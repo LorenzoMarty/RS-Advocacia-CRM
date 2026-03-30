@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}RS Advocacia | Novo compromisso{% endblock %}
-{% block topbar_label %}Novo compromisso{% endblock %}
+{% block title %}RS Advocacia | {% if editar %}Editar compromisso{% else %}Novo compromisso{% endif %}{% endblock %}
+{% block topbar_label %}{% if editar %}Editar compromisso{% else %}Novo compromisso{% endif %}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -227,6 +227,33 @@
         line-height:1.45;
     }
 
+    .check-field{
+        grid-template-columns:auto 1fr;
+        align-items:center;
+        gap:12px;
+        padding:14px;
+        border-radius:16px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+    }
+
+    .check-field input{
+        width:18px;
+        min-height:auto;
+        margin:0;
+        padding:0;
+        accent-color:var(--gold);
+        box-shadow:none;
+    }
+
+    .check-field label{
+        color:var(--text);
+        font-size:.9rem;
+        font-weight:600;
+        letter-spacing:0;
+        text-transform:none;
+    }
+
     .form-actions{
         display:flex;
         gap:10px;
@@ -257,21 +284,31 @@
 {% endblock %}
 
 {% block topbar_actions %}
-    <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
+    {% if editar %}
+        <a class="btn btn-secondary" href="{% url 'detalhes_evento' form.instance.id %}">Detalhes</a>
+    {% else %}
+        <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="event-create-page">
     <section class="surface event-intro reveal">
         <div class="intro-grid">
-            <a class="intro-link" href="{% url 'listar_eventos' %}">
+            <a class="intro-link" href="{% if editar %}{% url 'detalhes_evento' form.instance.id %}{% else %}{% url 'listar_eventos' %}{% endif %}">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
-                Voltar para agenda
+                {% if editar %}Voltar para o compromisso{% else %}Voltar para agenda{% endif %}
             </a>
 
             <div>
-                <h1 class="intro-title">Novo compromisso</h1>
-                <p class="intro-note">Cadastro direto, com foco em agendamento e vinculos essenciais.</p>
+                <h1 class="intro-title">{% if editar %}Editar compromisso{% else %}Novo compromisso{% endif %}</h1>
+                <p class="intro-note">
+                    {% if editar %}
+                        Ajuste o agendamento e mantenha os vinculos essenciais atualizados.
+                    {% else %}
+                        Cadastro direto, com foco em agendamento e vinculos essenciais.
+                    {% endif %}
+                </p>
             </div>
         </div>
     </section>
@@ -321,15 +358,13 @@
                         {% endfor %}
                     </div>
 
-                    {% if form.prioridade %}
-                        <div class="field {% if form.prioridade.errors %}has-error{% endif %}">
-                            <label for="{{ form.prioridade.id_for_label }}">Prioridade</label>
-                            {{ form.prioridade }}
-                            {% for error in form.prioridade.errors %}
-                                <div class="field-error">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    <div class="field {% if form.prioridade.errors %}has-error{% endif %}">
+                        <label for="{{ form.prioridade.id_for_label }}">Prioridade</label>
+                        {{ form.prioridade }}
+                        {% for error in form.prioridade.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
                 </div>
             </section>
 
@@ -354,6 +389,15 @@
                         {{ form.data_fim }}
                         <div class="field-note">Mantenha a janela clara para evitar conflito de agenda.</div>
                         {% for error in form.data_fim.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field {% if form.lembrete_em.errors %}has-error{% endif %}">
+                        <label for="{{ form.lembrete_em.id_for_label }}">Lembrete</label>
+                        {{ form.lembrete_em }}
+                        <div class="field-note">Opcional. Defina um aviso anterior ao inicio.</div>
+                        {% for error in form.lembrete_em.errors %}
                             <div class="field-error">{{ error }}</div>
                         {% endfor %}
                     </div>
@@ -398,51 +442,67 @@
                             <div class="field-error">{{ error }}</div>
                         {% endfor %}
                     </div>
+
+                    <div class="field {% if form.criado_por.errors %}has-error{% endif %}">
+                        <label for="{{ form.criado_por.id_for_label }}">Criado por</label>
+                        {{ form.criado_por }}
+                        {% for error in form.criado_por.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
                 </div>
             </section>
 
-            {% if form.local or form.observacoes or form.descricao %}
-                <section class="form-section">
-                    <div class="section-headline">
-                        <h2 class="section-kicker">Contexto</h2>
-                        <p class="section-copy">Informacoes de apoio para a execucao do compromisso.</p>
+            <section class="form-section">
+                <div class="section-headline">
+                    <h2 class="section-kicker">Contexto</h2>
+                    <p class="section-copy">Informacoes de apoio para a execucao do compromisso.</p>
+                </div>
+
+                <div class="form-grid">
+                    <div class="field span-2 {% if form.local.errors %}has-error{% endif %}">
+                        <label for="{{ form.local.id_for_label }}">Local</label>
+                        {{ form.local }}
+                        {% for error in form.local.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
                     </div>
 
-                    <div class="form-grid">
-                        {% if form.local %}
-                            <div class="field span-2 {% if form.local.errors %}has-error{% endif %}">
-                                <label for="{{ form.local.id_for_label }}">Local</label>
-                                {{ form.local }}
-                                {% for error in form.local.errors %}
-                                    <div class="field-error">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-
-                        {% if form.observacoes %}
-                            <div class="field span-2 {% if form.observacoes.errors %}has-error{% endif %}">
-                                <label for="{{ form.observacoes.id_for_label }}">Observacoes</label>
-                                {{ form.observacoes }}
-                                {% for error in form.observacoes.errors %}
-                                    <div class="field-error">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% elif form.descricao %}
-                            <div class="field span-2 {% if form.descricao.errors %}has-error{% endif %}">
-                                <label for="{{ form.descricao.id_for_label }}">Observacoes</label>
-                                {{ form.descricao }}
-                                {% for error in form.descricao.errors %}
-                                    <div class="field-error">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                    <div class="field span-2 {% if form.descricao.errors %}has-error{% endif %}">
+                        <label for="{{ form.descricao.id_for_label }}">Descricao</label>
+                        {{ form.descricao }}
+                        {% for error in form.descricao.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
                     </div>
-                </section>
-            {% endif %}
+
+                    <div class="field span-2 {% if form.observacoes.errors %}has-error{% endif %}">
+                        <label for="{{ form.observacoes.id_for_label }}">Observacoes</label>
+                        {{ form.observacoes }}
+                        {% for error in form.observacoes.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field span-2 {% if form.concluido.errors %}has-error{% endif %}">
+                        <div class="check-field">
+                            {{ form.concluido }}
+                            <label for="{{ form.concluido.id_for_label }}">Marcar compromisso como concluido</label>
+                        </div>
+                        {% for error in form.concluido.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
 
             <div class="form-actions">
-                <button class="btn" type="submit">Salvar</button>
-                <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Cancelar</a>
+                <button class="btn" type="submit">{% if editar %}Atualizar{% else %}Salvar{% endif %}</button>
+                {% if editar %}
+                    <a class="btn btn-secondary" href="{% url 'detalhes_evento' form.instance.id %}">Cancelar</a>
+                {% else %}
+                    <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Cancelar</a>
+                {% endif %}
             </div>
         </form>
     </section>

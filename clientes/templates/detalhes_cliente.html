@@ -350,6 +350,8 @@
 
 {% block topbar_actions %}
     <a class="btn btn-secondary" href="{% url 'listar_clientes' %}">Clientes</a>
+    <a class="btn btn-secondary" href="{% url 'editar_cliente' cliente.id %}">Editar</a>
+    <a class="btn btn-danger" href="{% url 'excluir_cliente' cliente.id %}">Excluir</a>
     <a class="btn btn-secondary" href="{% url 'criar_processo' %}">Processo</a>
     <a class="btn" href="{% url 'criar_evento' %}">Compromisso</a>
 {% endblock %}

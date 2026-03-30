@@ -40,7 +40,9 @@
     }
 
     .process-identity{
-        display:grid;
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
         gap:18px;
     }
 
@@ -86,6 +88,7 @@
         display:flex;
         flex-wrap:wrap;
         gap:10px;
+        align-items:flex-start;
     }
 
     .meta-pill,
@@ -95,7 +98,7 @@
         min-height:38px;
         max-width:100%;
         padding:0 14px;
-        border-radius:16px;
+        border-radius:10px;
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--soft);
@@ -389,6 +392,8 @@
 
 {% block topbar_actions %}
     <a class="btn btn-secondary" href="{% url 'listar_processos' %}">Processos</a>
+    <a class="btn btn-secondary" href="{% url 'editar_processo' processo.id %}">Editar</a>
+    <a class="btn btn-danger" href="{% url 'excluir_processo' processo.id %}">Excluir</a>
     <a class="btn btn-secondary" href="{% url 'detalhes_cliente' processo.cliente.id %}">Cliente</a>
     <a class="btn" href="{% url 'criar_evento' %}">Compromisso</a>
 {% endblock %}

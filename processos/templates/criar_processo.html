@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}RS Advocacia | Novo processo{% endblock %}
-{% block topbar_label %}Novo processo{% endblock %}
+{% block title %}RS Advocacia | {% if editar %}Editar processo{% else %}Novo processo{% endif %}{% endblock %}
+{% block topbar_label %}{% if editar %}Editar processo{% else %}Novo processo{% endif %}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -234,7 +234,11 @@
 {% endblock %}
 
 {% block topbar_actions %}
-    <a class="btn btn-secondary" href="{% url 'listar_processos' %}">Processos</a>
+    {% if editar %}
+        <a class="btn btn-secondary" href="{% url 'detalhes_processo' form.instance.id %}">Detalhes</a>
+    {% else %}
+        <a class="btn btn-secondary" href="{% url 'listar_processos' %}">Processos</a>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -242,8 +246,14 @@
     <section class="surface create-intro reveal">
         <div class="section-head">
             <div>
-                <h1 class="intro-title">Novo processo</h1>
-                <p class="intro-note">Registro claro e direto.</p>
+                <h1 class="intro-title">{% if editar %}Editar processo{% else %}Novo processo{% endif %}</h1>
+                <p class="intro-note">
+                    {% if editar %}
+                        Ajuste os dados principais do processo sem trocar de fluxo.
+                    {% else %}
+                        Registro claro e direto.
+                    {% endif %}
+                </p>
             </div>
         </div>
     </section>
@@ -347,8 +357,12 @@
             </section>
 
             <div class="form-actions">
-                <button class="btn" type="submit">Salvar</button>
-                <a class="btn btn-secondary" href="{% url 'listar_processos' %}">Cancelar</a>
+                <button class="btn" type="submit">{% if editar %}Atualizar{% else %}Salvar{% endif %}</button>
+                {% if editar %}
+                    <a class="btn btn-secondary" href="{% url 'detalhes_processo' form.instance.id %}">Cancelar</a>
+                {% else %}
+                    <a class="btn btn-secondary" href="{% url 'listar_processos' %}">Cancelar</a>
+                {% endif %}
             </div>
         </form>
     </section>

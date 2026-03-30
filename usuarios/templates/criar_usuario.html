@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}RS Advocacia | Novo usuario{% endblock %}
-{% block topbar_label %}Novo usuario{% endblock %}
+{% block title %}RS Advocacia | {% if editar %}Editar usuario{% else %}Novo usuario{% endif %}{% endblock %}
+{% block topbar_label %}{% if editar %}Editar usuario{% else %}Novo usuario{% endif %}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -145,6 +145,12 @@
         box-shadow:0 0 0 4px rgba(194,154,99,.08);
     }
 
+    .field.has-error input,
+    .field.has-error select{
+        border-color:rgba(239,122,122,.4);
+        box-shadow:0 0 0 4px rgba(239,122,122,.08);
+    }
+
     .field select option,
     .field select optgroup{
         background:#161a22;
@@ -154,6 +160,61 @@
     .field-help{
         color:var(--muted);
         font-size:.82rem;
+    }
+
+    .field-error{
+        color:var(--danger);
+        font-size:.82rem;
+        line-height:1.45;
+    }
+
+    .password-wrap{
+        position:relative;
+    }
+
+    .password-wrap input{
+        padding-right:52px;
+    }
+
+    .password-toggle{
+        position:absolute;
+        top:50%;
+        right:10px;
+        width:34px;
+        height:34px;
+        display:grid;
+        place-items:center;
+        border-radius:12px;
+        border:1px solid transparent;
+        color:var(--muted);
+        transform:translateY(-50%);
+        transition:background .2s ease,border-color .2s ease,color .2s ease;
+    }
+
+    .password-toggle:hover{
+        color:var(--text);
+        background:var(--hover);
+        border-color:rgba(194,154,99,.18);
+    }
+
+    .password-toggle:focus-visible{
+        outline:0;
+        color:var(--text);
+        background:var(--hover);
+        border-color:rgba(194,154,99,.24);
+        box-shadow:0 0 0 4px rgba(194,154,99,.08);
+    }
+
+    .password-toggle .icon-hide{
+        display:none;
+    }
+
+    .password-toggle.is-visible .icon-show{
+        display:none;
+    }
+
+    .password-toggle.is-visible .icon-hide{
+        display:block;
     }
 
     .form-actions{
@@ -201,7 +262,11 @@
 {% endblock %}
 
 {% block topbar_actions %}
-    <a class="btn btn-secondary" href="{% url 'listar_usuarios' %}">Usuarios</a>
+    {% if editar %}
+        <a class="btn btn-secondary" href="{% url 'detalhes_usuario' form.instance.id %}">Detalhes</a>
+    {% else %}
+        <a class="btn btn-secondary" href="{% url 'listar_usuarios' %}">Usuarios</a>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -209,73 +274,150 @@
     <section class="surface create-intro reveal">
         <div class="section-head">
             <div>
-                <h1 class="intro-title">Novo usuario</h1>
-                <p class="intro-note">Cadastro direto da equipe.</p>
+                <h1 class="intro-title">{% if editar %}Editar usuario{% else %}Novo usuario{% endif %}</h1>
+                <p class="intro-note">
+                    {% if editar %}
+                        Atualize os dados do perfil sem perder o contexto atual.
+                    {% else %}
+                        Cadastro direto da equipe.
+                    {% endif %}
+                </p>
             </div>
         </div>
     </section>
 
     <section class="surface form-panel reveal" style="--delay:.06s">
-        {% if request.method == 'POST' %}
+        {% if success %}
             <div class="status-card">
                 <strong>Usuario salvo.</strong>
                 <p>O cadastro foi registrado.</p>
             </div>
         {% endif %}
 
-        {% if form and form.errors %}
+        {% if form.non_field_errors %}
             <div class="error-panel">
-                <strong>Revise os campos.</strong>
-                {{ form.errors }}
+                <strong>Revise os dados.</strong>
+                {{ form.non_field_errors }}
             </div>
         {% endif %}
 
         <form class="user-form" method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
             <div class="form-grid">
-                <div class="field">
-                    <label for="id_nome">Nome</label>
-                    <input id="id_nome" name="nome" type="text" required>
+                <div class="field {% if form.nome.errors %}has-error{% endif %}">
+                    <label for="{{ form.nome.id_for_label }}">Nome</label>
+                    {{ form.nome }}
+                    {% for error in form.nome.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
-                <div class="field">
-                    <label for="id_email">Email</label>
-                    <input id="id_email" name="email" type="email" required>
+                <div class="field {% if form.email.errors %}has-error{% endif %}">
+                    <label for="{{ form.email.id_for_label }}">Email</label>
+                    {{ form.email }}
+                    {% for error in form.email.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
-                <div class="field">
-                    <label for="id_cargo">Cargo</label>
-                    <select id="id_cargo" name="cargo" required>
-                        <option value="" selected disabled>Selecionar</option>
-                        <option value="admin">Administrador</option>
-                        <option value="advogado">Advogado</option>
-                        <option value="estagiario">Estagiario</option>
-                    </select>
+                <div class="field {% if form.cargo.errors %}has-error{% endif %}">
+                    <label for="{{ form.cargo.id_for_label }}">Cargo</label>
+                    {{ form.cargo }}
+                    {% for error in form.cargo.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
-                <div class="field">
-                    <label for="id_oab">OAB</label>
-                    <input id="id_oab" name="OAB" type="text">
+                <div class="field {% if form.OAB.errors %}has-error{% endif %}">
+                    <label for="{{ form.OAB.id_for_label }}">OAB</label>
+                    {{ form.OAB }}
+                    {% for error in form.OAB.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
-                <div class="field">
-                    <label for="id_senha">Senha</label>
-                    <input id="id_senha" name="senha" type="password" required>
+                <div class="field {% if form.senha.errors %}has-error{% endif %}">
+                    <label for="{{ form.senha.id_for_label }}">Senha</label>
+                    <div class="password-wrap">
+                        {{ form.senha }}
+                        <button
+                            class="password-toggle"
+                            type="button"
+                            aria-label="Mostrar senha"
+                            title="Mostrar senha"
+                            data-password-toggle
+                            data-password-target="{{ form.senha.id_for_label }}"
+                        >
+                            <svg class="icon-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="icon-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="m3 3 18 18"></path>
+                                <path d="M10.6 10.7a3 3 0 0 0 4.2 4.2"></path>
+                                <path d="M9.4 5.5A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a17.7 17.7 0 0 1-3 3.8"></path>
+                                <path d="M6.6 6.7C4 8.4 2 12 2 12a17.3 17.3 0 0 0 5.1 5.2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    {% for error in form.senha.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
-                <div class="field">
-                    <label for="id_foto">Foto</label>
-                    <input id="id_foto" name="foto" type="file" accept="image/*">
-                    <span class="field-help">Opcional</span>
+                <div class="field {% if form.foto.errors %}has-error{% endif %}">
+                    <label for="{{ form.foto.id_for_label }}">Foto</label>
+                    {{ form.foto }}
+                    {% if editar and form.instance.foto %}
+                        <span class="field-help">Foto atual cadastrada.</span>
+                    {% else %}
+                        <span class="field-help">Opcional</span>
+                    {% endif %}
+                    {% for error in form.foto.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
                 </div>
             </div>
 
             <div class="form-actions">
-                <button class="btn" type="submit">Salvar</button>
-                <a class="btn btn-secondary" href="{% url 'listar_usuarios' %}">Cancelar</a>
+                <button class="btn" type="submit">{% if editar %}Atualizar{% else %}Salvar{% endif %}</button>
+                {% if editar %}
+                    <a class="btn btn-secondary" href="{% url 'detalhes_usuario' form.instance.id %}">Cancelar</a>
+                {% else %}
+                    <a class="btn btn-secondary" href="{% url 'listar_usuarios' %}">Cancelar</a>
+                {% endif %}
             </div>
         </form>
     </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const toggles = document.querySelectorAll("[data-password-toggle]");
+
+        toggles.forEach(function (toggle) {
+            const targetId = toggle.getAttribute("data-password-target");
+            const input = document.getElementById(targetId);
+
+            if (!input) {
+                return;
+            }
+
+            toggle.addEventListener("click", function () {
+                const isVisible = input.type === "text";
+                input.type = isVisible ? "password" : "text";
+                toggle.classList.toggle("is-visible", !isVisible);
+                toggle.setAttribute("aria-label", isVisible ? "Mostrar senha" : "Ocultar senha");
+                toggle.setAttribute("title", isVisible ? "Mostrar senha" : "Ocultar senha");
+            });
+        });
+    }());
+</script>
 {% endblock %}

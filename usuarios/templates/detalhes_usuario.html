@@ -40,7 +40,9 @@
     }
 
     .user-identity{
-        display:grid;
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
         gap:18px;
     }
 
@@ -92,6 +94,12 @@
         display:flex;
         flex-wrap:wrap;
         gap:10px;
+        align-items:flex-start;
+    }
+
+    .identity-meta .meta-pill{
+        min-height:32px;
+        border-radius:10px;
     }
 
     .meta-pill,
@@ -282,6 +290,8 @@
 
 {% block topbar_actions %}
     <a class="btn btn-secondary" href="{% url 'listar_usuarios' %}">Usuarios</a>
+    <a class="btn btn-secondary" href="{% url 'editar_usuario' usuario.id %}">Editar</a>
+    <a class="btn btn-danger" href="{% url 'excluir_usuario' usuario.id %}">Excluir</a>
     <a class="btn" href="{% url 'criar_usuario' %}">Novo</a>
 {% endblock %}
 

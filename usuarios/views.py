@@ -1,43 +1,62 @@
-from django.shortcuts import render
+from django.contrib import messages
+from django.shortcuts import redirect, render
+from django.urls import reverse
 
+from usuarios.forms import UsuarioForm
 from usuarios.models import Usuario
 
-# Create your views here.
+
 def listar_usuarios(request):
     usuarios = Usuario.objects.all()
-    return render(request, 'listar_usuarios.html', {'usuarios': usuarios})
+    return render(request, "listar_usuarios.html", {"usuarios": usuarios})
+
 
 def criar_usuario(request):
-    if request.method == 'POST':
-        nome = request.POST.get('nome')
-        email = request.POST.get('email')
-        senha = request.POST.get('senha')
-        cargo = request.POST.get('cargo')
-        foto = request.FILES.get('foto')
-        OAB = request.POST.get('OAB')
-        Usuario.objects.create(nome=nome, email=email, senha=senha, cargo=cargo, foto=foto, OAB=OAB)
-    return render(request, 'criar_usuario.html')
+    if request.method == "POST":
+        form = UsuarioForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Usuario criado com sucesso!")
+            return render(request, "criar_usuario.html", {"form": UsuarioForm(), "success": True})
+    else:
+        form = UsuarioForm()
+
+    return render(request, "criar_usuario.html", {"form": form})
+
 
 def detalhes_usuario(request, usuario_id):
     usuario = Usuario.objects.get(id=usuario_id)
-    return render(request, 'detalhes_usuario.html', {'usuario': usuario})
+    return render(request, "detalhes_usuario.html", {"usuario": usuario})
+
 
 def editar_usuario(request, usuario_id):
     usuario = Usuario.objects.get(id=usuario_id)
-    if request.method == 'POST':
-        usuario.nome = request.POST.get('nome')
-        usuario.email = request.POST.get('email')
-        usuario.senha = request.POST.get('senha')
-        usuario.cargo = request.POST.get('cargo')
-        if 'foto' in request.FILES:
-            usuario.foto = request.FILES['foto']
-        usuario.OAB = request.POST.get('OAB')
-        usuario.save()
-    return render(request, 'editar_usuario.html', {'usuario': usuario})
+
+    if request.method == "POST":
+        form = UsuarioForm(request.POST, request.FILES, instance=usuario)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Usuario atualizado com sucesso!")
+            return redirect("detalhes_usuario", usuario_id=usuario.id)
+    else:
+        form = UsuarioForm(instance=usuario)
+
+    context = {"form": form, "editar": True}
+    return render(request, "criar_usuario.html", context)
+
 
 def excluir_usuario(request, usuario_id):
     usuario = Usuario.objects.get(id=usuario_id)
-    if request.method == 'POST':
+
+    if request.method == "POST":
         usuario.delete()
-        return render(request, 'excluir_usuario.html', {'success': True})
-    return render(request, 'excluir_usuario.html', {'usuario': usuario})
+        messages.success(request, "Usuario excluido com sucesso!")
+        return redirect("listar_usuarios")
+
+    context = {
+        "registro_tipo": "usuario",
+        "registro_nome": usuario.nome,
+        "registro_meta": usuario.email,
+        "voltar_url": reverse("detalhes_usuario", args=[usuario.id]),
+    }
+    return render(request, "confirmar_exclusao.html", context)

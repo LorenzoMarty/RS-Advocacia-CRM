@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}RS Advocacia | Novo cliente{% endblock %}
-{% block topbar_label %}Novo cliente{% endblock %}
+{% block title %}RS Advocacia | {% if editar %}Editar cliente{% else %}Novo cliente{% endif %}{% endblock %}
+{% block topbar_label %}{% if editar %}Editar cliente{% else %}Novo cliente{% endif %}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -191,7 +191,11 @@
 {% endblock %}
 
 {% block topbar_actions %}
-    <a class="btn btn-secondary" href="{% url 'listar_clientes' %}">Clientes</a>
+    {% if editar %}
+        <a class="btn btn-secondary" href="{% url 'detalhes_cliente' form.instance.id %}">Detalhes</a>
+    {% else %}
+        <a class="btn btn-secondary" href="{% url 'listar_clientes' %}">Clientes</a>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -199,8 +203,14 @@
     <section class="surface create-intro reveal">
         <div class="section-head">
             <div>
-                <h1 class="intro-title">Novo cliente</h1>
-                <p class="intro-note">Cadastro direto e objetivo.</p>
+                <h1 class="intro-title">{% if editar %}Editar cliente{% else %}Novo cliente{% endif %}</h1>
+                <p class="intro-note">
+                    {% if editar %}
+                        Atualize os dados do cadastro com o mesmo fluxo da criacao.
+                    {% else %}
+                        Cadastro direto e objetivo.
+                    {% endif %}
+                </p>
             </div>
         </div>
     </section>
@@ -288,8 +298,12 @@
             </section>
 
             <div class="form-actions">
-                <button class="btn" type="submit">Salvar</button>
-                <a class="btn btn-secondary" href="{% url 'listar_clientes' %}">Cancelar</a>
+                <button class="btn" type="submit">{% if editar %}Atualizar{% else %}Salvar{% endif %}</button>
+                {% if editar %}
+                    <a class="btn btn-secondary" href="{% url 'detalhes_cliente' form.instance.id %}">Cancelar</a>
+                {% else %}
+                    <a class="btn btn-secondary" href="{% url 'listar_clientes' %}">Cancelar</a>
+                {% endif %}
             </div>
         </form>
     </section>

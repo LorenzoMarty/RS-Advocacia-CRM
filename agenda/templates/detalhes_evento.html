@@ -40,7 +40,9 @@
     }
 
     .event-identity{
-        display:grid;
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
         gap:18px;
     }
 
@@ -87,6 +89,13 @@
         display:flex;
         flex-wrap:wrap;
         gap:10px;
+        align-items:flex-start;
+    }
+
+    .hero-meta .meta-pill,
+    .hero-meta .status-badge{
+        min-height:32px;
+        border-radius:10px;
     }
 
     .meta-pill,
@@ -364,6 +373,8 @@
 
 {% block topbar_actions %}
     <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
+    <a class="btn btn-secondary" href="{% url 'editar_evento' evento.id %}">Editar</a>
+    <a class="btn btn-danger" href="{% url 'excluir_evento' evento.id %}">Excluir</a>
     <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
 {% endblock %}
 

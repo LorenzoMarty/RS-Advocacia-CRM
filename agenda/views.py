@@ -1,13 +1,16 @@
-from django.shortcuts import render
 from django.contrib import messages
-from agenda.models import Evento
-from agenda.forms import EventoForm
 from django.http import JsonResponse
+from django.shortcuts import redirect, render
+from django.urls import reverse
 
-# Create your views here.
+from agenda.forms import EventoForm
+from agenda.models import Evento
+
+
 def listar_eventos(request):
     eventos = Evento.objects.all()
     return render(request, "listar_eventos.html", {"eventos": eventos})
+
 
 def criar_evento(request):
     if request.method == "POST":
@@ -18,23 +21,58 @@ def criar_evento(request):
             return render(request, "criar_evento.html", {"form": EventoForm(), "success": True})
     else:
         form = EventoForm()
-    
+
     return render(request, "criar_evento.html", {"form": form})
+
 
 def detalhes_evento(request, evento_id):
     evento = Evento.objects.get(id=evento_id)
     return render(request, "detalhes_evento.html", {"evento": evento})
+
 
 def eventos_json(request):
     eventos = Evento.objects.all()
 
     data = [
         {
-            "title": e.titulo,
-            "start": e.data_inicio.isoformat(),
-            "end": e.data_fim.isoformat(),
+            "title": evento.titulo,
+            "start": evento.data_inicio.isoformat(),
+            "end": evento.data_fim.isoformat(),
         }
-        for e in eventos
+        for evento in eventos
     ]
 
     return JsonResponse(data, safe=False)
+
+
+def excluir_evento(request, evento_id):
+    evento = Evento.objects.get(id=evento_id)
+
+    if request.method == "POST":
+        evento.delete()
+        messages.success(request, "Evento excluido com sucesso!")
+        return redirect("listar_eventos")
+
+    context = {
+        "registro_tipo": "evento",
+        "registro_nome": evento.titulo,
+        "registro_meta": evento.data_inicio.strftime("%d/%m/%Y %H:%M"),
+        "voltar_url": reverse("detalhes_evento", args=[evento.id]),
+    }
+    return render(request, "confirmar_exclusao.html", context)
+
+
+def editar_evento(request, evento_id):
+    evento = Evento.objects.get(id=evento_id)
+
+    if request.method == "POST":
+        form = EventoForm(request.POST, instance=evento)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Evento atualizado com sucesso!")
+            return redirect("detalhes_evento", evento_id=evento.id)
+    else:
+        form = EventoForm(instance=evento)
+
+    context = {"form": form, "editar": True}
+    return render(request, "criar_evento.html", context)
