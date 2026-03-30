@@ -1,0 +1,551 @@
+{% extends "base.html" %}
+
+{% block title %}RS Advocacia | {{ cliente.nome }}{% endblock %}
+{% block topbar_label %}Cliente{% endblock %}
+
+{% block extra_head %}
+<style>
+    .client-page{
+        display:grid;
+        gap:18px;
+    }
+
+    .client-hero,
+    .section-card{
+        padding:22px;
+    }
+
+    .client-hero-grid{
+        display:grid;
+        grid-template-columns:minmax(0, 1.2fr) 320px;
+        gap:18px;
+        align-items:stretch;
+    }
+
+    .crumbs{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        margin-bottom:18px;
+        color:var(--muted);
+        font-size:.76rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    .crumbs::after{
+        content:"/";
+        opacity:.5;
+    }
+
+    .client-identity{
+        display:grid;
+        gap:18px;
+    }
+
+    .identity-row{
+        display:flex;
+        align-items:flex-start;
+        gap:16px;
+        min-width:0;
+    }
+
+    .client-mark{
+        width:58px;
+        height:58px;
+        flex:0 0 auto;
+        display:grid;
+        place-items:center;
+        border-radius:20px;
+        color:var(--gold-soft);
+        font-size:1.05rem;
+        font-weight:700;
+        letter-spacing:.02em;
+        background:rgba(194,154,99,.08);
+        border:1px solid rgba(194,154,99,.18);
+    }
+
+    .client-name{
+        margin:0;
+        font-family:var(--serif);
+        font-size:clamp(2.35rem, 4vw, 3.4rem);
+        line-height:.95;
+        font-weight:400;
+        letter-spacing:-.06em;
+    }
+
+    .client-subtitle{
+        margin:10px 0 0;
+        color:var(--soft);
+        font-size:.96rem;
+    }
+
+    .identity-meta{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+    }
+
+    .meta-pill{
+        display:inline-flex;
+        align-items:center;
+        min-height:34px;
+        max-width:100%;
+        padding:0 12px;
+        border-radius:999px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--soft);
+        font-size:.8rem;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+
+    .hero-summary{
+        display:grid;
+        gap:10px;
+    }
+
+    .summary-card{
+        padding:18px;
+        border-radius:20px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+    }
+
+    .summary-card span{
+        display:block;
+        color:var(--muted);
+        font-size:.72rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    .summary-card strong{
+        display:block;
+        margin-top:10px;
+        font-size:2rem;
+        line-height:1;
+        letter-spacing:-.05em;
+    }
+
+    .client-layout{
+        display:grid;
+        grid-template-columns:minmax(0, 1.05fr) minmax(320px, .95fr);
+        gap:18px;
+    }
+
+    .stack{
+        display:grid;
+        gap:18px;
+    }
+
+    .detail-grid{
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:10px;
+    }
+
+    .detail-item{
+        padding:16px;
+        border-radius:18px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+    }
+
+    .detail-item span{
+        display:block;
+        color:var(--muted);
+        font-size:.72rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    .detail-item strong,
+    .detail-item a{
+        display:block;
+        margin-top:8px;
+        color:var(--text);
+        font-size:.96rem;
+        font-weight:600;
+        line-height:1.45;
+        word-break:break-word;
+    }
+
+    .list{
+        display:grid;
+        gap:10px;
+    }
+
+    .process-item,
+    .event-item{
+        display:grid;
+        gap:12px;
+        padding:16px;
+        border-radius:20px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        transition:border-color .2s ease,background .2s ease,transform .2s ease;
+    }
+
+    .process-item:hover,
+    .event-item:hover{
+        transform:translateY(-1px);
+        border-color:rgba(194,154,99,.18);
+        background:rgba(194,154,99,.06);
+    }
+
+    .process-link{
+        display:grid;
+        gap:12px;
+        color:inherit;
+    }
+
+    .list-top{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:12px;
+    }
+
+    .list-title{
+        margin:0;
+        font-size:1rem;
+        line-height:1.4;
+        font-weight:600;
+    }
+
+    .list-subtitle{
+        margin:6px 0 0;
+        color:var(--soft);
+        font-size:.84rem;
+        line-height:1.45;
+    }
+
+    .list-meta{
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+    }
+
+    .meta-chip{
+        display:inline-flex;
+        align-items:center;
+        min-height:30px;
+        padding:0 10px;
+        border-radius:999px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--soft);
+        font-size:.78rem;
+    }
+
+    .status-badge{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        min-height:32px;
+        padding:0 11px;
+        border-radius:999px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--soft);
+        font-size:.7rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    .status-badge::before{
+        content:"";
+        width:6px;
+        height:6px;
+        border-radius:999px;
+        background:currentColor;
+    }
+
+    .status-badge.gold{
+        color:var(--gold-soft);
+        background:rgba(194,154,99,.08);
+        border-color:rgba(194,154,99,.2);
+    }
+
+    .status-badge.success{
+        color:var(--success);
+    }
+
+    .status-badge.warn{
+        color:var(--warn);
+    }
+
+    .status-badge.danger{
+        color:var(--danger);
+    }
+
+    .note-box{
+        padding:18px;
+        border-radius:20px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--soft);
+        line-height:1.7;
+    }
+
+    .empty-actions{
+        margin-top:16px;
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+    }
+
+    html[data-theme="light"] .client-mark,
+    html[data-theme="light"] .summary-card,
+    html[data-theme="light"] .detail-item,
+    html[data-theme="light"] .process-item,
+    html[data-theme="light"] .event-item,
+    html[data-theme="light"] .meta-pill,
+    html[data-theme="light"] .meta-chip,
+    html[data-theme="light"] .note-box,
+    html[data-theme="light"] .status-badge{
+        background:rgba(24,30,42,.04);
+        border-color:rgba(30,34,45,.1);
+    }
+
+    html[data-theme="light"] .status-badge.gold{
+        background:rgba(181,138,79,.1);
+        border-color:rgba(181,138,79,.2);
+    }
+
+    @media (max-width:1180px){
+        .client-hero-grid,
+        .client-layout{
+            grid-template-columns:1fr;
+        }
+    }
+
+    @media (max-width:700px){
+        .client-hero,
+        .section-card{
+            padding:18px;
+        }
+
+        .identity-row{
+            flex-direction:column;
+        }
+
+        .detail-grid{
+            grid-template-columns:1fr;
+        }
+
+        .list-top{
+            flex-direction:column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block topbar_actions %}
+    <a class="btn btn-secondary" href="{% url 'listar_clientes' %}">Clientes</a>
+    <a class="btn btn-secondary" href="{% url 'criar_processo' %}">Processo</a>
+    <a class="btn" href="{% url 'criar_evento' %}">Compromisso</a>
+{% endblock %}
+
+{% block content %}
+{% with processos=cliente.processo_set.all eventos=cliente.evento_set.all total_processos=cliente.processo_set.count total_eventos=cliente.evento_set.count %}
+<div class="client-page">
+    <section class="surface client-hero reveal">
+        <div class="crumbs">
+            <a href="{% url 'listar_clientes' %}">Clientes</a>
+        </div>
+
+        <div class="client-hero-grid">
+            <div class="client-identity">
+                <div class="identity-row">
+                    <div class="client-mark" aria-hidden="true">{{ cliente.nome|first|upper }}</div>
+                    <div>
+                        <h1 class="client-name">{{ cliente.nome }}</h1>
+                        <p class="client-subtitle">Dados centrais do cliente.</p>
+                    </div>
+                </div>
+
+                <div class="identity-meta">
+                    <span class="meta-pill">CPF {{ cliente.cpf }}</span>
+                    <a class="meta-pill" href="tel:{{ cliente.telefone }}">{{ cliente.telefone }}</a>
+                    <a class="meta-pill" href="mailto:{{ cliente.email }}">{{ cliente.email }}</a>
+                </div>
+            </div>
+
+            <aside class="hero-summary">
+                <article class="summary-card">
+                    <span>Processos</span>
+                    <strong>{{ total_processos }}</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Compromissos</span>
+                    <strong>{{ total_eventos }}</strong>
+                </article>
+            </aside>
+        </div>
+    </section>
+
+    <div class="client-layout">
+        <div class="stack">
+            <section class="surface section-card reveal" style="--delay:.04s">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Dados</h2>
+                        <p class="section-note">Essenciais</p>
+                    </div>
+                </div>
+
+                <div class="detail-grid">
+                    <article class="detail-item">
+                        <span>Documento</span>
+                        <strong>{{ cliente.cpf }}</strong>
+                    </article>
+                    <article class="detail-item">
+                        <span>Telefone</span>
+                        <a href="tel:{{ cliente.telefone }}">{{ cliente.telefone }}</a>
+                    </article>
+                    <article class="detail-item">
+                        <span>Email</span>
+                        <a href="mailto:{{ cliente.email }}">{{ cliente.email }}</a>
+                    </article>
+                    <article class="detail-item">
+                        <span>Observacoes</span>
+                        <strong>{% if cliente.obs %}Disponiveis{% else %}-{% endif %}</strong>
+                    </article>
+                </div>
+            </section>
+
+            <section class="surface section-card reveal" style="--delay:.08s">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Processos</h2>
+                        <p class="section-note">{{ total_processos }} registro{{ total_processos|pluralize }}</p>
+                    </div>
+                </div>
+
+                <div class="list">
+                    {% for processo in processos %}
+                        {% with status=processo.status|default:''|lower %}
+                            <article class="process-item">
+                                <a class="process-link" href="{% url 'detalhes_processo' processo.id %}">
+                                    <div class="list-top">
+                                        <div>
+                                            <h3 class="list-title">{{ processo.numero_processo }}</h3>
+                                            <p class="list-subtitle">{{ processo.area_juridica }}</p>
+                                        </div>
+
+                                        {% if 'conclu' in status or 'encerr' in status %}
+                                            <span class="status-badge success">{{ processo.status }}</span>
+                                        {% elif 'arquiv' in status %}
+                                            <span class="status-badge">{{ processo.status }}</span>
+                                        {% elif 'aguard' in status or 'penden' in status %}
+                                            <span class="status-badge warn">{{ processo.status }}</span>
+                                        {% elif status == 'ativo' or 'andamento' in status or 'tramita' in status %}
+                                            <span class="status-badge gold">{{ processo.status|default:"Ativo" }}</span>
+                                        {% else %}
+                                            <span class="status-badge gold">{{ processo.status|default:"Ativo" }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="list-meta">
+                                        <span class="meta-chip">{{ processo.advogado_responsavel }}</span>
+                                        <span class="meta-chip">{{ processo.vara }}</span>
+                                    </div>
+                                </a>
+                            </article>
+                        {% endwith %}
+                    {% empty %}
+                        <div class="empty">
+                            <strong>Sem processos.</strong>
+                            <p>Crie um novo registro para este cliente.</p>
+                            <div class="empty-actions">
+                                <a class="btn" href="{% url 'criar_processo' %}">Novo processo</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+
+        <div class="stack">
+            <section class="surface section-card reveal" style="--delay:.06s">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Compromissos</h2>
+                        <p class="section-note">{{ total_eventos }} registro{{ total_eventos|pluralize }}</p>
+                    </div>
+                </div>
+
+                <div class="list">
+                    {% for evento in eventos %}
+                        {% with status=evento.status|default:''|lower %}
+                            <article class="event-item">
+                                <div class="list-top">
+                                    <div>
+                                        <h3 class="list-title">{{ evento.titulo }}</h3>
+                                        <p class="list-subtitle">{{ evento.data_inicio|date:"d/m/Y" }} as {{ evento.data_inicio|date:"H:i" }}</p>
+                                    </div>
+
+                                    {% if evento.concluido or 'conclu' in status %}
+                                        <span class="status-badge success">{{ evento.status|default:"Concluido" }}</span>
+                                    {% elif 'aguard' in status or 'penden' in status %}
+                                        <span class="status-badge warn">{{ evento.status }}</span>
+                                    {% elif 'confirm' in status or 'agend' in status %}
+                                        <span class="status-badge gold">{{ evento.status }}</span>
+                                    {% else %}
+                                        <span class="status-badge gold">{{ evento.status|default:"Ativo" }}</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="list-meta">
+                                    <span class="meta-chip">{{ evento.tipo_evento }}</span>
+                                    {% if evento.processo %}
+                                        <span class="meta-chip">{{ evento.processo.numero_processo }}</span>
+                                    {% endif %}
+                                    {% if evento.responsavel %}
+                                        <span class="meta-chip">{{ evento.responsavel }}</span>
+                                    {% endif %}
+                                </div>
+                            </article>
+                        {% endwith %}
+                    {% empty %}
+                        <div class="empty">
+                            <strong>Sem compromissos.</strong>
+                            <p>Agende um novo evento para este cliente.</p>
+                            <div class="empty-actions">
+                                <a class="btn" href="{% url 'criar_evento' %}">Novo compromisso</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="surface section-card reveal" style="--delay:.1s">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Observacoes</h2>
+                        <p class="section-note">Internas</p>
+                    </div>
+                </div>
+
+                {% if cliente.obs %}
+                    <div class="note-box">{{ cliente.obs|linebreaksbr }}</div>
+                {% else %}
+                    <div class="empty">
+                        <strong>Sem observacoes.</strong>
+                        <p>Nenhuma nota registrada.</p>
+                    </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+</div>
+{% endwith %}
+{% endblock %}

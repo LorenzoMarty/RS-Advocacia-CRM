@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}RS Advocacia | Clientes{% endblock %}
+{% block topbar_label %}Clientes{% endblock %}
+
+{% block extra_head %}
+<style>
+    .clients-page{
+        display:grid;
+        gap:18px;
+    }
+
+    .clients-intro,
+    .clients-panel{
+        padding:22px;
+    }
+
+    .intro-title{
+        margin:0;
+        font-family:var(--serif);
+        font-size:clamp(2.35rem, 4vw, 3.2rem);
+        line-height:.96;
+        font-weight:400;
+        letter-spacing:-.06em;
+    }
+
+    .list-head{
+        display:grid;
+        grid-template-columns:minmax(0, 1.3fr) minmax(260px, .95fr) 120px 88px;
+        gap:14px;
+        padding:0 14px 12px 86px;
+        color:var(--muted);
+        font-size:.7rem;
+        font-weight:700;
+        letter-spacing:.16em;
+        text-transform:uppercase;
+    }
+
+    .clients-list{
+        display:grid;
+        gap:10px;
+    }
+
+    .client-row{
+        display:grid;
+        grid-template-columns:auto minmax(0, 1.3fr) minmax(260px, .95fr) 120px 88px;
+        gap:14px;
+        align-items:center;
+        padding:16px;
+        border-radius:20px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        transition:border-color .2s ease,background .2s ease,transform .2s ease;
+    }
+
+    .client-row:hover{
+        transform:translateY(-1px);
+        border-color:rgba(194,154,99,.18);
+        background:rgba(194,154,99,.06);
+    }
+
+    .client-avatar{
+        width:46px;
+        height:46px;
+        display:grid;
+        place-items:center;
+        border-radius:16px;
+        color:var(--gold-soft);
+        font-size:.92rem;
+        font-weight:700;
+        letter-spacing:.02em;
+        background:rgba(194,154,99,.08);
+        border:1px solid rgba(194,154,99,.18);
+    }
+
+    .client-main,
+    .client-contact,
+    .client-volume,
+    .client-actions{
+        min-width:0;
+    }
+
+    .client-name{
+        margin:0;
+        font-size:1rem;
+        line-height:1.35;
+        font-weight:600;
+    }
+
+    .client-doc{
+        display:block;
+        margin-top:6px;
+        color:var(--muted);
+        font-size:.82rem;
+        line-height:1.4;
+    }
+
+    .contact-stack{
+        display:grid;
+        gap:8px;
+    }
+
+    .contact-link{
+        display:inline-flex;
+        align-items:center;
+        width:fit-content;
+        min-height:32px;
+        max-width:100%;
+        padding:0 11px;
+        border-radius:999px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--soft);
+        font-size:.8rem;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+
+    .client-volume{
+        display:grid;
+        justify-items:start;
+        gap:6px;
+    }
+
+    .volume-number{
+        font-size:1.45rem;
+        line-height:1;
+        font-weight:700;
+        letter-spacing:-.05em;
+    }
+
+    .volume-label{
+        color:var(--muted);
+        font-size:.74rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    .client-actions{
+        display:flex;
+        justify-content:flex-end;
+    }
+
+    .action-link{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-height:38px;
+        padding:0 14px;
+        border-radius:12px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--text);
+        font-size:.82rem;
+        font-weight:600;
+        transition:border-color .2s ease,background .2s ease,transform .2s ease;
+    }
+
+    .action-link:hover{
+        border-color:rgba(194,154,99,.2);
+        background:rgba(194,154,99,.08);
+        transform:translateY(-1px);
+    }
+
+    .empty-state{
+        padding:42px 22px;
+        text-align:center;
+    }
+
+    .empty-state .empty{
+        max-width:420px;
+        margin:0 auto;
+        padding:28px;
+    }
+
+    .empty-actions{
+        margin-top:16px;
+        display:flex;
+        justify-content:center;
+    }
+
+    html[data-theme="light"] .client-row,
+    html[data-theme="light"] .contact-link,
+    html[data-theme="light"] .action-link{
+        background:rgba(24,30,42,.04);
+        border-color:rgba(30,34,45,.1);
+    }
+
+    html[data-theme="light"] .client-avatar{
+        background:rgba(181,138,79,.1);
+        border-color:rgba(181,138,79,.2);
+    }
+
+    @media (max-width:1160px){
+        .list-head{
+            display:none;
+        }
+
+        .client-row{
+            grid-template-columns:auto minmax(0, 1fr) auto;
+            grid-template-areas:
+                "avatar main actions"
+                "avatar contact contact"
+                "avatar volume volume";
+            align-items:start;
+        }
+
+        .client-avatar{grid-area:avatar}
+        .client-main{grid-area:main}
+        .client-contact{grid-area:contact}
+        .client-volume{grid-area:volume}
+        .client-actions{grid-area:actions}
+    }
+
+    @media (max-width:640px){
+        .clients-intro,
+        .clients-panel{
+            padding:18px;
+        }
+
+        .client-row{
+            grid-template-columns:1fr;
+            grid-template-areas:
+                "main"
+                "contact"
+                "volume"
+                "actions";
+            gap:12px;
+        }
+
+        .client-avatar{
+            display:none;
+        }
+
+        .client-actions{
+            justify-content:flex-start;
+        }
+
+        .contact-link{
+            max-width:100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block topbar_actions %}
+    <a class="btn" href="{% url 'criar_cliente' %}">Novo</a>
+{% endblock %}
+
+{% block content %}
+<div class="clients-page">
+    <section class="surface clients-intro reveal">
+        <div class="section-head">
+            <div>
+                <h1 class="intro-title">Clientes</h1>
+                <p class="section-note">Base ativa</p>
+            </div>
+            <span class="badge gold">{{ clientes|length }} registros</span>
+        </div>
+    </section>
+
+    <section class="surface clients-panel reveal" style="--delay:.06s">
+        {% if clientes %}
+            <div class="list-head" aria-hidden="true">
+                <span>Cliente</span>
+                <span>Contato</span>
+                <span>Processos</span>
+                <span>Acoes</span>
+            </div>
+
+            <div class="clients-list">
+                {% for cliente in clientes %}
+                    {% with processo_count=cliente.processo_set.count %}
+                        <article class="client-row">
+                            <div class="client-avatar" aria-hidden="true">{{ cliente.nome|first|upper }}</div>
+
+                            <div class="client-main">
+                                <h2 class="client-name">{{ cliente.nome }}</h2>
+                                <span class="client-doc">CPF {{ cliente.cpf }}</span>
+                            </div>
+
+                            <div class="client-contact">
+                                <div class="contact-stack">
+                                    <a class="contact-link" href="mailto:{{ cliente.email }}">{{ cliente.email }}</a>
+                                    <a class="contact-link" href="tel:{{ cliente.telefone }}">{{ cliente.telefone }}</a>
+                                </div>
+                            </div>
+
+                            <div class="client-volume">
+                                <strong class="volume-number">{{ processo_count }}</strong>
+                                <span class="volume-label">processo{{ processo_count|pluralize }}</span>
+                            </div>
+
+                            <div class="client-actions">
+                                <a class="action-link" href="{% url 'detalhes_cliente' cliente.id %}">Ver</a>
+                            </div>
+                        </article>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty">
+                    <strong>Sem clientes.</strong>
+                    <p>Comece com um novo cadastro.</p>
+                    <div class="empty-actions">
+                        <a class="btn" href="{% url 'criar_cliente' %}">Novo</a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

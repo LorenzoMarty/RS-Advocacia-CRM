@@ -1,0 +1,637 @@
+{% extends "base.html" %}
+
+{% block title %}RS Advocacia | {{ evento.titulo }}{% endblock %}
+{% block topbar_label %}Evento{% endblock %}
+
+{% block extra_head %}
+<style>
+    .event-page{
+        display:grid;
+        gap:18px;
+    }
+
+    .event-hero,
+    .section-card{
+        padding:22px;
+    }
+
+    .event-hero-grid{
+        display:grid;
+        grid-template-columns:minmax(0, 1.18fr) 320px;
+        gap:18px;
+        align-items:stretch;
+    }
+
+    .crumbs{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        margin-bottom:18px;
+        color:var(--muted);
+        font-size:.76rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    .crumbs::after{
+        content:"/";
+        opacity:.5;
+    }
+
+    .event-identity{
+        display:grid;
+        gap:18px;
+    }
+
+    .identity-row{
+        display:flex;
+        align-items:flex-start;
+        gap:16px;
+        min-width:0;
+    }
+
+    .event-mark{
+        width:58px;
+        height:58px;
+        flex:0 0 auto;
+        display:grid;
+        place-items:center;
+        border-radius:20px;
+        color:var(--gold-soft);
+        font-size:1.02rem;
+        font-weight:700;
+        letter-spacing:.02em;
+        background:rgba(194,154,99,.08);
+        border:1px solid rgba(194,154,99,.18);
+    }
+
+    .event-title{
+        margin:0;
+        font-family:var(--serif);
+        font-size:clamp(2.25rem, 4vw, 3.25rem);
+        line-height:.96;
+        font-weight:400;
+        letter-spacing:-.06em;
+        word-break:break-word;
+    }
+
+    .event-subtitle{
+        margin:10px 0 0;
+        color:var(--soft);
+        font-size:.96rem;
+        line-height:1.6;
+    }
+
+    .hero-meta{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+    }
+
+    .meta-pill,
+    .meta-chip{
+        display:inline-flex;
+        align-items:center;
+        min-height:38px;
+        max-width:100%;
+        padding:0 14px;
+        border-radius:16px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--soft);
+        font-size:.8rem;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+
+    .hero-summary{
+        display:grid;
+        gap:10px;
+    }
+
+    .summary-card{
+        padding:18px;
+        border-radius:20px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+    }
+
+    .summary-card span{
+        display:block;
+        color:var(--muted);
+        font-size:.72rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    .summary-card strong{
+        display:block;
+        margin-top:10px;
+        font-size:1.3rem;
+        line-height:1.15;
+        letter-spacing:-.04em;
+        word-break:break-word;
+    }
+
+    .summary-card .status-badge{
+        margin-top:10px;
+    }
+
+    .event-layout{
+        display:grid;
+        grid-template-columns:minmax(0, 1.04fr) minmax(320px, .96fr);
+        gap:18px;
+    }
+
+    .stack{
+        display:grid;
+        gap:18px;
+    }
+
+    .detail-grid{
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:10px;
+    }
+
+    .detail-item{
+        padding:16px;
+        border-radius:18px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+    }
+
+    .detail-item.span-2{
+        grid-column:1 / -1;
+    }
+
+    .detail-item span{
+        display:block;
+        color:var(--muted);
+        font-size:.72rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    .detail-item strong,
+    .detail-item a,
+    .detail-item div{
+        display:block;
+        margin-top:8px;
+        color:var(--text);
+        font-size:.96rem;
+        font-weight:600;
+        line-height:1.5;
+        word-break:break-word;
+    }
+
+    .status-badge{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        min-height:38px;
+        padding:0 14px;
+        border-radius:16px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--soft);
+        font-size:.7rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+        white-space:nowrap;
+    }
+
+    .status-badge::before{
+        content:"";
+        width:6px;
+        height:6px;
+        border-radius:999px;
+        background:currentColor;
+    }
+
+    .status-badge.gold{
+        color:var(--gold-soft);
+        background:rgba(194,154,99,.08);
+        border-color:rgba(194,154,99,.2);
+    }
+
+    .status-badge.success{
+        color:var(--success);
+    }
+
+    .status-badge.warn{
+        color:var(--warn);
+    }
+
+    .status-badge.danger{
+        color:var(--danger);
+    }
+
+    .link-card,
+    .note-box{
+        padding:16px;
+        border-radius:20px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        transition:border-color .2s ease,background .2s ease,transform .2s ease;
+    }
+
+    .link-card{
+        display:grid;
+        gap:14px;
+    }
+
+    .link-card:hover{
+        transform:translateY(-1px);
+        border-color:rgba(194,154,99,.18);
+        background:rgba(194,154,99,.06);
+    }
+
+    .link-head{
+        display:flex;
+        align-items:flex-start;
+        gap:14px;
+    }
+
+    .link-mark{
+        width:46px;
+        height:46px;
+        flex:0 0 auto;
+        display:grid;
+        place-items:center;
+        border-radius:16px;
+        color:var(--gold-soft);
+        font-size:.92rem;
+        font-weight:700;
+        background:rgba(194,154,99,.08);
+        border:1px solid rgba(194,154,99,.18);
+    }
+
+    .link-title{
+        margin:0;
+        font-size:1rem;
+        line-height:1.4;
+        font-weight:600;
+    }
+
+    .link-copy{
+        margin-top:6px;
+        color:var(--soft);
+        font-size:.84rem;
+        line-height:1.5;
+    }
+
+    .link-meta{
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+    }
+
+    .note-box{
+        color:var(--soft);
+        line-height:1.7;
+    }
+
+    .note-stack{
+        display:grid;
+        gap:12px;
+    }
+
+    .note-block{
+        display:grid;
+        gap:8px;
+    }
+
+    .note-block strong{
+        font-size:.78rem;
+        color:var(--muted);
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    html[data-theme="light"] .event-mark,
+    html[data-theme="light"] .summary-card,
+    html[data-theme="light"] .detail-item,
+    html[data-theme="light"] .link-card,
+    html[data-theme="light"] .note-box,
+    html[data-theme="light"] .meta-pill,
+    html[data-theme="light"] .meta-chip,
+    html[data-theme="light"] .status-badge,
+    html[data-theme="light"] .link-mark{
+        background:rgba(24,30,42,.04);
+        border-color:rgba(30,34,45,.1);
+    }
+
+    html[data-theme="light"] .status-badge.gold{
+        background:rgba(181,138,79,.1);
+        border-color:rgba(181,138,79,.2);
+    }
+
+    @media (max-width:1180px){
+        .event-hero-grid,
+        .event-layout{
+            grid-template-columns:1fr;
+        }
+    }
+
+    @media (max-width:720px){
+        .event-hero,
+        .section-card{
+            padding:18px;
+        }
+
+        .identity-row,
+        .link-head{
+            flex-direction:column;
+        }
+
+        .detail-grid{
+            grid-template-columns:1fr;
+        }
+
+        .detail-item.span-2{
+            grid-column:auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block topbar_actions %}
+    <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
+    <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
+{% endblock %}
+
+{% block content %}
+{% with cliente=evento.cliente processo=evento.processo status=evento.status|default:''|lower prioridade=evento.prioridade|default:''|lower %}
+<div class="event-page">
+    <section class="surface event-hero reveal">
+        <div class="crumbs">
+            <a href="{% url 'listar_eventos' %}">Agenda</a>
+        </div>
+
+        <div class="event-hero-grid">
+            <div class="event-identity">
+                <div class="identity-row">
+                    <div class="event-mark" aria-hidden="true">EV</div>
+                    <div>
+                        <h1 class="event-title">{{ evento.titulo }}</h1>
+                        <p class="event-subtitle">
+                            {{ evento.data_inicio|date:"d/m/Y" }}
+                            {% if evento.data_fim %}
+                                · {{ evento.data_inicio|date:"H:i" }} ate {{ evento.data_fim|date:"H:i" }}
+                            {% else %}
+                                · {{ evento.data_inicio|date:"H:i" }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="hero-meta">
+                    {% if evento.tipo_evento %}
+                        <span class="meta-pill">{{ evento.tipo_evento }}</span>
+                    {% endif %}
+
+                    {% if evento.responsavel %}
+                        <span class="meta-pill">{{ evento.responsavel }}</span>
+                    {% endif %}
+
+                    {% if evento.local %}
+                        <span class="meta-pill">{{ evento.local }}</span>
+                    {% endif %}
+
+                    {% if evento.prioridade %}
+                        {% if 'alta' in prioridade or 'urg' in prioridade %}
+                            <span class="status-badge danger">{{ evento.prioridade }}</span>
+                        {% elif 'med' in prioridade %}
+                            <span class="status-badge warn">{{ evento.prioridade }}</span>
+                        {% else %}
+                            <span class="status-badge gold">{{ evento.prioridade }}</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <aside class="hero-summary">
+                <article class="summary-card">
+                    <span>Status</span>
+                    {% if evento.concluido or 'conclu' in status %}
+                        <span class="status-badge success">{{ evento.status|default:"Concluido" }}</span>
+                    {% elif 'cancel' in status or 'adiad' in status %}
+                        <span class="status-badge danger">{{ evento.status }}</span>
+                    {% elif 'aguard' in status or 'penden' in status %}
+                        <span class="status-badge warn">{{ evento.status }}</span>
+                    {% else %}
+                        <span class="status-badge gold">{{ evento.status|default:"Agendado" }}</span>
+                    {% endif %}
+                </article>
+
+                <article class="summary-card">
+                    <span>Cliente</span>
+                    <strong>{{ cliente.nome|default:"Nao vinculado" }}</strong>
+                </article>
+
+                <article class="summary-card">
+                    <span>Processo</span>
+                    <strong>{{ processo.numero_processo|default:"Nao vinculado" }}</strong>
+                </article>
+            </aside>
+        </div>
+    </section>
+
+    <div class="event-layout">
+        <div class="stack">
+            <section class="surface section-card reveal" style="--delay:.04s">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Informacoes</h2>
+                        <p class="section-note">Essenciais</p>
+                    </div>
+                </div>
+
+                <div class="detail-grid">
+                    <article class="detail-item span-2">
+                        <span>Titulo</span>
+                        <strong>{{ evento.titulo }}</strong>
+                    </article>
+
+                    <article class="detail-item">
+                        <span>Tipo</span>
+                        <strong>{{ evento.tipo_evento|default:"-" }}</strong>
+                    </article>
+
+                    <article class="detail-item">
+                        <span>Responsavel</span>
+                        <strong>{{ evento.responsavel|default:"-" }}</strong>
+                    </article>
+
+                    <article class="detail-item">
+                        <span>Inicio</span>
+                        <strong>{{ evento.data_inicio|date:"d/m/Y H:i" }}</strong>
+                    </article>
+
+                    <article class="detail-item">
+                        <span>Fim</span>
+                        <strong>{{ evento.data_fim|date:"d/m/Y H:i"|default:"-" }}</strong>
+                    </article>
+
+                    <article class="detail-item">
+                        <span>Status</span>
+                        <div>
+                            {% if evento.concluido or 'conclu' in status %}
+                                <span class="status-badge success">{{ evento.status|default:"Concluido" }}</span>
+                            {% elif 'cancel' in status or 'adiad' in status %}
+                                <span class="status-badge danger">{{ evento.status }}</span>
+                            {% elif 'aguard' in status or 'penden' in status %}
+                                <span class="status-badge warn">{{ evento.status }}</span>
+                            {% else %}
+                                <span class="status-badge gold">{{ evento.status|default:"Agendado" }}</span>
+                            {% endif %}
+                        </div>
+                    </article>
+
+                    <article class="detail-item">
+                        <span>Prioridade</span>
+                        <div>
+                            {% if evento.prioridade %}
+                                {% if 'alta' in prioridade or 'urg' in prioridade %}
+                                    <span class="status-badge danger">{{ evento.prioridade }}</span>
+                                {% elif 'med' in prioridade %}
+                                    <span class="status-badge warn">{{ evento.prioridade }}</span>
+                                {% else %}
+                                    <span class="status-badge gold">{{ evento.prioridade }}</span>
+                                {% endif %}
+                            {% else %}
+                                <strong>-</strong>
+                            {% endif %}
+                        </div>
+                    </article>
+
+                    <article class="detail-item span-2">
+                        <span>Local</span>
+                        <strong>{{ evento.local|default:"Nao informado" }}</strong>
+                    </article>
+                </div>
+            </section>
+
+            {% if evento.descricao or evento.observacoes %}
+                <section class="surface section-card reveal" style="--delay:.08s">
+                    <div class="section-head">
+                        <div>
+                            <h2 class="section-title">Observacoes</h2>
+                            <p class="section-note">Contexto</p>
+                        </div>
+                    </div>
+
+                    <div class="note-box">
+                        <div class="note-stack">
+                            {% if evento.descricao %}
+                                <div class="note-block">
+                                    <strong>Descricao</strong>
+                                    <div>{{ evento.descricao|linebreaksbr }}</div>
+                                </div>
+                            {% endif %}
+
+                            {% if evento.observacoes %}
+                                <div class="note-block">
+                                    <strong>Notas internas</strong>
+                                    <div>{{ evento.observacoes|linebreaksbr }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+            {% endif %}
+        </div>
+
+        <div class="stack">
+            <section class="surface section-card reveal" style="--delay:.06s">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Vinculos</h2>
+                        <p class="section-note">Relacionados</p>
+                    </div>
+                </div>
+
+                <div class="stack">
+                    {% if cliente %}
+                        <a class="link-card" href="{% url 'detalhes_cliente' cliente.id %}">
+                            <div class="link-head">
+                                <div class="link-mark" aria-hidden="true">{{ cliente.nome|first|upper }}</div>
+                                <div>
+                                    <h3 class="link-title">{{ cliente.nome }}</h3>
+                                    <p class="link-copy">Cliente vinculado ao compromisso.</p>
+                                </div>
+                            </div>
+
+                            <div class="link-meta">
+                                {% if cliente.email %}
+                                    <span class="meta-chip">{{ cliente.email }}</span>
+                                {% endif %}
+                                {% if cliente.telefone %}
+                                    <span class="meta-chip">{{ cliente.telefone }}</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                    {% endif %}
+
+                    {% if processo %}
+                        <a class="link-card" href="{% url 'detalhes_processo' processo.id %}">
+                            <div class="link-head">
+                                <div class="link-mark" aria-hidden="true">PJ</div>
+                                <div>
+                                    <h3 class="link-title">{{ processo.numero_processo }}</h3>
+                                    <p class="link-copy">{{ processo.area_juridica|default:"Processo vinculado" }}</p>
+                                </div>
+                            </div>
+
+                            <div class="link-meta">
+                                {% if processo.vara %}
+                                    <span class="meta-chip">{{ processo.vara }}</span>
+                                {% endif %}
+                                {% if processo.advogado_responsavel %}
+                                    <span class="meta-chip">{{ processo.advogado_responsavel }}</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="surface section-card reveal" style="--delay:.1s">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Resumo rapido</h2>
+                        <p class="section-note">Leitura imediata</p>
+                    </div>
+                </div>
+
+                <div class="detail-grid">
+                    <article class="detail-item">
+                        <span>Data</span>
+                        <strong>{{ evento.data_inicio|date:"d/m/Y" }}</strong>
+                    </article>
+                    <article class="detail-item">
+                        <span>Horario</span>
+                        <strong>{{ evento.data_inicio|date:"H:i" }}{% if evento.data_fim %} - {{ evento.data_fim|date:"H:i" }}{% endif %}</strong>
+                    </article>
+                    <article class="detail-item">
+                        <span>Situacao</span>
+                        <strong>{% if evento.concluido %}Encerrado{% else %}Em andamento{% endif %}</strong>
+                    </article>
+                    <article class="detail-item">
+                        <span>Origem</span>
+                        <strong>{{ evento.criado_por|default:"Interno" }}</strong>
+                    </article>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endwith %}
+{% endblock %}

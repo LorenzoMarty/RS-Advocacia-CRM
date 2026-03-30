@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block title %}RS Advocacia | Novo compromisso{% endblock %}
+{% block topbar_label %}Novo compromisso{% endblock %}
+
+{% block extra_head %}
+<style>
+    .event-create-page{
+        display:grid;
+        gap:18px;
+    }
+
+    .event-intro,
+    .event-form-panel{
+        padding:22px;
+    }
+
+    .intro-grid{
+        display:grid;
+        gap:14px;
+    }
+
+    .intro-link{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        width:fit-content;
+        color:var(--muted);
+        font-size:.76rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    .intro-title{
+        margin:0;
+        font-family:var(--serif);
+        font-size:clamp(2.4rem, 4vw, 3.3rem);
+        line-height:.96;
+        font-weight:400;
+        letter-spacing:-.06em;
+    }
+
+    .intro-note{
+        margin:10px 0 0;
+        max-width:56ch;
+        color:var(--soft);
+        font-size:.96rem;
+        line-height:1.6;
+    }
+
+    .status-card,
+    .error-panel{
+        margin-bottom:18px;
+        padding:16px 18px;
+        border-radius:18px;
+    }
+
+    .status-card{
+        border:1px solid rgba(115,211,177,.22);
+        background:rgba(115,211,177,.08);
+    }
+
+    .error-panel{
+        border:1px solid rgba(239,122,122,.22);
+        background:rgba(239,122,122,.08);
+    }
+
+    .status-card strong,
+    .error-panel strong{
+        display:block;
+        font-size:.96rem;
+    }
+
+    .status-card p,
+    .error-panel p{
+        margin:6px 0 0;
+        color:var(--soft);
+        font-size:.88rem;
+        line-height:1.55;
+    }
+
+    .error-panel ul{
+        margin:8px 0 0;
+        padding-left:18px;
+        color:var(--soft);
+    }
+
+    .event-form{
+        display:grid;
+        gap:24px;
+    }
+
+    .form-section{
+        display:grid;
+        gap:14px;
+    }
+
+    .section-headline{
+        display:grid;
+        gap:4px;
+    }
+
+    .section-kicker{
+        margin:0;
+        color:var(--muted);
+        font-size:.76rem;
+        font-weight:700;
+        letter-spacing:.16em;
+        text-transform:uppercase;
+    }
+
+    .section-copy{
+        margin:0;
+        color:var(--muted);
+        font-size:.86rem;
+        line-height:1.5;
+    }
+
+    .form-grid{
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:14px;
+    }
+
+    .field{
+        display:grid;
+        gap:8px;
+    }
+
+    .field.span-2{
+        grid-column:1 / -1;
+    }
+
+    .field label{
+        color:var(--muted);
+        font-size:.74rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea{
+        width:100%;
+        min-height:50px;
+        padding:0 14px;
+        border-radius:16px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--text);
+        outline:0;
+        transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;
+    }
+
+    .field select{
+        appearance:none;
+        -webkit-appearance:none;
+        -moz-appearance:none;
+        cursor:pointer;
+        padding-right:40px;
+        border-color:rgba(255,255,255,.1);
+        background:
+            linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
+            linear-gradient(45deg, transparent 50%, var(--gold-soft) 50%),
+            linear-gradient(135deg, var(--gold-soft) 50%, transparent 50%),
+            var(--ghost);
+        background-position:0 0,calc(100% - 20px) calc(50% - 3px),calc(100% - 14px) calc(50% - 3px),0 0;
+        background-size:100% 100%,6px 6px,6px 6px,auto;
+        background-repeat:no-repeat;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+    }
+
+    .field select:hover{
+        border-color:rgba(194,154,99,.18);
+        background-color:var(--ghost-strong);
+    }
+
+    .field textarea{
+        min-height:148px;
+        padding:14px;
+        resize:vertical;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus{
+        border-color:rgba(194,154,99,.24);
+        background:var(--ghost-strong);
+        box-shadow:0 0 0 4px rgba(194,154,99,.08);
+    }
+
+    .field.has-error input,
+    .field.has-error select,
+    .field.has-error textarea{
+        border-color:rgba(239,122,122,.4);
+        box-shadow:0 0 0 4px rgba(239,122,122,.08);
+    }
+
+    .field select option,
+    .field select optgroup{
+        background:#161a22;
+        color:#f6f1e8;
+    }
+
+    html[data-theme="light"] .field select{
+        border-color:rgba(30,34,45,.12);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.72);
+    }
+
+    html[data-theme="light"] .field select option,
+    html[data-theme="light"] .field select optgroup{
+        background:#fbf6ef;
+        color:#16181f;
+    }
+
+    .field-note{
+        color:var(--muted);
+        font-size:.8rem;
+        line-height:1.45;
+    }
+
+    .field-error{
+        color:var(--danger);
+        font-size:.82rem;
+        line-height:1.45;
+    }
+
+    .form-actions{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        padding-top:4px;
+    }
+
+    @media (max-width:720px){
+        .event-intro,
+        .event-form-panel{
+            padding:18px;
+        }
+
+        .form-grid{
+            grid-template-columns:1fr;
+        }
+
+        .field.span-2{
+            grid-column:auto;
+        }
+
+        .form-actions .btn,
+        .form-actions .btn-secondary{
+            width:100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block topbar_actions %}
+    <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
+{% endblock %}
+
+{% block content %}
+<div class="event-create-page">
+    <section class="surface event-intro reveal">
+        <div class="intro-grid">
+            <a class="intro-link" href="{% url 'listar_eventos' %}">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+                Voltar para agenda
+            </a>
+
+            <div>
+                <h1 class="intro-title">Novo compromisso</h1>
+                <p class="intro-note">Cadastro direto, com foco em agendamento e vinculos essenciais.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="surface event-form-panel reveal" style="--delay:.06s">
+        {% if success %}
+            <div class="status-card">
+                <strong>Compromisso salvo.</strong>
+                <p>O registro foi adicionado e ja pode ser consultado na agenda.</p>
+            </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+            <div class="error-panel">
+                <strong>Revise os dados.</strong>
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <form class="event-form" method="post">
+            {% csrf_token %}
+
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            <section class="form-section">
+                <div class="section-headline">
+                    <h2 class="section-kicker">Identificacao</h2>
+                    <p class="section-copy">Defina o compromisso e o enquadramento basico.</p>
+                </div>
+
+                <div class="form-grid">
+                    <div class="field span-2 {% if form.titulo.errors %}has-error{% endif %}">
+                        <label for="{{ form.titulo.id_for_label }}">Titulo</label>
+                        {{ form.titulo }}
+                        {% for error in form.titulo.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field {% if form.tipo_evento.errors %}has-error{% endif %}">
+                        <label for="{{ form.tipo_evento.id_for_label }}">Tipo de evento</label>
+                        {{ form.tipo_evento }}
+                        {% for error in form.tipo_evento.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    {% if form.prioridade %}
+                        <div class="field {% if form.prioridade.errors %}has-error{% endif %}">
+                            <label for="{{ form.prioridade.id_for_label }}">Prioridade</label>
+                            {{ form.prioridade }}
+                            {% for error in form.prioridade.errors %}
+                                <div class="field-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="section-headline">
+                    <h2 class="section-kicker">Agendamento</h2>
+                    <p class="section-copy">Inicio e encerramento em um fluxo simples e objetivo.</p>
+                </div>
+
+                <div class="form-grid">
+                    <div class="field {% if form.data_inicio.errors %}has-error{% endif %}">
+                        <label for="{{ form.data_inicio.id_for_label }}">Inicio</label>
+                        {{ form.data_inicio }}
+                        <div class="field-note">Use a data e a hora do compromisso.</div>
+                        {% for error in form.data_inicio.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field {% if form.data_fim.errors %}has-error{% endif %}">
+                        <label for="{{ form.data_fim.id_for_label }}">Fim</label>
+                        {{ form.data_fim }}
+                        <div class="field-note">Mantenha a janela clara para evitar conflito de agenda.</div>
+                        {% for error in form.data_fim.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="section-headline">
+                    <h2 class="section-kicker">Vinculos</h2>
+                    <p class="section-copy">Associe cliente, processo e responsavel direto.</p>
+                </div>
+
+                <div class="form-grid">
+                    <div class="field {% if form.cliente.errors %}has-error{% endif %}">
+                        <label for="{{ form.cliente.id_for_label }}">Cliente</label>
+                        {{ form.cliente }}
+                        {% for error in form.cliente.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field {% if form.processo.errors %}has-error{% endif %}">
+                        <label for="{{ form.processo.id_for_label }}">Processo</label>
+                        {{ form.processo }}
+                        {% for error in form.processo.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field {% if form.responsavel.errors %}has-error{% endif %}">
+                        <label for="{{ form.responsavel.id_for_label }}">Responsavel</label>
+                        {{ form.responsavel }}
+                        {% for error in form.responsavel.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field {% if form.status.errors %}has-error{% endif %}">
+                        <label for="{{ form.status.id_for_label }}">Status</label>
+                        {{ form.status }}
+                        {% for error in form.status.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            {% if form.local or form.observacoes or form.descricao %}
+                <section class="form-section">
+                    <div class="section-headline">
+                        <h2 class="section-kicker">Contexto</h2>
+                        <p class="section-copy">Informacoes de apoio para a execucao do compromisso.</p>
+                    </div>
+
+                    <div class="form-grid">
+                        {% if form.local %}
+                            <div class="field span-2 {% if form.local.errors %}has-error{% endif %}">
+                                <label for="{{ form.local.id_for_label }}">Local</label>
+                                {{ form.local }}
+                                {% for error in form.local.errors %}
+                                    <div class="field-error">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if form.observacoes %}
+                            <div class="field span-2 {% if form.observacoes.errors %}has-error{% endif %}">
+                                <label for="{{ form.observacoes.id_for_label }}">Observacoes</label>
+                                {{ form.observacoes }}
+                                {% for error in form.observacoes.errors %}
+                                    <div class="field-error">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% elif form.descricao %}
+                            <div class="field span-2 {% if form.descricao.errors %}has-error{% endif %}">
+                                <label for="{{ form.descricao.id_for_label }}">Observacoes</label>
+                                {{ form.descricao }}
+                                {% for error in form.descricao.errors %}
+                                    <div class="field-error">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </section>
+            {% endif %}
+
+            <div class="form-actions">
+                <button class="btn" type="submit">Salvar</button>
+                <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Cancelar</a>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

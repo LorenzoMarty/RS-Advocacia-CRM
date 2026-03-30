@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}RS Advocacia | Usuarios{% endblock %}
+{% block topbar_label %}Usuarios{% endblock %}
+
+{% block extra_head %}
+<style>
+    .users-page{
+        display:grid;
+        gap:18px;
+    }
+
+    .users-intro,
+    .users-panel{
+        padding:22px;
+    }
+
+    .intro-title{
+        margin:0;
+        font-family:var(--serif);
+        font-size:clamp(2.35rem, 4vw, 3.2rem);
+        line-height:.96;
+        font-weight:400;
+        letter-spacing:-.06em;
+    }
+
+    .users-head{
+        display:grid;
+        grid-template-columns:minmax(0, 1.1fr) minmax(220px, .95fr) 132px 88px;
+        gap:14px;
+        padding:0 14px 12px 74px;
+        color:var(--muted);
+        font-size:.7rem;
+        font-weight:700;
+        letter-spacing:.16em;
+        text-transform:uppercase;
+    }
+
+    .users-list{
+        display:grid;
+        gap:10px;
+    }
+
+    .user-row{
+        display:grid;
+        grid-template-columns:auto minmax(0, 1.1fr) minmax(220px, .95fr) 132px 88px;
+        gap:14px;
+        align-items:center;
+        padding:16px;
+        border-radius:20px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        transition:border-color .2s ease,background .2s ease,transform .2s ease;
+    }
+
+    .user-row:hover{
+        transform:translateY(-1px);
+        border-color:rgba(194,154,99,.18);
+        background:rgba(194,154,99,.06);
+    }
+
+    .user-avatar{
+        width:44px;
+        height:44px;
+        overflow:hidden;
+        border-radius:16px;
+        border:1px solid rgba(194,154,99,.18);
+        background:rgba(194,154,99,.08);
+        color:var(--gold-soft);
+        display:grid;
+        place-items:center;
+        font-weight:700;
+        font-size:.92rem;
+        letter-spacing:.02em;
+    }
+
+    .user-avatar img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+    }
+
+    .user-main,
+    .user-contact,
+    .user-role,
+    .user-actions{
+        min-width:0;
+    }
+
+    .user-name{
+        margin:0;
+        font-size:1rem;
+        line-height:1.4;
+        font-weight:600;
+    }
+
+    .user-meta{
+        display:block;
+        margin-top:6px;
+        color:var(--muted);
+        font-size:.82rem;
+        line-height:1.45;
+    }
+
+    .contact-stack{
+        display:grid;
+        gap:8px;
+    }
+
+    .contact-chip,
+    .role-badge{
+        display:inline-flex;
+        align-items:center;
+        width:fit-content;
+        max-width:100%;
+        min-height:32px;
+        padding:0 11px;
+        border-radius:999px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--soft);
+        font-size:.8rem;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+
+    .role-badge{
+        color:var(--gold-soft);
+        background:rgba(194,154,99,.08);
+        border-color:rgba(194,154,99,.2);
+    }
+
+    .user-actions{
+        display:flex;
+        justify-content:flex-end;
+    }
+
+    .action-link{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-height:38px;
+        padding:0 14px;
+        border-radius:12px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--text);
+        font-size:.82rem;
+        font-weight:600;
+        transition:border-color .2s ease,background .2s ease,transform .2s ease;
+    }
+
+    .action-link:hover{
+        transform:translateY(-1px);
+        border-color:rgba(194,154,99,.2);
+        background:rgba(194,154,99,.08);
+    }
+
+    .empty-state{
+        padding:42px 22px;
+        text-align:center;
+    }
+
+    .empty-state .empty{
+        max-width:420px;
+        margin:0 auto;
+        padding:28px;
+    }
+
+    .empty-actions{
+        margin-top:16px;
+        display:flex;
+        justify-content:center;
+    }
+
+    html[data-theme="light"] .user-row,
+    html[data-theme="light"] .contact-chip,
+    html[data-theme="light"] .action-link{
+        background:rgba(24,30,42,.04);
+        border-color:rgba(30,34,45,.1);
+    }
+
+    html[data-theme="light"] .role-badge,
+    html[data-theme="light"] .user-avatar{
+        background:rgba(181,138,79,.1);
+        border-color:rgba(181,138,79,.2);
+    }
+
+    @media (max-width:1160px){
+        .users-head{
+            display:none;
+        }
+
+        .user-row{
+            grid-template-columns:auto minmax(0, 1fr) auto;
+            grid-template-areas:
+                "avatar main actions"
+                "avatar contact contact"
+                "avatar role role";
+            align-items:start;
+        }
+
+        .user-avatar{grid-area:avatar}
+        .user-main{grid-area:main}
+        .user-contact{grid-area:contact}
+        .user-role{grid-area:role}
+        .user-actions{grid-area:actions}
+    }
+
+    @media (max-width:640px){
+        .users-intro,
+        .users-panel{
+            padding:18px;
+        }
+
+        .user-row{
+            grid-template-columns:1fr;
+            grid-template-areas:
+                "main"
+                "contact"
+                "role"
+                "actions";
+            gap:12px;
+        }
+
+        .user-avatar{
+            display:none;
+        }
+
+        .user-actions{
+            justify-content:flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block topbar_actions %}
+    <a class="btn" href="{% url 'criar_usuario' %}">Novo</a>
+{% endblock %}
+
+{% block content %}
+<div class="users-page">
+    <section class="surface users-intro reveal">
+        <div class="section-head">
+            <div>
+                <h1 class="intro-title">Usuarios</h1>
+                <p class="section-note">Equipe</p>
+            </div>
+            <span class="badge gold">{{ usuarios|length }} registros</span>
+        </div>
+    </section>
+
+    <section class="surface users-panel reveal" style="--delay:.06s">
+        {% if usuarios %}
+            <div class="users-head" aria-hidden="true">
+                <span>Usuario</span>
+                <span>Contato</span>
+                <span>Perfil</span>
+                <span>Acoes</span>
+            </div>
+
+            <div class="users-list">
+                {% for usuario in usuarios %}
+                    <article class="user-row">
+                        <div class="user-avatar" aria-hidden="true">
+                            {% if usuario.foto %}
+                                <img src="{{ usuario.foto.url }}" alt="{{ usuario.nome }}">
+                            {% else %}
+                                {{ usuario.nome|first|upper }}
+                            {% endif %}
+                        </div>
+
+                        <div class="user-main">
+                            <h2 class="user-name">{{ usuario.nome }}</h2>
+                            <span class="user-meta">{{ usuario.email }}</span>
+                        </div>
+
+                        <div class="user-contact">
+                            <div class="contact-stack">
+                                <a class="contact-chip" href="mailto:{{ usuario.email }}">{{ usuario.email }}</a>
+                                {% if usuario.OAB %}
+                                    <span class="contact-chip">OAB {{ usuario.OAB }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="user-role">
+                            <span class="role-badge">{{ usuario.get_cargo_display }}</span>
+                        </div>
+
+                        <div class="user-actions">
+                            <a class="action-link" href="{% url 'detalhes_usuario' usuario.id %}">Ver</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty">
+                    <strong>Sem usuarios.</strong>
+                    <p>Crie um novo cadastro.</p>
+                    <div class="empty-actions">
+                        <a class="btn" href="{% url 'criar_usuario' %}">Novo</a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
