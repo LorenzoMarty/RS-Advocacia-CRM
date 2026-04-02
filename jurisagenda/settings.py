@@ -17,6 +17,14 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _clean_host(value: str) -> str:
+    return value.strip().removeprefix('https://').removeprefix('http://').rstrip('/')
+
+
+def _split_env_hosts(value: str) -> list[str]:
+    return [_clean_host(item) for item in value.split(',') if _clean_host(item)]
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -26,7 +34,22 @@ SECRET_KEY = 'django-insecure-+g)herdbhyeh+jva+k)qugqi$v1qa^%(4p756636ltfzx_i6ll
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = sorted(
+    {
+        '127.0.0.1',
+        'localhost',
+        'agenda-juri.vercel.app',
+        *(
+            _clean_host(host)
+            for host in (
+                os.getenv('VERCEL_URL', ''),
+                os.getenv('VERCEL_PROJECT_PRODUCTION_URL', ''),
+            )
+            if _clean_host(host)
+        ),
+        *_split_env_hosts(os.getenv('ALLOWED_HOSTS', '')),
+    }
+)
 
 
 # Application definition
