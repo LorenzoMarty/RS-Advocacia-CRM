@@ -1,0 +1,36 @@
+.btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    min-height:42px;
+    padding:0 15px;
+    border-radius:13px;
+    border:1px solid transparent;
+    background:linear-gradient(135deg, var(--gold-soft), var(--gold));
+    color:#0f1116;
+    font-size:.88rem;
+    font-weight:700;
+    white-space:nowrap;
+    transition:transform .2s ease,filter .2s ease,box-shadow .2s ease,border-color .2s ease,background .2s ease;
+    box-shadow:0 12px 24px rgba(194,154,99,.16);
+}
+
+.btn:hover{transform:translateY(-1px);filter:brightness(1.02)}
+.btn-secondary{background:var(--ghost);color:var(--text);border-color:var(--line);box-shadow:none}
+.btn-secondary:hover{border-color:rgba(194,154,99,.2);background:var(--hover)}
+.btn-danger{
+    background:rgba(239,122,122,.14);
+    color:#ffe3e3;
+    border-color:rgba(239,122,122,.28);
+    box-shadow:none;
+}
+.btn-danger:hover{
+    background:rgba(239,122,122,.18);
+    filter:none;
+}
+html[data-theme="light"] .btn-danger{
+    color:#8f2929;
+    background:rgba(239,122,122,.1);
+    border-color:rgba(143,41,41,.18);
+}

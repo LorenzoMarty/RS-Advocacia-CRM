@@ -1,0 +1,261 @@
+.process-page{
+        display:grid;
+        gap:18px;
+    }
+
+    .process-intro,
+    .process-panel{
+        padding:22px;
+    }
+
+    .intro-title{
+        margin:0;
+        font-family:var(--serif);
+        font-size:clamp(2.35rem, 4vw, 3.2rem);
+        line-height:.96;
+        font-weight:400;
+        letter-spacing:-.06em;
+    }
+
+    .process-head{
+        display:grid;
+        grid-template-columns:minmax(0, 1.45fr) minmax(220px, .9fr) minmax(170px, .8fr) 128px 88px;
+        gap:14px;
+        padding:0 14px 12px 14px;
+        color:var(--muted);
+        font-size:.7rem;
+        font-weight:700;
+        letter-spacing:.16em;
+        text-transform:uppercase;
+    }
+
+    .process-list{
+        display:grid;
+        gap:10px;
+    }
+
+    .process-row{
+        display:grid;
+        grid-template-columns:minmax(0, 1.45fr) minmax(220px, .9fr) minmax(170px, .8fr) 128px 88px;
+        gap:14px;
+        align-items:center;
+        padding:16px 14px;
+        border-radius:20px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        transition:border-color .2s ease,background .2s ease,transform .2s ease;
+    }
+
+    .process-row:hover{
+        transform:translateY(-1px);
+        border-color:rgba(194,154,99,.18);
+        background:rgba(194,154,99,.06);
+    }
+
+    .process-main,
+    .process-meta,
+    .process-owner,
+    .process-status,
+    .process-actions{
+        min-width:0;
+    }
+
+    .process-number{
+        margin:0;
+        font-size:1rem;
+        line-height:1.4;
+        font-weight:600;
+    }
+
+    .process-client{
+        display:block;
+        margin-top:6px;
+        color:var(--soft);
+        font-size:.84rem;
+        line-height:1.45;
+    }
+
+    .meta-stack,
+    .owner-stack{
+        display:grid;
+        gap:8px;
+    }
+
+    .meta-chip,
+    .owner-chip{
+        display:inline-flex;
+        align-items:center;
+        width:fit-content;
+        max-width:100%;
+        min-height:32px;
+        padding:0 11px;
+        border-radius:999px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--soft);
+        font-size:.8rem;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+
+    .process-status{
+        display:flex;
+        justify-content:flex-start;
+    }
+
+    .status-badge{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        min-height:34px;
+        padding:0 12px;
+        border-radius:999px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--soft);
+        font-size:.7rem;
+        font-weight:700;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+    }
+
+    .status-badge::before{
+        content:"";
+        width:6px;
+        height:6px;
+        border-radius:999px;
+        background:currentColor;
+    }
+
+    .status-badge.gold{
+        color:var(--gold-soft);
+        background:rgba(194,154,99,.08);
+        border-color:rgba(194,154,99,.2);
+    }
+
+    .status-badge.success{
+        color:var(--success);
+    }
+
+    .status-badge.warn{
+        color:var(--warn);
+    }
+
+    .status-badge.danger{
+        color:var(--danger);
+    }
+
+    .process-actions{
+        display:flex;
+        justify-content:flex-end;
+    }
+
+    .action-link{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-height:38px;
+        padding:0 14px;
+        border-radius:12px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--text);
+        font-size:.82rem;
+        font-weight:600;
+        transition:border-color .2s ease,background .2s ease,transform .2s ease;
+    }
+
+    .action-link:hover{
+        transform:translateY(-1px);
+        border-color:rgba(194,154,99,.2);
+        background:rgba(194,154,99,.08);
+    }
+
+    .empty-state{
+        padding:42px 22px;
+        text-align:center;
+    }
+
+    .empty-state .empty{
+        max-width:420px;
+        margin:0 auto;
+        padding:28px;
+    }
+
+    .empty-actions{
+        display:flex;
+        justify-content:center;
+        margin-top:16px;
+    }
+
+    html[data-theme="light"] .process-row,
+    html[data-theme="light"] .meta-chip,
+    html[data-theme="light"] .owner-chip,
+    html[data-theme="light"] .status-badge,
+    html[data-theme="light"] .action-link{
+        background:rgba(24,30,42,.04);
+        border-color:rgba(30,34,45,.1);
+    }
+
+    html[data-theme="light"] .status-badge.gold{
+        background:rgba(181,138,79,.1);
+        border-color:rgba(181,138,79,.2);
+    }
+
+    @media (max-width:1180px){
+        .process-head{
+            display:none;
+        }
+
+        .process-row{
+            grid-template-columns:minmax(0, 1fr) auto;
+            grid-template-areas:
+                "main actions"
+                "meta meta"
+                "owner status";
+            align-items:start;
+        }
+
+        .process-main{grid-area:main}
+        .process-meta{grid-area:meta}
+        .process-owner{grid-area:owner}
+        .process-status{grid-area:status;justify-content:flex-end}
+        .process-actions{grid-area:actions}
+    }
+
+@media (max-width:640px){
+    .process-intro,
+    .process-panel{
+        padding:16px;
+    }
+
+    .process-row{
+        grid-template-columns:minmax(0, 1fr) auto;
+        grid-template-areas:
+            "main actions"
+            "meta meta"
+            "owner status";
+        gap:10px;
+        padding:13px 12px;
+        border-radius:18px;
+    }
+
+    .process-status{justify-content:flex-end}
+    .process-actions{justify-content:flex-end}
+
+    .meta-chip,
+    .owner-chip{
+        max-width:100%;
+        min-height:30px;
+        padding:0 10px;
+        font-size:.76rem;
+    }
+
+    .process-number{font-size:.95rem}
+    .process-client{margin-top:4px;font-size:.78rem}
+    .status-badge{min-height:30px;padding:0 10px;font-size:.64rem}
+    .action-link{min-height:36px;padding:0 12px;font-size:.78rem}
+    .empty-state{padding:30px 16px}
+    .empty-state .empty{padding:22px}
+}
