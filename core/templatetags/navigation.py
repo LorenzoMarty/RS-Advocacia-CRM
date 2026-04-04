@@ -34,8 +34,8 @@ PRIMARY_NAVIGATION = (
     },
     {
         "key": "usuarios",
-        "label": "Usuarios",
-        "mobile_label": "Usuarios",
+        "label": "Usuários",
+        "mobile_label": "Usuários",
         "url_name": "listar_usuarios",
         "icon": "usuarios",
     },

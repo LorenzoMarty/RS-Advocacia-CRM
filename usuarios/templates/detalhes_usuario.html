@@ -2,14 +2,14 @@
 {% load static %}
 
 {% block title %}RS Advocacia | {{ usuario.nome }}{% endblock %}
-{% block topbar_label %}Usuario{% endblock %}
+{% block topbar_label %}Usuário{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/pages/usuarios-detail.css' %}">
 {% endblock %}
 
 {% block topbar_actions %}
-    <a class="btn btn-secondary" href="{% url 'listar_usuarios' %}">Usuarios</a>
+    <a class="btn btn-secondary" href="{% url 'listar_usuarios' %}">Usuários</a>
     <a class="btn btn-secondary" href="{% url 'editar_usuario' usuario.id %}">Editar</a>
     <a class="btn btn-danger" href="{% url 'excluir_usuario' usuario.id %}">Excluir</a>
     <a class="btn" href="{% url 'criar_usuario' %}">Novo</a>
@@ -17,20 +17,16 @@
 
 {% block content %}
 <div class="user-page">
-    <section class="surface user-hero reveal">
+    <section class="surface user-hero">
         <div class="crumbs">
-            <a href="{% url 'listar_usuarios' %}">Usuarios</a>
+            <a href="{% url 'listar_usuarios' %}">Usuários</a>
         </div>
 
         <div class="user-hero-grid">
             <div class="user-identity">
                 <div class="identity-row">
                     <div class="user-mark" aria-hidden="true">
-                        {% if usuario.foto %}
-                            <img src="{{ usuario.foto.url }}" alt="{{ usuario.nome }}">
-                        {% else %}
-                            {{ usuario.nome|first|upper }}
-                        {% endif %}
+                        {{ usuario.nome|first|upper }}
                     </div>
                     <div>
                         <h1 class="user-name">{{ usuario.nome }}</h1>
@@ -40,9 +36,6 @@
 
                 <div class="identity-meta">
                     <span class="meta-pill role-pill">{{ usuario.get_cargo_display }}</span>
-                    {% if usuario.OAB %}
-                        <span class="meta-pill">OAB {{ usuario.OAB }}</span>
-                    {% endif %}
                 </div>
             </div>
 
@@ -52,8 +45,8 @@
                     <strong>{{ usuario.get_cargo_display }}</strong>
                 </article>
                 <article class="summary-card">
-                    <span>OAB</span>
-                    <strong>{{ usuario.OAB|default:"-" }}</strong>
+                    <span>Processos</span>
+                    <strong>{{ processos|default:''|length }}</strong>
                 </article>
                 <article class="summary-card">
                     <span>Agenda</span>
@@ -65,7 +58,7 @@
 
     <div class="user-layout">
         <div class="stack">
-            <section class="surface section-card reveal" style="--delay:.04s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
                         <h2 class="section-title">Dados</h2>
@@ -86,15 +79,11 @@
                         <span>Cargo</span>
                         <strong>{{ usuario.get_cargo_display }}</strong>
                     </article>
-                    <article class="detail-item">
-                        <span>OAB</span>
-                        <strong>{{ usuario.OAB|default:"-" }}</strong>
-                    </article>
                 </div>
             </section>
 
             {% if processos %}
-                <section class="surface section-card reveal" style="--delay:.08s">
+                <section class="surface section-card">
                     <div class="section-head">
                         <div>
                             <h2 class="section-title">Processos</h2>
@@ -124,7 +113,7 @@
 
         <div class="stack">
             {% if eventos %}
-                <section class="surface section-card reveal" style="--delay:.06s">
+                <section class="surface section-card">
                     <div class="section-head">
                         <div>
                             <h2 class="section-title">Compromissos</h2>
@@ -151,7 +140,7 @@
                 </section>
             {% endif %}
 
-            <section class="surface section-card reveal" style="--delay:.1s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
                         <h2 class="section-title">Perfil</h2>
@@ -161,9 +150,6 @@
 
                 <div class="note-box">
                     {{ usuario.get_cargo_display }}
-                    {% if usuario.OAB %}
-                        <br>OAB {{ usuario.OAB }}
-                    {% endif %}
                 </div>
             </section>
         </div>

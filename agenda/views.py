@@ -20,7 +20,17 @@ def criar_evento(request):
             messages.success(request, "Evento criado com sucesso!")
             return render(request, "criar_evento.html", {"form": EventoForm(), "success": True})
     else:
-        form = EventoForm()
+        initial = {}
+        cliente_id = request.GET.get("cliente")
+        processo_id = request.GET.get("processo")
+
+        if cliente_id and cliente_id.isdigit():
+            initial["cliente"] = int(cliente_id)
+
+        if processo_id and processo_id.isdigit():
+            initial["processo"] = int(processo_id)
+
+        form = EventoForm(initial=initial)
 
     return render(request, "criar_evento.html", {"form": form})
 

@@ -8,6 +8,10 @@
 <link rel="stylesheet" href="{% static 'css/pages/agenda-form.css' %}">
 {% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'js/pages/agenda-form.js' %}" defer></script>
+{% endblock %}
+
 {% block topbar_actions %}
     {% if editar %}
         <a class="btn btn-secondary" href="{% url 'detalhes_evento' form.instance.id %}">Detalhes</a>
@@ -18,7 +22,7 @@
 
 {% block content %}
 <div class="event-create-page">
-    <section class="surface event-intro reveal">
+    <section class="surface event-intro">
         <div class="intro-grid">
             <a class="intro-link" href="{% if editar %}{% url 'detalhes_evento' form.instance.id %}{% else %}{% url 'listar_eventos' %}{% endif %}">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
@@ -29,16 +33,16 @@
                 <h1 class="intro-title">{% if editar %}Editar compromisso{% else %}Novo compromisso{% endif %}</h1>
                 <p class="intro-note">
                     {% if editar %}
-                        Ajuste o agendamento e mantenha os vinculos essenciais atualizados.
+                        Ajuste o agendamento e mantenha os vínculos essenciais atualizados.
                     {% else %}
-                        Cadastro direto, com foco em agendamento e vinculos essenciais.
+                        Cadastro direto, com foco em agendamento e vínculos essenciais.
                     {% endif %}
                 </p>
             </div>
         </div>
     </section>
 
-    <section class="surface event-form-panel reveal" style="--delay:.06s">
+    <section class="surface event-form-panel">
         {% include "partials/form_feedback.html" with success=success form=form success_title="Compromisso salvo." success_copy="O registro foi adicionado e ja pode ser consultado na agenda." only %}
 
         <form class="event-form" method="post">
@@ -50,13 +54,13 @@
 
             <section class="form-section">
                 <div class="section-headline">
-                    <h2 class="section-kicker">Identificacao</h2>
-                    <p class="section-copy">Defina o compromisso e o enquadramento basico.</p>
+                    <h2 class="section-kicker">Identificação</h2>
+                    <p class="section-copy">Defina o compromisso e o enquadramento básico.</p>
                 </div>
 
                 <div class="form-grid">
                     <div class="field span-2 {% if form.titulo.errors %}has-error{% endif %}">
-                        <label for="{{ form.titulo.id_for_label }}">Titulo</label>
+                        <label for="{{ form.titulo.id_for_label }}">Título</label>
                         {{ form.titulo }}
                         {% for error in form.titulo.errors %}
                             <div class="field-error">{{ error }}</div>
@@ -84,12 +88,12 @@
             <section class="form-section">
                 <div class="section-headline">
                     <h2 class="section-kicker">Agendamento</h2>
-                    <p class="section-copy">Inicio e encerramento em um fluxo simples e objetivo.</p>
+                    <p class="section-copy">Início e encerramento em um fluxo simples e objetivo.</p>
                 </div>
 
                 <div class="form-grid">
                     <div class="field {% if form.data_inicio.errors %}has-error{% endif %}">
-                        <label for="{{ form.data_inicio.id_for_label }}">Inicio</label>
+                        <label for="{{ form.data_inicio.id_for_label }}">Início</label>
                         {{ form.data_inicio }}
                         <div class="field-note">Use a data e a hora do compromisso.</div>
                         {% for error in form.data_inicio.errors %}
@@ -109,7 +113,7 @@
                     <div class="field {% if form.lembrete_em.errors %}has-error{% endif %}">
                         <label for="{{ form.lembrete_em.id_for_label }}">Lembrete</label>
                         {{ form.lembrete_em }}
-                        <div class="field-note">Opcional. Defina um aviso anterior ao inicio.</div>
+                        <div class="field-note">Opcional. Defina um aviso anterior ao início.</div>
                         {% for error in form.lembrete_em.errors %}
                             <div class="field-error">{{ error }}</div>
                         {% endfor %}
@@ -119,8 +123,8 @@
 
             <section class="form-section">
                 <div class="section-headline">
-                    <h2 class="section-kicker">Vinculos</h2>
-                    <p class="section-copy">Associe cliente, processo e responsavel direto.</p>
+                    <h2 class="section-kicker">Vínculos</h2>
+                    <p class="section-copy">Associe cliente, processo e responsável direto.</p>
                 </div>
 
                 <div class="form-grid">
@@ -141,7 +145,7 @@
                     </div>
 
                     <div class="field {% if form.responsavel.errors %}has-error{% endif %}">
-                        <label for="{{ form.responsavel.id_for_label }}">Responsavel</label>
+                        <label for="{{ form.responsavel.id_for_label }}">Responsável</label>
                         {{ form.responsavel }}
                         {% for error in form.responsavel.errors %}
                             <div class="field-error">{{ error }}</div>
@@ -169,7 +173,7 @@
             <section class="form-section">
                 <div class="section-headline">
                     <h2 class="section-kicker">Contexto</h2>
-                    <p class="section-copy">Informacoes de apoio para a execucao do compromisso.</p>
+                    <p class="section-copy">Informações de apoio para a execução do compromisso.</p>
                 </div>
 
                 <div class="form-grid">
@@ -182,7 +186,7 @@
                     </div>
 
                     <div class="field span-2 {% if form.descricao.errors %}has-error{% endif %}">
-                        <label for="{{ form.descricao.id_for_label }}">Descricao</label>
+                        <label for="{{ form.descricao.id_for_label }}">Descrição</label>
                         {{ form.descricao }}
                         {% for error in form.descricao.errors %}
                             <div class="field-error">{{ error }}</div>
@@ -190,7 +194,7 @@
                     </div>
 
                     <div class="field span-2 {% if form.observacoes.errors %}has-error{% endif %}">
-                        <label for="{{ form.observacoes.id_for_label }}">Observacoes</label>
+                        <label for="{{ form.observacoes.id_for_label }}">Observações</label>
                         {{ form.observacoes }}
                         {% for error in form.observacoes.errors %}
                             <div class="field-error">{{ error }}</div>
@@ -200,7 +204,7 @@
                     <div class="field span-2 {% if form.concluido.errors %}has-error{% endif %}">
                         <div class="check-field">
                             {{ form.concluido }}
-                            <label for="{{ form.concluido.id_for_label }}">Marcar compromisso como concluido</label>
+                            <label for="{{ form.concluido.id_for_label }}">Marcar compromisso como concluído</label>
                         </div>
                         {% for error in form.concluido.errors %}
                             <div class="field-error">{{ error }}</div>

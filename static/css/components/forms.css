@@ -2,6 +2,21 @@
     width:min(100%, 420px);
 }
 
+.list-intro-toolbar{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto;
+    gap:14px;
+    align-items:end;
+}
+
+.list-intro-toolbar .page-search-inline{
+    width:min(100%, 420px);
+}
+
+.list-intro-action{
+    justify-self:end;
+}
+
 .page-search{
     position:relative;
     width:100%;
@@ -229,11 +244,6 @@
     font-size:.9rem;
     font-weight:600;
     letter-spacing:-.01em;
-}
-
-.rs-select-option-note{
-    color:var(--muted);
-    font-size:.76rem;
 }
 
 .rs-select-option-mark{

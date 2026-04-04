@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
@@ -7,8 +8,24 @@ from processos.models import Processo
 
 
 def listar_processos(request):
+    busca = request.GET.get("q", "").strip()
     processos = Processo.objects.all()
-    return render(request, "listar_processos.html", {"processos": processos})
+
+    if busca:
+        processos = processos.filter(
+            Q(numero_processo__icontains=busca)
+            | Q(cliente__nome__icontains=busca)
+            | Q(area_juridica__icontains=busca)
+            | Q(vara__icontains=busca)
+            | Q(advogado_responsavel__icontains=busca)
+            | Q(status__icontains=busca)
+        )
+
+    context = {
+        "processos": processos,
+        "busca": busca,
+    }
+    return render(request, "listar_processos.html", context)
 
 
 def criar_processo(request):

@@ -8,6 +8,29 @@
         padding:22px;
     }
 
+    .clients-intro-toolbar{
+        grid-template-columns:minmax(0, 1fr) auto;
+    }
+
+    .clients-filters{
+        display:grid;
+        grid-template-columns:minmax(0, 1fr) minmax(220px, 240px);
+        gap:12px;
+        align-items:end;
+        width:min(100%, 720px);
+    }
+
+    .clients-filters .page-search-inline,
+    .clients-type-filter{
+        width:100%;
+    }
+
+    .clients-type-filter .rs-select,
+    .clients-type-filter .rs-select-trigger,
+    .clients-type-filter select{
+        width:100%;
+    }
+
     .intro-title{
         margin:0;
         font-family:var(--serif);
@@ -78,6 +101,34 @@
         font-size:1rem;
         line-height:1.35;
         font-weight:600;
+    }
+
+    .client-tier{
+        display:inline-flex;
+        align-items:center;
+        width:fit-content;
+        min-height:28px;
+        margin-top:8px;
+        padding:0 10px;
+        border-radius:999px;
+        border:1px solid var(--line);
+        background:var(--ghost);
+        color:var(--soft);
+        font-size:.68rem;
+        font-weight:700;
+        letter-spacing:.12em;
+        text-transform:uppercase;
+    }
+
+    .client-tier-esporadico{
+        color:var(--soft);
+        background:rgba(255,255,255,.03);
+    }
+
+    .client-tier-mensalista{
+        color:var(--gold-soft);
+        background:rgba(194,154,99,.1);
+        border-color:rgba(194,154,99,.2);
     }
 
     .client-doc{
@@ -186,9 +237,25 @@
         border-color:rgba(181,138,79,.2);
     }
 
+    html[data-theme="light"] .client-tier-esporadico{
+        background:rgba(24,30,42,.04);
+        border-color:rgba(30,34,45,.1);
+        color:rgba(22,24,31,.72);
+    }
+
+    html[data-theme="light"] .client-tier-mensalista{
+        background:rgba(181,138,79,.12);
+        border-color:rgba(181,138,79,.22);
+        color:#8b6836;
+    }
+
     @media (max-width:1160px){
         .list-head{
             display:none;
+        }
+
+        .clients-filters{
+            grid-template-columns:minmax(0, 1fr) minmax(200px, 220px);
         }
 
         .client-row{
@@ -213,6 +280,12 @@
         padding:16px;
     }
 
+    .clients-filters{
+        grid-template-columns:1fr;
+        width:100%;
+        gap:10px;
+    }
+
     .client-row{
         grid-template-columns:minmax(0, 1fr) auto;
         grid-template-areas:
@@ -235,6 +308,13 @@
     .client-doc{
         margin-top:4px;
         font-size:.78rem;
+    }
+
+    .client-tier{
+        min-height:26px;
+        margin-top:6px;
+        padding:0 9px;
+        font-size:.62rem;
     }
 
     .contact-stack{

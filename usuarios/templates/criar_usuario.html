@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}RS Advocacia | {% if editar %}Editar usuario{% else %}Novo usuario{% endif %}{% endblock %}
-{% block topbar_label %}{% if editar %}Editar usuario{% else %}Novo usuario{% endif %}{% endblock %}
+{% block title %}RS Advocacia | {% if editar %}Editar usuário{% else %}Novo usuário{% endif %}{% endblock %}
+{% block topbar_label %}{% if editar %}Editar usuário{% else %}Novo usuário{% endif %}{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/pages/usuarios-form.css' %}">
@@ -12,16 +12,16 @@
     {% if editar %}
         <a class="btn btn-secondary" href="{% url 'detalhes_usuario' form.instance.id %}">Detalhes</a>
     {% else %}
-        <a class="btn btn-secondary" href="{% url 'listar_usuarios' %}">Usuarios</a>
+        <a class="btn btn-secondary" href="{% url 'listar_usuarios' %}">Usuários</a>
     {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="create-page">
-    <section class="surface create-intro reveal">
+    <section class="surface create-intro">
         <div class="section-head">
             <div>
-                <h1 class="intro-title">{% if editar %}Editar usuario{% else %}Novo usuario{% endif %}</h1>
+                <h1 class="intro-title">{% if editar %}Editar usuário{% else %}Novo usuário{% endif %}</h1>
                 <p class="intro-note">
                     {% if editar %}
                         Atualize os dados do perfil sem perder o contexto atual.
@@ -33,10 +33,10 @@
         </div>
     </section>
 
-    <section class="surface form-panel reveal" style="--delay:.06s">
-        {% include "partials/form_feedback.html" with success=success form=form success_title="Usuario salvo." success_copy="O cadastro foi registrado." only %}
+    <section class="surface form-panel">
+        {% include "partials/form_feedback.html" with success=success form=form success_title="Usuário salvo." success_copy="O cadastro foi registrado." only %}
 
-        <form class="user-form" method="post" enctype="multipart/form-data">
+        <form class="user-form" method="post">
             {% csrf_token %}
 
             {% for hidden in form.hidden_fields %}
@@ -64,14 +64,6 @@
                     <label for="{{ form.cargo.id_for_label }}">Cargo</label>
                     {{ form.cargo }}
                     {% for error in form.cargo.errors %}
-                        <div class="field-error">{{ error }}</div>
-                    {% endfor %}
-                </div>
-
-                <div class="field {% if form.OAB.errors %}has-error{% endif %}">
-                    <label for="{{ form.OAB.id_for_label }}">OAB</label>
-                    {{ form.OAB }}
-                    {% for error in form.OAB.errors %}
                         <div class="field-error">{{ error }}</div>
                     {% endfor %}
                 </div>
@@ -105,18 +97,6 @@
                     {% endfor %}
                 </div>
 
-                <div class="field {% if form.foto.errors %}has-error{% endif %}">
-                    <label for="{{ form.foto.id_for_label }}">Foto</label>
-                    {{ form.foto }}
-                    {% if editar and form.instance.foto %}
-                        <span class="field-help">Foto atual cadastrada.</span>
-                    {% else %}
-                        <span class="field-help">Opcional</span>
-                    {% endif %}
-                    {% for error in form.foto.errors %}
-                        <div class="field-error">{{ error }}</div>
-                    {% endfor %}
-                </div>
             </div>
 
             <div class="form-actions">

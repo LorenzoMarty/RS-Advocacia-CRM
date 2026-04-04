@@ -8,31 +8,39 @@
 <link rel="stylesheet" href="{% static 'css/pages/processos-list.css' %}">
 {% endblock %}
 
-{% block topbar_actions %}
-    <a class="btn" href="{% url 'criar_processo' %}">Novo</a>
-{% endblock %}
+{% block topbar_actions %}{% endblock %}
 
 {% block content %}
 <div class="process-page">
-    <section class="surface process-intro reveal">
+    {% url 'criar_processo' as create_url %}
+    <section class="surface process-intro">
         <div class="section-head">
             <div>
                 <h1 class="intro-title">Processos</h1>
-                <p class="section-note">Carteira ativa</p>
+                <p class="section-note">Gerencie seus processos jurídicos</p>
             </div>
             <span class="badge gold">{{ processos|length }} registros</span>
         </div>
-        {% include "partials/page_search.html" %}
+
+        <form class="list-intro-toolbar" method="get" data-process-filters-form>
+            <div class="page-search-inline">
+                <label class="page-search" aria-label="Buscar processos">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                    <input type="search" name="q" value="{{ busca }}" placeholder="Buscar" data-process-search>
+                </label>
+            </div>
+            <a class="btn list-intro-action" href="{{ create_url }}">Novo</a>
+        </form>
     </section>
 
-    <section class="surface process-panel reveal" style="--delay:.06s">
+    <section class="surface process-panel">
         {% if processos %}
             <div class="process-head" aria-hidden="true">
                 <span>Processo</span>
-                <span>Area</span>
-                <span>Responsavel</span>
+                <span>Área</span>
+                <span>Responsável</span>
                 <span>Status</span>
-                <span>Acoes</span>
+                <span>Ações</span>
             </div>
 
             <div class="process-list">
@@ -85,9 +93,12 @@
         {% else %}
             <div class="empty-state">
                 <div class="empty">
-                    <strong>Sem processos.</strong>
-                    <p>Comece com um novo registro.</p>
+                    <strong>Nenhum processo encontrado.</strong>
+                    <p>{% if busca %}Ajuste a busca para localizar o registro desejado.{% else %}Comece com um novo registro.{% endif %}</p>
                     <div class="empty-actions">
+                        {% if busca %}
+                            <a class="btn btn-secondary" href="{% url 'listar_processos' %}">Limpar busca</a>
+                        {% endif %}
                         <a class="btn" href="{% url 'criar_processo' %}">Novo</a>
                     </div>
                 </div>
@@ -95,4 +106,8 @@
         {% endif %}
     </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/pages/processos-list.js' %}" defer></script>
 {% endblock %}

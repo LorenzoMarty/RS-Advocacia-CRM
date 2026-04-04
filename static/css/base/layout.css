@@ -17,7 +17,7 @@
     border:1px solid var(--line);
     box-shadow:var(--shadow);
     backdrop-filter:blur(18px);
-    overflow:hidden;
+    overflow:visible;
     z-index:40;
     transition:transform .35s cubic-bezier(.22,1,.36,1),width .35s cubic-bezier(.22,1,.36,1),padding .35s cubic-bezier(.22,1,.36,1),background .22s ease,border-color .22s ease;
 }

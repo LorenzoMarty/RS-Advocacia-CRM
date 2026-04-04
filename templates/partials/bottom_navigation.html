@@ -2,7 +2,7 @@
 {% get_primary_navigation as primary_navigation %}
 
 <div class="bottom-nav-shell" aria-hidden="false">
-    <nav class="bottom-nav" aria-label="Navegacao principal">
+    <nav class="bottom-nav" aria-label="Navegação principal">
         <div class="bottom-nav-track">
             {% for item in primary_navigation %}
                 <a class="bottom-nav-link {% if item.active %}active{% endif %}" href="{{ item.url }}" {% if item.active %}aria-current="page"{% endif %} aria-label="{{ item.label }}" title="{{ item.label }}">

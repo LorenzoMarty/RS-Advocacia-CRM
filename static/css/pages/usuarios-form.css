@@ -127,10 +127,6 @@
         background-color:var(--ghost-strong);
     }
 
-    .field input[type="file"]{
-        padding:12px 14px;
-    }
-
     .field input:focus,
     .field select:focus{
         border-color:rgba(194,154,99,.24);
@@ -148,11 +144,6 @@
     .field select optgroup{
         background:#161a22;
         color:#f6f1e8;
-    }
-
-    .field-help{
-        color:var(--muted);
-        font-size:.82rem;
     }
 
     .field-error{
@@ -274,14 +265,6 @@
     .field select{
         min-height:44px;
         border-radius:14px;
-    }
-
-    .field input[type="file"]{
-        padding:10px 12px;
-    }
-
-    .field-help{
-        font-size:.76rem;
     }
 
     .form-actions .btn,

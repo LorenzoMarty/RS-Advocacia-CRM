@@ -19,7 +19,7 @@
 {% block content %}
 {% with processos=cliente.processo_set.all eventos=cliente.evento_set.all total_processos=cliente.processo_set.count total_eventos=cliente.evento_set.count %}
 <div class="client-page">
-    <section class="surface client-hero reveal">
+    <section class="surface client-hero">
         <div class="crumbs">
             <a href="{% url 'listar_clientes' %}">Clientes</a>
         </div>
@@ -35,28 +35,15 @@
                 </div>
 
                 <div class="identity-meta">
-                    <span class="meta-pill">CPF {{ cliente.cpf }}</span>
-                    <a class="meta-pill" href="tel:{{ cliente.telefone }}">{{ cliente.telefone }}</a>
-                    <a class="meta-pill" href="mailto:{{ cliente.email }}">{{ cliente.email }}</a>
+                    <span class="meta-pill client-tier-pill client-tier-{{ cliente.tipo_cliente }}">{{ cliente.get_tipo_cliente_display }}</span>
                 </div>
             </div>
-
-            <aside class="hero-summary">
-                <article class="summary-card">
-                    <span>Processos</span>
-                    <strong>{{ total_processos }}</strong>
-                </article>
-                <article class="summary-card">
-                    <span>Compromissos</span>
-                    <strong>{{ total_eventos }}</strong>
-                </article>
-            </aside>
         </div>
     </section>
 
     <div class="client-layout">
         <div class="stack">
-            <section class="surface section-card reveal" style="--delay:.04s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
                         <h2 class="section-title">Dados</h2>
@@ -78,13 +65,17 @@
                         <a href="mailto:{{ cliente.email }}">{{ cliente.email }}</a>
                     </article>
                     <article class="detail-item">
-                        <span>Observacoes</span>
-                        <strong>{% if cliente.obs %}Disponiveis{% else %}-{% endif %}</strong>
+                        <span>Tipo</span>
+                        <strong>{{ cliente.get_tipo_cliente_display }}</strong>
+                    </article>
+                    <article class="detail-item">
+                        <span>Observações</span>
+                        <strong>{% if cliente.obs %}Disponíveis{% else %}-{% endif %}</strong>
                     </article>
                 </div>
             </section>
 
-            <section class="surface section-card reveal" style="--delay:.08s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
                         <h2 class="section-title">Processos</h2>
@@ -137,7 +128,7 @@
         </div>
 
         <div class="stack">
-            <section class="surface section-card reveal" style="--delay:.06s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
                         <h2 class="section-title">Compromissos</h2>
@@ -156,7 +147,7 @@
                                     </div>
 
                                     {% if evento.concluido or 'conclu' in status %}
-                                        <span class="status-badge success">{{ evento.status|default:"Concluido" }}</span>
+                                        <span class="status-badge success">{{ evento.status|default:"Concluído" }}</span>
                                     {% elif 'aguard' in status or 'penden' in status %}
                                         <span class="status-badge warn">{{ evento.status }}</span>
                                     {% elif 'confirm' in status or 'agend' in status %}
@@ -189,10 +180,10 @@
                 </div>
             </section>
 
-            <section class="surface section-card reveal" style="--delay:.1s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
-                        <h2 class="section-title">Observacoes</h2>
+                        <h2 class="section-title">Observações</h2>
                         <p class="section-note">Internas</p>
                     </div>
                 </div>
@@ -201,7 +192,7 @@
                     <div class="note-box">{{ cliente.obs|linebreaksbr }}</div>
                 {% else %}
                     <div class="empty">
-                        <strong>Sem observacoes.</strong>
+                        <strong>Sem observações.</strong>
                         <p>Nenhuma nota registrada.</p>
                     </div>
                 {% endif %}

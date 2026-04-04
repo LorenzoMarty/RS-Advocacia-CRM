@@ -178,8 +178,7 @@
 
     .item:hover,
     .shortcut:hover,
-    .rail-stat:hover,
-    .rail-focus:hover{
+    .rail-stat:hover{
         transform:translateY(-1px);
         border-color:rgba(194,154,99,.18);
         background:rgba(194,154,99,.06);
@@ -285,29 +284,6 @@
         letter-spacing:-.04em;
     }
 
-    .rail-focus{
-        display:grid;
-        gap:12px;
-        padding:16px;
-        border-radius:20px;
-        border:1px solid var(--line);
-        background:var(--ghost);
-        transition:border-color .2s ease,background .2s ease,transform .2s ease;
-    }
-
-    .rail-focus strong{
-        display:block;
-        font-size:1rem;
-        line-height:1.45;
-    }
-
-    .rail-focus p{
-        margin:0;
-        color:var(--soft);
-        line-height:1.55;
-        font-size:.92rem;
-    }
-
     html[data-theme="light"] .hero{
         background:
             radial-gradient(circle at top right, rgba(181,138,79,.1), transparent 30%),
@@ -319,7 +295,6 @@
     html[data-theme="light"] .item,
     html[data-theme="light"] .shortcut,
     html[data-theme="light"] .rail-stat,
-    html[data-theme="light"] .rail-focus,
     html[data-theme="light"] .focus-meta span,
     html[data-theme="light"] .item-meta span{
         background:rgba(24,30,42,.04);
@@ -383,8 +358,7 @@
     }
 
     .hero-subtitle,
-    .focus-time,
-    .rail-focus p{
+    .focus-time{
         font-size:.9rem;
     }
 
@@ -430,8 +404,7 @@
     }
 
     .shortcut,
-    .rail-stat,
-    .rail-focus{
+    .rail-stat{
         padding:12px;
         border-radius:16px;
     }

@@ -67,12 +67,6 @@
         letter-spacing:.02em;
     }
 
-    .user-avatar img{
-        width:100%;
-        height:100%;
-        object-fit:cover;
-    }
-
     .user-main,
     .user-contact,
     .user-role,

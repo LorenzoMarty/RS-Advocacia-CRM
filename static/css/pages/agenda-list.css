@@ -55,6 +55,10 @@
     .calendar-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
     .legend-chip{display:inline-flex;align-items:center;gap:8px;min-height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:var(--ghost);color:var(--soft);font-size:.75rem}
     .legend-chip::before{content:"";width:8px;height:8px;border-radius:999px;background:var(--chip-color,var(--gold))}
+    .legend-chip-audiencia{--chip-color:#c29a63}
+    .legend-chip-reuniao{--chip-color:#7893d1}
+    .legend-chip-prazo{--chip-color:#e8b25c}
+    .legend-chip-tarefa{--chip-color:#b6bcc8}
     .calendar-frame{overflow:auto;padding:4px 2px 2px}
     .calendar-weekdays,.calendar-days{min-width:720px}
     .calendar-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;margin-bottom:12px}

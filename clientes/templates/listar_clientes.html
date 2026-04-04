@@ -8,24 +8,44 @@
 <link rel="stylesheet" href="{% static 'css/pages/clientes-list.css' %}">
 {% endblock %}
 
-{% block topbar_actions %}
-    <a class="btn" href="{% url 'criar_cliente' %}">Novo</a>
-{% endblock %}
+{% block topbar_actions %}{% endblock %}
 
 {% block content %}
 <div class="clients-page">
-    <section class="surface clients-intro reveal">
+    {% url 'criar_cliente' as create_url %}
+    <section class="surface clients-intro">
         <div class="section-head">
             <div>
                 <h1 class="intro-title">Clientes</h1>
-                <p class="section-note">Base ativa</p>
+                <p class="section-note">Gerencie seus clientes</p>
             </div>
             <span class="badge gold">{{ clientes|length }} registros</span>
         </div>
-        {% include "partials/page_search.html" %}
+
+        <form class="list-intro-toolbar clients-intro-toolbar" method="get" data-client-filters-form>
+            <div class="clients-filters">
+                <div class="page-search-inline">
+                    <label class="page-search" aria-label="Buscar clientes">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                        <input type="search" name="q" value="{{ busca }}" placeholder="Buscar" data-client-search>
+                    </label>
+                </div>
+
+                <div class="clients-type-filter">
+                    <label class="sr-only" for="clients-type-filter">Tipo do cliente</label>
+                    <select id="clients-type-filter" name="tipo" data-client-type-filter aria-label="Filtrar por tipo do cliente">
+                        <option value="todos" {% if tipo_cliente == "todos" %}selected{% endif %}>Todos os tipos</option>
+                        <option value="esporadico" {% if tipo_cliente == "esporadico" %}selected{% endif %}>Esporádicos</option>
+                        <option value="mensalista" {% if tipo_cliente == "mensalista" %}selected{% endif %}>Mensalistas</option>
+                    </select>
+                </div>
+            </div>
+
+            <a class="btn list-intro-action" href="{{ create_url }}">Novo</a>
+        </form>
     </section>
 
-    <section class="surface clients-panel reveal" style="--delay:.06s">
+    <section class="surface clients-panel">
         {% if clientes %}
             <div class="list-head" aria-hidden="true">
                 <span>Cliente</span>
@@ -42,6 +62,7 @@
 
                             <div class="client-main">
                                 <h2 class="client-name">{{ cliente.nome }}</h2>
+                                <span class="client-tier client-tier-{{ cliente.tipo_cliente }}">{{ cliente.get_tipo_cliente_display }}</span>
                                 <span class="client-doc">CPF {{ cliente.cpf }}</span>
                             </div>
 
@@ -64,12 +85,16 @@
                     {% endwith %}
                 {% endfor %}
             </div>
+
         {% else %}
             <div class="empty-state">
                 <div class="empty">
-                    <strong>Sem clientes.</strong>
-                    <p>Comece com um novo cadastro.</p>
+                    <strong>Nenhum cliente encontrado.</strong>
+                    <p>{% if busca or tipo_cliente != "todos" %}Ajuste a busca ou troque o tipo selecionado.{% else %}Comece com um novo cadastro.{% endif %}</p>
                     <div class="empty-actions">
+                        {% if busca or tipo_cliente != "todos" %}
+                            <a class="btn btn-secondary" href="{% url 'listar_clientes' %}">Limpar filtros</a>
+                        {% endif %}
                         <a class="btn" href="{% url 'criar_cliente' %}">Novo</a>
                     </div>
                 </div>
@@ -77,4 +102,8 @@
         {% endif %}
     </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/pages/clientes-list.js' %}" defer></script>
 {% endblock %}

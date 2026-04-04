@@ -10,16 +10,15 @@
 
 {% block topbar_actions %}
     <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
-    <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
 {% endblock %}
 
 {% block content %}
-<section class="surface hero reveal">
+<section class="surface hero">
     <div class="hero-grid">
         <div class="hero-copy">
-            <h1 class="hero-title">Controle juridico.</h1>
-            <p class="hero-subtitle">Agenda, prazos e carteira em um painel.</p>
-            {% include "partials/page_search.html" %}
+            <h1 class="hero-title">Controle jurídico.</h1>
+            <p class="hero-subtitle">Gerencie seus compromissos e processos com eficiência.</p>
+            
 
             <div class="hero-actions">
                 <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
@@ -32,7 +31,7 @@
                     <strong>{{ eventos_hoje|length }}</strong>
                 </article>
                 <article class="metric">
-                    <span>Prazos</span>
+                    <span>Eventos</span>
                     <strong>{{ proximos_eventos|length }}</strong>
                 </article>
                 <article class="metric">
@@ -48,7 +47,7 @@
 
         {% with proximo=proximos_eventos|first %}
             <aside class="focus-card">
-                <span class="focus-label">Proximo prazo</span>
+                <span class="focus-label">Próximo prazo</span>
                 {% if proximo %}
                     <h2>{{ proximo.titulo }}</h2>
                     <p class="focus-time">{{ proximo.data_inicio|date:"d/m/Y \\a\\s H:i" }}</p>
@@ -71,8 +70,8 @@
                         <span class="badge gold">{{ proximo.prioridade|default:"Monitorado" }}</span>
                     {% endif %}
                 {% else %}
-                    <h2>Sem prazos no radar.</h2>
-                    <p class="focus-time">O proximo compromisso aparece aqui.</p>
+                    <h2>Sem compromissos no momento.</h2>
+                    <p class="focus-time">O próximo compromisso aparece aqui.</p>
                 {% endif %}
             </aside>
         {% endwith %}
@@ -81,7 +80,7 @@
 
 <section class="dashboard-grid">
     <div class="stack">
-        <article class="surface panel reveal" style="--delay:.06s">
+        <article class="surface panel">
             <div class="section-head">
                 <div>
                     <h2 class="section-title">Agenda</h2>
@@ -109,7 +108,7 @@
 
                         <div class="item-side">
                             {% if evento.concluido %}
-                                <span class="badge success">Concluido</span>
+                                <span class="badge success">Concluído</span>
                             {% elif evento.status %}
                                 <span class="badge gold">{{ evento.status }}</span>
                             {% else %}
@@ -127,11 +126,11 @@
             </div>
         </article>
 
-        <article class="surface panel reveal" style="--delay:.1s">
+        <article class="surface panel">
             <div class="section-head">
                 <div>
-                    <h2 class="section-title">Prazos</h2>
-                    <p class="section-note">Proximos</p>
+                    <h2 class="section-title">Eventos</h2>
+                    <p class="section-note">Próximos</p>
                 </div>
                 <span class="badge warn">{{ proximos_eventos|length }}</span>
             </div>
@@ -167,8 +166,8 @@
                     </article>
                 {% empty %}
                     <div class="empty">
-                        <strong>Sem prazos.</strong>
-                        <p>Sem pendencias futuras.</p>
+                        <strong>Sem eventos.</strong>
+                        <p>Sem pendências futuras.</p>
                     </div>
                 {% endfor %}
             </div>
@@ -176,11 +175,11 @@
     </div>
 
     <aside class="stack">
-        <article class="surface rail reveal" style="--delay:.08s">
+        <article class="surface rail">
             <div class="section-head">
                 <div>
-                    <h2 class="section-title">Operacao</h2>
-                    <p class="section-note">Atalhos e visao rapida</p>
+                    <h2 class="section-title">Operação</h2>
+                    <p class="section-note">Atalhos e visão rápida</p>
                 </div>
             </div>
 
@@ -218,7 +217,7 @@
 
                     <a class="shortcut" href="{% url 'listar_usuarios' %}">
                         <div class="shortcut-copy">
-                            <strong>Usuarios</strong>
+                            <strong>Usuários</strong>
                             <span>Equipe</span>
                         </div>
                         <span class="shortcut-icon" aria-hidden="true">
@@ -248,28 +247,7 @@
                 </div>
             </div>
 
-            <div class="rail-group">
-                {% with proximo=proximos_eventos|first %}
-                    {% if proximo %}
-                        <article class="rail-focus">
-                            {% if proximo.prioridade == 'Alta' or proximo.prioridade == 'ALTA' or proximo.prioridade == 'Urgente' %}
-                                <span class="badge danger">{{ proximo.prioridade|default:"Alta" }}</span>
-                            {% elif proximo.prioridade == 'Media' or proximo.prioridade == 'MEDIA' %}
-                                <span class="badge warn">{{ proximo.prioridade|default:"Media" }}</span>
-                            {% else %}
-                                <span class="badge gold">{{ proximo.prioridade|default:"Monitorado" }}</span>
-                            {% endif %}
-                            <strong>{{ proximo.titulo }}</strong>
-                            <p>{{ proximo.data_inicio|date:"d/m/Y \\a\\s H:i" }}</p>
-                        </article>
-                    {% else %}
-                        <div class="empty">
-                            <strong>Sem destaque.</strong>
-                            <p>Nada imediato.</p>
-                        </div>
-                    {% endif %}
-                {% endwith %}
-            </div>
+           
         </article>
     </aside>
 </section>

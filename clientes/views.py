@@ -1,14 +1,37 @@
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.db.models import Q
 
 from clientes.forms import ClienteForm
 from clientes.models import Cliente
 
 
 def listar_clientes(request):
+    busca = request.GET.get("q", "").strip()
+    tipo_cliente = request.GET.get("tipo", "todos").strip()
+
     clientes = Cliente.objects.all()
-    return render(request, "listar_clientes.html", {"clientes": clientes})
+
+    if busca:
+        clientes = clientes.filter(
+            Q(nome__icontains=busca)
+            | Q(email__icontains=busca)
+            | Q(telefone__icontains=busca)
+            | Q(cpf__icontains=busca)
+        )
+
+    if tipo_cliente in {"esporadico", "mensalista"}:
+        clientes = clientes.filter(tipo_cliente=tipo_cliente)
+    else:
+        tipo_cliente = "todos"
+
+    context = {
+        "clientes": clientes,
+        "busca": busca,
+        "tipo_cliente": tipo_cliente,
+    }
+    return render(request, "listar_clientes.html", context)
 
 
 def criar_cliente(request):

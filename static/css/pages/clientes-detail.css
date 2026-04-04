@@ -96,6 +96,23 @@
         text-overflow:ellipsis;
     }
 
+    .client-tier-pill{
+        font-weight:700;
+        letter-spacing:.12em;
+        text-transform:uppercase;
+    }
+
+    .client-tier-esporadico{
+        color:var(--soft);
+        background:rgba(255,255,255,.03);
+    }
+
+    .client-tier-mensalista{
+        color:var(--gold-soft);
+        background:rgba(194,154,99,.1);
+        border-color:rgba(194,154,99,.2);
+    }
+
     .hero-summary{
         display:grid;
         gap:10px;
@@ -313,6 +330,18 @@
         border-color:rgba(181,138,79,.2);
     }
 
+    html[data-theme="light"] .client-tier-esporadico{
+        background:rgba(24,30,42,.04);
+        border-color:rgba(30,34,45,.1);
+        color:rgba(22,24,31,.72);
+    }
+
+    html[data-theme="light"] .client-tier-mensalista{
+        background:rgba(181,138,79,.12);
+        border-color:rgba(181,138,79,.22);
+        color:#8b6836;
+    }
+
     @media (max-width:1180px){
         .client-hero-grid,
         .client-layout{
@@ -361,6 +390,10 @@
         min-height:30px;
         padding:0 10px;
         font-size:.74rem;
+    }
+
+    .client-tier-pill{
+        font-size:.68rem;
     }
 
     .summary-card{

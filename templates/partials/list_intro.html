@@ -1,0 +1,15 @@
+<section class="surface {{ intro_class }}">
+    <div class="section-head">
+        <div>
+            <h1 class="intro-title">{{ title }}</h1>
+            <p class="section-note">{{ note }}</p>
+        </div>
+        <span class="badge gold">{{ count }} registros</span>
+    </div>
+    <div class="list-intro-toolbar">
+        {% include "partials/page_search.html" %}
+        {% if action_url %}
+            <a class="btn list-intro-action" href="{{ action_url }}">{{ action_label|default:"Novo" }}</a>
+        {% endif %}
+    </div>
+</section>

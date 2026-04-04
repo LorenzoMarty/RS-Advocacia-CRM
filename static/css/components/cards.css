@@ -76,11 +76,6 @@
 .empty strong{display:block;font-size:.96rem}
 .empty p{margin:6px 0 0;color:var(--muted);font-size:.9rem;line-height:1.55}
 
-.reveal{
-    opacity:1;
-    transform:none;
-    transition:none;
-}
 .theme-icon{position:relative;width:18px;height:18px}
 .theme-icon svg{position:absolute;inset:0;transition:opacity .18s ease,transform .18s ease}
 .theme-icon .sun{opacity:0;transform:scale(.8) rotate(-8deg)}

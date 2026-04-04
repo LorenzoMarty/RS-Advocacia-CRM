@@ -18,7 +18,7 @@
 {% block content %}
 {% with cliente=evento.cliente processo=evento.processo status=evento.status|default:''|lower prioridade=evento.prioridade|default:''|lower %}
 <div class="event-page">
-    <section class="surface event-hero reveal">
+    <section class="surface event-hero">
         <div class="crumbs">
             <a href="{% url 'listar_eventos' %}">Agenda</a>
         </div>
@@ -32,79 +32,55 @@
                         <p class="event-subtitle">
                             {{ evento.data_inicio|date:"d/m/Y" }}
                             {% if evento.data_fim %}
-                                · {{ evento.data_inicio|date:"H:i" }} ate {{ evento.data_fim|date:"H:i" }}
+                                • {{ evento.data_inicio|date:"H:i" }} até {{ evento.data_fim|date:"H:i" }}
                             {% else %}
-                                · {{ evento.data_inicio|date:"H:i" }}
+                                • {{ evento.data_inicio|date:"H:i" }}
                             {% endif %}
                         </p>
                     </div>
                 </div>
 
-                <div class="hero-meta">
-                    {% if evento.tipo_evento %}
-                        <span class="meta-pill">{{ evento.tipo_evento }}</span>
-                    {% endif %}
-
-                    {% if evento.responsavel %}
-                        <span class="meta-pill">{{ evento.responsavel }}</span>
-                    {% endif %}
-
-                    {% if evento.local %}
-                        <span class="meta-pill">{{ evento.local }}</span>
-                    {% endif %}
-
-                    {% if evento.prioridade %}
-                        {% if 'alta' in prioridade or 'urg' in prioridade %}
-                            <span class="status-badge danger">{{ evento.prioridade }}</span>
-                        {% elif 'med' in prioridade %}
-                            <span class="status-badge warn">{{ evento.prioridade }}</span>
+                <aside class="hero-summary">
+                    <article class="summary-card summary-card-status">
+                        <span>Status</span>
+                        {% if evento.concluido or 'conclu' in status %}
+                            <span class="status-badge success">{{ evento.status|default:"Concluído" }}</span>
+                        {% elif 'cancel' in status or 'adiad' in status %}
+                            <span class="status-badge danger">{{ evento.status }}</span>
+                        {% elif 'aguard' in status or 'penden' in status %}
+                            <span class="status-badge warn">{{ evento.status }}</span>
                         {% else %}
-                            <span class="status-badge gold">{{ evento.prioridade }}</span>
+                            <span class="status-badge gold">{{ evento.status|default:"Agendado" }}</span>
                         {% endif %}
-                    {% endif %}
-                </div>
+                    </article>
+
+                    <article class="summary-card">
+                        <span>Cliente</span>
+                        <strong>{{ cliente.nome|default:"Não vinculado" }}</strong>
+                    </article>
+
+                    <article class="summary-card">
+                        <span>Processo</span>
+                        <strong>{{ processo.numero_processo|default:"Não vinculado" }}</strong>
+                    </article>
+                </aside>
             </div>
-
-            <aside class="hero-summary">
-                <article class="summary-card">
-                    <span>Status</span>
-                    {% if evento.concluido or 'conclu' in status %}
-                        <span class="status-badge success">{{ evento.status|default:"Concluido" }}</span>
-                    {% elif 'cancel' in status or 'adiad' in status %}
-                        <span class="status-badge danger">{{ evento.status }}</span>
-                    {% elif 'aguard' in status or 'penden' in status %}
-                        <span class="status-badge warn">{{ evento.status }}</span>
-                    {% else %}
-                        <span class="status-badge gold">{{ evento.status|default:"Agendado" }}</span>
-                    {% endif %}
-                </article>
-
-                <article class="summary-card">
-                    <span>Cliente</span>
-                    <strong>{{ cliente.nome|default:"Nao vinculado" }}</strong>
-                </article>
-
-                <article class="summary-card">
-                    <span>Processo</span>
-                    <strong>{{ processo.numero_processo|default:"Nao vinculado" }}</strong>
-                </article>
-            </aside>
         </div>
     </section>
 
     <div class="event-layout">
         <div class="stack">
-            <section class="surface section-card reveal" style="--delay:.04s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
-                        <h2 class="section-title">Informacoes</h2>
+                        <h2 class="section-title">Informações</h2>
                         <p class="section-note">Essenciais</p>
                     </div>
                 </div>
 
                 <div class="detail-grid">
                     <article class="detail-item span-2">
-                        <span>Titulo</span>
+                        <span>Título</span>
                         <strong>{{ evento.titulo }}</strong>
                     </article>
 
@@ -114,12 +90,12 @@
                     </article>
 
                     <article class="detail-item">
-                        <span>Responsavel</span>
+                        <span>Responsável</span>
                         <strong>{{ evento.responsavel|default:"-" }}</strong>
                     </article>
 
                     <article class="detail-item">
-                        <span>Inicio</span>
+                        <span>Início</span>
                         <strong>{{ evento.data_inicio|date:"d/m/Y H:i" }}</strong>
                     </article>
 
@@ -132,7 +108,7 @@
                         <span>Status</span>
                         <div>
                             {% if evento.concluido or 'conclu' in status %}
-                                <span class="status-badge success">{{ evento.status|default:"Concluido" }}</span>
+                                <span class="status-badge success">{{ evento.status|default:"Concluído" }}</span>
                             {% elif 'cancel' in status or 'adiad' in status %}
                                 <span class="status-badge danger">{{ evento.status }}</span>
                             {% elif 'aguard' in status or 'penden' in status %}
@@ -162,16 +138,16 @@
 
                     <article class="detail-item span-2">
                         <span>Local</span>
-                        <strong>{{ evento.local|default:"Nao informado" }}</strong>
+                        <strong>{{ evento.local|default:"Não informado" }}</strong>
                     </article>
                 </div>
             </section>
 
             {% if evento.descricao or evento.observacoes %}
-                <section class="surface section-card reveal" style="--delay:.08s">
+                <section class="surface section-card">
                     <div class="section-head">
                         <div>
-                            <h2 class="section-title">Observacoes</h2>
+                            <h2 class="section-title">Observações</h2>
                             <p class="section-note">Contexto</p>
                         </div>
                     </div>
@@ -180,7 +156,7 @@
                         <div class="note-stack">
                             {% if evento.descricao %}
                                 <div class="note-block">
-                                    <strong>Descricao</strong>
+                                    <strong>Descrição</strong>
                                     <div>{{ evento.descricao|linebreaksbr }}</div>
                                 </div>
                             {% endif %}
@@ -198,10 +174,10 @@
         </div>
 
         <div class="stack">
-            <section class="surface section-card reveal" style="--delay:.06s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
-                        <h2 class="section-title">Vinculos</h2>
+                        <h2 class="section-title">Vínculos</h2>
                         <p class="section-note">Relacionados</p>
                     </div>
                 </div>
@@ -251,10 +227,10 @@
                 </div>
             </section>
 
-            <section class="surface section-card reveal" style="--delay:.1s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
-                        <h2 class="section-title">Resumo rapido</h2>
+                        <h2 class="section-title">Resumo rápido</h2>
                         <p class="section-note">Leitura imediata</p>
                     </div>
                 </div>
@@ -265,11 +241,11 @@
                         <strong>{{ evento.data_inicio|date:"d/m/Y" }}</strong>
                     </article>
                     <article class="detail-item">
-                        <span>Horario</span>
+                        <span>Horário</span>
                         <strong>{{ evento.data_inicio|date:"H:i" }}{% if evento.data_fim %} - {{ evento.data_fim|date:"H:i" }}{% endif %}</strong>
                     </article>
                     <article class="detail-item">
-                        <span>Situacao</span>
+                        <span>Situação</span>
                         <strong>{% if evento.concluido %}Encerrado{% else %}Em andamento{% endif %}</strong>
                     </article>
                     <article class="detail-item">

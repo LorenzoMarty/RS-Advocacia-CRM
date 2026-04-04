@@ -14,20 +14,20 @@
 
 {% block content %}
 <div class="confirm-page">
-    <section class="surface confirm-intro reveal">
+    <section class="surface confirm-intro">
         <div class="section-head">
             <div>
                 <h1 class="confirm-title">Excluir {{ registro_tipo }}</h1>
-                <p class="confirm-copy">Revise o registro antes de confirmar. A exclusao remove este item do fluxo principal.</p>
+                <p class="confirm-copy">Revise o registro antes de confirmar. A exclusão remove este item do fluxo principal.</p>
             </div>
         </div>
     </section>
 
-    <section class="surface confirm-panel reveal" style="--delay:.06s">
+    <section class="surface confirm-panel">
         <div class="confirm-box">
             <div class="confirm-alert">
-                <strong>Acao irreversivel.</strong>
-                <p>Depois da confirmacao, este {{ registro_tipo }} nao podera ser recuperado pela interface.</p>
+                <strong>Ação irreversível.</strong>
+                <p>Depois da confirmação, este {{ registro_tipo }} não poderá ser recuperado pela interface.</p>
             </div>
 
             <div class="confirm-meta">
@@ -41,7 +41,7 @@
             <form method="post">
                 {% csrf_token %}
                 <div class="confirm-actions">
-                    <button class="btn btn-danger" type="submit">Confirmar exclusao</button>
+                    <button class="btn btn-danger" type="submit">Confirmar exclusão</button>
                     <a class="btn btn-secondary" href="{{ voltar_url }}">Cancelar</a>
                 </div>
             </form>

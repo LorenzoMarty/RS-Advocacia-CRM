@@ -9,17 +9,16 @@
 {% endblock %}
 
 {% block topbar_actions %}
-    <a class="btn btn-secondary" href="{% url 'listar_processos' %}">Processos</a>
-    <a class="btn btn-secondary" href="{% url 'editar_processo' processo.id %}">Editar</a>
-    <a class="btn btn-danger" href="{% url 'excluir_processo' processo.id %}">Excluir</a>
-    <a class="btn btn-secondary" href="{% url 'detalhes_cliente' processo.cliente.id %}">Cliente</a>
-    <a class="btn" href="{% url 'criar_evento' %}">Compromisso</a>
+<a class="btn btn-secondary" href="{% url 'listar_processos' %}">Processos</a>
+<a class="btn btn-secondary" href="{% url 'editar_processo' processo.id %}">Editar</a>
+<a class="btn btn-danger" href="{% url 'excluir_processo' processo.id %}">Excluir</a>
+<a class="btn btn-secondary" href="{% url 'detalhes_cliente' processo.cliente.id %}">Cliente</a>
+<a class="btn" href="{% url 'criar_evento' %}?processo={{ processo.id }}&cliente={{ processo.cliente.id }}">Compromisso</a>
 {% endblock %}
 
 {% block content %}
-{% with cliente=processo.cliente eventos=processo.evento_set.all total_eventos=processo.evento_set.count status=processo.status|default:''|lower %}
 <div class="process-page">
-    <section class="surface process-hero reveal">
+    <section class="surface process-hero">
         <div class="crumbs">
             <a href="{% url 'listar_processos' %}">Processos</a>
         </div>
@@ -30,47 +29,43 @@
                     <div class="process-mark" aria-hidden="true">PJ</div>
                     <div>
                         <h1 class="process-number">{{ processo.numero_processo }}</h1>
-                        <p class="process-subtitle">{{ cliente.nome }}</p>
+                        <p class="process-subtitle">{{ processo.cliente.nome }}</p>
                     </div>
                 </div>
 
-                <div class="identity-meta">
-                    <span class="meta-pill">{{ processo.area_juridica|default:"Area nao definida" }}</span>
-                    <span class="meta-pill">{{ processo.vara|default:"Vara nao definida" }}</span>
-                    <span class="meta-pill">{{ processo.advogado_responsavel|default:"Responsavel nao definido" }}</span>
-                </div>
+                <aside class="hero-summary">
+                    <article class="summary-card">
+                        <span>Status</span>
+                        {% if 'conclu' in processo.status|default:''|lower or 'encerr' in processo.status|default:''|lower %}
+                        <span class="status-badge success">{{ processo.status }}</span>
+                        {% elif 'arquiv' in processo.status|default:''|lower %}
+                        <span class="status-badge">{{ processo.status }}</span>
+                        {% elif 'aguard' in processo.status|default:''|lower or 'penden' in processo.status|default:''|lower %}
+                        <span class="status-badge warn">{{ processo.status }}</span>
+                        {% elif processo.status|default:''|lower == 'ativo' or 'andamento' in processo.status|default:''|lower or 'tramita' in processo.status|default:''|lower %}
+                        <span class="status-badge gold">{{ processo.status|default:"Ativo" }}</span>
+                        {% else %}
+                        <span class="status-badge danger">{{ processo.status|default:"Ativo" }}</span>
+                        {% endif %}
+                    </article>
+                    <article class="summary-card">
+                        <span>Compromissos</span>
+                        <strong>{{ processo.evento_set.count }}</strong>
+                    </article>
+                    <article class="summary-card">
+                        <span>Responsável</span>
+                        <strong>{{ processo.advogado_responsavel|default:"-" }}</strong>
+                    </article>
+                </aside>
             </div>
 
-            <aside class="hero-summary">
-                <article class="summary-card">
-                    <span>Status</span>
-                    {% if 'conclu' in status or 'encerr' in status %}
-                        <span class="status-badge success">{{ processo.status }}</span>
-                    {% elif 'arquiv' in status %}
-                        <span class="status-badge">{{ processo.status }}</span>
-                    {% elif 'aguard' in status or 'penden' in status %}
-                        <span class="status-badge warn">{{ processo.status }}</span>
-                    {% elif status == 'ativo' or 'andamento' in status or 'tramita' in status %}
-                        <span class="status-badge gold">{{ processo.status|default:"Ativo" }}</span>
-                    {% else %}
-                        <span class="status-badge danger">{{ processo.status|default:"Ativo" }}</span>
-                    {% endif %}
-                </article>
-                <article class="summary-card">
-                    <span>Compromissos</span>
-                    <strong>{{ total_eventos }}</strong>
-                </article>
-                <article class="summary-card">
-                    <span>Responsavel</span>
-                    <strong>{{ processo.advogado_responsavel|default:"-" }}</strong>
-                </article>
-            </aside>
+
         </div>
     </section>
 
     <div class="process-layout">
         <div class="stack">
-            <section class="surface section-card reveal" style="--delay:.04s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
                         <h2 class="section-title">Dados</h2>
@@ -80,15 +75,15 @@
 
                 <div class="detail-grid">
                     <article class="detail-item">
-                        <span>Numero</span>
+                        <span>Número</span>
                         <strong>{{ processo.numero_processo }}</strong>
                     </article>
                     <article class="detail-item">
                         <span>Cliente</span>
-                        <a href="{% url 'detalhes_cliente' cliente.id %}">{{ cliente.nome }}</a>
+                        <a href="{% url 'detalhes_cliente' processo.cliente.id %}">{{ processo.cliente.nome }}</a>
                     </article>
                     <article class="detail-item">
-                        <span>Area</span>
+                        <span>Área</span>
                         <strong>{{ processo.area_juridica|default:"-" }}</strong>
                     </article>
                     <article class="detail-item">
@@ -96,83 +91,83 @@
                         <strong>{{ processo.vara|default:"-" }}</strong>
                     </article>
                     <article class="detail-item">
-                        <span>Responsavel</span>
+                        <span>Responsável</span>
                         <strong>{{ processo.advogado_responsavel|default:"-" }}</strong>
                     </article>
                     <article class="detail-item">
                         <span>Status</span>
                         <div>
-                            {% if 'conclu' in status or 'encerr' in status %}
-                                <span class="status-badge success">{{ processo.status }}</span>
-                            {% elif 'arquiv' in status %}
-                                <span class="status-badge">{{ processo.status }}</span>
-                            {% elif 'aguard' in status or 'penden' in status %}
-                                <span class="status-badge warn">{{ processo.status }}</span>
-                            {% elif status == 'ativo' or 'andamento' in status or 'tramita' in status %}
-                                <span class="status-badge gold">{{ processo.status|default:"Ativo" }}</span>
+                            {% if 'conclu' in processo.status|default:''|lower or 'encerr' in processo.status|default:''|lower %}
+                            <span class="status-badge success">{{ processo.status }}</span>
+                            {% elif 'arquiv' in processo.status|default:''|lower %}
+                            <span class="status-badge">{{ processo.status }}</span>
+                            {% elif 'aguard' in processo.status|default:''|lower or 'penden' in processo.status|default:''|lower %}
+                            <span class="status-badge warn">{{ processo.status }}</span>
+                            {% elif processo.status|default:''|lower == 'ativo' or 'andamento' in processo.status|default:''|lower or 'tramita' in processo.status|default:''|lower %}
+                            <span class="status-badge gold">{{ processo.status|default:"Ativo" }}</span>
                             {% else %}
-                                <span class="status-badge gold">{{ processo.status|default:"Ativo" }}</span>
+                            <span class="status-badge gold">{{ processo.status|default:"Ativo" }}</span>
                             {% endif %}
                         </div>
                     </article>
                 </div>
             </section>
 
-            <section class="surface section-card reveal" style="--delay:.08s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
                         <h2 class="section-title">Agenda</h2>
-                        <p class="section-note">{{ total_eventos }} registro{{ total_eventos|pluralize }}</p>
+                        <p class="section-note">{{ processo.evento_set.count }} registro{{ processo.evento_set.count|pluralize }}</p>
                     </div>
                 </div>
 
                 <div class="list">
-                    {% for evento in eventos %}
-                        {% with event_status=evento.status|default:''|lower %}
-                            <article class="event-item">
-                                <div class="list-top">
-                                    <div>
-                                        <h3 class="list-title">{{ evento.titulo }}</h3>
-                                        <p class="list-subtitle">{{ evento.data_inicio|date:"d/m/Y" }} as {{ evento.data_inicio|date:"H:i" }}</p>
-                                    </div>
-
-                                    {% if evento.concluido or 'conclu' in event_status %}
-                                        <span class="status-badge success">{{ evento.status|default:"Concluido" }}</span>
-                                    {% elif 'aguard' in event_status or 'penden' in event_status %}
-                                        <span class="status-badge warn">{{ evento.status }}</span>
-                                    {% elif 'confirm' in event_status or 'agend' in event_status %}
-                                        <span class="status-badge gold">{{ evento.status }}</span>
-                                    {% else %}
-                                        <span class="status-badge gold">{{ evento.status|default:"Ativo" }}</span>
-                                    {% endif %}
-                                </div>
-
-                                <div class="list-meta">
-                                    <span class="meta-chip">{{ evento.tipo_evento|default:"Compromisso" }}</span>
-                                    {% if evento.responsavel %}
-                                        <span class="meta-chip">{{ evento.responsavel }}</span>
-                                    {% endif %}
-                                    {% if evento.local %}
-                                        <span class="meta-chip">{{ evento.local }}</span>
-                                    {% endif %}
-                                </div>
-                            </article>
-                        {% endwith %}
-                    {% empty %}
-                        <div class="empty">
-                            <strong>Sem compromissos.</strong>
-                            <p>Adicione um novo evento para este processo.</p>
-                            <div class="empty-actions">
-                                <a class="btn" href="{% url 'criar_evento' %}">Novo compromisso</a>
+                    {% for evento in processo.evento_set.all %}
+                    {% with event_status=evento.status|default:''|lower %}
+                    <article class="event-item">
+                        <div class="list-top">
+                            <div>
+                                <h3 class="list-title">{{ evento.titulo }}</h3>
+                                <p class="list-subtitle">{{ evento.data_inicio|date:"d/m/Y H:i" }}</p>
                             </div>
+
+                            {% if evento.concluido or 'conclu' in event_status %}
+                            <span class="status-badge success">{{ evento.status|default:"Concluído" }}</span>
+                            {% elif 'aguard' in event_status or 'penden' in event_status %}
+                            <span class="status-badge warn">{{ evento.status }}</span>
+                            {% elif 'confirm' in event_status or 'agend' in event_status %}
+                            <span class="status-badge gold">{{ evento.status }}</span>
+                            {% else %}
+                            <span class="status-badge gold">{{ evento.status|default:"Ativo" }}</span>
+                            {% endif %}
                         </div>
+
+                        <div class="list-meta">
+                            <span class="meta-chip">{{ evento.tipo_evento|default:"Compromisso" }}</span>
+                            {% if evento.responsavel %}
+                            <span class="meta-chip">{{ evento.responsavel }}</span>
+                            {% endif %}
+                            {% if evento.local %}
+                            <span class="meta-chip">{{ evento.local }}</span>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% endwith %}
+                    {% empty %}
+                    <div class="empty">
+                        <strong>Sem compromissos.</strong>
+                        <p>Adicione um novo evento para este processo.</p>
+                        <div class="empty-actions">
+                            <a class="btn" href="{% url 'criar_evento' %}">Novo compromisso</a>
+                        </div>
+                    </div>
                     {% endfor %}
                 </div>
             </section>
         </div>
 
         <div class="stack">
-            <section class="surface section-card reveal" style="--delay:.06s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
                         <h2 class="section-title">Cliente</h2>
@@ -182,43 +177,42 @@
 
                 <article class="client-card">
                     <div class="client-card-head">
-                        <div class="client-mark" aria-hidden="true">{{ cliente.nome|first|upper }}</div>
+                        <div class="client-mark" aria-hidden="true">{{ processo.cliente.nome|first|upper }}</div>
                         <div>
-                            <h3 class="client-name">{{ cliente.nome }}</h3>
-                            <p class="client-copy">CPF {{ cliente.cpf }}</p>
+                            <h3 class="client-name">{{ processo.cliente.nome }}</h3>
+                            <p class="client-copy">CPF {{ processo.cliente.cpf }}</p>
                         </div>
                     </div>
 
                     <div class="client-meta">
-                        <a class="meta-chip" href="mailto:{{ cliente.email }}">{{ cliente.email }}</a>
-                        <a class="meta-chip" href="tel:{{ cliente.telefone }}">{{ cliente.telefone }}</a>
+                        <a class="meta-chip" href="mailto:{{ processo.cliente.email }}">{{ processo.cliente.email }}</a>
+                        <a class="meta-chip" href="tel:{{ processo.cliente.telefone }}">{{ processo.cliente.telefone }}</a>
                     </div>
 
                     <div class="empty-actions">
-                        <a class="btn btn-secondary" href="{% url 'detalhes_cliente' cliente.id %}">Ver cliente</a>
+                        <a class="btn btn-secondary" href="{% url 'detalhes_cliente' processo.cliente.id %}">Ver cliente</a>
                     </div>
                 </article>
             </section>
 
-            <section class="surface section-card reveal" style="--delay:.1s">
+            <section class="surface section-card">
                 <div class="section-head">
                     <div>
-                        <h2 class="section-title">Observacoes</h2>
+                        <h2 class="section-title">Observações</h2>
                         <p class="section-note">Internas</p>
                     </div>
                 </div>
 
                 {% if processo.descricao %}
-                    <div class="note-box">{{ processo.descricao|linebreaksbr }}</div>
+                <div class="note-box">{{ processo.descricao|linebreaksbr }}</div>
                 {% else %}
-                    <div class="empty">
-                        <strong>Sem observacoes.</strong>
-                        <p>Nenhuma nota registrada.</p>
-                    </div>
+                <div class="empty">
+                    <strong>Sem observações.</strong>
+                    <p>Nenhuma nota registrada.</p>
+                </div>
                 {% endif %}
             </section>
         </div>
     </div>
 </div>
-{% endwith %}
 {% endblock %}

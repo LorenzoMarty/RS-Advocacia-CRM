@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0b0d12">
-    <title>{% block title %}RS Advocacia | Plataforma juridica{% endblock %}</title>
+    <title>{% block title %}RS Advocacia | Plataforma jurídica{% endblock %}</title>
     <script>
         (function () {
             try {
@@ -30,9 +30,9 @@
 </head>
 <body>
     <div class="shell">
-        <aside class="sidebar" id="app-sidebar" aria-label="Navegacao principal">
-            <button class="toggle sidebar-toggle" type="button" aria-controls="app-sidebar" aria-expanded="true" aria-label="Recolher sidebar" title="Recolher sidebar" data-sidebar-toggle>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg>
+        <aside class="sidebar" id="app-sidebar" aria-label="Navegação principal">
+            <button class="sidebar-toggle-clean" type="button" aria-controls="app-sidebar" aria-expanded="true" aria-label="Recolher sidebar" title="Recolher sidebar" data-sidebar-toggle>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>
             </button>
             <div class="sidebar-scroll">
                 <a class="brand" href="{% url 'dashboard' %}" aria-label="Ir para o dashboard" title="Dashboard">
@@ -46,18 +46,6 @@
 
                 {% include "partials/sidebar_navigation.html" %}
 
-                <div class="sidebar-footer">
-                    <div class="sidebar-user">
-                        <div class="avatar">{% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.username|first|upper }}{% else %}RS{% endif %}</div>
-                        <div class="sidebar-user-copy">
-                            <strong>{% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.username }}{% else %}Equipe RS{% endif %}</strong>
-                            <span>{% if request.user.is_authenticated %}ativo{% else %}interno{% endif %}</span>
-                        </div>
-                    </div>
-                    <a class="icon-btn" href="{% url 'criar_evento' %}" aria-label="Novo">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
-                    </a>
-                </div>
             </div>
         </aside>
 

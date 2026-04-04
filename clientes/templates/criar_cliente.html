@@ -18,13 +18,13 @@
 
 {% block content %}
 <div class="create-page">
-    <section class="surface create-intro reveal">
+    <section class="surface create-intro">
         <div class="section-head">
             <div>
                 <h1 class="intro-title">{% if editar %}Editar cliente{% else %}Novo cliente{% endif %}</h1>
                 <p class="intro-note">
                     {% if editar %}
-                        Atualize os dados do cadastro com o mesmo fluxo da criacao.
+                        Atualize os dados do cadastro com o mesmo fluxo da criação.
                     {% else %}
                         Cadastro direto e objetivo.
                     {% endif %}
@@ -33,7 +33,7 @@
         </div>
     </section>
 
-    <section class="surface form-panel reveal" style="--delay:.06s">
+    <section class="surface form-panel">
         {% include "partials/form_feedback.html" with success=success form=form success_title="Cliente salvo." success_copy="O cadastro foi registrado." only %}
 
         <form class="client-form" method="post">
@@ -41,7 +41,7 @@
 
             <section class="form-group">
                 <div class="group-head">
-                    <h2 class="group-title">Identificacao</h2>
+                    <h2 class="group-title">Identificação</h2>
                 </div>
 
                 <div class="form-grid">
@@ -57,6 +57,14 @@
                         <label for="{{ form.cpf.id_for_label }}">CPF / CNPJ</label>
                         {{ form.cpf }}
                         {% for error in form.cpf.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field {% if form.tipo_cliente.errors %}has-error{% endif %}">
+                        <label for="{{ form.tipo_cliente.id_for_label }}">Tipo de cliente</label>
+                        {{ form.tipo_cliente }}
+                        {% for error in form.tipo_cliente.errors %}
                             <div class="field-error">{{ error }}</div>
                         {% endfor %}
                     </div>
@@ -89,7 +97,7 @@
 
             <section class="form-group">
                 <div class="group-head">
-                    <h2 class="group-title">Observacoes</h2>
+                    <h2 class="group-title">Observações</h2>
                 </div>
 
                 <div class="form-grid">
