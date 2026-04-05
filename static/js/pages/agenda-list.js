@@ -231,7 +231,7 @@
                 + '<div class="side-top">'
                 + '  <div>'
                 + '    <h3 class="side-title">' + event.title + '</h3>'
-                + '    <p class="side-time">' + formatDate(event.startDate) + ' â€¢ ' + formatTime(event.startDate) + '</p>'
+                + '    <p class="side-time">' + formatDate(event.startDate) + ' &bull; ' + formatTime(event.startDate) + '</p>'
                 + '  </div>'
                 + '  <span class="status-badge ' + statusClass + '">' + (event.status || "Ativo") + '</span>'
                 + '</div>'

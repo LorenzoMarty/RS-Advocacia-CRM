@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static access %}
 
 {% block title %}RS Advocacia | Excluir {{ registro_tipo|capfirst }}{% endblock %}
 {% block topbar_label %}Excluir{% endblock %}
@@ -9,7 +9,9 @@
 {% endblock %}
 
 {% block topbar_actions %}
-    <a class="btn btn-secondary" href="{{ voltar_url }}">Voltar</a>
+    {% if not voltar_permission or request|has_perm:voltar_permission %}
+        <a class="btn btn-secondary" href="{{ voltar_url }}">Voltar</a>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -25,9 +27,9 @@
 
     <section class="surface confirm-panel">
         <div class="confirm-box">
-            <div class="confirm-alert">
-                <strong>Ação irreversível.</strong>
-                <p>Depois da confirmação, este {{ registro_tipo }} não poderá ser recuperado pela interface.</p>
+            <div class="confirm-alert{% if confirm_blocked %} is-blocked{% endif %}">
+                <strong>{{ confirm_alert_title|default:"Ação irreversível." }}</strong>
+                <p>{{ confirm_alert_copy|default:"Depois da confirmação, este registro não poderá ser recuperado pela interface." }}</p>
             </div>
 
             <div class="confirm-meta">
@@ -38,13 +40,23 @@
                 {% endif %}
             </div>
 
-            <form method="post">
-                {% csrf_token %}
+            {% if confirm_blocked %}
                 <div class="confirm-actions">
-                    <button class="btn btn-danger" type="submit">Confirmar exclusão</button>
-                    <a class="btn btn-secondary" href="{{ voltar_url }}">Cancelar</a>
+                    {% if not voltar_permission or request|has_perm:voltar_permission %}
+                        <a class="btn btn-secondary" href="{{ voltar_url }}">Voltar</a>
+                    {% endif %}
                 </div>
-            </form>
+            {% else %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="confirm-actions">
+                        <button class="btn btn-danger" type="submit">Confirmar exclusão</button>
+                        {% if not voltar_permission or request|has_perm:voltar_permission %}
+                            <a class="btn btn-secondary" href="{{ voltar_url }}">Cancelar</a>
+                        {% endif %}
+                    </div>
+                </form>
+            {% endif %}
         </div>
     </section>
 </div>

@@ -48,6 +48,11 @@
         line-height:1.6;
     }
 
+    .confirm-alert.is-blocked{
+        border-color:rgba(194,154,99,.22);
+        background:rgba(194,154,99,.08);
+    }
+
     .confirm-meta{
         display:grid;
         gap:10px;

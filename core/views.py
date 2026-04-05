@@ -2,9 +2,15 @@ from django.shortcuts import render
 from datetime import date
 from agenda.models import Evento
 from clientes.models import Cliente
+from core.permissions import app_permissions_required
 from processos.models import Processo
 
 # Create your views here.
+@app_permissions_required(
+    "agenda.view_evento",
+    "clientes.view_cliente",
+    "processos.view_processo",
+)
 def dashboard(request):
     hoje = date.today()
 

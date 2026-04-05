@@ -1,4 +1,4 @@
-{% load static %}
+{% load static navigation access %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -29,13 +29,18 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+    {% get_home_navigation_url as home_navigation_url %}
+    <div class="ambient-light" aria-hidden="true">
+        <span class="ambient-light__blob ambient-light__blob--gold"></span>
+        <span class="ambient-light__blob ambient-light__blob--blue"></span>
+    </div>
     <div class="shell">
         <aside class="sidebar" id="app-sidebar" aria-label="Navegação principal">
             <button class="sidebar-toggle-clean" type="button" aria-controls="app-sidebar" aria-expanded="true" aria-label="Recolher sidebar" title="Recolher sidebar" data-sidebar-toggle>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>
             </button>
             <div class="sidebar-scroll">
-                <a class="brand" href="{% url 'dashboard' %}" aria-label="Ir para o dashboard" title="Dashboard">
+                <a class="brand" href="{{ home_navigation_url }}" aria-label="Ir para a área inicial" title="Início">
                     <div class="brand-mark" aria-hidden="true">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="m19 8 3 8a5 5 0 0 1-6 0z"></path><path d="m5 8 3 8a5 5 0 0 1-6 0z"></path><path d="M3 7h18"></path><path d="M7 21h10"></path></svg>
                     </div>
@@ -45,6 +50,44 @@
                 </a>
 
                 {% include "partials/sidebar_navigation.html" %}
+
+                {% if request.user.is_authenticated or usuario_logado %}
+                    <div class="sidebar-footer">
+                        <div class="profile sidebar-profile">
+                            <div class="avatar">
+                                {% if usuario_logado %}
+                                    {{ usuario_logado.nome|first|upper }}
+                                {% elif request.user.is_authenticated %}
+                                    {{ request.user.get_full_name|default:request.user.username|first|upper }}
+                                {% else %}
+                                    RS
+                                {% endif %}
+                            </div>
+                            <div class="profile-copy">
+                                <strong>
+                                    {% if usuario_logado %}
+                                        {{ usuario_logado.nome }}
+                                    {% elif request.user.is_authenticated %}
+                                        {{ request.user.get_full_name|default:request.user.username }}
+                                    {% else %}
+                                        RS Advocacia
+                                    {% endif %}
+                                </strong>
+                                <span>{% now "d/m/Y" %}</span>
+                            </div>
+                        </div>
+
+                        <a class="nav-link sidebar-logout" href="{% url 'logout' %}" aria-label="Sair" title="Sair">
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m16 17 5-5-5-5"></path>
+                                    <path d="M21 12H9"></path>
+                                    <path d="M13 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path>
+                                </svg>
+                            </span>
+                        </a>
+                    </div>
+                {% endif %}
 
             </div>
         </aside>
@@ -67,22 +110,60 @@
 
                         <div class="topbar-actions">
                             {% block topbar_actions %}
-                                <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
-                                <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
+                                {% if request|has_perm:"agenda.view_evento" %}
+                                    <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
+                                {% endif %}
+                                {% if request|has_perm:"agenda.add_evento" %}
+                                    <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
+                                {% endif %}
                             {% endblock %}
                         </div>
 
-                        <div class="profile">
-                            <div class="avatar">{% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.username|first|upper }}{% else %}RS{% endif %}</div>
+                        <div class="profile topbar-profile-mobile">
+                            <div class="avatar">
+                                {% if usuario_logado %}
+                                    {{ usuario_logado.nome|first|upper }}
+                                {% elif request.user.is_authenticated %}
+                                    {{ request.user.get_full_name|default:request.user.username|first|upper }}
+                                {% else %}
+                                    RS
+                                {% endif %}
+                            </div>
                             <div class="profile-copy">
-                                <strong>{% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.username }}{% else %}RS Advocacia{% endif %}</strong>
+                                <strong>
+                                    {% if usuario_logado %}
+                                        {{ usuario_logado.nome }}
+                                    {% elif request.user.is_authenticated %}
+                                        {{ request.user.get_full_name|default:request.user.username }}
+                                    {% else %}
+                                        RS Advocacia
+                                    {% endif %}
+                                </strong>
                                 <span>{% now "d/m/Y" %}</span>
                             </div>
                         </div>
+
+                        {% if request.user.is_authenticated or usuario_logado %}
+                            <a class="topbar-icon-link logout-link topbar-logout-mobile" href="{% url 'logout' %}" aria-label="Sair" title="Sair">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="m16 17 5-5-5-5"></path>
+                                    <path d="M21 12H9"></path>
+                                    <path d="M13 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path>
+                                </svg>
+                                <span class="sr-only">Sair</span>
+                            </a>
+                        {% endif %}
                     </div>
                 </header>
 
                 <main class="main">
+                    {% if messages %}
+                        <div class="flash-stack" aria-live="polite" aria-label="Mensagens do sistema">
+                            {% for message in messages %}
+                                <div class="flash flash-{{ message.tags|default:'info' }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                     {% block content %}{% endblock %}
                 </main>
             </div>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static access clientes_extras %}
 
 {% block title %}RS Advocacia | {{ cliente.nome }}{% endblock %}
 {% block topbar_label %}Cliente{% endblock %}
@@ -9,11 +9,6 @@
 {% endblock %}
 
 {% block topbar_actions %}
-    <a class="btn btn-secondary" href="{% url 'listar_clientes' %}">Clientes</a>
-    <a class="btn btn-secondary" href="{% url 'editar_cliente' cliente.id %}">Editar</a>
-    <a class="btn btn-danger" href="{% url 'excluir_cliente' cliente.id %}">Excluir</a>
-    <a class="btn btn-secondary" href="{% url 'criar_processo' %}">Processo</a>
-    <a class="btn" href="{% url 'criar_evento' %}">Compromisso</a>
 {% endblock %}
 
 {% block content %}
@@ -54,7 +49,7 @@
                 <div class="detail-grid">
                     <article class="detail-item">
                         <span>Documento</span>
-                        <strong>{{ cliente.cpf }}</strong>
+                        <strong>{{ cliente.cpf|format_document }}</strong>
                     </article>
                     <article class="detail-item">
                         <span>Telefone</span>
@@ -87,7 +82,11 @@
                     {% for processo in processos %}
                         {% with status=processo.status|default:''|lower %}
                             <article class="process-item">
+                                {% if request|has_perm:"processos.view_processo" %}
                                 <a class="process-link" href="{% url 'detalhes_processo' processo.id %}">
+                                {% else %}
+                                <div class="process-link">
+                                {% endif %}
                                     <div class="list-top">
                                         <div>
                                             <h3 class="list-title">{{ processo.numero_processo }}</h3>
@@ -111,7 +110,11 @@
                                         <span class="meta-chip">{{ processo.advogado_responsavel }}</span>
                                         <span class="meta-chip">{{ processo.vara }}</span>
                                     </div>
+                                {% if request|has_perm:"processos.view_processo" %}
                                 </a>
+                                {% else %}
+                                </div>
+                                {% endif %}
                             </article>
                         {% endwith %}
                     {% empty %}
@@ -119,7 +122,9 @@
                             <strong>Sem processos.</strong>
                             <p>Crie um novo registro para este cliente.</p>
                             <div class="empty-actions">
-                                <a class="btn" href="{% url 'criar_processo' %}">Novo processo</a>
+                                {% if request|has_perm:"processos.add_processo" %}
+                                    <a class="btn" href="{% url 'criar_processo' %}?cliente={{ cliente.id }}">Novo processo</a>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
@@ -173,7 +178,9 @@
                             <strong>Sem compromissos.</strong>
                             <p>Agende um novo evento para este cliente.</p>
                             <div class="empty-actions">
-                                <a class="btn" href="{% url 'criar_evento' %}">Novo compromisso</a>
+                                {% if request|has_perm:"agenda.add_evento" %}
+                                    <a class="btn" href="{% url 'criar_evento' %}?cliente={{ cliente.id }}">Novo compromisso</a>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}

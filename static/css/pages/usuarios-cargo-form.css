@@ -1,0 +1,231 @@
+.cargo-form-page{
+    display:grid;
+    gap:18px;
+}
+
+.intro-grid{
+    display:grid;
+    gap:14px;
+}
+
+.intro-link{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    width:fit-content;
+    color:var(--muted);
+    font-size:.76rem;
+    font-weight:700;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+}
+
+.cargo-intro,
+.cargo-panel{
+    padding:22px;
+}
+
+.intro-title{
+    margin:0;
+    font-family:var(--serif);
+    font-size:clamp(2.4rem, 4vw, 3.3rem);
+    line-height:.96;
+    font-weight:400;
+    letter-spacing:-.06em;
+}
+
+.intro-note{
+    margin:10px 0 0;
+    max-width:56ch;
+    color:var(--soft);
+    font-size:.96rem;
+    line-height:1.6;
+}
+
+.cargo-form{
+    display:grid;
+    gap:18px;
+}
+
+.field{
+    display:grid;
+    gap:8px;
+}
+
+.field label{
+    color:var(--muted);
+    font-size:.74rem;
+    font-weight:700;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+}
+
+.field input{
+    width:100%;
+    min-height:48px;
+    padding:0 14px;
+    border-radius:16px;
+    border:1px solid var(--line);
+    background:var(--ghost);
+    color:var(--text);
+    outline:0;
+    transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;
+}
+
+.field input:focus{
+    border-color:rgba(194,154,99,.24);
+    background:var(--ghost-strong);
+    box-shadow:0 0 0 4px rgba(194,154,99,.08);
+}
+
+.field.has-error input,
+.permissions-panel.has-error{
+    border-color:rgba(239,122,122,.4);
+    box-shadow:0 0 0 4px rgba(239,122,122,.08);
+}
+
+.permissions-panel{
+    padding:18px;
+    border-radius:20px;
+    border:1px solid var(--line);
+    background:var(--ghost);
+}
+
+.permissions-sections{
+    display:grid;
+    gap:14px;
+}
+
+.permission-section{
+    padding:16px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.02);
+}
+
+.permission-section-head{
+    margin-bottom:12px;
+}
+
+.permission-section-title{
+    margin:0;
+    font-size:1rem;
+    line-height:1.35;
+    font-weight:600;
+}
+
+.permission-section-note{
+    margin:4px 0 0;
+    color:var(--soft);
+    font-size:.82rem;
+}
+
+.permission-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+}
+
+.permission-item{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:14px;
+    border-radius:16px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.02);
+    cursor:pointer;
+    transition:border-color .2s ease,background .2s ease,transform .2s ease;
+}
+
+.permission-item:hover{
+    transform:translateY(-1px);
+    border-color:rgba(194,154,99,.18);
+    background:rgba(194,154,99,.06);
+}
+
+.permission-item input{
+    width:18px;
+    height:18px;
+    margin-top:2px;
+    accent-color:var(--gold);
+    flex:0 0 auto;
+}
+
+.permission-copy{
+    display:grid;
+    gap:4px;
+    min-width:0;
+}
+
+.permission-copy strong{
+    display:block;
+    font-size:.92rem;
+    line-height:1.35;
+}
+
+.permission-copy span{
+    color:var(--soft);
+    font-size:.8rem;
+    line-height:1.45;
+    text-transform:capitalize;
+}
+
+.selection-empty{
+    padding:14px;
+    border-radius:16px;
+    border:1px dashed var(--line);
+    color:var(--soft);
+    font-size:.84rem;
+    line-height:1.55;
+}
+
+.field-error{
+    color:var(--danger);
+    font-size:.82rem;
+    line-height:1.45;
+}
+
+.form-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+html[data-theme="light"] .permissions-panel,
+html[data-theme="light"] .permission-section{
+    background:rgba(24,30,42,.04);
+    border-color:rgba(30,34,45,.1);
+}
+
+@media (max-width:720px){
+    .cargo-intro,
+    .cargo-panel{
+        padding:16px;
+    }
+
+    .intro-link{
+        gap:6px;
+        font-size:.68rem;
+        letter-spacing:.12em;
+    }
+
+    .intro-title{
+        font-size:clamp(2rem, 10vw, 2.5rem);
+    }
+
+    .intro-note{
+        margin-top:8px;
+        font-size:.86rem;
+        line-height:1.5;
+    }
+
+    .permission-grid{
+        grid-template-columns:1fr;
+    }
+
+    .form-actions .btn,
+    .form-actions .btn-secondary{
+        width:100%;
+    }
+}

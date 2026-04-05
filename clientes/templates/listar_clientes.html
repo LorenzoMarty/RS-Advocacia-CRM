@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static access clientes_extras %}
 
 {% block title %}RS Advocacia | Clientes{% endblock %}
 {% block topbar_label %}Clientes{% endblock %}
@@ -19,7 +19,7 @@
                 <h1 class="intro-title">Clientes</h1>
                 <p class="section-note">Gerencie seus clientes</p>
             </div>
-            <span class="badge gold">{{ clientes|length }} registros</span>
+            <span class="badge gold" data-list-count>{{ clientes|length }} registros</span>
         </div>
 
         <form class="list-intro-toolbar clients-intro-toolbar" method="get" data-client-filters-form>
@@ -41,7 +41,9 @@
                 </div>
             </div>
 
-            <a class="btn list-intro-action" href="{{ create_url }}">Novo</a>
+            {% if request|has_perm:"clientes.add_cliente" %}
+                <a class="btn list-intro-action" href="{{ create_url }}">Novo</a>
+            {% endif %}
         </form>
     </section>
 
@@ -57,13 +59,13 @@
             <div class="clients-list">
                 {% for cliente in clientes %}
                     {% with processo_count=cliente.processo_set.count %}
-                        <article class="client-row">
+                        <article class="client-row" data-client-row data-client-type="{{ cliente.tipo_cliente }}">
                             <div class="client-avatar" aria-hidden="true">{{ cliente.nome|first|upper }}</div>
 
                             <div class="client-main">
                                 <h2 class="client-name">{{ cliente.nome }}</h2>
                                 <span class="client-tier client-tier-{{ cliente.tipo_cliente }}">{{ cliente.get_tipo_cliente_display }}</span>
-                                <span class="client-doc">CPF {{ cliente.cpf }}</span>
+                                <span class="client-doc">{{ cliente.cpf|document_label }} {{ cliente.cpf|format_document }}</span>
                             </div>
 
                             <div class="client-contact">
@@ -80,10 +82,28 @@
 
                             <div class="client-actions">
                                 <a class="action-link" href="{% url 'detalhes_cliente' cliente.id %}">Ver</a>
+                                {% if request|has_perm:"clientes.change_cliente" %}
+                                    <a class="action-link" href="{% url 'editar_cliente' cliente.id %}">Editar</a>
+                                {% endif %}
+                                {% if request|has_perm:"clientes.delete_cliente" %}
+                                    <a class="action-link action-link-danger" href="{% url 'excluir_cliente' cliente.id %}">Excluir</a>
+                                {% endif %}
                             </div>
                         </article>
                     {% endwith %}
                 {% endfor %}
+            </div>
+
+            <div class="empty-state" data-client-empty hidden>
+                <div class="empty">
+                    <strong>Nenhum cliente encontrado.</strong>
+                    <p>Ajuste a busca ou troque o tipo selecionado.</p>
+                    {% if request|has_perm:"clientes.add_cliente" %}
+                        <div class="empty-actions">
+                            <a class="btn" href="{% url 'criar_cliente' %}">Novo</a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
 
         {% else %}
@@ -95,7 +115,9 @@
                         {% if busca or tipo_cliente != "todos" %}
                             <a class="btn btn-secondary" href="{% url 'listar_clientes' %}">Limpar filtros</a>
                         {% endif %}
-                        <a class="btn" href="{% url 'criar_cliente' %}">Novo</a>
+                        {% if request|has_perm:"clientes.add_cliente" %}
+                            <a class="btn" href="{% url 'criar_cliente' %}">Novo</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>

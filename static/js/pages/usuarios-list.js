@@ -1,14 +1,12 @@
 (function () {
-    const form = document.querySelector("[data-client-filters-form]");
-    const searchInput = document.querySelector("[data-client-search]");
-    const typeSelect = document.querySelector("[data-client-type-filter]");
-    const head = document.querySelector(".list-head");
-    const list = document.querySelector(".clients-list");
-    const emptyState = document.querySelector("[data-client-empty]");
+    const searchInput = document.querySelector("[data-page-search]");
+    const head = document.querySelector(".users-head");
+    const list = document.querySelector(".users-list");
+    const emptyState = document.querySelector("[data-user-empty]");
     const countBadge = document.querySelector("[data-list-count]");
-    const rows = Array.from(document.querySelectorAll("[data-client-row]"));
+    const rows = Array.from(document.querySelectorAll("[data-user-row]"));
 
-    if (!form || !searchInput || !typeSelect) {
+    if (!searchInput) {
         return;
     }
 
@@ -31,14 +29,10 @@
 
     function applyFilters() {
         const search = normalize(searchInput.value);
-        const type = normalize(typeSelect.value);
         let visibleCount = 0;
 
         rows.forEach(function (row) {
-            const matchesSearch = !search || normalize(row.textContent).includes(search);
-            const matchesType = !type || type === "todos" || normalize(row.dataset.clientType) === type;
-            const isVisible = matchesSearch && matchesType;
-
+            const isVisible = !search || normalize(row.textContent).includes(search);
             row.hidden = !isVisible;
 
             if (isVisible) {
@@ -61,14 +55,8 @@
         updateCount(visibleCount);
     }
 
-    form.addEventListener("submit", function (event) {
-        event.preventDefault();
-        applyFilters();
-    });
-
     searchInput.addEventListener("input", applyFilters);
     searchInput.addEventListener("search", applyFilters);
-    typeSelect.addEventListener("change", applyFilters);
 
     applyFilters();
 }());

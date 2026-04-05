@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static access %}
 
 {% block title %}RS Advocacia | {{ usuario.nome }}{% endblock %}
 {% block topbar_label %}Usuário{% endblock %}
@@ -9,10 +9,6 @@
 {% endblock %}
 
 {% block topbar_actions %}
-    <a class="btn btn-secondary" href="{% url 'listar_usuarios' %}">Usuários</a>
-    <a class="btn btn-secondary" href="{% url 'editar_usuario' usuario.id %}">Editar</a>
-    <a class="btn btn-danger" href="{% url 'excluir_usuario' usuario.id %}">Excluir</a>
-    <a class="btn" href="{% url 'criar_usuario' %}">Novo</a>
 {% endblock %}
 
 {% block content %}
@@ -34,25 +30,21 @@
                     </div>
                 </div>
 
-                <div class="identity-meta">
-                    <span class="meta-pill role-pill">{{ usuario.get_cargo_display }}</span>
-                </div>
+                <aside class="hero-summary">
+                    <article class="summary-card">
+                        <span>Perfil</span>
+                        <strong>{{ usuario.cargo_label }}</strong>
+                    </article>
+                    <article class="summary-card">
+                        <span>Processos</span>
+                        <strong>{{ processos|default:''|length }}</strong>
+                    </article>
+                    <article class="summary-card">
+                        <span>Agenda</span>
+                        <strong>{{ eventos|default:''|length }}</strong>
+                    </article>
+                </aside>
             </div>
-
-            <aside class="hero-summary">
-                <article class="summary-card">
-                    <span>Perfil</span>
-                    <strong>{{ usuario.get_cargo_display }}</strong>
-                </article>
-                <article class="summary-card">
-                    <span>Processos</span>
-                    <strong>{{ processos|default:''|length }}</strong>
-                </article>
-                <article class="summary-card">
-                    <span>Agenda</span>
-                    <strong>{{ eventos|default:''|length }}</strong>
-                </article>
-            </aside>
         </div>
     </section>
 
@@ -77,80 +69,95 @@
                     </article>
                     <article class="detail-item">
                         <span>Cargo</span>
-                        <strong>{{ usuario.get_cargo_display }}</strong>
+                        <strong>{{ usuario.cargo_label }}</strong>
                     </article>
                 </div>
             </section>
 
             {% if processos %}
-                <section class="surface section-card">
-                    <div class="section-head">
-                        <div>
-                            <h2 class="section-title">Processos</h2>
-                            <p class="section-note">{{ processos|length }} registro{{ processos|length|pluralize }}</p>
-                        </div>
+            <section class="surface section-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Processos</h2>
+                        <p class="section-note">{{ processos|length }} registro{{ processos|length|pluralize }}</p>
                     </div>
+                </div>
 
-                    <div class="related-list">
-                        {% for processo in processos %}
-                            <article class="related-item">
-                                <h3 class="related-title">{{ processo.numero_processo }}</h3>
-                                <p class="related-copy">{{ processo.cliente.nome }}</p>
-                                <div class="related-meta">
-                                    {% if processo.area_juridica %}
-                                        <span class="meta-chip">{{ processo.area_juridica }}</span>
-                                    {% endif %}
-                                    {% if processo.status %}
-                                        <span class="meta-chip">{{ processo.status }}</span>
-                                    {% endif %}
-                                </div>
-                            </article>
-                        {% endfor %}
-                    </div>
-                </section>
+                <div class="related-list">
+                    {% for processo in processos %}
+                    <article class="related-item">
+                        <h3 class="related-title">{{ processo.numero_processo }}</h3>
+                        <p class="related-copy">{{ processo.cliente.nome }}</p>
+                        <div class="related-meta">
+                            {% if processo.area_juridica %}
+                            <span class="meta-chip">{{ processo.area_juridica }}</span>
+                            {% endif %}
+                            {% if processo.status %}
+                            <span class="meta-chip">{{ processo.status }}</span>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
             {% endif %}
         </div>
 
         <div class="stack">
             {% if eventos %}
-                <section class="surface section-card">
-                    <div class="section-head">
-                        <div>
-                            <h2 class="section-title">Compromissos</h2>
-                            <p class="section-note">{{ eventos|length }} registro{{ eventos|length|pluralize }}</p>
-                        </div>
+            <section class="surface section-card">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Compromissos</h2>
+                        <p class="section-note">{{ eventos|length }} registro{{ eventos|length|pluralize }}</p>
                     </div>
+                </div>
 
-                    <div class="related-list">
-                        {% for evento in eventos %}
-                            <article class="related-item">
-                                <h3 class="related-title">{{ evento.titulo }}</h3>
-                                <p class="related-copy">{{ evento.data_inicio|date:"d/m/Y" }} as {{ evento.data_inicio|date:"H:i" }}</p>
-                                <div class="related-meta">
-                                    {% if evento.tipo_evento %}
-                                        <span class="meta-chip">{{ evento.tipo_evento }}</span>
-                                    {% endif %}
-                                    {% if evento.status %}
-                                        <span class="meta-chip">{{ evento.status }}</span>
-                                    {% endif %}
-                                </div>
-                            </article>
-                        {% endfor %}
-                    </div>
-                </section>
+                <div class="related-list">
+                    {% for evento in eventos %}
+                    <article class="related-item">
+                        <h3 class="related-title">{{ evento.titulo }}</h3>
+                        <p class="related-copy">{{ evento.data_inicio|date:"d/m/Y" }} as {{ evento.data_inicio|date:"H:i" }}</p>
+                        <div class="related-meta">
+                            {% if evento.tipo_evento %}
+                            <span class="meta-chip">{{ evento.tipo_evento }}</span>
+                            {% endif %}
+                            {% if evento.status %}
+                            <span class="meta-chip">{{ evento.status }}</span>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
             {% endif %}
 
             <section class="surface section-card">
                 <div class="section-head">
                     <div>
-                        <h2 class="section-title">Perfil</h2>
-                        <p class="section-note">Sistema</p>
+                        <h2 class="section-title">Cargo</h2>
+                        <p class="section-note">Permissões vinculadas</p>
                     </div>
                 </div>
 
-                <div class="note-box">
-                    {{ usuario.get_cargo_display }}
+                {% if cargos %}
+                <div class="cargo-list">
+                    {% for cargo in cargos %}
+                    {% if request|has_perm:"auth.view_group" %}
+                    <a class="meta-chip cargo-chip" href="{% url 'detalhes_cargo' cargo.id %}">{{ cargo.name }}</a>
+                    {% else %}
+                    <span class="meta-chip cargo-chip">{{ cargo.name }}</span>
+                    {% endif %}
+                    {% endfor %}
                 </div>
+                <div class="note-box">
+                    {{ permissoes_total }} permissões herdadas pelo cargo atribuído a este usuário.
+                </div>
+                {% else %}
+                <div class="note-box">
+                    Este usuário ainda não possui um cargo vinculado.
+                </div>
+                {% endif %}
             </section>
         </div>
     </div>

@@ -59,6 +59,8 @@
     --sidebar-toggle-border-hover:rgba(194,154,99,.18);
     --sidebar-toggle-shadow:0 12px 24px rgba(0,0,0,.2);
     --sidebar-toggle-icon-color:rgba(246,241,232,.72);
+    --ambient-light-gold:#d4af7f;
+    --ambient-light-blue:#4f6cff;
 }
 
 html[data-theme="light"]{
@@ -111,4 +113,6 @@ html[data-theme="light"]{
     --sidebar-toggle-border-hover:rgba(181,138,79,.18);
     --sidebar-toggle-shadow:0 10px 22px rgba(58,44,20,.12);
     --sidebar-toggle-icon-color:rgba(22,24,31,.72);
+    --ambient-light-gold:#d4af7f;
+    --ambient-light-blue:#4f6cff;
 }

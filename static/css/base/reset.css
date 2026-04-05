@@ -12,23 +12,6 @@ body{
     transition:background .22s ease,color .22s ease;
 }
 
-body::before,
-body::after{
-    content:"";
-    position:fixed;
-    width:22rem;
-    height:22rem;
-    border-radius:999px;
-    filter:blur(110px);
-    opacity:.22;
-    pointer-events:none;
-    z-index:0;
-    animation:float 22s ease-in-out infinite alternate;
-}
-
-body::before{top:-10rem;left:-8rem;background:rgba(194,154,99,.12)}
-body::after{right:-10rem;bottom:-12rem;background:rgba(92,106,144,.14);animation-duration:28s}
-
 a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit}
 button{border:0;padding:0;background:transparent;color:inherit;cursor:pointer}

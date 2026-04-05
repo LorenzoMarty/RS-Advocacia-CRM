@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static access %}
 
 {% block title %}RS Advocacia | {{ processo.numero_processo }}{% endblock %}
 {% block topbar_label %}Processo{% endblock %}
@@ -9,11 +9,6 @@
 {% endblock %}
 
 {% block topbar_actions %}
-<a class="btn btn-secondary" href="{% url 'listar_processos' %}">Processos</a>
-<a class="btn btn-secondary" href="{% url 'editar_processo' processo.id %}">Editar</a>
-<a class="btn btn-danger" href="{% url 'excluir_processo' processo.id %}">Excluir</a>
-<a class="btn btn-secondary" href="{% url 'detalhes_cliente' processo.cliente.id %}">Cliente</a>
-<a class="btn" href="{% url 'criar_evento' %}?processo={{ processo.id }}&cliente={{ processo.cliente.id }}">Compromisso</a>
 {% endblock %}
 
 {% block content %}
@@ -80,7 +75,11 @@
                     </article>
                     <article class="detail-item">
                         <span>Cliente</span>
-                        <a href="{% url 'detalhes_cliente' processo.cliente.id %}">{{ processo.cliente.nome }}</a>
+                        {% if request|has_perm:"clientes.view_cliente" %}
+                            <a href="{% url 'detalhes_cliente' processo.cliente.id %}">{{ processo.cliente.nome }}</a>
+                        {% else %}
+                            <strong>{{ processo.cliente.nome }}</strong>
+                        {% endif %}
                     </article>
                     <article class="detail-item">
                         <span>Área</span>
@@ -158,7 +157,9 @@
                         <strong>Sem compromissos.</strong>
                         <p>Adicione um novo evento para este processo.</p>
                         <div class="empty-actions">
-                            <a class="btn" href="{% url 'criar_evento' %}">Novo compromisso</a>
+                            {% if request|has_perm:"agenda.add_evento" %}
+                                <a class="btn" href="{% url 'criar_evento' %}">Novo compromisso</a>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
@@ -190,7 +191,9 @@
                     </div>
 
                     <div class="empty-actions">
-                        <a class="btn btn-secondary" href="{% url 'detalhes_cliente' processo.cliente.id %}">Ver cliente</a>
+                        {% if request|has_perm:"clientes.view_cliente" %}
+                            <a class="btn btn-secondary" href="{% url 'detalhes_cliente' processo.cliente.id %}">Ver cliente</a>
+                        {% endif %}
                     </div>
                 </article>
             </section>

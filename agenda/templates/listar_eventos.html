@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static access %}
 
 {% block title %}RS Advocacia | Agenda{% endblock %}
 {% block topbar_label %}Agenda{% endblock %}
@@ -46,7 +46,9 @@
                 </div>
             </div>
 
-            <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
+            {% if request|has_perm:"agenda.add_evento" %}
+                <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
+            {% endif %}
         </div>
     </section>
 

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static access %}
 
 {% block title %}RS Advocacia | {{ evento.titulo }}{% endblock %}
 {% block topbar_label %}Evento{% endblock %}
@@ -9,10 +9,18 @@
 {% endblock %}
 
 {% block topbar_actions %}
-    <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
-    <a class="btn btn-secondary" href="{% url 'editar_evento' evento.id %}">Editar</a>
-    <a class="btn btn-danger" href="{% url 'excluir_evento' evento.id %}">Excluir</a>
-    <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
+    {% if request|has_perm:"agenda.view_evento" %}
+        <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
+    {% endif %}
+    {% if request|has_perm:"agenda.change_evento" %}
+        <a class="btn btn-secondary" href="{% url 'editar_evento' evento.id %}">Editar</a>
+    {% endif %}
+    {% if request|has_perm:"agenda.delete_evento" %}
+        <a class="btn btn-danger" href="{% url 'excluir_evento' evento.id %}">Excluir</a>
+    {% endif %}
+    {% if request|has_perm:"agenda.add_evento" %}
+        <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -183,7 +191,7 @@
                 </div>
 
                 <div class="stack">
-                    {% if cliente %}
+                    {% if cliente and request|has_perm:"clientes.view_cliente" %}
                         <a class="link-card" href="{% url 'detalhes_cliente' cliente.id %}">
                             <div class="link-head">
                                 <div class="link-mark" aria-hidden="true">{{ cliente.nome|first|upper }}</div>
@@ -204,7 +212,7 @@
                         </a>
                     {% endif %}
 
-                    {% if processo %}
+                    {% if processo and request|has_perm:"processos.view_processo" %}
                         <a class="link-card" href="{% url 'detalhes_processo' processo.id %}">
                             <div class="link-head">
                                 <div class="link-mark" aria-hidden="true">PJ</div>

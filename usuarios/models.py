@@ -11,9 +11,13 @@ class Usuario(models.Model):
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     senha = models.CharField(max_length=100)
-    cargo = models.CharField(max_length=50, choices=TIPOS)
+    cargo = models.CharField(max_length=50)
     foto = models.ImageField(upload_to='fotos_usuarios/', blank=True)
     OAB = models.CharField(max_length=20, blank=True, null=True)
+
+    @property
+    def cargo_label(self):
+        return dict(self.TIPOS).get(self.cargo, self.cargo)
 
     def __str__(self):
         return self.nome

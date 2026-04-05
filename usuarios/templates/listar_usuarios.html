@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static access %}
 
 {% block title %}RS Advocacia | Usuários{% endblock %}
 {% block topbar_label %}Usuários{% endblock %}
@@ -13,7 +13,8 @@
 {% block content %}
 <div class="users-page">
     {% url 'criar_usuario' as create_url %}
-    {% include "partials/list_intro.html" with intro_class="users-intro" title="Usuários" note="Equipe" count=usuarios|length action_url=create_url action_label="Novo" %}
+    {% url 'listar_cargos' as cargos_url %}
+    {% include "partials/list_intro.html" with intro_class="users-intro" title="Usuários" note="Equipe" count=usuarios|length action_url=create_url action_label="Novo" action_permission="usuarios.add_usuario" secondary_action_url=cargos_url secondary_action_label="Cargos" secondary_action_permission="auth.view_group" %}
 
     <section class="surface users-panel">
         {% if usuarios %}
@@ -26,7 +27,7 @@
 
             <div class="users-list">
                 {% for usuario in usuarios %}
-                    <article class="user-row">
+                    <article class="user-row" data-user-row>
                         <div class="user-avatar" aria-hidden="true">
                             {{ usuario.nome|first|upper }}
                         </div>
@@ -43,26 +44,50 @@
                         </div>
 
                         <div class="user-role">
-                            <span class="role-badge">{{ usuario.get_cargo_display }}</span>
+                            <span class="role-badge">{{ usuario.cargo_label }}</span>
                         </div>
 
                         <div class="user-actions">
                             <a class="action-link" href="{% url 'detalhes_usuario' usuario.id %}">Ver</a>
+                            {% if request|has_perm:"usuarios.change_usuario" %}
+                                <a class="action-link" href="{% url 'editar_usuario' usuario.id %}">Editar</a>
+                            {% endif %}
+                            {% if request|has_perm:"usuarios.delete_usuario" %}
+                                <a class="action-link action-link-danger" href="{% url 'excluir_usuario' usuario.id %}">Excluir</a>
+                            {% endif %}
                         </div>
                     </article>
                 {% endfor %}
+            </div>
+
+            <div class="empty-state" data-user-empty hidden>
+                <div class="empty">
+                    <strong>Nenhum usuário encontrado.</strong>
+                    <p>Ajuste a busca para localizar o registro desejado.</p>
+                    {% if request|has_perm:"usuarios.add_usuario" %}
+                        <div class="empty-actions">
+                            <a class="btn" href="{% url 'criar_usuario' %}">Novo</a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         {% else %}
             <div class="empty-state">
                 <div class="empty">
                     <strong>Sem usuários.</strong>
                     <p>Crie um novo cadastro.</p>
-                    <div class="empty-actions">
-                        <a class="btn" href="{% url 'criar_usuario' %}">Novo</a>
-                    </div>
+                    {% if request|has_perm:"usuarios.add_usuario" %}
+                        <div class="empty-actions">
+                            <a class="btn" href="{% url 'criar_usuario' %}">Novo</a>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         {% endif %}
     </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/pages/usuarios-list.js' %}" defer></script>
 {% endblock %}

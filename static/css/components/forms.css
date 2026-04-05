@@ -9,6 +9,14 @@
     align-items:end;
 }
 
+.list-intro-actions{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
 .list-intro-toolbar .page-search-inline{
     width:min(100%, 420px);
 }

@@ -95,6 +95,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'usuarios.views.current_usuario',
             ],
             'libraries': {
                 'navigation': 'core.templatetags.navigation',
@@ -165,3 +166,8 @@ if not DEBUG:
             'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
         }
     }
+
+# Auth redirects
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'  # para onde vai após login
+LOGOUT_REDIRECT_URL = 'login'     # para onde vai após logout

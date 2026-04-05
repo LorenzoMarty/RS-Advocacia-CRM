@@ -4,6 +4,54 @@
     min-height:100vh;
 }
 
+.ambient-light{
+    position:fixed;
+    inset:0;
+    overflow:hidden;
+    pointer-events:none;
+    z-index:0;
+    display:none;
+}
+
+html[data-theme="dark"] .ambient-light{
+    display:block;
+}
+
+.ambient-light__blob{
+    position:absolute;
+    width:420px;
+    height:420px;
+    border-radius:999px;
+    filter:blur(120px);
+    opacity:.08;
+    transform:translate3d(0,0,0);
+    transform-origin:center center;
+    backface-visibility:hidden;
+    will-change:transform;
+}
+
+.ambient-light__blob--gold{
+    top:10%;
+    left:8%;
+    background:var(--ambient-light-gold);
+    animation:ambient-float-a 16s ease-in-out infinite;
+}
+
+.ambient-light__blob--blue{
+    top:55%;
+    right:10%;
+    background:var(--ambient-light-blue);
+    animation:ambient-float-b 20s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce){
+    .ambient-light__blob{
+        animation:none;
+        opacity:.06;
+        transform:none;
+    }
+}
+
 .sidebar{
     display:none;
     position:fixed;

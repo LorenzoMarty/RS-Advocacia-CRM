@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static access %}
 
 {% block title %}RS Advocacia | Processos{% endblock %}
 {% block topbar_label %}Processos{% endblock %}
@@ -19,7 +19,7 @@
                 <h1 class="intro-title">Processos</h1>
                 <p class="section-note">Gerencie seus processos jurídicos</p>
             </div>
-            <span class="badge gold">{{ processos|length }} registros</span>
+            <span class="badge gold" data-list-count>{{ processos|length }} registros</span>
         </div>
 
         <form class="list-intro-toolbar" method="get" data-process-filters-form>
@@ -29,7 +29,9 @@
                     <input type="search" name="q" value="{{ busca }}" placeholder="Buscar" data-process-search>
                 </label>
             </div>
-            <a class="btn list-intro-action" href="{{ create_url }}">Novo</a>
+            {% if request|has_perm:"processos.add_processo" %}
+                <a class="btn list-intro-action" href="{{ create_url }}">Novo</a>
+            {% endif %}
         </form>
     </section>
 
@@ -46,7 +48,7 @@
             <div class="process-list">
                 {% for processo in processos %}
                     {% with status=processo.status|default:''|lower %}
-                        <article class="process-row">
+                        <article class="process-row" data-process-row>
                             <div class="process-main">
                                 <h2 class="process-number">{{ processo.numero_processo }}</h2>
                                 <span class="process-client">{{ processo.cliente.nome }}</span>
@@ -85,10 +87,28 @@
 
                             <div class="process-actions">
                                 <a class="action-link" href="{% url 'detalhes_processo' processo.id %}">Ver</a>
+                                {% if request|has_perm:"processos.change_processo" %}
+                                    <a class="action-link" href="{% url 'editar_processo' processo.id %}">Editar</a>
+                                {% endif %}
+                                {% if request|has_perm:"processos.delete_processo" %}
+                                    <a class="action-link action-link-danger" href="{% url 'excluir_processo' processo.id %}">Excluir</a>
+                                {% endif %}
                             </div>
                         </article>
                     {% endwith %}
                 {% endfor %}
+            </div>
+
+            <div class="empty-state" data-process-empty hidden>
+                <div class="empty">
+                    <strong>Nenhum processo encontrado.</strong>
+                    <p>Ajuste a busca para localizar o registro desejado.</p>
+                    {% if request|has_perm:"processos.add_processo" %}
+                        <div class="empty-actions">
+                            <a class="btn" href="{% url 'criar_processo' %}">Novo</a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         {% else %}
             <div class="empty-state">
@@ -99,7 +119,9 @@
                         {% if busca %}
                             <a class="btn btn-secondary" href="{% url 'listar_processos' %}">Limpar busca</a>
                         {% endif %}
-                        <a class="btn" href="{% url 'criar_processo' %}">Novo</a>
+                        {% if request|has_perm:"processos.add_processo" %}
+                            <a class="btn" href="{% url 'criar_processo' %}">Novo</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>

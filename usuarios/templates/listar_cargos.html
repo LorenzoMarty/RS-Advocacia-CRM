@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static access %}
+
+{% block title %}RS Advocacia | Cargos{% endblock %}
+{% block topbar_label %}Cargos{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/pages/usuarios-cargos.css' %}">
+{% endblock %}
+
+{% block topbar_actions %}{% endblock %}
+
+{% block content %}
+<div class="cargos-page">
+    <section class="surface cargos-intro">
+        <div class="section-head">
+            <div>
+                <h1 class="intro-title">Cargos</h1>
+                <p class="section-note">Perfis de acesso e permissões da operação.</p>
+            </div>
+            <span class="badge gold">{{ cargos|length }} registros</span>
+        </div>
+
+        <div class="cargos-intro-actions">
+            {% if request|has_perm:"usuarios.view_usuario" %}
+                <a class="btn btn-secondary" href="{% url 'listar_usuarios' %}">Usuários</a>
+            {% endif %}
+            {% if request|has_perm:"auth.add_group" %}
+                <a class="btn" href="{% url 'criar_cargo' %}">Novo cargo</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="surface cargos-panel">
+        {% if cargos %}
+            <div class="cargos-head" aria-hidden="true">
+                <span>Cargo</span>
+                <span>Usuários</span>
+                <span>Permissões</span>
+                <span>Apps</span>
+                <span>Ações</span>
+            </div>
+
+            <div class="cargos-list">
+                {% for cargo in cargos %}
+                    <article class="cargo-row">
+                        <div class="cargo-main">
+                            <div class="cargo-mark" aria-hidden="true">{{ cargo.name|first|upper }}</div>
+                            <div class="cargo-copy">
+                                <h2 class="cargo-name">{{ cargo.name }}</h2>
+                                <p class="cargo-note">Permissões herdadas automaticamente pelos usuários com este cargo.</p>
+                            </div>
+                        </div>
+
+                        <div class="cargo-stat cargo-users-stat">
+                            <strong>{{ cargo.usuarios_total }}</strong>
+                            <span>usuários</span>
+                        </div>
+
+                        <div class="cargo-stat cargo-permissions-stat">
+                            <strong>{{ cargo.permissoes_total }}</strong>
+                            <span>permissões</span>
+                        </div>
+
+                        <div class="cargo-apps">
+                            {% for app_label in cargo.apps %}
+                                <span class="cargo-app-chip">{{ app_label }}</span>
+                            {% empty %}
+                                <span class="cargo-app-chip is-empty">Sem permissões</span>
+                            {% endfor %}
+                        </div>
+
+                        <div class="cargo-actions">
+                            <a class="action-link" href="{% url 'detalhes_cargo' cargo.id %}">Ver</a>
+                            {% if request|has_perm:"auth.change_group" %}
+                                <a class="action-link" href="{% url 'editar_cargo' cargo.id %}">Editar</a>
+                            {% endif %}
+                            {% if request|has_perm:"auth.delete_group" %}
+                                <a class="action-link action-link-danger" href="{% url 'excluir_cargo' cargo.id %}">Excluir</a>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty">
+                    <strong>Sem cargos disponíveis.</strong>
+                    <p>Crie o primeiro cargo para começar a organizar permissões.</p>
+                    <div class="empty-actions">
+                        {% if request|has_perm:"auth.add_group" %}
+                            <a class="btn" href="{% url 'criar_cargo' %}">Novo cargo</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

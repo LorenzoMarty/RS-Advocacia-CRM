@@ -19,7 +19,7 @@
 
     .process-head{
         display:grid;
-        grid-template-columns:minmax(0, 1.45fr) minmax(220px, .9fr) minmax(170px, .8fr) 128px 88px;
+        grid-template-columns:minmax(0, 1.45fr) minmax(220px, .9fr) minmax(170px, .8fr) 128px 272px;
         gap:14px;
         padding:0 14px 12px 14px;
         color:var(--muted);
@@ -36,7 +36,7 @@
 
     .process-row{
         display:grid;
-        grid-template-columns:minmax(0, 1.45fr) minmax(220px, .9fr) minmax(170px, .8fr) 128px 88px;
+        grid-template-columns:minmax(0, 1.45fr) minmax(220px, .9fr) minmax(170px, .8fr) 128px 272px;
         gap:14px;
         align-items:center;
         padding:16px 14px;
@@ -149,6 +149,8 @@
     .process-actions{
         display:flex;
         justify-content:flex-end;
+        gap:8px;
+        flex-wrap:wrap;
     }
 
     .action-link{
@@ -170,6 +172,17 @@
         transform:translateY(-1px);
         border-color:rgba(194,154,99,.2);
         background:rgba(194,154,99,.08);
+    }
+
+    .action-link-danger{
+        color:var(--danger);
+        border-color:rgba(229,111,111,.18);
+        background:rgba(229,111,111,.08);
+    }
+
+    .action-link-danger:hover{
+        border-color:rgba(229,111,111,.26);
+        background:rgba(229,111,111,.14);
     }
 
     .empty-state{
@@ -196,6 +209,11 @@
     html[data-theme="light"] .action-link{
         background:rgba(24,30,42,.04);
         border-color:rgba(30,34,45,.1);
+    }
+
+    html[data-theme="light"] .action-link-danger{
+        background:rgba(229,111,111,.08);
+        border-color:rgba(229,111,111,.18);
     }
 
     html[data-theme="light"] .status-badge.gold{
