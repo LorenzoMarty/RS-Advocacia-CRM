@@ -35,7 +35,8 @@
         let visibleCount = 0;
 
         rows.forEach(function (row) {
-            const matchesSearch = !search || normalize(row.textContent).includes(search);
+            const searchableText = normalize(row.dataset.searchContent || "");
+            const matchesSearch = !search || searchableText.includes(search);
             const matchesType = !type || type === "todos" || normalize(row.dataset.clientType) === type;
             const isVisible = matchesSearch && matchesType;
 

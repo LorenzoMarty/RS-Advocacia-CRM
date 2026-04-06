@@ -16,6 +16,7 @@ a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit}
 button{border:0;padding:0;background:transparent;color:inherit;cursor:pointer}
 svg,img{display:block}
+[hidden]{display:none!important}
 ::selection{background:var(--selection)}
 ::-webkit-scrollbar{width:8px}
 ::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:999px}

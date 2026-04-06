@@ -59,7 +59,7 @@
             <div class="clients-list">
                 {% for cliente in clientes %}
                     {% with processo_count=cliente.processo_set.count %}
-                        <article class="client-row" data-client-row data-client-type="{{ cliente.tipo_cliente }}">
+                        <article class="client-row" data-client-row data-client-type="{{ cliente.tipo_cliente }}" data-search-content="{{ cliente.nome }} {{ cliente.email }} {{ cliente.telefone }} {{ cliente.cpf }} {{ cliente.cpf|format_document }} {{ cliente.get_tipo_cliente_display }}">
                             <div class="client-avatar" aria-hidden="true">{{ cliente.nome|first|upper }}</div>
 
                             <div class="client-main">

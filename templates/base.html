@@ -95,65 +95,67 @@
         <div class="page">
             <div class="page-wrap">
                 <header class="topbar">
-                    <div class="topbar-left">
-                        <span class="topbar-pill">{% block topbar_label %}Painel{% endblock %}</span>
-                    </div>
-
-                    <div class="topbar-right">
-                        <button class="theme-toggle" type="button" aria-label="Alternar tema" data-theme-toggle title="Alternar tema">
-                            <span class="theme-icon" aria-hidden="true">
-                                <svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5"></path><path d="M12 19.5V22"></path><path d="m4.93 4.93 1.77 1.77"></path><path d="m17.3 17.3 1.77 1.77"></path><path d="M2 12h2.5"></path><path d="M19.5 12H22"></path><path d="m4.93 19.07 1.77-1.77"></path><path d="m17.3 6.7 1.77-1.77"></path></svg>
-                                <svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 1 0 9 9 9 9 0 1 1-9-9"></path></svg>
-                            </span>
-                            <span class="sr-only">Alternar tema</span>
-                        </button>
-
-                        <div class="topbar-actions">
-                            {% block topbar_actions %}
-                                {% if request|has_perm:"agenda.view_evento" %}
-                                    <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
-                                {% endif %}
-                                {% if request|has_perm:"agenda.add_evento" %}
-                                    <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
-                                {% endif %}
-                            {% endblock %}
+                    <div class="topbar-main">
+                        <div class="topbar-side topbar-side-left">
+                            <button class="theme-toggle" type="button" aria-label="Alternar tema" data-theme-toggle title="Alternar tema">
+                                <span class="theme-icon" aria-hidden="true">
+                                    <svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5"></path><path d="M12 19.5V22"></path><path d="m4.93 4.93 1.77 1.77"></path><path d="m17.3 17.3 1.77 1.77"></path><path d="M2 12h2.5"></path><path d="M19.5 12H22"></path><path d="m4.93 19.07 1.77-1.77"></path><path d="m17.3 6.7 1.77-1.77"></path></svg>
+                                    <svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 1 0 9 9 9 9 0 1 1-9-9"></path></svg>
+                                </span>
+                                <span class="sr-only">Alternar tema</span>
+                            </button>
                         </div>
 
-                        <div class="profile topbar-profile-mobile">
-                            <div class="avatar">
-                                {% if usuario_logado %}
-                                    {{ usuario_logado.nome|first|upper }}
-                                {% elif request.user.is_authenticated %}
-                                    {{ request.user.get_full_name|default:request.user.username|first|upper }}
-                                {% else %}
-                                    RS
-                                {% endif %}
-                            </div>
-                            <div class="profile-copy">
-                                <strong>
+                        <div class="topbar-center">
+                            <span class="topbar-pill">{% block topbar_label %}Painel{% endblock %}</span>
+                        </div>
+
+                        <div class="topbar-side topbar-side-right">
+                            <div class="profile topbar-profile-mobile">
+                                <div class="avatar">
                                     {% if usuario_logado %}
-                                        {{ usuario_logado.nome }}
+                                        {{ usuario_logado.nome|first|upper }}
                                     {% elif request.user.is_authenticated %}
-                                        {{ request.user.get_full_name|default:request.user.username }}
+                                        {{ request.user.get_full_name|default:request.user.username|first|upper }}
                                     {% else %}
-                                        RS Advocacia
+                                        RS
                                     {% endif %}
-                                </strong>
-                                <span>{% now "d/m/Y" %}</span>
+                                </div>
+                                <div class="profile-copy">
+                                    <strong>
+                                        {% if usuario_logado %}
+                                            {{ usuario_logado.nome }}
+                                        {% elif request.user.is_authenticated %}
+                                            {{ request.user.get_full_name|default:request.user.username }}
+                                        {% else %}
+                                            RS Advocacia
+                                        {% endif %}
+                                    </strong>
+                                    <span>{% now "d/m/Y" %}</span>
+                                </div>
                             </div>
-                        </div>
 
-                        {% if request.user.is_authenticated or usuario_logado %}
-                            <a class="topbar-icon-link logout-link topbar-logout-mobile" href="{% url 'logout' %}" aria-label="Sair" title="Sair">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="m16 17 5-5-5-5"></path>
-                                    <path d="M21 12H9"></path>
-                                    <path d="M13 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path>
-                                </svg>
-                                <span class="sr-only">Sair</span>
-                            </a>
-                        {% endif %}
+                            {% if request.user.is_authenticated or usuario_logado %}
+                                <a class="topbar-icon-link logout-link topbar-logout-mobile" href="{% url 'logout' %}" aria-label="Sair" title="Sair">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="m16 17 5-5-5-5"></path>
+                                        <path d="M21 12H9"></path>
+                                        <path d="M13 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path>
+                                    </svg>
+                                    <span class="sr-only">Sair</span>
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
+
+                    <div class="topbar-actions">{% spaceless %}{% block topbar_actions %}
+                        {% if request|has_perm:"agenda.view_evento" %}
+                            <a class="btn btn-secondary" href="{% url 'listar_eventos' %}">Agenda</a>
+                        {% endif %}
+                        {% if request|has_perm:"agenda.add_evento" %}
+                            <a class="btn" href="{% url 'criar_evento' %}">Novo</a>
+                        {% endif %}
+                    {% endblock %}{% endspaceless %}</div>
                 </header>
 
                 <main class="main">

@@ -95,7 +95,7 @@
                     </article>
                     <article class="detail-item">
                         <span>Status</span>
-                        <div>
+                        <div class="detail-badge-wrap">
                             {% if 'conclu' in processo.status|default:''|lower or 'encerr' in processo.status|default:''|lower %}
                             <span class="status-badge success">{{ processo.status }}</span>
                             {% elif 'arquiv' in processo.status|default:''|lower %}

@@ -156,14 +156,6 @@
                             <div class="field-error">{{ error }}</div>
                         {% endfor %}
                     </div>
-
-                    <div class="field {% if form.criado_por.errors %}has-error{% endif %}">
-                        <label for="{{ form.criado_por.id_for_label }}">Criado por</label>
-                        {{ form.criado_por }}
-                        {% for error in form.criado_por.errors %}
-                            <div class="field-error">{{ error }}</div>
-                        {% endfor %}
-                    </div>
                 </div>
             </section>
 

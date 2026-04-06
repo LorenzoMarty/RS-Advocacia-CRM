@@ -67,7 +67,6 @@ class EventoForm(forms.ModelForm):
             "processo",
             "responsavel",
             "status",
-            "criado_por",
             "local",
             "observacoes",
             "concluido",

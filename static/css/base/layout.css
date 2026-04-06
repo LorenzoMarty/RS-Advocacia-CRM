@@ -117,8 +117,7 @@ html[data-theme="dark"] .ambient-light{
     top:14px;
     z-index:30;
     display:flex;
-    align-items:center;
-    justify-content:space-between;
+    flex-direction:column;
     gap:12px;
     margin-bottom:22px;
     padding:12px 14px;
@@ -129,9 +128,39 @@ html[data-theme="dark"] .ambient-light{
     backdrop-filter:blur(16px);
 }
 
-.topbar-left,.topbar-right{display:flex;align-items:center;gap:10px;min-width:0}
-.topbar-right{flex:1;justify-content:flex-end;flex-wrap:wrap}
-.topbar-right > *{min-width:0}
+.topbar-main{
+    display:grid;
+    grid-template-columns:minmax(40px, 1fr) auto minmax(40px, 1fr);
+    align-items:center;
+    gap:12px;
+    width:100%;
+}
+
+.topbar-side{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+}
+
+.topbar-side-left{
+    justify-content:flex-start;
+}
+
+.topbar-side-right{
+    justify-content:flex-end;
+}
+
+.topbar-side-right > *{
+    min-width:0;
+}
+
+.topbar-center{
+    display:flex;
+    justify-content:center;
+    min-width:0;
+}
+
 .topbar-actions{
     display:flex;
     align-items:center;
@@ -139,6 +168,11 @@ html[data-theme="dark"] .ambient-light{
     flex-wrap:wrap;
     gap:10px;
     min-width:0;
+    width:100%;
+}
+
+.topbar-actions:empty{
+    display:none;
 }
 
 .topbar-actions > *{
@@ -148,7 +182,9 @@ html[data-theme="dark"] .ambient-light{
 .topbar-pill{
     display:inline-flex;
     align-items:center;
+    justify-content:center;
     gap:8px;
+    width:clamp(220px, 42vw, 420px);
     max-width:100%;
     min-height:40px;
     padding:0 13px;

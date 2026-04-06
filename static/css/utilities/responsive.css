@@ -20,6 +20,33 @@
 
     .topbar{
         top:18px;
+        gap:8px;
+        padding:8px 12px;
+    }
+
+    .topbar-main{
+        grid-template-columns:minmax(0, 1fr) auto;
+        grid-template-areas:"title theme";
+        gap:16px;
+    }
+
+    .topbar-side-right{
+        display:none;
+    }
+
+    .topbar-center{
+        grid-area:title;
+        justify-content:flex-start;
+    }
+
+    .topbar-side-left{
+        grid-area:theme;
+        justify-content:flex-end;
+    }
+
+    .topbar-pill{
+        width:auto;
+        max-width:min(100%, 420px);
     }
 
     .bottom-nav-shell{
@@ -108,15 +135,12 @@
 }
 
 @media (max-width:920px){
-    .topbar{
-        flex-wrap:wrap;
-        align-items:flex-start;
-        gap:10px;
+    .topbar-main{
+        grid-template-columns:auto minmax(0, 1fr) auto;
+        gap:8px;
     }
 
-    .topbar-right{
-        flex:1 1 100%;
-        justify-content:flex-start;
+    .topbar-side-right{
         gap:8px;
     }
 
@@ -125,7 +149,7 @@
         gap:8px;
     }
 
-    .profile-copy span{
+    .topbar-profile-mobile .profile-copy span{
         display:none;
     }
 }
@@ -160,13 +184,13 @@
         border-radius:16px;
     }
 
-    .topbar-left,
-    .topbar-right{
-        width:100%;
+    .topbar-main{
+        grid-template-columns:auto minmax(0, 1fr) auto;
+        gap:7px;
     }
 
-    .topbar-right{
-        justify-content:flex-start;
+    .topbar-side{
+        gap:7px;
     }
 
     .page-search input{
@@ -191,7 +215,7 @@
     }
 
     .topbar-pill{
-        flex:1 1 auto;
+        width:100%;
         justify-content:center;
         min-height:36px;
         padding:0 11px;
@@ -207,10 +231,10 @@
 
     .topbar-actions .btn,
     .topbar-actions .btn-secondary,
-    .topbar-actions .btn-danger,
-    .profile{width:100%}
-    .profile{justify-content:space-between;margin-left:0}
-    .profile-copy span{display:none}
+    .topbar-actions .btn-danger{
+        width:100%;
+    }
+
     .btn{min-height:40px;padding:0 13px;font-size:.84rem}
     .theme-toggle,
     .topbar-icon-link{
@@ -218,12 +242,19 @@
         height:36px;
         border-radius:12px;
     }
-    .profile{
-        padding:4px 8px;
+
+    .topbar-profile-mobile{
+        width:auto;
+        min-width:0;
+        padding:4px;
         border-radius:12px;
     }
-    .profile .avatar,
-    .avatar{
+
+    .topbar-profile-mobile .profile-copy{
+        display:none;
+    }
+
+    .topbar-profile-mobile .avatar{
         width:32px;
         height:32px;
         border-radius:10px;
@@ -283,7 +314,11 @@
         margin-bottom:14px;
     }
 
-    .topbar-right{
+    .topbar-main{
+        gap:6px;
+    }
+
+    .topbar-side-right{
         display:flex;
         flex-wrap:nowrap;
         align-items:center;
@@ -292,8 +327,8 @@
 
     .topbar-actions{
         display:flex;
-        flex:1 1 auto;
-        width:auto;
+        flex-wrap:wrap;
+        width:100%;
         gap:6px;
     }
 
@@ -311,18 +346,16 @@
         flex:1 1 0;
     }
 
-    .profile{
-        width:auto;
-        min-width:0;
+    .topbar-profile-mobile{
         padding:3px;
         border-radius:11px;
     }
 
-    .profile-copy{
+    .topbar-profile-mobile .profile-copy{
         display:none;
     }
 
-    .profile .avatar{
+    .topbar-profile-mobile .avatar{
         width:30px;
         height:30px;
         border-radius:9px;

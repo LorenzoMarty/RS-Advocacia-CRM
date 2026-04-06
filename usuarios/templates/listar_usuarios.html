@@ -27,7 +27,7 @@
 
             <div class="users-list">
                 {% for usuario in usuarios %}
-                    <article class="user-row" data-user-row>
+                    <article class="user-row" data-user-row data-search-content="{{ usuario.nome }} {{ usuario.email }} {{ usuario.cargo_label }}">
                         <div class="user-avatar" aria-hidden="true">
                             {{ usuario.nome|first|upper }}
                         </div>

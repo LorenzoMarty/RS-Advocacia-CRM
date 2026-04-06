@@ -207,6 +207,19 @@
         word-break:break-word;
     }
 
+    .detail-item .detail-badge-wrap{
+        display:flex;
+        align-items:center;
+        margin-top:8px;
+    }
+
+    .detail-item .detail-badge-wrap .status-badge{
+        align-items:center;
+        justify-content:center;
+        width:100%;
+        line-height:1;
+    }
+
     .list{
         display:grid;
         gap:10px;

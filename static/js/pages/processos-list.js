@@ -33,7 +33,8 @@
         let visibleCount = 0;
 
         rows.forEach(function (row) {
-            const isVisible = !search || normalize(row.textContent).includes(search);
+            const searchableText = normalize(row.dataset.searchContent || "");
+            const isVisible = !search || searchableText.includes(search);
             row.hidden = !isVisible;
 
             if (isVisible) {

@@ -48,7 +48,7 @@
             <div class="process-list">
                 {% for processo in processos %}
                     {% with status=processo.status|default:''|lower %}
-                        <article class="process-row" data-process-row>
+                        <article class="process-row" data-process-row data-search-content="{{ processo.numero_processo }} {{ processo.cliente.nome }} {{ processo.area_juridica|default:'' }} {{ processo.vara|default:'' }} {{ processo.advogado_responsavel|default:'' }} {{ processo.status|default:'' }}">
                             <div class="process-main">
                                 <h2 class="process-number">{{ processo.numero_processo }}</h2>
                                 <span class="process-client">{{ processo.cliente.nome }}</span>

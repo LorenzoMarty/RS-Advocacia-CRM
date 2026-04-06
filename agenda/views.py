@@ -8,6 +8,28 @@ from agenda.models import Evento
 from core.permissions import app_permissions_required
 from core.permission_utils import get_permitted_url_or_fallback
 
+
+def _resolve_evento_criado_por(request):
+    session_name = (request.session.get("usuario_nome") or "").strip()
+    if session_name:
+        return session_name
+
+    request_user = getattr(request, "user", None)
+    if request_user and getattr(request_user, "is_authenticated", False):
+        full_name_getter = getattr(request_user, "get_full_name", None)
+        if callable(full_name_getter):
+            full_name = full_name_getter().strip()
+            if full_name:
+                return full_name
+
+        for attr in ("first_name", "username", "email"):
+            value = (getattr(request_user, attr, "") or "").strip()
+            if value:
+                return value
+
+    return "Interno"
+
+
 @app_permissions_required("agenda.view_evento")
 def listar_eventos(request):
     eventos = Evento.objects.all()
@@ -28,7 +50,9 @@ def criar_evento(request):
     if request.method == "POST":
         form = EventoForm(request.POST)
         if form.is_valid():
-            form.save()
+            evento = form.save(commit=False)
+            evento.criado_por = _resolve_evento_criado_por(request)
+            evento.save()
             messages.success(request, "Evento criado com sucesso!")
             return render(request, "criar_evento.html", {"form": EventoForm(initial=initial), "success": True})
     else:
