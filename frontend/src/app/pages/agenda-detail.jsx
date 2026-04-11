@@ -105,7 +105,7 @@ export function EventDetailPage() {
                 <article className="detail-item">
                   <span>Prioridade</span>
                   <div className="detail-badge-wrap">
-                    <StatusBadge tone={getStatusTone(eventItem.priority)}>{eventItem.priority || '-'}</StatusBadge>
+                    <StatusBadge tone={getStatusTone(eventItem.priority)} className="priority-badge">{eventItem.priority || '-'}</StatusBadge>
                   </div>
                 </article>
                 <article className="detail-item span-2">

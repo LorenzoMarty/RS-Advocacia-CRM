@@ -21,7 +21,6 @@ class Usuario(models.Model):
     senha = models.CharField(max_length=100)
     cargo = models.CharField(max_length=50)
     foto = models.ImageField(upload_to='fotos_usuarios/', blank=True)
-    OAB = models.CharField(max_length=20, blank=True, null=True)
 
     @property
     def cargo_label(self):

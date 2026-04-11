@@ -11,6 +11,6 @@ class CargoAdmin(admin.ModelAdmin):
 
 @admin.register(Usuario)
 class UsuarioAdmin(admin.ModelAdmin):
-    list_display = ("nome", "email", "cargo", "OAB")
+    list_display = ("nome", "email", "cargo")
     search_fields = ("nome", "email")
     list_filter = ("cargo",)

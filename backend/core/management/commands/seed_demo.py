@@ -134,28 +134,24 @@ class Command(BaseCommand):
                 "email": "usuario@example.com",
                 "senha": "123456",
                 "cargo": str(cargos["Administrador"].pk),
-                "OAB": "SP-120045",
             },
             {
                 "nome": "Gabriel Costa",
                 "email": "gabriel@rsadvocacia.com",
                 "senha": "123456",
                 "cargo": str(cargos["Advogado senior"].pk),
-                "OAB": "SP-223410",
             },
             {
                 "nome": "Laura Nunes",
                 "email": "laura@rsadvocacia.com",
                 "senha": "123456",
                 "cargo": str(cargos["Advogado senior"].pk),
-                "OAB": "SP-245901",
             },
             {
                 "nome": "Bruno Lima",
                 "email": "bruno@rsadvocacia.com",
                 "senha": "123456",
                 "cargo": str(cargos["Estagio"].pk),
-                "OAB": "",
             },
         ]
 
@@ -167,7 +163,6 @@ class Command(BaseCommand):
                     "nome": item["nome"],
                     "senha": make_password(item["senha"]),
                     "cargo": item["cargo"],
-                    "OAB": item["OAB"],
                 },
                 "usuarios",
             )

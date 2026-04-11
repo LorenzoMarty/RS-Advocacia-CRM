@@ -227,12 +227,21 @@
 
     .detail-item .detail-badge-wrap{
         display:flex;
+        align-items:center;
         margin:0;
     }
 
     .detail-item .detail-badge-wrap .status-badge{
         justify-content:center;
         width:100%;
+    }
+
+    .detail-item .detail-badge-wrap .priority-badge{
+        width:auto;
+        min-width:0;
+        min-height:32px;
+        padding:0 12px;
+        line-height:1;
     }
 
     .status-badge{
