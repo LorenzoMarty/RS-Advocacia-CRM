@@ -7,11 +7,11 @@ O fluxo atual usa o Django como API, Supabase Postgres como banco do backend e V
 ## Estrutura
 
 - `frontend/`: aplicação React/Vite. Consome a API via `VITE_API_URL`.
-- `backend/`: projeto Django com endpoints JSON, admin e configuração para `DATABASE_URL`.
+- `backend/`: projeto Django com endpoints JSON, admin e configuração para `DATABASE_URL` ou `POSTGRES_URL`.
 
 ## Banco Supabase
 
-Crie um projeto no Supabase e copie a connection string do Postgres em Project Dashboard > Connect.
+Crie um projeto no Supabase e copie a connection string do Postgres em Project Dashboard > Connect. Se voce conectou o Supabase pelo painel da Vercel, a integracao normalmente cria `POSTGRES_URL`; o backend tambem aceita `DATABASE_URL` quando voce configura a URL manualmente.
 
 Para deploy serverless na Vercel, prefira a string do pooler em Transaction mode e mantenha `sslmode=require` na URL. O backend também desativa prepared statements na conexão, porque o Transaction pooler do Supabase não aceita prepared statements.
 
@@ -21,7 +21,7 @@ Exemplo de formato:
 postgresql://postgres.project-ref:senha@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require
 ```
 
-Nunca coloque `DATABASE_URL` no frontend.
+Nunca coloque `DATABASE_URL` ou `POSTGRES_URL` no frontend.
 
 ## Rodar localmente
 
@@ -90,11 +90,14 @@ Configure estas variáveis no projeto do backend na Vercel:
 ```text
 SECRET_KEY=uma-chave-segura
 DEBUG=false
-DATABASE_URL=sua-url-do-supabase
+POSTGRES_URL=sua-url-do-supabase
 DATABASE_CONN_MAX_AGE=0
 ALLOWED_HOSTS=seu-backend.vercel.app
 CORS_ALLOWED_ORIGINS=https://seu-frontend.vercel.app
+CSRF_TRUSTED_ORIGINS=https://seu-backend.vercel.app
 ```
+
+Se a integracao do Supabase ja criou `POSTGRES_URL`, nao precisa criar `DATABASE_URL`. Se existir um `DATABASE_URL` antigo começando com `https://`, remova ou corrija essa variavel, porque `DATABASE_URL` deve ser uma connection string Postgres, começando com `postgres://` ou `postgresql://`.
 
 Deploy pela CLI:
 
@@ -103,7 +106,7 @@ npx vercel@latest --cwd backend
 npx vercel@latest --cwd backend --prod
 ```
 
-Depois do deploy do backend, aplique as migrações no Supabase usando a mesma `DATABASE_URL`:
+Depois do deploy do backend, aplique as migrações no Supabase usando a mesma connection string Postgres:
 
 ```powershell
 cd backend
@@ -155,9 +158,9 @@ https://seu-frontend.vercel.app/#/clientes
 
 ## Checklist
 
-- Supabase criado e `DATABASE_URL` copiada do Transaction pooler.
+- Supabase criado e connection string Postgres copiada do Transaction pooler ou criada pela integração da Vercel em `POSTGRES_URL`.
 - Backend publicado com `Root Directory` em `backend`.
-- Backend com `SECRET_KEY`, `DATABASE_URL`, `ALLOWED_HOSTS` e `CORS_ALLOWED_ORIGINS`.
+- Backend com `SECRET_KEY`, `POSTGRES_URL` ou `DATABASE_URL`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` e `CSRF_TRUSTED_ORIGINS`.
 - `uv run python manage.py migrate` aplicado no Supabase.
 - `uv run python manage.py seed_demo` aplicado ou usuário admin criado.
 - Frontend publicado com `Root Directory` em `frontend`.

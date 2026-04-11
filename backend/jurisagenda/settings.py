@@ -12,11 +12,16 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / '.env')
 
 
 def _clean_host(value: str) -> str:
@@ -29,6 +34,41 @@ def _split_env_hosts(value: str) -> list[str]:
 
 def _split_env_values(value: str) -> list[str]:
     return [item.strip().rstrip('/') for item in value.split(',') if item.strip()]
+
+
+def _https_origin(host: str) -> str:
+    return f'https://{_clean_host(host)}'
+
+
+def _clean_database_url(value: str) -> str:
+    parsed = urlsplit(value)
+    query = [
+        (key, query_value)
+        for key, query_value in parse_qsl(parsed.query, keep_blank_values=True)
+        if key != 'supa'
+    ]
+    return urlunsplit(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            urlencode(query),
+            parsed.fragment,
+        )
+    )
+
+
+def _database_url_from_env() -> str | None:
+    database_url = os.getenv('DATABASE_URL')
+    postgres_url = os.getenv('POSTGRES_URL')
+
+    if database_url and urlsplit(database_url).scheme not in {'http', 'https'}:
+        return database_url
+
+    if postgres_url:
+        return postgres_url
+
+    return database_url
 
 
 # Quick-start development settings - unsuitable for production
@@ -66,6 +106,22 @@ CORS_ALLOWED_ORIGINS = sorted(
         'http://127.0.0.1:5173',
         'http://localhost:5173',
         *_split_env_values(os.getenv('CORS_ALLOWED_ORIGINS', '')),
+    }
+)
+
+CSRF_TRUSTED_ORIGINS = sorted(
+    {
+        'http://127.0.0.1:8000',
+        'http://localhost:8000',
+        *(
+            _https_origin(host)
+            for host in (
+                os.getenv('VERCEL_URL', ''),
+                os.getenv('VERCEL_PROJECT_PRODUCTION_URL', ''),
+            )
+            if _clean_host(host)
+        ),
+        *_split_env_values(os.getenv('CSRF_TRUSTED_ORIGINS', '')),
     }
 )
 
@@ -121,9 +177,19 @@ WSGI_APPLICATION = 'jurisagenda.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = _database_url_from_env()
 
 if DATABASE_URL:
+    database_scheme = urlsplit(DATABASE_URL).scheme
+    if database_scheme in {'http', 'https'}:
+        raise ImproperlyConfigured(
+            'DATABASE_URL deve ser a connection string Postgres do Supabase, '
+            'começando com postgresql:// ou postgres://. '
+            'Nao use URL https:// do backend, do frontend ou do dashboard Supabase.'
+        )
+
+    DATABASE_URL = _clean_database_url(DATABASE_URL)
+
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
