@@ -1,0 +1,74 @@
+@import "./styles/main.css";
+@import "./styles/pages/login.css";
+@import "./styles/pages/dashboard.css";
+@import "./styles/pages/clientes-list.css";
+@import "./styles/pages/clientes-form.css";
+@import "./styles/pages/clientes-detail.css";
+@import "./styles/pages/processos-list.css";
+@import "./styles/pages/processos-form.css";
+@import "./styles/pages/processos-detail.css";
+@import "./styles/pages/agenda-list.css";
+@import "./styles/pages/agenda-form.css";
+@import "./styles/pages/agenda-detail.css";
+@import "./styles/pages/usuarios-list.css";
+@import "./styles/pages/usuarios-form.css";
+@import "./styles/pages/usuarios-detail.css";
+@import "./styles/pages/usuarios-cargos.css";
+@import "./styles/pages/usuarios-cargo-form.css";
+@import "./styles/pages/usuarios-cargo-detail.css";
+@import "./styles/pages/confirm-delete.css";
+
+#root {
+  min-height: 100vh;
+}
+
+body {
+  min-height: 100vh;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.flash-stack button {
+  border: 0;
+  width: 100%;
+  text-align: left;
+}
+
+.topbar-actions > *,
+.confirm-actions > *,
+.form-actions > *,
+.empty-actions > * {
+  text-decoration: none;
+}
+
+.empty-inline {
+  padding: 0;
+}
+
+.login-link {
+  border: 0;
+  background: transparent;
+}
+
+.not-found-shell {
+  display: grid;
+  gap: 16px;
+}
