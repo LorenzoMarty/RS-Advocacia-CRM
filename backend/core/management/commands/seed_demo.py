@@ -1,5 +1,6 @@
 from datetime import date, datetime, time, timedelta
 
+from django.contrib.auth.hashers import make_password
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
@@ -7,7 +8,32 @@ from django.utils import timezone
 from agenda.models import Evento
 from clientes.models import Cliente
 from processos.models import Processo
-from usuarios.models import Usuario
+from usuarios.models import Cargo, Usuario
+
+
+DEFAULT_PERMISSION_IDS = [
+    "dashboard.view",
+    "clientes.view",
+    "clientes.create",
+    "clientes.edit",
+    "clientes.delete",
+    "processos.view",
+    "processos.create",
+    "processos.edit",
+    "processos.delete",
+    "agenda.view",
+    "agenda.create",
+    "agenda.edit",
+    "agenda.delete",
+    "usuarios.view",
+    "usuarios.create",
+    "usuarios.edit",
+    "usuarios.delete",
+    "cargos.view",
+    "cargos.create",
+    "cargos.edit",
+    "cargos.delete",
+]
 
 
 class Command(BaseCommand):
@@ -16,6 +42,7 @@ class Command(BaseCommand):
     def __init__(self):
         super().__init__()
         self.stats = {
+            "cargos": {"created": 0, "updated": 0},
             "clientes": {"created": 0, "updated": 0},
             "usuarios": {"created": 0, "updated": 0},
             "processos": {"created": 0, "updated": 0},
@@ -26,7 +53,8 @@ class Command(BaseCommand):
         today = date.today()
 
         with transaction.atomic():
-            usuarios = self.seed_usuarios()
+            cargos = self.seed_cargos()
+            usuarios = self.seed_usuarios(cargos)
             clientes = self.seed_clientes()
             processos = self.seed_processos(clientes)
             self.seed_eventos(today, clientes, processos, usuarios)
@@ -53,6 +81,44 @@ class Command(BaseCommand):
         self.stats[bucket]["created" if created else "updated"] += 1
         return instance
 
+    def seed_cargos(self):
+        cargos = {}
+        demo_cargos = [
+            {
+                "nome": "Administrador",
+                "permission_ids": DEFAULT_PERMISSION_IDS,
+            },
+            {
+                "nome": "Advogado senior",
+                "permission_ids": [
+                    permission_id
+                    for permission_id in DEFAULT_PERMISSION_IDS
+                    if permission_id != "cargos.delete"
+                ],
+            },
+            {
+                "nome": "Estagio",
+                "permission_ids": [
+                    "dashboard.view",
+                    "clientes.view",
+                    "processos.view",
+                    "agenda.view",
+                    "agenda.create",
+                ],
+            },
+        ]
+
+        for item in demo_cargos:
+            cargo = self.upsert(
+                Cargo,
+                {"nome": item["nome"]},
+                {"permission_ids": item["permission_ids"]},
+                "cargos",
+            )
+            cargos[item["nome"]] = cargo
+
+        return cargos
+
     def make_dt(self, base_date, day_offset, hour, minute, duration_hours=1, duration_minutes=0):
         start = timezone.make_aware(
             datetime.combine(base_date + timedelta(days=day_offset), time(hour, minute))
@@ -60,35 +126,35 @@ class Command(BaseCommand):
         end = start + timedelta(hours=duration_hours, minutes=duration_minutes)
         return start, end
 
-    def seed_usuarios(self):
+    def seed_usuarios(self, cargos):
         usuarios = {}
         demo_usuarios = [
             {
-                "nome": "Renata Soares",
-                "email": "renata.soares.demo@rsadvocacia.local",
-                "senha": "demo123",
-                "cargo": "admin",
+                "nome": "Renata Sampaio",
+                "email": "usuario@example.com",
+                "senha": "123456",
+                "cargo": str(cargos["Administrador"].pk),
                 "OAB": "SP-120045",
             },
             {
-                "nome": "Gabriel Nunes",
-                "email": "gabriel.nunes.demo@rsadvocacia.local",
-                "senha": "demo123",
-                "cargo": "advogado",
+                "nome": "Gabriel Costa",
+                "email": "gabriel@rsadvocacia.com",
+                "senha": "123456",
+                "cargo": str(cargos["Advogado senior"].pk),
                 "OAB": "SP-223410",
             },
             {
-                "nome": "Larissa Prado",
-                "email": "larissa.prado.demo@rsadvocacia.local",
-                "senha": "demo123",
-                "cargo": "advogado",
+                "nome": "Laura Nunes",
+                "email": "laura@rsadvocacia.com",
+                "senha": "123456",
+                "cargo": str(cargos["Advogado senior"].pk),
                 "OAB": "SP-245901",
             },
             {
                 "nome": "Bruno Lima",
-                "email": "bruno.lima.demo@rsadvocacia.local",
-                "senha": "demo123",
-                "cargo": "Estagiário",
+                "email": "bruno@rsadvocacia.com",
+                "senha": "123456",
+                "cargo": str(cargos["Estagio"].pk),
                 "OAB": "",
             },
         ]
@@ -99,7 +165,7 @@ class Command(BaseCommand):
                 {"email": item["email"]},
                 {
                     "nome": item["nome"],
-                    "senha": item["senha"],
+                    "senha": make_password(item["senha"]),
                     "cargo": item["cargo"],
                     "OAB": item["OAB"],
                 },
@@ -175,7 +241,7 @@ class Command(BaseCommand):
                 "vara": "12a Vara Cível de São Paulo",
                 "area_juridica": "Cível",
                 "status": "Em andamento",
-                "advogado_responsavel": "Renata Soares",
+                "advogado_responsavel": "Renata Sampaio",
             },
             {
                 "numero_processo": "PROC-2026-0002",
@@ -184,7 +250,7 @@ class Command(BaseCommand):
                 "vara": "18a Vara do Trabalho de São Paulo",
                 "area_juridica": "Trabalhista",
                 "status": "Aguardando audiência",
-                "advogado_responsavel": "Gabriel Nunes",
+                "advogado_responsavel": "Gabriel Costa",
             },
             {
                 "numero_processo": "PROC-2026-0003",
@@ -193,7 +259,7 @@ class Command(BaseCommand):
                 "vara": "1a Vara Cível do Rio de Janeiro",
                 "area_juridica": "Cível",
                 "status": "Prazo aberto",
-                "advogado_responsavel": "Larissa Prado",
+                "advogado_responsavel": "Laura Nunes",
             },
             {
                 "numero_processo": "PROC-2026-0004",
@@ -202,7 +268,7 @@ class Command(BaseCommand):
                 "vara": "24a Vara Empresarial de Belo Horizonte",
                 "area_juridica": "Empresarial",
                 "status": "Fase inicial",
-                "advogado_responsavel": "Renata Soares",
+                "advogado_responsavel": "Renata Sampaio",
             },
             {
                 "numero_processo": "PROC-2026-0005",
@@ -211,7 +277,7 @@ class Command(BaseCommand):
                 "vara": "1a Vara de Família de Curitiba",
                 "area_juridica": "Família",
                 "status": "Audiência marcada",
-                "advogado_responsavel": "Gabriel Nunes",
+                "advogado_responsavel": "Gabriel Costa",
             },
         ]
 
@@ -242,7 +308,7 @@ class Command(BaseCommand):
                 "tipo_evento": "Audiência",
                 "status": "Confirmado",
                 "prioridade": "Alta",
-                "responsavel": usuarios["Renata Soares"].nome,
+                "responsavel": usuarios["Renata Sampaio"].nome,
                 "local": "Fórum Central - Sala 4",
                 "descricao": "Sessão de conciliação com proposta inicial.",
                 "observacoes": "Registro demo para o dashboard.",
@@ -260,7 +326,7 @@ class Command(BaseCommand):
                 "tipo_evento": "Reunião",
                 "status": "Agendado",
                 "prioridade": "Média",
-                "responsavel": usuarios["Gabriel Nunes"].nome,
+                "responsavel": usuarios["Gabriel Costa"].nome,
                 "local": "Sala de reunião 2",
                 "descricao": "Alinhamento com o cliente sobre provas e testemunhas.",
                 "observacoes": "Registro demo para a lista de hoje.",
@@ -279,7 +345,7 @@ class Command(BaseCommand):
                 "tipo_evento": "Prazo",
                 "status": "Aguardando",
                 "prioridade": "Alta",
-                "responsavel": usuarios["Larissa Prado"].nome,
+                "responsavel": usuarios["Laura Nunes"].nome,
                 "local": "Portal e-SAJ",
                 "descricao": "Protocolar contestação e anexar comprovantes.",
                 "observacoes": "Registro demo para próximos compromissos.",
@@ -315,7 +381,7 @@ class Command(BaseCommand):
                 "tipo_evento": "Audiência",
                 "status": "Confirmado",
                 "prioridade": "Alta",
-                "responsavel": usuarios["Gabriel Nunes"].nome,
+                "responsavel": usuarios["Gabriel Costa"].nome,
                 "local": "Fórum de Família - Sala 7",
                 "descricao": "Oitiva das partes e definição de novos encaminhamentos.",
                 "observacoes": "Audiência futura para alimentar o calendário.",
@@ -333,7 +399,7 @@ class Command(BaseCommand):
                 "tipo_evento": "Reunião",
                 "status": "Concluído",
                 "prioridade": "Média",
-                "responsavel": usuarios["Renata Soares"].nome,
+                "responsavel": usuarios["Renata Sampaio"].nome,
                 "local": "Videochamada",
                 "descricao": "Revisão final de minuta comercial.",
                 "observacoes": "Compromisso concluído para demonstração.",
@@ -351,7 +417,7 @@ class Command(BaseCommand):
                 "tipo_evento": "Prazo",
                 "status": "Atrasado",
                 "prioridade": "Alta",
-                "responsavel": usuarios["Larissa Prado"].nome,
+                "responsavel": usuarios["Laura Nunes"].nome,
                 "local": "Portal do tribunal",
                 "descricao": "Manifestação sobre documentos juntados pela parte contrária.",
                 "observacoes": "Compromisso vencido para demonstração da agenda.",

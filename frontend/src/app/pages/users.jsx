@@ -16,7 +16,7 @@ function validateUserForm(form, users, currentId) {
   if (!form.name.trim()) nextErrors.name = 'Informe o nome.';
   if (!form.email.trim()) nextErrors.email = 'Informe o email.';
   if (!form.roleId) nextErrors.roleId = 'Selecione um cargo.';
-  if (!form.password.trim()) nextErrors.password = 'Informe a senha.';
+  if (!currentId && !form.password.trim()) nextErrors.password = 'Informe a senha.';
   if (users.some((user) => user.email.toLowerCase() === form.email.toLowerCase() && user.id !== currentId)) {
     nextErrors.email = 'Já existe um usuário com este email.';
   }
@@ -116,7 +116,7 @@ export function UserFormPage() {
     name: user?.name || '',
     email: user?.email || '',
     roleId: user?.roleId || '',
-    password: user?.password || '',
+    password: '',
   }));
   const [errors, setErrors] = useState({});
 
@@ -124,7 +124,7 @@ export function UserFormPage() {
     return <NotFoundState title="Usuário não encontrado." />;
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const nextErrors = validateUserForm(form, users, form.id);
 
@@ -133,13 +133,17 @@ export function UserFormPage() {
       return;
     }
 
-    const savedUser = saveUser({
+    const savedUser = await saveUser({
       id: form.id || undefined,
       name: form.name.trim(),
       email: form.email.trim(),
       roleId: form.roleId,
       password: form.password,
     });
+
+    if (!savedUser) {
+      return;
+    }
 
     navigate(`/usuarios/${savedUser.id || form.id}`, { replace: true });
   }
@@ -193,7 +197,12 @@ export function UserFormPage() {
                 </select>
               </Field>
 
-              <Field id="user-password" label="Senha" error={errors.password}>
+              <Field
+                id="user-password"
+                label="Senha"
+                error={errors.password}
+                note={isEditing ? 'Deixe em branco para manter a senha atual.' : null}
+              >
                 <div className="password-wrap">
                   <input
                     id="user-password"
@@ -399,13 +408,16 @@ export function UserDeletePage() {
 
   const isBlocked = currentUser?.id === user.id;
 
-  function handleDelete(event) {
+  async function handleDelete(event) {
     event.preventDefault();
     if (isBlocked) {
       return;
     }
 
-    deleteUser(user.id);
+    const wasDeleted = await deleteUser(user.id);
+    if (!wasDeleted) {
+      return;
+    }
     navigate('/usuarios', { replace: true });
   }
 

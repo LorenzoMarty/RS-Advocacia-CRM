@@ -232,9 +232,12 @@ export function EventDeletePage() {
     return <NotFoundState title="Compromisso não encontrado." />;
   }
 
-  function handleDelete(event) {
+  async function handleDelete(event) {
     event.preventDefault();
-    deleteEvent(eventItem.id);
+    const wasDeleted = await deleteEvent(eventItem.id);
+    if (!wasDeleted) {
+      return;
+    }
     navigate('/agenda', { replace: true });
   }
 

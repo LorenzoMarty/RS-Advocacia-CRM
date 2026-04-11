@@ -60,7 +60,7 @@ export function EventFormPage() {
     return <NotFoundState title="Compromisso não encontrado." />;
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const nextErrors = validateEventForm({
       ...form,
@@ -73,7 +73,7 @@ export function EventFormPage() {
       return;
     }
 
-    const savedEvent = saveEvent({
+    const savedEvent = await saveEvent({
       id: form.id || undefined,
       title: form.title.trim(),
       type: form.type,
@@ -91,6 +91,10 @@ export function EventFormPage() {
       completed: form.completed,
       createdBy: eventItem?.createdBy || form.responsible.trim() || users[0]?.name || 'Interno',
     });
+
+    if (!savedEvent) {
+      return;
+    }
 
     navigate(`/agenda/${savedEvent.id || form.id}`, { replace: true });
   }

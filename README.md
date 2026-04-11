@@ -1,112 +1,166 @@
-# Juri React
+# Agenda Juri
 
-Aplicação jurídica convertida de templates Django para um frontend React com Vite. O frontend fica em `frontend/`; o backend Django fica em `backend/`, mas no estado atual o React usa dados em memória e não depende de API do Django para funcionar online.
+Aplicação jurídica com frontend React/Vite em `frontend/` e backend Django em `backend/`.
+
+O fluxo atual usa o Django como API, Supabase Postgres como banco do backend e Vercel para publicar backend e frontend em projetos separados.
 
 ## Estrutura
 
-- `frontend/`: aplicação React/Vite que deve ser publicada como site estático.
-- `backend/`: projeto Django mantido separado, hoje com raiz JSON e admin. Use apenas se você for criar APIs ou manter o admin online.
+- `frontend/`: aplicação React/Vite. Consome a API via `VITE_API_URL`.
+- `backend/`: projeto Django com endpoints JSON, admin e configuração para `DATABASE_URL`.
+
+## Banco Supabase
+
+Crie um projeto no Supabase e copie a connection string do Postgres em Project Dashboard > Connect.
+
+Para deploy serverless na Vercel, prefira a string do pooler em Transaction mode e mantenha `sslmode=require` na URL. O backend também desativa prepared statements na conexão, porque o Transaction pooler do Supabase não aceita prepared statements.
+
+Exemplo de formato:
+
+```text
+postgresql://postgres.project-ref:senha@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require
+```
+
+Nunca coloque `DATABASE_URL` no frontend.
 
 ## Rodar localmente
 
-Entre no frontend:
+Backend:
+
+```powershell
+cd backend
+uv sync
+$env:DATABASE_URL="sua-url-do-supabase"
+$env:SECRET_KEY="uma-chave-local"
+$env:DEBUG="true"
+$env:ALLOWED_HOSTS="127.0.0.1,localhost"
+$env:CORS_ALLOWED_ORIGINS="http://localhost:5173,http://127.0.0.1:5173"
+uv run python manage.py migrate
+uv run python manage.py seed_demo
+uv run python manage.py runserver
+```
+
+Frontend:
 
 ```powershell
 cd frontend
 npm install
+$env:VITE_API_URL="http://127.0.0.1:8000"
 npm run dev
 ```
 
-Antes de publicar, valide o build:
+Login demo após `seed_demo`:
 
-```powershell
-cd frontend
-npm run lint
-npm run build
-npm run preview
+```text
+Email: usuario@example.com
+Senha: 123456
 ```
 
-O comando `npm run build` gera os arquivos finais em `frontend/dist`.
+Sem `VITE_API_URL`, o frontend ainda abre com dados locais em memória. Com `VITE_API_URL`, ele chama os endpoints Django.
 
-## Publicar o frontend na Vercel
+## Endpoints Django
 
-Este é o caminho mais simples para deixar a interface online.
+Os endpoints abaixo são uma camada CRUD simples para integrar a interface. Antes de usar com dados sensíveis em produção, adicione autenticação/autorização server-side; CORS e login client-side não substituem controle de acesso no backend.
 
-1. Envie o projeto para um repositório no GitHub, GitLab ou Bitbucket.
-2. Acesse a Vercel e crie um novo projeto importando esse repositório.
-3. Configure o projeto com estes valores:
-   - Root Directory: `frontend`
-   - Framework Preset: `Vite`
-   - Install Command: `npm install`
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-4. Clique em Deploy.
-5. Depois do deploy, use a URL gerada pela Vercel para acessar o sistema.
-6. Para domínio próprio, vá em Project Settings > Domains e adicione seu domínio.
+- `GET /api/bootstrap/`
+- `POST /api/auth/login/`
+- `GET|POST /api/clients/`
+- `GET|PUT|PATCH|DELETE /api/clients/<id>/`
+- `GET|POST /api/processes/`
+- `GET|PUT|PATCH|DELETE /api/processes/<id>/`
+- `GET|POST /api/events/`
+- `GET|PUT|PATCH|DELETE /api/events/<id>/`
+- `GET|POST /api/users/`
+- `GET|PUT|PATCH|DELETE /api/users/<id>/`
+- `GET|POST /api/roles/`
+- `GET|PUT|PATCH|DELETE /api/roles/<id>/`
 
-Como o React está usando `HashRouter`, as rotas aparecem com `#/` na URL, por exemplo `https://seu-site.vercel.app/#/clientes`. Isso evita erro 404 ao atualizar a página em uma rota interna.
+## Deploy do backend na Vercel
 
-## Publicar pela Vercel CLI
+Crie primeiro o projeto do backend.
 
-Se preferir publicar pelo terminal:
+| Campo | Valor |
+| --- | --- |
+| Root Directory | `backend` |
+| Framework Preset | `Other` |
+| Build Command | definido em `backend/vercel.json` |
 
-```powershell
-cd frontend
-npm install
-npm run build
-npx vercel
+Configure estas variáveis no projeto do backend na Vercel:
+
+```text
+SECRET_KEY=uma-chave-segura
+DEBUG=false
+DATABASE_URL=sua-url-do-supabase
+DATABASE_CONN_MAX_AGE=0
+ALLOWED_HOSTS=seu-backend.vercel.app
+CORS_ALLOWED_ORIGINS=https://seu-frontend.vercel.app
 ```
 
-Para publicar em produção:
+Deploy pela CLI:
 
 ```powershell
-cd frontend
-npx vercel --prod
+npx vercel@latest --cwd backend
+npx vercel@latest --cwd backend --prod
 ```
 
-Quando a CLI perguntar, confirme que o diretório do projeto é `frontend`, o build command é `npm run build`, e o output directory é `dist`.
+Depois do deploy do backend, aplique as migrações no Supabase usando a mesma `DATABASE_URL`:
 
-## Publicar em Netlify
+```powershell
+cd backend
+$env:DATABASE_URL="sua-url-do-supabase"
+$env:SECRET_KEY="uma-chave-segura"
+$env:DEBUG="false"
+$env:ALLOWED_HOSTS="seu-backend.vercel.app"
+uv run python manage.py migrate
+uv run python manage.py seed_demo
+uv run python manage.py createsuperuser
+```
 
-Também funciona como site estático.
+Teste:
 
-1. Crie um novo site a partir do repositório.
-2. Configure:
-   - Base directory: `frontend`
-   - Build command: `npm run build`
-   - Publish directory: `dist`
-3. Execute o deploy.
+```text
+https://seu-backend.vercel.app/api/bootstrap/
+```
 
-Se você não configurar `frontend` como base directory, use `frontend/dist` como publish directory.
+## Deploy do frontend na Vercel
 
-## Sobre o backend Django
+Crie um segundo projeto para a interface.
 
-O backend foi separado do frontend. No estado atual:
+| Campo | Valor |
+| --- | --- |
+| Root Directory | `frontend` |
+| Framework Preset | `Vite` |
+| Install Command | `npm install` |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
 
-- O frontend não chama endpoints Django.
-- Os dados do frontend ficam em memória no `frontend/src/app/store.jsx`.
-- Ao recarregar a página, mudanças feitas na interface podem voltar para os dados iniciais.
+Configure no projeto do frontend:
 
-Se quiser deixar o backend online também, trate como um projeto separado e configure:
+```text
+VITE_API_URL=https://seu-backend.vercel.app
+```
 
-- Banco de dados persistente, como PostgreSQL. Não use SQLite para dados de produção em hospedagens serverless.
-- `SECRET_KEY` seguro via variável de ambiente.
-- `DEBUG=false`.
-- `ALLOWED_HOSTS` com o domínio do backend.
-- Migrações com `python manage.py migrate`.
-- Usuário admin com `python manage.py createsuperuser`.
+Deploy pela CLI:
 
-O arquivo `backend/vercel.json` ainda existe para um deploy separado do Django, mas isso só deve ser usado se você realmente for expor o backend. Para um app com dados reais, prefira primeiro criar APIs Django e trocar o store em memória do React por chamadas HTTP.
+```powershell
+npx vercel@latest --cwd frontend
+npx vercel@latest --cwd frontend --prod
+```
 
-## Checklist antes de deixar online
+O app usa `HashRouter`, então rotas internas ficam com `#/`, por exemplo:
 
-- `npm run lint` passa sem erros.
-- `npm run build` passa sem erros.
-- O projeto da hospedagem aponta para `frontend`.
-- O output directory está como `dist`.
-- O site abre pela URL pública gerada.
-- Login, dashboard, clientes, processos, agenda, usuários e cargos foram testados no link publicado.
+```text
+https://seu-frontend.vercel.app/#/clientes
+```
 
-## Próximo passo recomendado
+## Checklist
 
-Se o objetivo for usar dados reais, crie endpoints no Django para clientes, processos, agenda, usuários e cargos, depois configure o React para chamar a URL da API por uma variável como `VITE_API_URL`.
+- Supabase criado e `DATABASE_URL` copiada do Transaction pooler.
+- Backend publicado com `Root Directory` em `backend`.
+- Backend com `SECRET_KEY`, `DATABASE_URL`, `ALLOWED_HOSTS` e `CORS_ALLOWED_ORIGINS`.
+- `uv run python manage.py migrate` aplicado no Supabase.
+- `uv run python manage.py seed_demo` aplicado ou usuário admin criado.
+- Frontend publicado com `Root Directory` em `frontend`.
+- Frontend com `VITE_API_URL` apontando para a URL do backend.
+- `/api/bootstrap/` responde na URL pública do backend.
+- Login, dashboard, clientes, processos, agenda, usuários e cargos testados no frontend publicado.

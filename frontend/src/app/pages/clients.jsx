@@ -166,7 +166,7 @@ export function ClientFormPage() {
     return <NotFoundState title="Cliente não encontrado." />;
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const nextErrors = validateClientForm(form);
 
@@ -175,7 +175,7 @@ export function ClientFormPage() {
       return;
     }
 
-    const savedClient = saveClient({
+    const savedClient = await saveClient({
       id: form.id || undefined,
       name: form.name.trim(),
       document: stripDocument(form.document),
@@ -184,6 +184,10 @@ export function ClientFormPage() {
       email: form.email.trim(),
       notes: form.notes.trim(),
     });
+
+    if (!savedClient) {
+      return;
+    }
 
     navigate(`/clientes/${savedClient.id || form.id}`, { replace: true });
   }
@@ -484,10 +488,14 @@ export function ClientDeletePage() {
     return <NotFoundState title="Cliente não encontrado." />;
   }
 
-  function handleDelete(event) {
+  async function handleDelete(event) {
     event.preventDefault();
     setIsDeleting(true);
-    deleteClient(client.id);
+    const wasDeleted = await deleteClient(client.id);
+    setIsDeleting(false);
+    if (!wasDeleted) {
+      return;
+    }
     navigate('/clientes', { replace: true });
   }
 

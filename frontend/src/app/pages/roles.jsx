@@ -131,7 +131,7 @@ export function RoleFormPage() {
     }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const nextErrors = validateRoleForm(form);
 
@@ -140,11 +140,15 @@ export function RoleFormPage() {
       return;
     }
 
-    const savedRole = saveRole({
+    const savedRole = await saveRole({
       id: form.id || undefined,
       name: form.name.trim(),
       permissionIds: form.permissionIds,
     });
+
+    if (!savedRole) {
+      return;
+    }
 
     navigate(`/cargos/${savedRole.id || form.id}`, { replace: true });
   }
@@ -362,13 +366,16 @@ export function RoleDeletePage() {
   const roleUsers = linkedUsers(users, role.id);
   const isBlocked = roleUsers.length > 0;
 
-  function handleDelete(event) {
+  async function handleDelete(event) {
     event.preventDefault();
     if (isBlocked) {
       return;
     }
 
-    deleteRole(role.id);
+    const wasDeleted = await deleteRole(role.id);
+    if (!wasDeleted) {
+      return;
+    }
     navigate('/cargos', { replace: true });
   }
 

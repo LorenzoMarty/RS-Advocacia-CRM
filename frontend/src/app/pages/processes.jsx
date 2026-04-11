@@ -138,7 +138,7 @@ export function ProcessFormPage() {
     return <NotFoundState title="Processo não encontrado." />;
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const nextErrors = validateProcessForm(form);
 
@@ -147,7 +147,7 @@ export function ProcessFormPage() {
       return;
     }
 
-    const savedProcess = saveProcess({
+    const savedProcess = await saveProcess({
       id: form.id || undefined,
       number: form.number.trim(),
       clientId: form.clientId,
@@ -157,6 +157,10 @@ export function ProcessFormPage() {
       court: form.court.trim(),
       description: form.description.trim(),
     });
+
+    if (!savedProcess) {
+      return;
+    }
 
     navigate(`/processos/${savedProcess.id || form.id}`, { replace: true });
   }
@@ -478,9 +482,12 @@ export function ProcessDeletePage() {
     return <NotFoundState title="Processo não encontrado." />;
   }
 
-  function handleDelete(event) {
+  async function handleDelete(event) {
     event.preventDefault();
-    deleteProcess(process.id);
+    const wasDeleted = await deleteProcess(process.id);
+    if (!wasDeleted) {
+      return;
+    }
     navigate('/processos', { replace: true });
   }
 

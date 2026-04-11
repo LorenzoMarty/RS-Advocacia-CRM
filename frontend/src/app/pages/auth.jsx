@@ -12,10 +12,10 @@ export function LoginPage() {
   });
   const [error, setError] = useState('');
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    const hasSession = login(form.email, form.password);
+    const hasSession = await login(form.email, form.password);
     if (!hasSession) {
       setError('Email ou senha inválidos.');
       return;

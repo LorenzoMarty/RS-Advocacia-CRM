@@ -2,7 +2,7 @@ from django.db import models
 
 # Create your models here.
 class Processo(models.Model):
-    numero_processo = models.CharField(max_length=20)
+    numero_processo = models.CharField(max_length=40)
     cliente = models.ForeignKey('clientes.Cliente', on_delete=models.CASCADE)
     descricao = models.TextField(blank=True)
     vara = models.CharField(max_length=100)
