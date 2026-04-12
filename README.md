@@ -56,7 +56,7 @@ python manage.py runserver
 - Python
 - Django
 - PostgreeSQL
-- HTML, CSS, JS
+- React
 
 ## Autor
 
