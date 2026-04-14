@@ -7,6 +7,7 @@ from django.utils import timezone
 from agenda.models import Evento
 from clientes.models import Cliente
 from processos.models import Processo
+from usuarios.forms import normalize_cargo_name
 from usuarios.models import Usuario
 
 
@@ -100,7 +101,7 @@ class Command(BaseCommand):
                 {
                     "nome": item["nome"],
                     "senha": item["senha"],
-                    "cargo": item["cargo"],
+                    "cargo": normalize_cargo_name(item["cargo"]),
                     "OAB": item["OAB"],
                 },
                 "usuarios",

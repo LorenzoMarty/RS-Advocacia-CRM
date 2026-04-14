@@ -186,7 +186,8 @@ def serialize_permission(permission: Permission):
         "id": str(permission.pk),
         "path": f"{permission.content_type.app_label}.{permission.codename}",
         "displayName": _format_permission_name(permission),
-        "modelLabel": model_name.replace("_", " ").title() or permission.content_type.model.title(),
+        "modelLabel": model_name.replace("_", " ").title()
+        or permission.content_type.model.title(),
         "app": permission.content_type.app_label,
         "action": action_label,
     }
@@ -198,7 +199,9 @@ def serialize_permission_groups():
         content_type__app_label__in=PERMISSION_APP_LABELS.keys()
     )
 
-    for permission in permissions.order_by("content_type__app_label", "content_type__model", "codename"):
+    for permission in permissions.order_by(
+        "content_type__app_label", "content_type__model", "codename"
+    ):
         app_label = permission.content_type.app_label
         grouped.setdefault(
             app_label,
@@ -213,6 +216,22 @@ def serialize_permission_groups():
     return list(grouped.values())
 
 
+def _cargo_lookup_values(cargo_name: str) -> set[str]:
+    values = {cargo_name}
+
+    for legacy_value, cargo_label in Usuario.TIPOS:
+        if cargo_label == cargo_name:
+            values.add(legacy_value)
+        if legacy_value == cargo_name:
+            values.add(cargo_label)
+
+    return values
+
+
+def _usuarios_for_cargo(cargo: Group):
+    return Usuario.objects.filter(cargo__in=_cargo_lookup_values(cargo.name))
+
+
 def serialize_cargo(cargo: Group):
     permission_ids = [str(pk) for pk in cargo.permissions.values_list("pk", flat=True)]
     return {
@@ -223,22 +242,21 @@ def serialize_cargo(cargo: Group):
         "permissions": permission_ids,
         "permissionIds": permission_ids,
         "permissoes_total": cargo.permissions.count(),
-        "usuarios_total": Usuario.objects.filter(cargo=cargo.name).count(),
+        "usuarios_total": _usuarios_for_cargo(cargo).count(),
     }
 
 
 def serialize_usuario(usuario: Usuario):
-    cargo = Group.objects.filter(name=usuario.cargo).first()
+    cargo_nome = normalize_cargo_name(usuario.cargo)
+    cargo = Group.objects.filter(name=cargo_nome).first()
     return {
         "id": str(usuario.pk),
         "pk": usuario.pk,
         "nome": usuario.nome,
         "name": usuario.nome,
         "email": usuario.email,
-        "cargo": usuario.cargo,
-        "roleId": str(cargo.pk) if cargo else usuario.cargo,
-        "foto": usuario.foto.url if usuario.foto else "",
-        "OAB": usuario.OAB,
+        "cargo": cargo_nome,
+        "roleId": str(cargo.pk) if cargo else cargo_nome,
     }
 
 
@@ -341,15 +359,21 @@ def detalhes_usuario(request, usuario_id):
     usuario = get_object_or_404(Usuario, pk=usuario_id)
     auth_user = _get_or_sync_auth_user(usuario)
     _sync_auth_user_cargo(usuario, auth_user)
-    processos = Processo.objects.filter(advogado_responsavel=usuario.nome).select_related("cliente")
-    eventos = Evento.objects.filter(responsavel=usuario.nome).select_related("cliente", "processo")
+    processos = Processo.objects.filter(
+        advogado_responsavel=usuario.nome
+    ).select_related("cliente")
+    eventos = Evento.objects.filter(responsavel=usuario.nome).select_related(
+        "cliente", "processo"
+    )
 
     from agenda.views import serialize_evento
     from processos.views import serialize_processo
 
     serialized_processos = [serialize_processo(processo) for processo in processos]
     serialized_eventos = [serialize_evento(evento) for evento in eventos]
-    serialized_cargos = [serialize_cargo(cargo) for cargo in auth_user.groups.order_by("name")]
+    serialized_cargos = [
+        serialize_cargo(cargo) for cargo in auth_user.groups.order_by("name")
+    ]
     serialized_usuario = serialize_usuario(usuario)
 
     return success_response(
@@ -451,9 +475,11 @@ def detalhes_cargo(request, cargo_id):
         return method_not_allowed(["GET"])
 
     cargo = get_object_or_404(Group, pk=cargo_id)
-    usuarios_vinculados = Usuario.objects.filter(cargo=cargo.name).order_by("nome")
+    usuarios_vinculados = _usuarios_for_cargo(cargo).order_by("nome")
     permission_sections = []
-    for section in cargo_permissions_for_display(cargo.permissions.select_related("content_type").all()):
+    for section in cargo_permissions_for_display(
+        cargo.permissions.select_related("content_type").all()
+    ):
         permission_sections.append(
             {
                 "key": section["key"],
@@ -470,7 +496,9 @@ def detalhes_cargo(request, cargo_id):
         )
 
     serialized_cargo = serialize_cargo(cargo)
-    serialized_usuarios = [serialize_usuario(usuario) for usuario in usuarios_vinculados]
+    serialized_usuarios = [
+        serialize_usuario(usuario) for usuario in usuarios_vinculados
+    ]
     return success_response(
         {
             "cargo": serialized_cargo,
@@ -499,7 +527,7 @@ def editar_cargo(request, cargo_id):
     if form.is_valid():
         cargo = form.save()
         if previous_name != cargo.name:
-            Usuario.objects.filter(cargo=previous_name).update(cargo=cargo.name)
+            Usuario.objects.filter(cargo__in=_cargo_lookup_values(previous_name)).update(cargo=cargo.name)
         serialized = serialize_cargo(cargo)
         return success_response(
             {"cargo": serialized, "role": serialized},
@@ -515,11 +543,15 @@ def excluir_cargo(request, cargo_id):
         return method_not_allowed(["DELETE"])
 
     cargo = get_object_or_404(Group, pk=cargo_id)
-    usuarios_vinculados = Usuario.objects.filter(cargo=cargo.name).count()
+    usuarios_vinculados = _usuarios_for_cargo(cargo).count()
 
     if usuarios_vinculados:
         return error_response(
-            {"cargo": ["Remova ou altere os usuarios vinculados antes de excluir este cargo."]},
+            {
+                "cargo": [
+                    "Remova ou altere os usuarios vinculados antes de excluir este cargo."
+                ]
+            },
             status=409,
         )
 
@@ -533,7 +565,11 @@ def login(request: HttpRequest):
         return method_not_allowed(["POST"])
 
     request_user = cast(User | AnonymousUser, getattr(request, "user", None))
-    auth_user = request_user if isinstance(request_user, User) and request_user.is_authenticated else None
+    auth_user = (
+        request_user
+        if isinstance(request_user, User) and request_user.is_authenticated
+        else None
+    )
 
     if auth_user is not None:
         auth_logout(request)
@@ -544,7 +580,9 @@ def login(request: HttpRequest):
     except ValueError as exc:
         return error_response(str(exc), status=400)
 
-    form = LoginForm(payload_with_aliases(payload, {"password": "senha", "username": "email"}))
+    form = LoginForm(
+        payload_with_aliases(payload, {"password": "senha", "username": "email"})
+    )
     if form.is_valid():
         email = form.cleaned_data["email"]
         senha = form.cleaned_data["senha"]
@@ -556,7 +594,9 @@ def login(request: HttpRequest):
         else:
             auth_user = _get_or_sync_auth_user(usuario)
             _sync_auth_user_cargo(usuario, auth_user)
-            auth_login(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
+            auth_login(
+                request, auth_user, backend="django.contrib.auth.backends.ModelBackend"
+            )
             request.session["usuario_id"] = usuario.pk
             request.session["usuario_nome"] = usuario.nome
             request.session["usuario_email"] = usuario.email
@@ -584,7 +624,9 @@ def current_usuario(request: HttpRequest):
         return method_not_allowed(["GET"])
 
     usuario = get_current_usuario(request)["usuario_logado"]
-    return success_response({"usuario": serialize_usuario(usuario) if usuario else None})
+    return success_response(
+        {"usuario": serialize_usuario(usuario) if usuario else None}
+    )
 
 
 def get_current_usuario(request: HttpRequest):
@@ -596,7 +638,9 @@ def get_current_usuario(request: HttpRequest):
 
     request_user = cast(User | AnonymousUser, getattr(request, "user", None))
     if usuario is None and request_user and request_user.is_authenticated:
-        auth_identifier = getattr(request_user, "email", "") or getattr(request_user, "username", "")
+        auth_identifier = getattr(request_user, "email", "") or getattr(
+            request_user, "username", ""
+        )
         if auth_identifier:
             usuario = Usuario.objects.filter(email=auth_identifier).first()
             if usuario:
