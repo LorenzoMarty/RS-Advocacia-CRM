@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.test import TestCase
@@ -40,6 +42,32 @@ class ExcluirCargoTests(TestCase):
                 {"id": item["id"], "name": item["name"]}
                 for item in payload["data"]["cargos"]
             ],
+        )
+
+    def test_cria_usuario_com_cargo_dinamico(self):
+        cargo = Group.objects.create(name="Operacional")
+
+        response = self.client.post(
+            reverse("criar_usuario"),
+            data=json.dumps(
+                {
+                    "name": "Marina",
+                    "email": "marina@example.com",
+                    "password": "123456",
+                    "roleId": str(cargo.pk),
+                }
+            ),
+            content_type="application/json",
+        )
+        payload = response.json()
+
+        self.assertEqual(response.status_code, 201, payload)
+        self.assertTrue(payload["success"])
+        self.assertEqual(payload["data"]["user"]["email"], "marina@example.com")
+        self.assertEqual(payload["data"]["user"]["roleId"], str(cargo.pk))
+        self.assertEqual(
+            Usuario.objects.get(email="marina@example.com").cargo,
+            "Operacional",
         )
 
     def test_exclusao_informa_bloqueio_quando_ha_usuarios_vinculados(self):

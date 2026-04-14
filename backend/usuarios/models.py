@@ -12,7 +12,7 @@ class Usuario(models.Model):
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     senha = models.CharField(max_length=100)
-    cargo = models.CharField(max_length=50, choices=TIPOS)
+    cargo = models.CharField(max_length=50)
 
     @property
     def cargo_label(self):
