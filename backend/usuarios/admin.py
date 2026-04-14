@@ -9,4 +9,4 @@ class UsuarioAdmin(admin.ModelAdmin):
     form = UsuarioForm
     list_display = ("nome", "email", "cargo")
     search_fields = ("nome", "email")
-    list_filter = ("cargo",)
+    list_filter = "cargo"
