@@ -2,7 +2,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 import { api, isApiEnabled, isEventsApiEnabled } from './api';
-import { createSeedState, LOGIN_HINT } from './data';
 
 const AppStateContext = createContext(null);
 
@@ -89,13 +88,12 @@ function eventFromResponse(payload) {
 }
 
 export function AppStateProvider({ children }) {
-  const [seed] = useState(() => createSeedState(new Date()));
-  const [permissionGroups, setPermissionGroups] = useState(seed.permissionGroups);
-  const [roles, setRoles] = useState(() => (isApiEnabled ? [] : seed.roles));
-  const [users, setUsers] = useState(() => (isApiEnabled ? [] : seed.users));
-  const [clients, setClients] = useState(() => (isApiEnabled ? [] : seed.clients));
-  const [processes, setProcesses] = useState(() => (isApiEnabled ? [] : seed.processes));
-  const [events, setEvents] = useState(() => (isEventsApiEnabled ? [] : seed.events));
+  const [permissionGroups, setPermissionGroups] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [processes, setProcesses] = useState([]);
+  const [events, setEvents] = useState([]);
   const [flashes, setFlashes] = useState([]);
   const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled);
   const [apiStatus, setApiStatus] = useState((isApiEnabled || isEventsApiEnabled) ? 'loading' : 'local');
@@ -600,7 +598,7 @@ export function AppStateProvider({ children }) {
     isLoading,
     isEventsLoading,
     apiStatus,
-    loginHint: LOGIN_HINT,
+    loginHint: null,
     removeFlash,
     addFlash,
     login,

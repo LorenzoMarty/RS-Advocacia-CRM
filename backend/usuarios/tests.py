@@ -70,6 +70,24 @@ class ExcluirCargoTests(TestCase):
             "Operacional",
         )
 
+    def test_admin_adiciona_usuario_com_cargo_dinamico(self):
+        cargo = Group.objects.create(name="Operacional")
+
+        response = self.client.post(
+            reverse("admin:usuarios_usuario_add"),
+            data={
+                "nome": "Ana Paula",
+                "email": "ana@example.com",
+                "senha": "123456",
+                "cargo": cargo.name,
+                "_save": "Salvar",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Usuario.objects.filter(email="ana@example.com").exists())
+        self.assertEqual(Usuario.objects.get(email="ana@example.com").cargo, cargo.name)
+
     def test_exclusao_informa_bloqueio_quando_ha_usuarios_vinculados(self):
         cargo = Group.objects.create(name="Administrador")
         Usuario.objects.create(
