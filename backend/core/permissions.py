@@ -2,26 +2,23 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any
 
-from django.contrib.auth.decorators import login_required, permission_required
+from core.permission_utils import user_has_all_permissions
+from core.utils import error_response
 
 
 def app_permissions_required(*permissions: str):
-    required_permissions: str | tuple[str, ...]
-    if len(permissions) == 1:
-        required_permissions = permissions[0]
-    else:
-        required_permissions = permissions
-
     def decorator(view_func: Callable[..., Any]):
-        protected_view = permission_required(
-            required_permissions,
-            raise_exception=True,
-        )(view_func)
-
         @wraps(view_func)
-        def wrapped_view(*args: Any, **kwargs: Any):
-            return protected_view(*args, **kwargs)
+        def wrapped_view(request, *args: Any, **kwargs: Any):
+            user = getattr(request, "user", None)
+            if user is None or not getattr(user, "is_authenticated", False):
+                return error_response({"auth": ["Autenticacao necessaria."]}, status=401)
 
-        return login_required(wrapped_view)
+            if permissions and not user_has_all_permissions(request, permissions):
+                return error_response({"permission": ["Permissao insuficiente."]}, status=403)
+
+            return view_func(request, *args, **kwargs)
+
+        return wrapped_view
 
     return decorator

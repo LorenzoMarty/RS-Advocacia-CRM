@@ -210,7 +210,7 @@ function useShellPreferences() {
 }
 
 export function GuestLayout() {
-  const { currentUser } = useAppState();
+  const { currentUser, isLoading } = useAppState();
 
   useEffect(() => {
     document.body.classList.add('login-body');
@@ -227,6 +227,10 @@ export function GuestLayout() {
     };
   }, []);
 
+  if (isLoading) {
+    return null;
+  }
+
   if (currentUser) {
     return <Navigate to="/" replace />;
   }
@@ -235,7 +239,7 @@ export function GuestLayout() {
 }
 
 export function ProtectedLayout() {
-  const { currentUser, logout } = useAppState();
+  const { currentUser, isLoading, logout } = useAppState();
   const location = useLocation();
   const [chrome, setChrome] = useState(PAGE_CHROME_DEFAULT);
   const { sidebarCollapsed, toggleTheme, toggleSidebar } = useShellPreferences();
@@ -249,6 +253,10 @@ export function ProtectedLayout() {
       window.RSSelect.refresh();
     }
   }, [location.pathname, location.search]);
+
+  if (isLoading) {
+    return null;
+  }
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;

@@ -1,0 +1,34 @@
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Local environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Local databases and uploads
+*.sqlite3
+db.sqlite3
+media/
+
+# Build/cache output
+dist/
+build/
+coverage/
+.coverage
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.cache/

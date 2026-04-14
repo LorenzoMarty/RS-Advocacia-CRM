@@ -1,14 +1,6 @@
 from django.db import models
 
 # Create your models here.
-class Cargo(models.Model):
-    nome = models.CharField(max_length=100, unique=True)
-    permission_ids = models.JSONField(default=list, blank=True)
-
-    def __str__(self):
-        return self.nome
-
-
 class Usuario(models.Model):
     TIPOS = [
         ("admin", "Administrador"),
@@ -21,6 +13,7 @@ class Usuario(models.Model):
     senha = models.CharField(max_length=100)
     cargo = models.CharField(max_length=50)
     foto = models.ImageField(upload_to='fotos_usuarios/', blank=True)
+    OAB = models.CharField(max_length=20, blank=True, null=True)
 
     @property
     def cargo_label(self):

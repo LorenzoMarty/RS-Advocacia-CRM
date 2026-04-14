@@ -17,6 +17,7 @@
 @import "./styles/pages/usuarios-cargo-form.css";
 @import "./styles/pages/usuarios-cargo-detail.css";
 @import "./styles/pages/confirm-delete.css";
+@import "./styles/pages/api-test.css";
 
 #root {
   min-height: 100vh;

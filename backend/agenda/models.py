@@ -23,7 +23,7 @@ class Evento(models.Model):
         if self.data_fim < self.data_inicio:
             raise ValidationError("A data de fim deve ser posterior à data de início.")
         if self.lembrete_em and self.lembrete_em > self.data_inicio:
-            raise ValidationError("O lembrete deve ser definido para uma data anterior ao início do compromisso.")
+            raise ValidationError("O lembrete deve ser definido para uma data anterior ao início do evento.")
         
     def __str__(self):
         return f"{self.processo.numero_processo} - {self.data_inicio.strftime('%Y-%m-%d %H:%M')}"

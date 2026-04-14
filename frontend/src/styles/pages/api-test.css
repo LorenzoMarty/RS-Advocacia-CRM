@@ -1,0 +1,70 @@
+.api-test-page {
+    display: grid;
+    gap: 18px;
+}
+
+.api-test-hero,
+.api-test-list {
+    padding: 22px;
+}
+
+.api-test-hero {
+    display: grid;
+    gap: 12px;
+}
+
+.api-test-hero h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    line-height: 1;
+    font-weight: 400;
+    letter-spacing: -0.04em;
+}
+
+.api-test-hero p,
+.form-message {
+    margin: 0;
+    color: var(--soft);
+    line-height: 1.6;
+}
+
+.api-test-form {
+    display: grid;
+    gap: 18px;
+}
+
+.api-test-list {
+    display: grid;
+    gap: 10px;
+}
+
+.api-test-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-width: 0;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--ghost);
+}
+
+.api-test-item strong,
+.api-test-item span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.api-test-item span {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+    .api-test-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

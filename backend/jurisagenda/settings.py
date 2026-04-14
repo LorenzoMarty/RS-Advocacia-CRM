@@ -10,18 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-import os
 from pathlib import Path
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
-
-import dj_database_url
-from django.core.exceptions import ImproperlyConfigured
-from dotenv import load_dotenv
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-load_dotenv(BASE_DIR / '.env')
 
 
 def _clean_host(value: str) -> str:
@@ -32,50 +25,15 @@ def _split_env_hosts(value: str) -> list[str]:
     return [_clean_host(item) for item in value.split(',') if _clean_host(item)]
 
 
-def _split_env_values(value: str) -> list[str]:
+def _split_env_origins(value: str) -> list[str]:
     return [item.strip().rstrip('/') for item in value.split(',') if item.strip()]
-
-
-def _https_origin(host: str) -> str:
-    return f'https://{_clean_host(host)}'
-
-
-def _clean_database_url(value: str) -> str:
-    parsed = urlsplit(value)
-    query = [
-        (key, query_value)
-        for key, query_value in parse_qsl(parsed.query, keep_blank_values=True)
-        if key != 'supa'
-    ]
-    return urlunsplit(
-        (
-            parsed.scheme,
-            parsed.netloc,
-            parsed.path,
-            urlencode(query),
-            parsed.fragment,
-        )
-    )
-
-
-def _database_url_from_env() -> str | None:
-    database_url = os.getenv('DATABASE_URL')
-    postgres_url = os.getenv('POSTGRES_URL')
-
-    if database_url and urlsplit(database_url).scheme not in {'http', 'https'}:
-        return database_url
-
-    if postgres_url:
-        return postgres_url
-
-    return database_url
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-+g)herdbhyeh+jva+k)qugqi$v1qa^%(4p756636ltfzx_i6ll')
+SECRET_KEY = 'django-insecure-+g)herdbhyeh+jva+k)qugqi$v1qa^%(4p756636ltfzx_i6ll'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 _debug_env = os.getenv('DEBUG')
@@ -101,34 +59,11 @@ ALLOWED_HOSTS = sorted(
     }
 )
 
-CORS_ALLOWED_ORIGINS = sorted(
-    {
-        'http://127.0.0.1:5173',
-        'http://localhost:5173',
-        *_split_env_values(os.getenv('CORS_ALLOWED_ORIGINS', '')),
-    }
-)
-
-CSRF_TRUSTED_ORIGINS = sorted(
-    {
-        'http://127.0.0.1:8000',
-        'http://localhost:8000',
-        *(
-            _https_origin(host)
-            for host in (
-                os.getenv('VERCEL_URL', ''),
-                os.getenv('VERCEL_PROJECT_PRODUCTION_URL', ''),
-            )
-            if _clean_host(host)
-        ),
-        *_split_env_values(os.getenv('CSRF_TRUSTED_ORIGINS', '')),
-    }
-)
-
 
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -144,9 +79,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'core.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -177,38 +112,12 @@ WSGI_APPLICATION = 'jurisagenda.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASE_URL = _database_url_from_env()
-
-if DATABASE_URL:
-    database_scheme = urlsplit(DATABASE_URL).scheme
-    if database_scheme in {'http', 'https'}:
-        raise ImproperlyConfigured(
-            'DATABASE_URL deve ser a connection string Postgres do Supabase, '
-            'começando com postgresql:// ou postgres://. '
-            'Nao use URL https:// do backend, do frontend ou do dashboard Supabase.'
-        )
-
-    DATABASE_URL = _clean_database_url(DATABASE_URL)
-
-    DATABASES = {
-        'default': dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=int(os.getenv('DATABASE_CONN_MAX_AGE', '0')),
-            conn_health_checks=True,
-        )
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-
-    if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
-        DATABASES['default'].setdefault('OPTIONS', {})
-        DATABASES['default']['OPTIONS'].setdefault('sslmode', 'require')
-        DATABASES['default']['OPTIONS'].setdefault('prepare_threshold', None)
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 
 # Password validation
@@ -257,7 +166,21 @@ if not DEBUG:
         }
     }
 
-# Auth redirects
-LOGIN_URL = '/admin/login/'
-LOGIN_REDIRECT_URL = '/admin/'
-LOGOUT_REDIRECT_URL = '/admin/login/'
+# CORS/CSRF for the React frontend. Keep this as an explicit allowlist in production.
+DEFAULT_REACT_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+]
+
+CORS_ALLOWED_ORIGINS = _split_env_origins(
+    os.getenv('CORS_ALLOWED_ORIGINS', ','.join(DEFAULT_REACT_ORIGINS))
+)
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = sorted(
+    {
+        *DEFAULT_REACT_ORIGINS,
+        *_split_env_origins(os.getenv('CORS_ALLOWED_ORIGINS', '')),
+        *_split_env_origins(os.getenv('CSRF_TRUSTED_ORIGINS', '')),
+    }
+)

@@ -41,6 +41,7 @@ import {
   RoleDetailPage,
   RoleDeletePage,
 } from "./app/pages/roles";
+import { ApiTestPage } from "./app/pages/api-test";
 
 function ClientFormRoute() {
   const { clientId } = useParams();
@@ -82,6 +83,7 @@ export default function App() {
 
           <Route element={<ProtectedLayout />}>
             <Route index element={<DashboardPage />} />
+            <Route path="/api-test" element={<ApiTestPage />} />
 
             <Route path="/clientes" element={<ClientsListPage />} />
             <Route path="/clientes/novo" element={<ClientFormRoute />} />

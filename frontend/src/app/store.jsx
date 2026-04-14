@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from 'react';
 
-import { api, isApiEnabled } from './api';
+import { api, isApiEnabled, isEventsApiEnabled } from './api';
 import { createSeedState, LOGIN_HINT } from './data';
 
 const AppStateContext = createContext(null);
@@ -24,22 +24,164 @@ function replaceById(items, payload) {
     : [...items, payload];
 }
 
+function mergeById(items, nextItems) {
+  return nextItems.reduce((currentItems, item) => replaceById(currentItems, item), items);
+}
+
 function errorMessage(error) {
   return error instanceof Error ? error.message : 'Falha ao comunicar com a API.';
 }
 
+function collectionFromResponse(payload, englishKey, portugueseKey) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  return payload?.[englishKey] || payload?.[portugueseKey] || [];
+}
+
+function itemFromResponse(payload, englishKey, portugueseKey) {
+  if (payload?.id) {
+    return payload;
+  }
+
+  return payload?.[englishKey] || payload?.[portugueseKey] || null;
+}
+
+function usersFromResponse(payload) {
+  return collectionFromResponse(payload, 'users', 'usuarios');
+}
+
+function userFromResponse(payload) {
+  return itemFromResponse(payload, 'user', 'usuario');
+}
+
+function rolesFromResponse(payload) {
+  return collectionFromResponse(payload, 'roles', 'cargos');
+}
+
+function roleFromResponse(payload) {
+  return itemFromResponse(payload, 'role', 'cargo');
+}
+
+function clientsFromResponse(payload) {
+  return collectionFromResponse(payload, 'clients', 'clientes');
+}
+
+function clientFromResponse(payload) {
+  return itemFromResponse(payload, 'client', 'cliente');
+}
+
+function processesFromResponse(payload) {
+  return collectionFromResponse(payload, 'processes', 'processos');
+}
+
+function processFromResponse(payload) {
+  return itemFromResponse(payload, 'process', 'processo');
+}
+
+function eventsFromResponse(payload) {
+  return collectionFromResponse(payload, 'events', 'eventos');
+}
+
+function eventFromResponse(payload) {
+  return itemFromResponse(payload, 'event', 'evento');
+}
+
 export function AppStateProvider({ children }) {
   const [seed] = useState(() => createSeedState(new Date()));
-  const [permissionGroups] = useState(seed.permissionGroups);
-  const [roles, setRoles] = useState(seed.roles);
-  const [users, setUsers] = useState(seed.users);
-  const [clients, setClients] = useState(seed.clients);
-  const [processes, setProcesses] = useState(seed.processes);
-  const [events, setEvents] = useState(seed.events);
+  const [permissionGroups, setPermissionGroups] = useState(seed.permissionGroups);
+  const [roles, setRoles] = useState(() => (isApiEnabled ? [] : seed.roles));
+  const [users, setUsers] = useState(() => (isApiEnabled ? [] : seed.users));
+  const [clients, setClients] = useState(() => (isApiEnabled ? [] : seed.clients));
+  const [processes, setProcesses] = useState(() => (isApiEnabled ? [] : seed.processes));
+  const [events, setEvents] = useState(() => (isEventsApiEnabled ? [] : seed.events));
   const [flashes, setFlashes] = useState([]);
-  const [isLoading, setIsLoading] = useState(isApiEnabled);
-  const [apiStatus, setApiStatus] = useState(isApiEnabled ? 'loading' : 'local');
+  const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled);
+  const [apiStatus, setApiStatus] = useState((isApiEnabled || isEventsApiEnabled) ? 'loading' : 'local');
+  const [isEventsLoading, setIsEventsLoading] = useState(isEventsApiEnabled);
+  const [currentSessionUser, setCurrentSessionUser] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem('rs-advocacia-user') || null);
+
+  function syncCurrentUser(user) {
+    if (!user) {
+      setCurrentSessionUser(null);
+      setCurrentUserId(null);
+      return null;
+    }
+
+    setCurrentSessionUser(user);
+    setUsers((currentUsers) => sortByName(replaceById(currentUsers, user)));
+    setCurrentUserId(user.id);
+    return user;
+  }
+
+  async function loadCurrentUser() {
+    const payload = await api.getCurrentUser();
+    return syncCurrentUser(userFromResponse(payload));
+  }
+
+  function applyBootstrapPayload(payload) {
+    if (payload.permissionGroups) {
+      setPermissionGroups(payload.permissionGroups);
+    }
+
+    setRoles(sortByName(rolesFromResponse(payload)));
+    setUsers((currentUsers) => sortByName(mergeById(currentUsers, usersFromResponse(payload))));
+    setClients(sortByName(clientsFromResponse(payload)));
+    setProcesses(processesFromResponse(payload));
+    setEvents(eventsFromResponse(payload));
+  }
+
+  async function loadRemoteCollections() {
+    let loadedRemoteData = false;
+    let lastError = null;
+
+    try {
+      const payload = await api.bootstrap();
+      applyBootstrapPayload(payload);
+      loadedRemoteData = true;
+    } catch (error) {
+      lastError = error;
+    }
+
+    const loaders = [
+      {
+        load: api.listRoles,
+        apply: (payload) => setRoles(sortByName(rolesFromResponse(payload))),
+      },
+      {
+        load: api.listUsers,
+        apply: (payload) => setUsers((currentUsers) => sortByName(mergeById(currentUsers, usersFromResponse(payload)))),
+      },
+      {
+        load: api.listClients,
+        apply: (payload) => setClients(sortByName(clientsFromResponse(payload))),
+      },
+      {
+        load: api.listProcesses,
+        apply: (payload) => setProcesses(processesFromResponse(payload)),
+      },
+      {
+        load: api.listEvents,
+        apply: (payload) => setEvents(eventsFromResponse(payload)),
+      },
+    ];
+
+    const results = await Promise.allSettled(loaders.map(({ load }) => load()));
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        loaders[index].apply(result.value);
+        loadedRemoteData = true;
+      } else {
+        lastError = result.reason;
+      }
+    });
+
+    if (!loadedRemoteData && lastError) {
+      throw lastError;
+    }
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -52,17 +194,16 @@ export function AppStateProvider({ children }) {
 
     async function loadRemoteState() {
       try {
-        const payload = await api.bootstrap();
+        const currentUser = await loadCurrentUser();
 
         if (!isMounted) {
           return;
         }
 
-        setRoles(payload.roles || []);
-        setUsers(payload.users || []);
-        setClients(payload.clients || []);
-        setProcesses(payload.processes || []);
-        setEvents(payload.events || []);
+        if (currentUser) {
+          await loadRemoteCollections();
+        }
+
         setApiStatus('ready');
       } catch (error) {
         if (!isMounted) {
@@ -74,6 +215,7 @@ export function AppStateProvider({ children }) {
       } finally {
         if (isMounted) {
           setIsLoading(false);
+          setIsEventsLoading(false);
         }
       }
     }
@@ -109,9 +251,13 @@ export function AppStateProvider({ children }) {
   async function login(email, password) {
     if (isApiEnabled) {
       try {
-        const payload = await api.login({ email, password });
-        setUsers((currentUsers) => sortByName(replaceById(currentUsers, payload.user)));
-        setCurrentUserId(payload.user.id);
+        const payload = await api.login({ email, username: email, password });
+        const user = userFromResponse(payload);
+        if (!user) {
+          throw new Error('Resposta invalida da API de login.');
+        }
+        syncCurrentUser(user);
+        await loadRemoteCollections();
         addFlash('Sessão iniciada.', 'success');
         return true;
       } catch (error) {
@@ -133,8 +279,22 @@ export function AppStateProvider({ children }) {
     return true;
   }
 
-  function logout() {
+  async function logout() {
+    if (isApiEnabled) {
+      try {
+        await api.logout();
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+      }
+    }
+
+    setCurrentSessionUser(null);
     setCurrentUserId(null);
+    setRoles([]);
+    setUsers([]);
+    setClients([]);
+    setProcesses([]);
+    setEvents([]);
     addFlash('Sessão encerrada.', 'info');
   }
 
@@ -144,9 +304,13 @@ export function AppStateProvider({ children }) {
         const response = payload.id
           ? await api.updateClient(payload.id, payload)
           : await api.createClient(payload);
-        setClients((currentClients) => sortByName(replaceById(currentClients, response.client)));
+        const savedClient = clientFromResponse(response);
+        if (!savedClient) {
+          throw new Error('Resposta invalida da API de clientes.');
+        }
+        setClients((currentClients) => sortByName(replaceById(currentClients, savedClient)));
         addFlash(payload.id ? 'Cliente atualizado.' : 'Cliente salvo.', 'success');
-        return response.client;
+        return savedClient;
       } catch (error) {
         addFlash(errorMessage(error), 'error');
         return null;
@@ -173,9 +337,13 @@ export function AppStateProvider({ children }) {
         const response = payload.id
           ? await api.updateProcess(payload.id, payload)
           : await api.createProcess(payload);
-        setProcesses((currentProcesses) => replaceById(currentProcesses, response.process));
+        const savedProcess = processFromResponse(response);
+        if (!savedProcess) {
+          throw new Error('Resposta invalida da API de processos.');
+        }
+        setProcesses((currentProcesses) => replaceById(currentProcesses, savedProcess));
         addFlash(payload.id ? 'Processo atualizado.' : 'Processo salvo.', 'success');
-        return response.process;
+        return savedProcess;
       } catch (error) {
         addFlash(errorMessage(error), 'error');
         return null;
@@ -197,14 +365,18 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveEvent(payload) {
-    if (isApiEnabled) {
+    if (isEventsApiEnabled) {
       try {
         const response = payload.id
           ? await api.updateEvent(payload.id, payload)
           : await api.createEvent(payload);
-        setEvents((currentEvents) => replaceById(currentEvents, response.event));
+        const savedEvent = eventFromResponse(response);
+        if (!savedEvent) {
+          throw new Error('Resposta invalida da API de eventos.');
+        }
+        setEvents((currentEvents) => replaceById(currentEvents, savedEvent));
         addFlash(payload.id ? 'Compromisso atualizado.' : 'Compromisso salvo.', 'success');
-        return response.event;
+        return savedEvent;
       } catch (error) {
         addFlash(errorMessage(error), 'error');
         return null;
@@ -225,15 +397,44 @@ export function AppStateProvider({ children }) {
     return nextEvent;
   }
 
+  async function loadEvent(eventId) {
+    if (!isEventsApiEnabled) {
+      return events.find((event) => event.id === eventId) || null;
+    }
+
+    setIsEventsLoading(true);
+
+    try {
+      const response = await api.getEvent(eventId);
+      const eventItem = eventFromResponse(response);
+      if (eventItem) {
+        setEvents((currentEvents) => replaceById(currentEvents, eventItem));
+      }
+      return eventItem;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    } finally {
+      setIsEventsLoading(false);
+    }
+  }
+
   async function saveUser(payload) {
     if (isApiEnabled) {
       try {
         const response = payload.id
           ? await api.updateUser(payload.id, payload)
           : await api.createUser(payload);
-        setUsers((currentUsers) => sortByName(replaceById(currentUsers, response.user)));
+        const savedUser = userFromResponse(response);
+        if (!savedUser) {
+          throw new Error('Resposta invalida da API de usuarios.');
+        }
+        setUsers((currentUsers) => sortByName(replaceById(currentUsers, savedUser)));
+        if (savedUser.id === currentUserId) {
+          setCurrentSessionUser(savedUser);
+        }
         addFlash(payload.id ? 'Usuário atualizado.' : 'Usuário salvo.', 'success');
-        return response.user;
+        return savedUser;
       } catch (error) {
         addFlash(errorMessage(error), 'error');
         return null;
@@ -268,9 +469,13 @@ export function AppStateProvider({ children }) {
         const response = payload.id
           ? await api.updateRole(payload.id, payload)
           : await api.createRole(payload);
-        setRoles((currentRoles) => sortByName(replaceById(currentRoles, response.role)));
+        const savedRole = roleFromResponse(response);
+        if (!savedRole) {
+          throw new Error('Resposta invalida da API de cargos.');
+        }
+        setRoles((currentRoles) => sortByName(replaceById(currentRoles, savedRole)));
         addFlash(payload.id ? 'Cargo atualizado.' : 'Cargo salvo.', 'success');
-        return response.role;
+        return savedRole;
       } catch (error) {
         addFlash(errorMessage(error), 'error');
         return null;
@@ -331,7 +536,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function deleteEvent(eventId) {
-    if (isApiEnabled) {
+    if (isEventsApiEnabled) {
       try {
         await api.deleteEvent(eventId);
       } catch (error) {
@@ -378,7 +583,7 @@ export function AppStateProvider({ children }) {
     return true;
   }
 
-  const currentUser = users.find((user) => user.id === currentUserId) || null;
+  const currentUser = users.find((user) => user.id === currentUserId) || currentSessionUser;
   const currentRole = roles.find((role) => role.id === currentUser?.roleId) || null;
 
   const value = {
@@ -393,6 +598,7 @@ export function AppStateProvider({ children }) {
     currentRole,
     isApiEnabled,
     isLoading,
+    isEventsLoading,
     apiStatus,
     loginHint: LOGIN_HINT,
     removeFlash,
@@ -402,6 +608,7 @@ export function AppStateProvider({ children }) {
     saveClient,
     saveProcess,
     saveEvent,
+    loadEvent,
     saveUser,
     saveRole,
     deleteClient,

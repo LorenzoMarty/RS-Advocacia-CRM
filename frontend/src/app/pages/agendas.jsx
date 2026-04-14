@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Link,
   useNavigate,
@@ -534,7 +534,7 @@ export function EventFormPage() {
   const params = useParams();
   const [searchParams] = useSearchParams();
   const isEditing = Boolean(params.eventId);
-  const { clients, events, processes, saveEvent, users } = useAppState();
+  const { clients, events, isEventsLoading, processes, saveEvent, users } = useAppState();
   const eventItem = events.find((item) => item.id === params.eventId) || null;
   const initialClientId = searchParams.get("cliente") || "";
   const initialProcessId = searchParams.get("processo") || "";
@@ -557,11 +557,39 @@ export function EventFormPage() {
   }));
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    if (!eventItem) {
+      return;
+    }
+
+    setForm({
+      id: eventItem.id || "",
+      title: eventItem.title || "",
+      type: eventItem.type || EVENT_TYPE_OPTIONS[0],
+      priority: eventItem.priority || EVENT_PRIORITY_OPTIONS[0],
+      start: formatDateTimeInput(eventItem.start),
+      end: formatDateTimeInput(eventItem.end),
+      reminderAt: formatDateTimeInput(eventItem.reminderAt),
+      clientId: eventItem.clientId || "",
+      processId: eventItem.processId || "",
+      responsible: eventItem.responsible || "",
+      status: eventItem.status || "",
+      location: eventItem.location || "",
+      description: eventItem.description || "",
+      notes: eventItem.notes || "",
+      completed: eventItem.completed || false,
+    });
+  }, [eventItem]);
+
   const availableProcesses = processes.filter(
     (process) => !form.clientId || process.clientId === form.clientId,
   );
 
   if (isEditing && !eventItem) {
+    if (isEventsLoading) {
+      return null;
+    }
+
     return <NotFoundState title="Compromisso não encontrado." />;
   }
 
@@ -987,10 +1015,39 @@ export function EventFormPage() {
 
 export function EventDetailPage() {
   const params = useParams();
-  const { clients, events, processes } = useAppState();
-  const eventItem = events.find((item) => item.id === params.eventId) || null;
+  const { clients, events, loadEvent, processes } = useAppState();
+  const [remoteEvent, setRemoteEvent] = useState(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(true);
+  const eventItem =
+    remoteEvent ||
+    events.find((item) => item.id === params.eventId) ||
+    null;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchEvent() {
+      setIsDetailLoading(true);
+      const eventData = await loadEvent(params.eventId);
+
+      if (isMounted) {
+        setRemoteEvent(eventData);
+        setIsDetailLoading(false);
+      }
+    }
+
+    fetchEvent();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [params.eventId]);
 
   if (!eventItem) {
+    if (isDetailLoading) {
+      return null;
+    }
+
     return <NotFoundState title="Compromisso não encontrado." />;
   }
 
@@ -1258,10 +1315,14 @@ export function EventDetailPage() {
 export function EventDeletePage() {
   const navigate = useNavigate();
   const params = useParams();
-  const { deleteEvent, events } = useAppState();
+  const { deleteEvent, events, isEventsLoading } = useAppState();
   const eventItem = events.find((item) => item.id === params.eventId) || null;
 
   if (!eventItem) {
+    if (isEventsLoading) {
+      return null;
+    }
+
     return <NotFoundState title="Compromisso não encontrado." />;
   }
 

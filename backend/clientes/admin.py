@@ -5,4 +5,4 @@ from clientes.models import Cliente
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
     list_display = ("nome", "telefone", "email")
-    search_fields = ("nome", "email", "cpf")
+    search_fields = ("nome", "email", "cpf_cnpj")
