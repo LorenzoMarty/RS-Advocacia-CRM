@@ -17,12 +17,21 @@ function buildUrl(path, baseUrl = apiBaseUrl) {
   return `${baseUrl}${normalizedPath}`;
 }
 
-function getCookie(name) {
-  return document.cookie
-    .split(';')
-    .map((cookie) => cookie.trim())
-    .find((cookie) => cookie.startsWith(`${name}=`))
-    ?.slice(name.length + 1) || '';
+export function getCookie(name) {
+  let cookieValue = '';
+
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (const rawCookie of cookies) {
+      const cookie = rawCookie.trim();
+      if (cookie.startsWith(`${name}=`)) {
+        cookieValue = cookie.substring(name.length + 1);
+        break;
+      }
+    }
+  }
+
+  return cookieValue;
 }
 
 async function ensureCsrfToken(baseUrl = apiBaseUrl) {
@@ -35,6 +44,10 @@ async function ensureCsrfToken(baseUrl = apiBaseUrl) {
     credentials: 'include',
   });
   const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(errorMessageFromPayload(payload, response.status));
+  }
 
   return getCookie('csrftoken') || payload.data?.csrfToken || payload.csrfToken || '';
 }
@@ -62,7 +75,7 @@ function errorMessageFromPayload(payload, status) {
   return String(error);
 }
 
-async function request(path, options = {}, { baseUrl = apiBaseUrl, requireConfiguredApi = true } = {}) {
+export async function apiRequest(path, options = {}, { baseUrl = apiBaseUrl, requireConfiguredApi = true } = {}) {
   if (requireConfiguredApi && !baseUrl) {
     throw new Error('API nao configurada. Defina VITE_API_URL.');
   }
@@ -110,36 +123,36 @@ function jsonOptions(method, payload) {
 }
 
 function eventRequest(path = '', options = {}) {
-  return request(`/api/eventos/${path}`, options, {
+  return apiRequest(`/api/eventos/${path}`, options, {
     baseUrl: apiBaseUrl,
     requireConfiguredApi: false,
   });
 }
 
 export const api = {
-  bootstrap: () => request('/api/bootstrap/'),
-  getCurrentUser: () => request('/api/usuarios/atual/'),
-  login: (payload) => request('/api/auth/login/', jsonOptions('POST', payload)),
-  logout: () => request('/api/auth/logout/', { method: 'POST' }),
-  listClients: () => request('/api/clientes/'),
-  createClient: (payload) => request('/api/clientes/criar/', jsonOptions('POST', payload)),
-  updateClient: (id, payload) => request(`/api/clientes/${id}/editar/`, jsonOptions('PUT', payload)),
-  deleteClient: (id) => request(`/api/clientes/${id}/excluir/`, { method: 'DELETE' }),
-  listProcesses: () => request('/api/processos/'),
-  createProcess: (payload) => request('/api/processos/criar/', jsonOptions('POST', payload)),
-  updateProcess: (id, payload) => request(`/api/processos/${id}/editar/`, jsonOptions('PUT', payload)),
-  deleteProcess: (id) => request(`/api/processos/${id}/excluir/`, { method: 'DELETE' }),
+  bootstrap: () => apiRequest('/api/bootstrap/'),
+  getCurrentUser: () => apiRequest('/api/usuarios/atual/'),
+  login: (payload) => apiRequest('/api/auth/login/', jsonOptions('POST', payload)),
+  logout: () => apiRequest('/api/auth/logout/', { method: 'POST' }),
+  listClients: () => apiRequest('/api/clientes/'),
+  createClient: (payload) => apiRequest('/api/clientes/criar/', jsonOptions('POST', payload)),
+  updateClient: (id, payload) => apiRequest(`/api/clientes/${id}/editar/`, jsonOptions('PUT', payload)),
+  deleteClient: (id) => apiRequest(`/api/clientes/${id}/excluir/`, { method: 'DELETE' }),
+  listProcesses: () => apiRequest('/api/processos/'),
+  createProcess: (payload) => apiRequest('/api/processos/criar/', jsonOptions('POST', payload)),
+  updateProcess: (id, payload) => apiRequest(`/api/processos/${id}/editar/`, jsonOptions('PUT', payload)),
+  deleteProcess: (id) => apiRequest(`/api/processos/${id}/excluir/`, { method: 'DELETE' }),
   listEvents: () => eventRequest(),
   getEvent: (id) => eventRequest(`${id}/`),
   createEvent: (payload) => eventRequest('criar/', jsonOptions('POST', payload)),
   updateEvent: (id, payload) => eventRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
   deleteEvent: (id) => eventRequest(`${id}/excluir/`, { method: 'DELETE' }),
-  listUsers: () => request('/api/usuarios/'),
-  createUser: (payload) => request('/api/usuarios/criar/', jsonOptions('POST', payload)),
-  updateUser: (id, payload) => request(`/api/usuarios/${id}/editar/`, jsonOptions('PUT', payload)),
-  deleteUser: (id) => request(`/api/usuarios/${id}/excluir/`, { method: 'DELETE' }),
-  listRoles: () => request('/api/cargos/'),
-  createRole: (payload) => request('/api/cargos/criar/', jsonOptions('POST', payload)),
-  updateRole: (id, payload) => request(`/api/cargos/${id}/editar/`, jsonOptions('PUT', payload)),
-  deleteRole: (id) => request(`/api/cargos/${id}/excluir/`, { method: 'DELETE' }),
+  listUsers: () => apiRequest('/api/usuarios/'),
+  createUser: (payload) => apiRequest('/api/usuarios/criar/', jsonOptions('POST', payload)),
+  updateUser: (id, payload) => apiRequest(`/api/usuarios/${id}/editar/`, jsonOptions('PUT', payload)),
+  deleteUser: (id) => apiRequest(`/api/usuarios/${id}/excluir/`, { method: 'DELETE' }),
+  listRoles: () => apiRequest('/api/cargos/'),
+  createRole: (payload) => apiRequest('/api/cargos/criar/', jsonOptions('POST', payload)),
+  updateRole: (id, payload) => apiRequest(`/api/cargos/${id}/editar/`, jsonOptions('PUT', payload)),
+  deleteRole: (id) => apiRequest(`/api/cargos/${id}/excluir/`, { method: 'DELETE' }),
 };

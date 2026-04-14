@@ -13,49 +13,52 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 
+from corsheaders.defaults import default_headers
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 def _clean_host(value: str) -> str:
-    return value.strip().removeprefix('https://').removeprefix('http://').rstrip('/')
+    return value.strip().removeprefix("https://").removeprefix("http://").rstrip("/")
 
 
 def _split_env_hosts(value: str) -> list[str]:
-    return [_clean_host(item) for item in value.split(',') if _clean_host(item)]
+    return [_clean_host(item) for item in value.split(",") if _clean_host(item)]
 
 
 def _split_env_origins(value: str) -> list[str]:
-    return [item.strip().rstrip('/') for item in value.split(',') if item.strip()]
+    return [item.strip().rstrip("/") for item in value.split(",") if item.strip()]
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+g)herdbhyeh+jva+k)qugqi$v1qa^%(4p756636ltfzx_i6ll'
+SECRET_KEY = "django-insecure-+g)herdbhyeh+jva+k)qugqi$v1qa^%(4p756636ltfzx_i6ll"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-_debug_env = os.getenv('DEBUG')
+_debug_env = os.getenv("DEBUG")
 if _debug_env is None:
-    DEBUG = not bool(os.getenv('VERCEL'))
+    DEBUG = not bool(os.getenv("VERCEL"))
 else:
-    DEBUG = _debug_env.strip().lower() in {'1', 'true', 'yes', 'on'}
+    DEBUG = _debug_env.strip().lower() in {"1", "true", "yes", "on"}
 
 ALLOWED_HOSTS = sorted(
     {
-        '127.0.0.1',
-        'localhost',
-        'agenda-juri.vercel.app',
+        "127.0.0.1",
+        "localhost",
+        "agenda-juri.vercel.app",
+        "agenda-juri-orcin.vercel.app",
         *(
             _clean_host(host)
             for host in (
-                os.getenv('VERCEL_URL', ''),
-                os.getenv('VERCEL_PROJECT_PRODUCTION_URL', ''),
+                os.getenv("VERCEL_URL", ""),
+                os.getenv("VERCEL_PROJECT_PRODUCTION_URL", ""),
             )
             if _clean_host(host)
         ),
-        *_split_env_hosts(os.getenv('ALLOWED_HOSTS', '')),
+        *_split_env_hosts(os.getenv("ALLOWED_HOSTS", "")),
     }
 )
 
@@ -63,59 +66,59 @@ ALLOWED_HOSTS = sorted(
 # Application definition
 
 INSTALLED_APPS = [
-    'corsheaders',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'clientes',
-    'processos',
-    'agenda',
-    'core',
-    'usuarios',
+    "corsheaders",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "clientes",
+    "processos",
+    "agenda",
+    "core",
+    "usuarios",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'jurisagenda.urls'
+ROOT_URLCONF = "jurisagenda.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'jurisagenda.wsgi.application'
+WSGI_APPLICATION = "jurisagenda.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -125,16 +128,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -142,9 +145,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -154,33 +157,51 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 WHITENOISE_USE_FINDERS = DEBUG
 
 if not DEBUG:
     STORAGES = {
-        'staticfiles': {
-            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         }
     }
 
 # CORS/CSRF for the React frontend. Keep this as an explicit allowlist in production.
 DEFAULT_REACT_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
+    "https://agenda-juri-orcin.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
-CORS_ALLOWED_ORIGINS = _split_env_origins(
-    os.getenv('CORS_ALLOWED_ORIGINS', ','.join(DEFAULT_REACT_ORIGINS))
+CORS_ALLOWED_ORIGINS = sorted(
+    {
+        *DEFAULT_REACT_ORIGINS,
+        *_split_env_origins(os.getenv("CORS_ALLOWED_ORIGINS", "")),
+    }
 )
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+    "x-csrftoken",
+)
 
 CSRF_TRUSTED_ORIGINS = sorted(
     {
-        *DEFAULT_REACT_ORIGINS,
-        *_split_env_origins(os.getenv('CORS_ALLOWED_ORIGINS', '')),
-        *_split_env_origins(os.getenv('CSRF_TRUSTED_ORIGINS', '')),
+        *CORS_ALLOWED_ORIGINS,
+        *_split_env_origins(os.getenv("CSRF_TRUSTED_ORIGINS", "")),
     }
 )
+
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = False
+CSRF_USE_SESSIONS = False
+
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

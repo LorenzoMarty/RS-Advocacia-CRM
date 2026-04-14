@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 
+import { apiRequest } from '../api';
 import { PageChrome } from '../layout';
 import { Field } from './common';
 
-const API_URL = 'http://localhost:8000/api/test/';
+const API_URL = '/api/test/';
 
 export function ApiTestPage() {
   const [items, setItems] = useState([]);
@@ -17,14 +18,7 @@ export function ApiTestPage() {
     setMessage('');
 
     try {
-      const response = await fetch(API_URL);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Falha ao buscar dados.');
-      }
-
-      console.log(data);
+      const data = await apiRequest(API_URL);
       setItems(data);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Falha ao buscar dados.');
@@ -50,22 +44,10 @@ export function ApiTestPage() {
     setMessage('');
 
     try {
-      const response = await fetch(API_URL, {
+      const data = await apiRequest(API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: trimmedName,
-        }),
+        body: JSON.stringify({ name: trimmedName }),
       });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || data.name?.join(' ') || 'Falha ao salvar dados.');
-      }
-
-      console.log(data);
       setName('');
       setItems((currentItems) => [data, ...currentItems]);
       setMessage('Nome salvo com sucesso.');

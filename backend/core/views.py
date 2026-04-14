@@ -89,4 +89,4 @@ def csrf_token(request):
     if request.method != "GET":
         return method_not_allowed(["GET"])
 
-    return success_response({"csrfToken": get_token(request)})
+    return success_response({"csrfToken": get_token(request)}, message="CSRF cookie set")
