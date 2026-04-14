@@ -10,10 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+import dj_database_url
 from corsheaders.defaults import default_headers
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,11 +34,53 @@ def _split_env_origins(value: str) -> list[str]:
     return [item.strip().rstrip("/") for item in value.split(",") if item.strip()]
 
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _clean_database_url(value: str) -> str:
+    parsed = urlsplit(value)
+    query = [
+        (key, query_value)
+        for key, query_value in parse_qsl(parsed.query, keep_blank_values=True)
+        if key != "supa"
+    ]
+    return urlunsplit(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            urlencode(query),
+            parsed.fragment,
+        )
+    )
+
+
+def _database_url_from_env() -> str:
+    database_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
+
+    if not database_url:
+        raise ImproperlyConfigured(
+            "Defina DATABASE_URL com a connection string PostgreSQL. "
+            "SQLite nao e mais suportado neste projeto."
+        )
+
+    database_scheme = urlsplit(database_url).scheme
+    if database_scheme in {"http", "https"}:
+        raise ImproperlyConfigured(
+            "DATABASE_URL deve ser uma connection string de banco, "
+            "como postgresql://usuario:senha@host:5432/banco. "
+            "Nao use uma URL https:// de app, dashboard ou API."
+        )
+
+    return _clean_database_url(database_url)
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-+g)herdbhyeh+jva+k)qugqi$v1qa^%(4p756636ltfzx_i6ll"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 _debug_env = os.getenv("DEBUG")
@@ -43,6 +88,14 @@ if _debug_env is None:
     DEBUG = not bool(os.getenv("VERCEL"))
 else:
     DEBUG = _debug_env.strip().lower() in {"1", "true", "yes", "on"}
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "django-insecure-+g)herdbhyeh+jva+k)qugqi$v1qa^%(4p756636ltfzx_i6ll"
+    else:
+        raise ImproperlyConfigured("Defina SECRET_KEY nas variaveis de ambiente da Vercel.")
 
 ALLOWED_HOSTS = sorted(
     {
@@ -116,11 +169,20 @@ WSGI_APPLICATION = "jurisagenda.wsgi.application"
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.parse(
+        _database_url_from_env(),
+        conn_max_age=int(os.getenv("DATABASE_CONN_MAX_AGE", "0")),
+        conn_health_checks=True,
+    )
 }
+
+if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
+    DATABASES["default"].setdefault("OPTIONS", {})
+    DATABASES["default"]["OPTIONS"].setdefault("prepare_threshold", None)
+
+    require_ssl = _env_flag("DATABASE_SSL_REQUIRE")
+    if require_ssl or not DEBUG:
+        DATABASES["default"]["OPTIONS"].setdefault("sslmode", "require")
 
 
 # Password validation
