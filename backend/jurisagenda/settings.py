@@ -227,7 +227,7 @@ WHITENOISE_USE_FINDERS = DEBUG
 if not DEBUG:
     STORAGES = {
         "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
         }
     }
 

@@ -88,6 +88,14 @@ class ExcluirCargoTests(TestCase):
         self.assertTrue(Usuario.objects.filter(email="ana@example.com").exists())
         self.assertEqual(Usuario.objects.get(email="ana@example.com").cargo, cargo.name)
 
+    def test_admin_abre_formulario_de_adicionar_usuario(self):
+        Group.objects.create(name="Operacional")
+
+        response = self.client.get(reverse("admin:usuarios_usuario_add"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Operacional")
+
     def test_exclusao_informa_bloqueio_quando_ha_usuarios_vinculados(self):
         cargo = Group.objects.create(name="Administrador")
         Usuario.objects.create(
