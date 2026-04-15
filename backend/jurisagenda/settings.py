@@ -124,6 +124,7 @@ ALLOWED_HOSTS = sorted(
         "127.0.0.1",
         "localhost",
         "agenda-juri.vercel.app",
+        "agenda-juri-backend.vercel.app",
         "agenda-juri-orcin.vercel.app",
         *(
             _clean_host(host)
@@ -279,13 +280,41 @@ CSRF_TRUSTED_ORIGINS = sorted(
     }
 )
 
-CSRF_COOKIE_SAMESITE = "None"
-CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = os.getenv(
+    "CSRF_COOKIE_SAMESITE",
+    "None" if not DEBUG else "Lax",
+)
+CSRF_COOKIE_SECURE = _env_flag("CSRF_COOKIE_SECURE", default=not DEBUG)
 CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
 
-SESSION_COOKIE_SAMESITE = "None"
-SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = os.getenv(
+    "SESSION_COOKIE_SAMESITE",
+    "None" if not DEBUG else "Lax",
+)
+SESSION_COOKIE_SECURE = _env_flag("SESSION_COOKIE_SECURE", default=not DEBUG)
 SESSION_COOKIE_HTTPONLY = True
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}

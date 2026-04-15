@@ -1,6 +1,7 @@
 from typing import Any, cast
 
 from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
 from django.db.models import Q
 from django.http import HttpRequest
@@ -24,6 +25,7 @@ from usuarios.forms import (
     UsuarioForm,
     _format_permission_name,
     cargo_permissions_for_display,
+    is_password_hash,
     normalize_cargo_name,
 )
 from usuarios.models import Usuario
@@ -172,6 +174,18 @@ def _sync_auth_user_cargo(usuario: Usuario, auth_user: User) -> Group | None:
         usuario.cargo = cargo.name
 
     return cargo
+
+
+def _usuario_password_matches(usuario: Usuario, raw_password: str) -> bool:
+    if is_password_hash(usuario.senha):
+        return check_password(raw_password, usuario.senha)
+
+    if usuario.senha != raw_password:
+        return False
+
+    usuario.senha = make_password(raw_password)
+    usuario.save(update_fields=["senha"])
+    return True
 
 
 def _get_cargos() -> list[Group]:
@@ -587,9 +601,8 @@ def login(request: HttpRequest):
         email = form.cleaned_data["email"]
         senha = form.cleaned_data["senha"]
 
-        try:
-            usuario = Usuario.objects.get(email=email, senha=senha)
-        except Usuario.DoesNotExist:
+        usuario = Usuario.objects.filter(email=email).first()
+        if usuario is None or not _usuario_password_matches(usuario, senha):
             form.add_error(None, "Email ou senha invalidos.")
         else:
             auth_user = _get_or_sync_auth_user(usuario)

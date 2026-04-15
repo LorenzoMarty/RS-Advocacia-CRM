@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import Group
 from django.test import TestCase
 from django.urls import reverse
@@ -65,10 +66,9 @@ class ExcluirCargoTests(TestCase):
         self.assertTrue(payload["success"])
         self.assertEqual(payload["data"]["user"]["email"], "marina@example.com")
         self.assertEqual(payload["data"]["user"]["roleId"], str(cargo.pk))
-        self.assertEqual(
-            Usuario.objects.get(email="marina@example.com").cargo,
-            "Operacional",
-        )
+        usuario = Usuario.objects.get(email="marina@example.com")
+        self.assertEqual(usuario.cargo, "Operacional")
+        self.assertTrue(check_password("123456", usuario.senha))
 
     def test_admin_adiciona_usuario_com_cargo_dinamico(self):
         cargo = Group.objects.create(name="Operacional")
@@ -86,7 +86,29 @@ class ExcluirCargoTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Usuario.objects.filter(email="ana@example.com").exists())
-        self.assertEqual(Usuario.objects.get(email="ana@example.com").cargo, cargo.name)
+        usuario = Usuario.objects.get(email="ana@example.com")
+        self.assertEqual(usuario.cargo, cargo.name)
+        self.assertTrue(check_password("123456", usuario.senha))
+
+    def test_login_aceita_senha_legada_e_atualiza_para_hash(self):
+        Group.objects.create(name="Operacional")
+        Usuario.objects.create(
+            nome="Usuario Legado",
+            email="legado@example.com",
+            senha="123456",
+            cargo="Operacional",
+        )
+
+        response = self.client.post(
+            reverse("login"),
+            data=json.dumps({"email": "legado@example.com", "password": "123456"}),
+            content_type="application/json",
+        )
+        payload = response.json()
+
+        self.assertEqual(response.status_code, 200, payload)
+        self.assertTrue(payload["success"])
+        self.assertTrue(check_password("123456", Usuario.objects.get(email="legado@example.com").senha))
 
     def test_admin_abre_formulario_de_adicionar_usuario(self):
         Group.objects.create(name="Operacional")

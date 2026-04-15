@@ -7,8 +7,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { login, loginHint } = useAppState();
   const [form, setForm] = useState({
-    email: loginHint.email,
-    password: loginHint.password,
+    email: loginHint?.email || '',
+    password: loginHint?.password || '',
   });
   const [error, setError] = useState('');
 

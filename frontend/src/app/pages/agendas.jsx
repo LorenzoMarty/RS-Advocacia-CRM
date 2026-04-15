@@ -562,6 +562,7 @@ export function EventFormPage() {
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm({
       id: eventItem.id || "",
       title: eventItem.title || "",
@@ -1041,6 +1042,7 @@ export function EventDetailPage() {
     return () => {
       isMounted = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.eventId]);
 
   if (!eventItem) {

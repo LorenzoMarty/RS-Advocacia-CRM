@@ -223,6 +223,7 @@ export function AppStateProvider({ children }) {
     return () => {
       isMounted = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -598,7 +599,7 @@ export function AppStateProvider({ children }) {
     isLoading,
     isEventsLoading,
     apiStatus,
-    loginHint: null,
+    loginHint: { email: '', password: '' },
     removeFlash,
     addFlash,
     login,
