@@ -90,13 +90,14 @@ def _ensure_default_cargos() -> list[Group]:
 
 
 def _apply_default_cargo_permissions(cargo: Group) -> None:
-    if cargo.permissions.exists():
-        return
-
     default_permissions = DEFAULT_CARGO_PERMISSIONS.get(cargo.name)
     if default_permissions is None:
         if cargo.name == "Administrador":
-            cargo.permissions.set(Permission.objects.all())
+            missing_permissions = Permission.objects.exclude(
+                pk__in=cargo.permissions.values_list("pk", flat=True)
+            )
+            if missing_permissions.exists():
+                cargo.permissions.add(*missing_permissions)
         return
 
     permission_filter = Q()
@@ -105,7 +106,11 @@ def _apply_default_cargo_permissions(cargo: Group) -> None:
         permission_filter |= Q(content_type__app_label=app_label, codename=codename)
 
     if permission_filter:
-        cargo.permissions.set(Permission.objects.filter(permission_filter))
+        missing_permissions = Permission.objects.filter(permission_filter).exclude(
+            pk__in=cargo.permissions.values_list("pk", flat=True)
+        )
+        if missing_permissions.exists():
+            cargo.permissions.add(*missing_permissions)
 
 
 def _find_auth_user(identifier: str) -> User | None:

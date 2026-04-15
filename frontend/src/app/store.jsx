@@ -124,8 +124,12 @@ export function AppStateProvider({ children }) {
       setPermissionGroups(payload.permissionGroups);
     }
 
-    setRoles(sortByName(rolesFromResponse(payload)));
-    setUsers((currentUsers) => sortByName(mergeById(currentUsers, usersFromResponse(payload))));
+    if (Object.prototype.hasOwnProperty.call(payload, 'roles') || Object.prototype.hasOwnProperty.call(payload, 'cargos')) {
+      setRoles(sortByName(rolesFromResponse(payload)));
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, 'users') || Object.prototype.hasOwnProperty.call(payload, 'usuarios')) {
+      setUsers((currentUsers) => sortByName(mergeById(currentUsers, usersFromResponse(payload))));
+    }
     setClients(sortByName(clientsFromResponse(payload)));
     setProcesses(processesFromResponse(payload));
     setEvents(eventsFromResponse(payload));
@@ -134,24 +138,7 @@ export function AppStateProvider({ children }) {
   async function loadRemoteCollections() {
     let loadedRemoteData = false;
     let lastError = null;
-
-    try {
-      const payload = await api.bootstrap();
-      applyBootstrapPayload(payload);
-      loadedRemoteData = true;
-    } catch (error) {
-      lastError = error;
-    }
-
     const loaders = [
-      {
-        load: api.listRoles,
-        apply: (payload) => setRoles(sortByName(rolesFromResponse(payload))),
-      },
-      {
-        load: api.listUsers,
-        apply: (payload) => setUsers((currentUsers) => sortByName(mergeById(currentUsers, usersFromResponse(payload)))),
-      },
       {
         load: api.listClients,
         apply: (payload) => setClients(sortByName(clientsFromResponse(payload))),
@@ -165,6 +152,28 @@ export function AppStateProvider({ children }) {
         apply: (payload) => setEvents(eventsFromResponse(payload)),
       },
     ];
+
+    try {
+      const payload = await api.bootstrap();
+      applyBootstrapPayload(payload);
+      const canLoadRoles = Object.prototype.hasOwnProperty.call(payload, 'roles') || Object.prototype.hasOwnProperty.call(payload, 'cargos');
+      const canLoadUsers = Object.prototype.hasOwnProperty.call(payload, 'users') || Object.prototype.hasOwnProperty.call(payload, 'usuarios');
+      if (canLoadRoles) {
+        loaders.push({
+          load: api.listRoles,
+          apply: (payload) => setRoles(sortByName(rolesFromResponse(payload))),
+        });
+      }
+      if (canLoadUsers) {
+        loaders.push({
+          load: api.listUsers,
+          apply: (payload) => setUsers((currentUsers) => sortByName(mergeById(currentUsers, usersFromResponse(payload)))),
+        });
+      }
+      loadedRemoteData = true;
+    } catch (error) {
+      lastError = error;
+    }
 
     const results = await Promise.allSettled(loaders.map(({ load }) => load()));
     results.forEach((result, index) => {
