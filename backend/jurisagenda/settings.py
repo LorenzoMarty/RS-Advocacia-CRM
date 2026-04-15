@@ -22,6 +22,28 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _load_local_env() -> None:
+    env_path = BASE_DIR / ".env"
+    if not env_path.exists():
+        return
+
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip().removeprefix("export ").strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+
+        os.environ.setdefault(key, value)
+
+
+_load_local_env()
+
+
 def _clean_host(value: str) -> str:
     return value.strip().removeprefix("https://").removeprefix("http://").rstrip("/")
 
