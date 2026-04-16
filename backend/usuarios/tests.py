@@ -45,6 +45,75 @@ class ExcluirCargoTests(TestCase):
             ],
         )
 
+    def test_listagem_de_cargos_atende_formulario_de_usuario(self):
+        staff = get_user_model().objects.create_user(
+            username="staff@example.com",
+            email="staff@example.com",
+            password="senha-forte-123",
+        )
+        permission = Permission.objects.get(
+            content_type__app_label="usuarios",
+            codename="add_usuario",
+        )
+        staff.user_permissions.add(permission)
+        self.client.force_login(staff)
+
+        response = self.client.get(reverse("listar_cargos"))
+        payload = response.json()
+
+        self.assertEqual(response.status_code, 200, payload)
+        self.assertTrue(payload["success"])
+        self.assertTrue(payload["data"]["roles"])
+
+    def test_usuario_atual_ressincroniza_permissoes_do_cargo(self):
+        usuario = Usuario.objects.create(
+            nome="Admin Front",
+            email="admin-front@example.com",
+            senha="123456",
+            cargo="Administrador",
+        )
+        auth_user = get_user_model().objects.create_user(
+            username=usuario.email,
+            email=usuario.email,
+            password="senha-forte-123",
+        )
+        self.client.force_login(auth_user)
+        session = self.client.session
+        session["usuario_id"] = usuario.pk
+        session.save()
+
+        current_response = self.client.get(reverse("current_usuario"))
+        create_response = self.client.post(
+            reverse("criar_cargo"),
+            data=json.dumps({"name": "Financeiro", "permissionIds": []}),
+            content_type="application/json",
+        )
+
+        auth_user.refresh_from_db()
+        self.assertEqual(current_response.status_code, 200)
+        self.assertTrue(auth_user.groups.filter(name="Administrador").exists())
+        self.assertTrue(auth_user.has_perm("auth.add_group"))
+        self.assertEqual(create_response.status_code, 201, create_response.json())
+        self.assertTrue(Group.objects.filter(name="Financeiro").exists())
+
+    def test_bootstrap_serializa_role_id_com_id_do_cargo(self):
+        usuario = Usuario.objects.create(
+            nome="Usuario Admin",
+            email="usuario-admin@example.com",
+            senha="123456",
+            cargo="admin",
+        )
+
+        response = self.client.get(reverse("bootstrap"))
+        payload = response.json()
+
+        cargo = Group.objects.get(name="Administrador")
+        serialized_user = next(
+            item for item in payload["data"]["users"] if item["id"] == str(usuario.pk)
+        )
+        self.assertEqual(response.status_code, 200, payload)
+        self.assertEqual(serialized_user["roleId"], str(cargo.pk))
+
     def test_cria_usuario_com_cargo_dinamico(self):
         cargo = Group.objects.create(name="Operacional")
 

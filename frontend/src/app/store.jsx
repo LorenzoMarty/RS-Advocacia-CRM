@@ -56,7 +56,14 @@ function userFromResponse(payload) {
 }
 
 function rolesFromResponse(payload) {
-  return collectionFromResponse(payload, 'roles', 'cargos');
+  return collectionFromResponse(payload, 'roles', 'cargos')
+    .map((role) => ({
+      ...role,
+      id: String(role.id || role.pk || role.name || role.nome),
+      name: role.name || role.nome || '',
+      permissionIds: (role.permissionIds || role.permissions || []).map(String),
+    }))
+    .filter((role) => role.id && role.name);
 }
 
 function roleFromResponse(payload) {
@@ -151,19 +158,16 @@ export function AppStateProvider({ children }) {
         load: api.listEvents,
         apply: (payload) => setEvents(eventsFromResponse(payload)),
       },
+      {
+        load: api.listRoles,
+        apply: (payload) => setRoles(sortByName(rolesFromResponse(payload))),
+      },
     ];
 
     try {
       const payload = await api.bootstrap();
       applyBootstrapPayload(payload);
-      const canLoadRoles = Object.prototype.hasOwnProperty.call(payload, 'roles') || Object.prototype.hasOwnProperty.call(payload, 'cargos');
       const canLoadUsers = Object.prototype.hasOwnProperty.call(payload, 'users') || Object.prototype.hasOwnProperty.call(payload, 'usuarios');
-      if (canLoadRoles) {
-        loaders.push({
-          load: api.listRoles,
-          apply: (payload) => setRoles(sortByName(rolesFromResponse(payload))),
-        });
-      }
       if (canLoadUsers) {
         loaders.push({
           load: api.listUsers,

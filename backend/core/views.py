@@ -8,7 +8,7 @@ from agenda.views import serialize_evento
 from clientes.models import Cliente
 from clientes.views import serialize_cliente
 from core.permissions import app_permissions_required
-from core.permission_utils import user_has_permission
+from core.permission_utils import user_has_any_permissions, user_has_permission
 from core.utils import method_not_allowed, success_response
 from processos.models import Processo
 from processos.views import serialize_processo
@@ -59,6 +59,22 @@ def bootstrap(request):
     serialized_processos = [serialize_processo(processo) for processo in processos]
     serialized_eventos = [serialize_evento(evento) for evento in eventos]
 
+    can_include_cargos = user_has_any_permissions(
+        request,
+        (
+            "auth.view_group",
+            "auth.add_group",
+            "auth.change_group",
+            "usuarios.view_usuario",
+            "usuarios.add_usuario",
+            "usuarios.change_usuario",
+        ),
+    )
+    serialized_cargos = []
+    if can_include_cargos:
+        cargos = _get_cargos()
+        serialized_cargos = [serialize_cargo(cargo) for cargo in cargos]
+
     data = {
         "clientes": serialized_clientes,
         "clients": serialized_clientes,
@@ -75,9 +91,7 @@ def bootstrap(request):
         data["usuarios"] = serialized_usuarios
         data["users"] = serialized_usuarios
 
-    if user_has_permission(request, "auth.view_group"):
-        cargos = _get_cargos()
-        serialized_cargos = [serialize_cargo(cargo) for cargo in cargos]
+    if can_include_cargos:
         data["cargos"] = serialized_cargos
         data["roles"] = serialized_cargos
 

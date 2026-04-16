@@ -8,7 +8,7 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from agenda.models import Evento
-from core.permissions import app_permissions_required
+from core.permissions import app_any_permissions_required, app_permissions_required
 from core.utils import (
     error_response,
     form_errors,
@@ -120,16 +120,21 @@ def _find_auth_user(identifier: str) -> User | None:
     return auth_user
 
 
-def _get_or_sync_auth_user(usuario: Usuario, previous_email: str | None = None) -> User:
-    auth_user: User | None = None
+def _get_or_sync_auth_user(
+    usuario: Usuario,
+    previous_email: str | None = None,
+    preferred_auth_user: User | None = None,
+) -> User:
+    auth_user: User | None = preferred_auth_user
     created = False
 
-    for identifier in (previous_email, usuario.email):
-        if not identifier:
-            continue
-        auth_user = _find_auth_user(identifier)
-        if auth_user is not None:
-            break
+    if auth_user is None:
+        for identifier in (previous_email, usuario.email):
+            if not identifier:
+                continue
+            auth_user = _find_auth_user(identifier)
+            if auth_user is not None:
+                break
 
     if auth_user is None:
         auth_user = User(username=usuario.email)
@@ -326,6 +331,7 @@ def listar_usuarios(request):
     if request.method != "GET":
         return method_not_allowed(["GET"])
 
+    _ensure_default_cargos()
     usuarios = Usuario.objects.all()
     serialized = [serialize_usuario(usuario) for usuario in usuarios]
     return success_response({"usuarios": serialized, "users": serialized})
@@ -443,7 +449,14 @@ def excluir_usuario(request, usuario_id):
     return success_response({"id": deleted_id}, message="Usuario excluido com sucesso.")
 
 
-@app_permissions_required("auth.view_group")
+@app_any_permissions_required(
+    "auth.view_group",
+    "auth.add_group",
+    "auth.change_group",
+    "usuarios.view_usuario",
+    "usuarios.add_usuario",
+    "usuarios.change_usuario",
+)
 def listar_cargos(request):
     if request.method != "GET":
         return method_not_allowed(["GET"])
@@ -632,6 +645,11 @@ def current_usuario(request: HttpRequest):
         return method_not_allowed(["GET"])
 
     usuario = get_current_usuario(request)["usuario_logado"]
+    request_user = cast(User | AnonymousUser, getattr(request, "user", None))
+    if usuario and isinstance(request_user, User) and request_user.is_authenticated:
+        auth_user = _get_or_sync_auth_user(usuario, preferred_auth_user=request_user)
+        _sync_auth_user_cargo(usuario, auth_user)
+
     return success_response(
         {"usuario": serialize_usuario(usuario) if usuario else None}
     )
