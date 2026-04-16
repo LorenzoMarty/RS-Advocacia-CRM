@@ -12,11 +12,18 @@ class Usuario(models.Model):
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     senha = models.CharField(max_length=100)
-    cargo = models.CharField(max_length=50)
+    cargo = models.CharField(max_length=20, choices=TIPOS)
 
     @property
     def cargo_label(self):
         return dict(self.TIPOS).get(self.cargo, self.cargo)
+
+    def __str__(self):
+        return self.nome
+
+
+class Cargo(models.Model):
+    nome = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.nome
