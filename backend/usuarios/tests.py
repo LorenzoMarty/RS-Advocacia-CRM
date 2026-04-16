@@ -2,7 +2,7 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.test import TestCase
 from django.urls import reverse
 
@@ -117,6 +117,64 @@ class ExcluirCargoTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Operacional")
+
+    def test_admin_abre_formulario_de_editar_cargo(self):
+        cargo = Group.objects.create(name="Operacional")
+
+        response = self.client.get(
+            reverse("admin:usuarios_cargo_change", args=[cargo.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Operacional")
+        self.assertContains(response, "Nome do cargo")
+
+    def test_admin_cargo_usa_permissoes_de_auth_group(self):
+        cargo = Group.objects.create(name="Operacional")
+        staff = get_user_model().objects.create_user(
+            username="staff@example.com",
+            email="staff@example.com",
+            password="senha-forte-123",
+            is_staff=True,
+        )
+        permissions = Permission.objects.filter(
+            content_type__app_label="auth",
+            codename__in=["change_group", "view_group"],
+        )
+        staff.user_permissions.add(*permissions)
+        self.client.force_login(staff)
+
+        response = self.client.get(
+            reverse("admin:usuarios_cargo_change", args=[cargo.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_admin_edita_cargo_e_sincroniza_usuarios_vinculados(self):
+        cargo = Group.objects.create(name="Operacional")
+        Usuario.objects.create(
+            nome="Bianca",
+            email="bianca@example.com",
+            senha="123456",
+            cargo=cargo.name,
+        )
+
+        response = self.client.post(
+            reverse("admin:usuarios_cargo_change", args=[cargo.pk]),
+            data={
+                "name": "Financeiro",
+                "permissions": [],
+                "_save": "Salvar",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        cargo.refresh_from_db()
+        self.assertEqual(cargo.name, "Financeiro")
+        self.assertEqual(
+            Usuario.objects.get(email="bianca@example.com").cargo,
+            "Financeiro",
+        )
 
     def test_exclusao_informa_bloqueio_quando_ha_usuarios_vinculados(self):
         cargo = Group.objects.create(name="Administrador")

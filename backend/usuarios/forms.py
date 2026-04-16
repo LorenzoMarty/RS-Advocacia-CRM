@@ -2,9 +2,9 @@ from collections import OrderedDict
 
 from django import forms
 from django.contrib.auth.hashers import identify_hasher, make_password
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 
-from usuarios.models import Usuario
+from usuarios.models import Cargo, Usuario
 
 PERMISSION_APP_LABELS = OrderedDict(
     (
@@ -87,7 +87,7 @@ def is_password_hash(value):
 
 
 def get_available_cargo_choices(current_value=None):
-    cargos = list(Group.objects.order_by("name").values_list("name", flat=True))
+    cargos = list(Cargo.objects.order_by("name").values_list("name", flat=True))
 
     for _legacy_value, cargo_label in Usuario.TIPOS:
         if cargo_label not in cargos:
@@ -142,7 +142,7 @@ class CargoForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Group
+        model = Cargo
         fields = ["name", "permissions"]
 
     def __init__(self, *args, **kwargs):

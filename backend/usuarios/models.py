@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Group
 from django.db import models
 
 
@@ -12,7 +13,7 @@ class Usuario(models.Model):
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     senha = models.CharField(max_length=100)
-    cargo = models.CharField(max_length=20, choices=TIPOS)
+    cargo = models.CharField(max_length=150)
 
     @property
     def cargo_label(self):
@@ -22,8 +23,24 @@ class Usuario(models.Model):
         return self.nome
 
 
-class Cargo(models.Model):
-    nome = models.CharField(max_length=50, unique=True)
+def cargo_lookup_values(cargo_name: str) -> set[str]:
+    values = {cargo_name}
+
+    for legacy_value, cargo_label in Usuario.TIPOS:
+        if cargo_label == cargo_name:
+            values.add(legacy_value)
+        if legacy_value == cargo_name:
+            values.add(cargo_label)
+
+    return values
+
+
+class Cargo(Group):
+    class Meta:
+        proxy = True
+        default_permissions = ()
+        verbose_name = "Cargo"
+        verbose_name_plural = "Cargos"
 
     def __str__(self):
-        return self.nome
+        return self.name

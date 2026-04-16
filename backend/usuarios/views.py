@@ -28,7 +28,7 @@ from usuarios.forms import (
     is_password_hash,
     normalize_cargo_name,
 )
-from usuarios.models import Usuario
+from usuarios.models import Cargo, Usuario, cargo_lookup_values
 
 
 ESTAGIARIO_CARGO_NAME = dict(Usuario.TIPOS).get("estagiario", "Estagiario")
@@ -83,7 +83,7 @@ def _clear_usuario_session(request: HttpRequest) -> None:
 def _ensure_default_cargos() -> list[Group]:
     cargos = []
     for _legacy_value, cargo_label in Usuario.TIPOS:
-        cargo, _ = Group.objects.get_or_create(name=cargo_label)
+        cargo, _ = Cargo.objects.get_or_create(name=cargo_label)
         _apply_default_cargo_permissions(cargo)
         cargos.append(cargo)
     return cargos
@@ -162,7 +162,7 @@ def _get_or_create_cargo(cargo_name: str) -> Group | None:
     normalized_name = str(normalize_cargo_name(cargo_name) or "").strip()
     if not normalized_name:
         return None
-    cargo, _ = Group.objects.get_or_create(name=normalized_name)
+    cargo, _ = Cargo.objects.get_or_create(name=normalized_name)
     _apply_default_cargo_permissions(cargo)
     return cargo
 
@@ -195,7 +195,7 @@ def _usuario_password_matches(usuario: Usuario, raw_password: str) -> bool:
 
 def _get_cargos() -> list[Group]:
     _ensure_default_cargos()
-    return list(Group.objects.order_by("name"))
+    return list(Cargo.objects.order_by("name"))
 
 
 def serialize_permission(permission: Permission):
@@ -235,20 +235,8 @@ def serialize_permission_groups():
     return list(grouped.values())
 
 
-def _cargo_lookup_values(cargo_name: str) -> set[str]:
-    values = {cargo_name}
-
-    for legacy_value, cargo_label in Usuario.TIPOS:
-        if cargo_label == cargo_name:
-            values.add(legacy_value)
-        if legacy_value == cargo_name:
-            values.add(cargo_label)
-
-    return values
-
-
 def _usuarios_for_cargo(cargo: Group):
-    return Usuario.objects.filter(cargo__in=_cargo_lookup_values(cargo.name))
+    return Usuario.objects.filter(cargo__in=cargo_lookup_values(cargo.name))
 
 
 def serialize_cargo(cargo: Group):
@@ -267,7 +255,7 @@ def serialize_cargo(cargo: Group):
 
 def serialize_usuario(usuario: Usuario):
     cargo_nome = normalize_cargo_name(usuario.cargo)
-    cargo = Group.objects.filter(name=cargo_nome).first()
+    cargo = Cargo.objects.filter(name=cargo_nome).first()
     return {
         "id": str(usuario.pk),
         "pk": usuario.pk,
@@ -284,9 +272,9 @@ def _resolve_cargo_api_value(value):
         return value
 
     value = str(value)
-    cargo = Group.objects.filter(pk=value).first() if value.isdigit() else None
+    cargo = Cargo.objects.filter(pk=value).first() if value.isdigit() else None
     if cargo is None:
-        cargo = Group.objects.filter(name=value).first()
+        cargo = Cargo.objects.filter(name=value).first()
     return cargo.name if cargo else value
 
 
@@ -493,7 +481,7 @@ def detalhes_cargo(request, cargo_id):
     if request.method != "GET":
         return method_not_allowed(["GET"])
 
-    cargo = get_object_or_404(Group, pk=cargo_id)
+    cargo = get_object_or_404(Cargo, pk=cargo_id)
     usuarios_vinculados = _usuarios_for_cargo(cargo).order_by("nome")
     permission_sections = []
     for section in cargo_permissions_for_display(
@@ -534,7 +522,7 @@ def editar_cargo(request, cargo_id):
     if request.method not in {"PUT", "PATCH"}:
         return method_not_allowed(["PUT", "PATCH"])
 
-    cargo = get_object_or_404(Group, pk=cargo_id)
+    cargo = get_object_or_404(Cargo, pk=cargo_id)
     previous_name = cargo.name
 
     try:
@@ -546,7 +534,9 @@ def editar_cargo(request, cargo_id):
     if form.is_valid():
         cargo = form.save()
         if previous_name != cargo.name:
-            Usuario.objects.filter(cargo__in=_cargo_lookup_values(previous_name)).update(cargo=cargo.name)
+            Usuario.objects.filter(
+                cargo__in=cargo_lookup_values(previous_name)
+            ).update(cargo=cargo.name)
         serialized = serialize_cargo(cargo)
         return success_response(
             {"cargo": serialized, "role": serialized},
@@ -561,7 +551,7 @@ def excluir_cargo(request, cargo_id):
     if request.method != "DELETE":
         return method_not_allowed(["DELETE"])
 
-    cargo = get_object_or_404(Group, pk=cargo_id)
+    cargo = get_object_or_404(Cargo, pk=cargo_id)
     usuarios_vinculados = _usuarios_for_cargo(cargo).count()
 
     if usuarios_vinculados:
