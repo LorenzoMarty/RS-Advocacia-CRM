@@ -6,10 +6,165 @@ import { useAppState } from '../store';
 import { formatCount } from '../utils';
 import { EmptyState, Field, NotFoundState } from './common';
 
-function roleApps(role, permissionGroups) {
+const ACTION_ORDER = ['view', 'create', 'edit', 'delete'];
+
+const ACTION_LABELS = {
+  add: 'Cadastrar',
+  change: 'Editar',
+  create: 'Cadastrar',
+  delete: 'Excluir',
+  edit: 'Editar',
+  view: 'Ver',
+};
+
+const ACTION_NOTES = {
+  create: 'Criar novo',
+  delete: 'Remover',
+  edit: 'Alterar',
+  view: 'Consultar',
+};
+
+const AREA_LABELS = {
+  agenda: 'Agenda',
+  auth: 'Cargos e acessos',
+  clientes: 'Clientes',
+  processos: 'Processos',
+  usuarios: 'Usuários',
+};
+
+const AREA_NOTES = {
+  agenda: 'Compromissos, prazos, audiências e tarefas.',
+  auth: 'Cargos, regras de acesso e contas internas.',
+  clientes: 'Cadastro, dados e histórico dos clientes.',
+  processos: 'Processos jurídicos e seus dados principais.',
+  usuarios: 'Cadastro da equipe que usa o sistema.',
+};
+
+const RESOURCE_LABELS = {
+  cliente: 'Clientes',
+  evento: 'Compromissos',
+  group: 'Cargos',
+  permission: 'Regras de acesso',
+  processo: 'Processos',
+  user: 'Contas internas',
+  usuario: 'Usuários',
+};
+
+const RESOURCE_NOTES = {
+  cliente: 'Dados dos clientes atendidos pelo escritório.',
+  evento: 'Itens da agenda, como prazos e audiências.',
+  group: 'Cargos usados para liberar acessos por perfil.',
+  permission: 'Regras avançadas usadas pelo sistema.',
+  processo: 'Informações dos processos cadastrados.',
+  user: 'Contas técnicas de autenticação.',
+  usuario: 'Pessoas da equipe cadastradas no sistema.',
+};
+
+function normalizeKey(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function titleFromKey(value) {
+  return String(value || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function permissionParts(permission) {
+  const codename = String(permission.path || '').split('.').pop() || '';
+  const [rawAction, ...rawResource] = codename.split('_');
+  const action = ACTION_LABELS[permission.action] ? permission.action : rawAction;
+  const actionKey = {
+    add: 'create',
+    change: 'edit',
+  }[action] || action || 'view';
+  const resourceKey = rawResource.join('_') || normalizeKey(permission.modelLabel || permission.displayName);
+
+  return { actionKey, resourceKey };
+}
+
+function permissionIdSet(role) {
+  return new Set((role.permissionIds || []).map(String));
+}
+
+function actionRank(actionKey) {
+  const index = ACTION_ORDER.indexOf(actionKey);
+  return index === -1 ? ACTION_ORDER.length : index;
+}
+
+function buildPermissionSections(permissionGroups) {
   return permissionGroups
-    .filter((group) => group.permissions.some((permission) => role.permissionIds.includes(permission.id)))
-    .map((group) => group.label);
+    .map((group) => {
+      const resourcesByKey = new Map();
+
+      (group.permissions || []).forEach((permission) => {
+        const { actionKey, resourceKey } = permissionParts(permission);
+        const normalizedResourceKey = normalizeKey(resourceKey);
+
+        if (!resourcesByKey.has(normalizedResourceKey)) {
+          resourcesByKey.set(normalizedResourceKey, {
+            key: normalizedResourceKey,
+            label: RESOURCE_LABELS[normalizedResourceKey] || titleFromKey(normalizedResourceKey),
+            note: RESOURCE_NOTES[normalizedResourceKey] || 'Acesso a esta área do sistema.',
+            permissions: [],
+          });
+        }
+
+        resourcesByKey.get(normalizedResourceKey).permissions.push({
+          ...permission,
+          id: String(permission.id),
+          actionKey,
+          actionLabel: ACTION_LABELS[actionKey] || titleFromKey(actionKey),
+          actionNote: ACTION_NOTES[actionKey] || 'Permitir ação',
+        });
+      });
+
+      const resources = [...resourcesByKey.values()]
+        .map((resource) => ({
+          ...resource,
+          permissions: resource.permissions.sort(
+            (left, right) => actionRank(left.actionKey) - actionRank(right.actionKey),
+          ),
+        }))
+        .sort((left, right) => left.label.localeCompare(right.label, 'pt-BR'));
+
+      return {
+        key: group.key,
+        label: AREA_LABELS[group.key] || group.label || titleFromKey(group.key),
+        note: AREA_NOTES[group.key] || 'Acessos desta parte do sistema.',
+        resources,
+      };
+    })
+    .filter((section) => section.resources.length);
+}
+
+function sectionPermissionIds(section) {
+  return section.resources.flatMap((resource) => resource.permissions.map((permission) => permission.id));
+}
+
+function selectedPermissionSections(role, permissionGroups) {
+  const selectedIds = permissionIdSet(role);
+
+  return buildPermissionSections(permissionGroups)
+    .map((section) => ({
+      ...section,
+      resources: section.resources
+        .map((resource) => ({
+          ...resource,
+          permissions: resource.permissions.filter((permission) => selectedIds.has(permission.id)),
+        }))
+        .filter((resource) => resource.permissions.length),
+    }))
+    .filter((section) => section.resources.length);
+}
+
+function roleAreas(role, permissionGroups) {
+  return selectedPermissionSections(role, permissionGroups).map((section) => section.label);
 }
 
 function linkedUsers(users, roleId) {
@@ -36,7 +191,7 @@ export function RolesListPage() {
           <div className="section-head">
             <div>
               <h1 className="intro-title">Cargos</h1>
-              <p className="section-note">Perfis de acesso e permissões da operação.</p>
+              <p className="section-note">Defina o que cada pessoa pode ver, cadastrar, editar ou excluir.</p>
             </div>
             <span className="badge gold">{formatCount(roles.length)}</span>
           </div>
@@ -53,22 +208,22 @@ export function RolesListPage() {
               <div className="cargos-head" aria-hidden="true">
                 <span>Cargo</span>
                 <span>Usuários</span>
-                <span>Permissões</span>
-                <span>Apps</span>
+                <span>Acessos</span>
+                <span>Áreas</span>
                 <span>Ações</span>
               </div>
 
               <div className="cargos-list">
                 {roles.map((role) => {
                   const roleUsers = linkedUsers(users, role.id);
-                  const apps = roleApps(role, permissionGroups);
+                  const areas = roleAreas(role, permissionGroups);
                   return (
                     <article key={role.id} className="cargo-row">
                       <div className="cargo-main">
                         <div className="cargo-mark" aria-hidden="true">{role.name.slice(0, 1).toUpperCase()}</div>
                         <div className="cargo-copy">
                           <h2 className="cargo-name">{role.name}</h2>
-                          <p className="cargo-note">Permissões herdadas automaticamente pelos usuários com este cargo.</p>
+                          <p className="cargo-note">Quem recebe este cargo herda os acessos marcados aqui.</p>
                         </div>
                       </div>
 
@@ -79,11 +234,11 @@ export function RolesListPage() {
 
                       <div className="cargo-stat cargo-permissions-stat">
                         <strong>{role.permissionIds.length}</strong>
-                        <span>permissões</span>
+                        <span>acessos</span>
                       </div>
 
                       <div className="cargo-apps">
-                        {apps.length ? apps.map((label) => <span key={label} className="cargo-app-chip">{label}</span>) : <span className="cargo-app-chip is-empty">Sem permissões</span>}
+                        {areas.length ? areas.map((label) => <span key={label} className="cargo-app-chip">{label}</span>) : <span className="cargo-app-chip is-empty">Sem acessos</span>}
                       </div>
 
                       <div className="cargo-actions">
@@ -97,7 +252,7 @@ export function RolesListPage() {
               </div>
             </>
           ) : (
-            <EmptyState title="Sem cargos disponíveis." copy="Crie o primeiro cargo para começar a organizar permissões." actions={<Link className="btn" to="/cargos/novo">Novo cargo</Link>} />
+            <EmptyState title="Sem cargos disponíveis." copy="Crie o primeiro cargo para organizar os acessos da equipe." actions={<Link className="btn" to="/cargos/novo">Novo cargo</Link>} />
           )}
         </section>
       </div>
@@ -117,18 +272,31 @@ export function RoleFormPage() {
     permissionIds: role?.permissionIds || [],
   }));
   const [errors, setErrors] = useState({});
+  const permissionSections = buildPermissionSections(permissionGroups);
+  const selectedPermissionIds = new Set(form.permissionIds.map(String));
 
   if (isEditing && !role) {
     return <NotFoundState title="Cargo não encontrado." />;
   }
 
-  function togglePermission(permissionId) {
+  function setPermissionSelection(permissionIds, shouldSelect) {
     setForm((currentForm) => ({
       ...currentForm,
-      permissionIds: currentForm.permissionIds.includes(permissionId)
-        ? currentForm.permissionIds.filter((currentPermissionId) => currentPermissionId !== permissionId)
-        : [...currentForm.permissionIds, permissionId],
+      permissionIds: [
+        ...permissionIds.reduce((nextPermissionIds, permissionId) => {
+          if (shouldSelect) {
+            nextPermissionIds.add(String(permissionId));
+          } else {
+            nextPermissionIds.delete(String(permissionId));
+          }
+          return nextPermissionIds;
+        }, new Set(currentForm.permissionIds.map(String))),
+      ],
     }));
+  }
+
+  function togglePermission(permissionId) {
+    setPermissionSelection([permissionId], !selectedPermissionIds.has(String(permissionId)));
   }
 
   async function handleSubmit(event) {
@@ -170,7 +338,7 @@ export function RoleFormPage() {
               <div>
                 <h1 className="intro-title">{isEditing ? role.name : 'Novo cargo'}</h1>
                 <p className="intro-note">
-                  {isEditing ? 'Atualize o nome e as permissões deste cargo.' : 'Crie um novo cargo e defina o escopo de acesso dele.'}
+                  {isEditing ? 'Atualize o nome e os acessos deste cargo.' : 'Crie um cargo e escolha as ações liberadas para ele.'}
                 </p>
               </div>
             </div>
@@ -186,44 +354,77 @@ export function RoleFormPage() {
             <section className={`permissions-panel${errors.permissionIds ? ' has-error' : ''}`}>
               <div className="section-head">
                 <div>
-                  <h2 className="section-title">Permissões</h2>
-                  <p className="section-note">Selecione exatamente o que este cargo pode fazer.</p>
+                  <h2 className="section-title">Acessos do cargo</h2>
+                  <p className="section-note">Marque as ações que este cargo pode fazer em cada área.</p>
                 </div>
               </div>
 
-              <div className="permissions-sections">
-                {permissionGroups.map((group) => (
-                  <section key={group.key} className="permission-section">
-                    <div className="permission-section-head">
-                      <div>
-                        <h3 className="permission-section-title">{group.label}</h3>
-                        <p className="permission-section-note">{group.permissions.length} permissões</p>
-                      </div>
-                    </div>
+              <p className="permission-guide">Dica: marque Ver quando a pessoa precisar abrir a área no menu.</p>
 
-                    <div className="permission-grid">
-                      {group.permissions.map((permission) => (
-                        <label key={permission.id} className="permission-item" htmlFor={permission.id}>
-                          <input
-                            id={permission.id}
-                            type="checkbox"
-                            checked={form.permissionIds.includes(permission.id)}
-                            onChange={() => togglePermission(permission.id)}
-                          />
-                          <span className="permission-copy">
-                            <strong>{permission.displayName}</strong>
-                            <span>{permission.modelLabel}</span>
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </div>
+              {permissionSections.length ? (
+                <div className="permissions-sections">
+                  {permissionSections.map((section) => {
+                    const ids = sectionPermissionIds(section);
+                    const selectedCount = ids.filter((id) => selectedPermissionIds.has(id)).length;
+                    const isFullySelected = ids.length > 0 && selectedCount === ids.length;
+
+                    return (
+                      <section key={section.key} className="permission-section">
+                        <div className="permission-section-head">
+                          <div>
+                            <h3 className="permission-section-title">{section.label}</h3>
+                            <p className="permission-section-note">{section.note}</p>
+                          </div>
+                          <div className="permission-section-tools">
+                            <span>{selectedCount} de {ids.length}</span>
+                            <button type="button" onClick={() => setPermissionSelection(ids, !isFullySelected)}>
+                              {isFullySelected ? 'Limpar área' : 'Marcar área'}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="permission-resource-list">
+                          {section.resources.map((resource) => (
+                            <article key={resource.key} className="permission-resource">
+                              <div className="permission-resource-copy">
+                                <h4>{resource.label}</h4>
+                                <p>{resource.note}</p>
+                              </div>
+
+                              <div className="permission-action-grid">
+                                {resource.permissions.map((permission) => (
+                                  <label
+                                    key={permission.id}
+                                    className={`permission-action-option permission-action-${permission.actionKey}`}
+                                    htmlFor={`permission-${permission.id}`}
+                                  >
+                                    <input
+                                      id={`permission-${permission.id}`}
+                                      type="checkbox"
+                                      checked={selectedPermissionIds.has(permission.id)}
+                                      onChange={() => togglePermission(permission.id)}
+                                    />
+                                    <span>
+                                      <strong>{permission.actionLabel}</strong>
+                                      <small>{permission.actionNote}</small>
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="selection-empty">As permissões ainda não foram carregadas.</div>
+              )}
             </section>
 
             <div className="form-actions">
-              <button className="btn" type="submit">Salvar permissões</button>
+              <button className="btn" type="submit">Salvar cargo</button>
               {isEditing ? <Link className="btn btn-danger" to={`/cargos/${role.id}/excluir`}>Excluir cargo</Link> : null}
               <Link className="btn btn-secondary" to={isEditing ? `/cargos/${role.id}` : '/cargos'}>Cancelar</Link>
             </div>
@@ -244,12 +445,7 @@ export function RoleDetailPage() {
   }
 
   const roleUsers = linkedUsers(users, role.id);
-  const sections = permissionGroups
-    .map((group) => ({
-      ...group,
-      permissions: group.permissions.filter((permission) => role.permissionIds.includes(permission.id)),
-    }))
-    .filter((group) => group.permissions.length);
+  const sections = selectedPermissionSections(role, permissionGroups);
 
   return (
     <>
@@ -267,7 +463,7 @@ export function RoleDetailPage() {
                 <div className="cargo-mark" aria-hidden="true">{role.name.slice(0, 1).toUpperCase()}</div>
                 <div>
                   <h1 className="cargo-name">{role.name}</h1>
-                  <p className="cargo-subtitle">Cargo da equipe com permissões herdadas automaticamente.</p>
+                  <p className="cargo-subtitle">Acessos herdados automaticamente por quem tem este cargo.</p>
                 </div>
               </div>
 
@@ -277,11 +473,11 @@ export function RoleDetailPage() {
                   <strong>{roleUsers.length}</strong>
                 </article>
                 <article className="summary-card">
-                  <span>Permissões</span>
+                  <span>Acessos</span>
                   <strong>{role.permissionIds.length}</strong>
                 </article>
                 <article className="summary-card">
-                  <span>Apps</span>
+                  <span>Áreas</span>
                   <strong>{sections.length}</strong>
                 </article>
               </aside>
@@ -293,25 +489,37 @@ export function RoleDetailPage() {
           <section className="surface section-card">
             <div className="section-head">
               <div>
-                <h2 className="section-title">Permissões</h2>
-                <p className="section-note">Agrupadas por área do sistema</p>
+                <h2 className="section-title">O que este cargo pode fazer</h2>
+                <p className="section-note">Acessos organizados por área</p>
               </div>
             </div>
 
             {sections.length ? (
-              <div className="permission-sections">
+              <div className="permission-summary-sections">
                 {sections.map((section) => (
-                  <section key={section.key} className="permission-block">
-                    <div className="permission-block-head">
-                      <h3>{section.label}</h3>
-                      <span className="badge">{section.permissions.length} itens</span>
+                  <section key={section.key} className="permission-summary-section">
+                    <div className="permission-summary-head">
+                      <div>
+                        <h3>{section.label}</h3>
+                        <p>{section.note}</p>
+                      </div>
+                      <span className="badge">{sectionPermissionIds(section).length} acessos</span>
                     </div>
 
-                    <div className="permission-list">
-                      {section.permissions.map((permission) => (
-                        <article key={permission.id} className="permission-item">
-                          <strong>{permission.displayName}</strong>
-                          <span>{permission.modelLabel}</span>
+                    <div className="permission-summary-list">
+                      {section.resources.map((resource) => (
+                        <article key={resource.key} className="permission-summary-row">
+                          <div>
+                            <strong>{resource.label}</strong>
+                            <span>{resource.note}</span>
+                          </div>
+                          <div className="permission-action-chips">
+                            {resource.permissions.map((permission) => (
+                              <span key={permission.id} className={`permission-action-chip permission-action-${permission.actionKey}`}>
+                                {permission.actionLabel}
+                              </span>
+                            ))}
+                          </div>
                         </article>
                       ))}
                     </div>
@@ -319,7 +527,7 @@ export function RoleDetailPage() {
                 ))}
               </div>
             ) : (
-              <div className="note-box">Este cargo ainda não possui permissões atribuídas.</div>
+              <div className="note-box">Este cargo ainda não possui acessos liberados.</div>
             )}
           </section>
 

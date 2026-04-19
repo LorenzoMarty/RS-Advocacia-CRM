@@ -154,6 +154,91 @@
     gap:10px;
 }
 
+.permission-summary-sections{
+    display:grid;
+    gap:12px;
+}
+
+.permission-summary-section{
+    padding:16px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--ghost);
+}
+
+.permission-summary-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:12px;
+}
+
+.permission-summary-head h3{
+    margin:0;
+    font-size:1rem;
+    line-height:1.35;
+    font-weight:700;
+}
+
+.permission-summary-head p{
+    margin:4px 0 0;
+    color:var(--soft);
+    font-size:.82rem;
+    line-height:1.5;
+}
+
+.permission-summary-list{
+    display:grid;
+    gap:8px;
+}
+
+.permission-summary-row{
+    display:grid;
+    grid-template-columns:minmax(170px, .8fr) minmax(0, 1fr);
+    gap:12px;
+    align-items:center;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.02);
+}
+
+.permission-summary-row strong{
+    display:block;
+    font-size:.92rem;
+    line-height:1.35;
+}
+
+.permission-summary-row span{
+    display:block;
+    margin-top:3px;
+    color:var(--soft);
+    font-size:.78rem;
+    line-height:1.45;
+}
+
+.permission-action-chips{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:8px;
+}
+
+.permission-action-chip{
+    display:inline-flex;
+    align-items:center;
+    margin:0;
+    min-height:30px;
+    padding:0 10px;
+    border-radius:8px;
+    border:1px solid rgba(194,154,99,.18);
+    background:rgba(194,154,99,.08);
+    color:var(--gold-soft);
+    font-size:.76rem;
+    font-weight:700;
+}
+
 .permission-item{
     display:grid;
     gap:4px;
@@ -204,6 +289,8 @@
 html[data-theme="light"] .cargo-mark,
 html[data-theme="light"] .summary-card,
 html[data-theme="light"] .permission-block,
+html[data-theme="light"] .permission-summary-section,
+html[data-theme="light"] .permission-summary-row,
 html[data-theme="light"] .permission-item,
 html[data-theme="light"] .related-item,
 html[data-theme="light"] .note-box,
@@ -257,6 +344,8 @@ html[data-theme="light"] .action-link{
 
     .summary-card,
     .permission-block,
+    .permission-summary-section,
+    .permission-summary-row,
     .related-item,
     .note-box{
         padding:14px;
@@ -278,5 +367,18 @@ html[data-theme="light"] .action-link{
 
     .summary-card strong{
         font-size:1.16rem;
+    }
+
+    .permission-summary-head,
+    .permission-summary-row{
+        grid-template-columns:1fr;
+    }
+
+    .permission-summary-head{
+        flex-direction:column;
+    }
+
+    .permission-action-chips{
+        justify-content:flex-start;
     }
 }

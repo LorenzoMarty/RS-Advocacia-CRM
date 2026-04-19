@@ -14,6 +14,7 @@ class Usuario(models.Model):
     email = models.EmailField(unique=True)
     senha = models.CharField(max_length=100)
     cargo = models.CharField(max_length=150)
+    google_sub = models.CharField(max_length=255, unique=True, null=True, blank=True)
 
     @property
     def cargo_label(self):

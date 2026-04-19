@@ -257,10 +257,12 @@ if not DEBUG:
 # CORS/CSRF for the React frontend. Keep this as an explicit allowlist in production.
 DEFAULT_REACT_ORIGINS = [
     "https://agenda-juri-orcin.vercel.app",
+    "http://localhost",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
+CORS_ALLOW_ALL_ORIGINS = _env_flag("CORS_ALLOW_ALL_ORIGINS", default=DEBUG)
 CORS_ALLOWED_ORIGINS = sorted(
     {
         *DEFAULT_REACT_ORIGINS,
@@ -294,6 +296,13 @@ SESSION_COOKIE_SAMESITE = os.getenv(
 )
 SESSION_COOKIE_SECURE = _env_flag("SESSION_COOKIE_SECURE", default=not DEBUG)
 SESSION_COOKIE_HTTPONLY = True
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+GOOGLE_ALLOWED_HOSTED_DOMAIN = os.getenv("GOOGLE_ALLOWED_HOSTED_DOMAIN", "").strip()
+GOOGLE_LOGIN_AUTO_CREATE = _env_flag("GOOGLE_LOGIN_AUTO_CREATE", default=False)
+GOOGLE_DEFAULT_CARGO = os.getenv("GOOGLE_DEFAULT_CARGO", "").strip()
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 

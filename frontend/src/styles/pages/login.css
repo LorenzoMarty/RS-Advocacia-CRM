@@ -217,6 +217,42 @@
     font-size:.94rem;
 }
 
+.login-google{
+    position:relative;
+    z-index:1;
+    display:grid;
+    gap:16px;
+}
+
+.login-divider{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    gap:12px;
+    color:var(--muted);
+    font-size:.74rem;
+    font-weight:700;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+}
+
+.login-divider::before,
+.login-divider::after{
+    content:"";
+    height:1px;
+    background:var(--line);
+}
+
+.login-google-button{
+    min-height:44px;
+    display:flex;
+    justify-content:center;
+}
+
+.login-google-button > div{
+    max-width:100%;
+}
+
 .login-footer{
     padding-top:4px;
     border-top:1px solid var(--line);

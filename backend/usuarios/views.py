@@ -3,11 +3,13 @@ from typing import Any, cast
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
+from django.conf import settings
 from django.db.models import Q
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from django.utils.crypto import get_random_string
+import requests
 
-from agenda.models import Evento
 from core.permissions import app_any_permissions_required, app_permissions_required
 from core.utils import (
     error_response,
@@ -17,14 +19,12 @@ from core.utils import (
     payload_with_aliases,
     success_response,
 )
-from processos.models import Processo
 from usuarios.forms import (
     CargoForm,
     LoginForm,
     PERMISSION_APP_LABELS,
     UsuarioForm,
     _format_permission_name,
-    cargo_permissions_for_display,
     is_password_hash,
     normalize_cargo_name,
 )
@@ -73,11 +73,41 @@ PERMISSION_ACTION_API_LABELS = {
     "view": "view",
 }
 
+CARGO_LIST_PERMISSIONS = (
+    "auth.view_group",
+    "auth.add_group",
+    "auth.change_group",
+    "usuarios.view_usuario",
+    "usuarios.add_usuario",
+    "usuarios.change_usuario",
+)
+
+
+class GoogleLoginConfigurationError(Exception):
+    pass
+
 
 def _clear_usuario_session(request: HttpRequest) -> None:
     request.session.pop("usuario_id", None)
     request.session.pop("usuario_nome", None)
     request.session.pop("usuario_email", None)
+
+
+def _remember_usuario_session(request: HttpRequest, usuario: Usuario) -> None:
+    request.session["usuario_id"] = usuario.pk
+    request.session["usuario_nome"] = usuario.nome
+    request.session["usuario_email"] = usuario.email
+
+
+def _authenticated_user(request: HttpRequest) -> User | None:
+    request_user = cast(User | AnonymousUser | None, getattr(request, "user", None))
+    if (
+        request_user is None
+        or isinstance(request_user, AnonymousUser)
+        or not request_user.is_authenticated
+    ):
+        return None
+    return cast(User, request_user)
 
 
 def _ensure_default_cargos() -> list[Group]:
@@ -186,6 +216,20 @@ def _sync_auth_user_cargo(usuario: Usuario, auth_user: User) -> Group | None:
     return cargo
 
 
+def _sync_usuario_auth(
+    usuario: Usuario,
+    previous_email: str | None = None,
+    preferred_auth_user: User | None = None,
+) -> User:
+    auth_user = _get_or_sync_auth_user(
+        usuario,
+        previous_email=previous_email,
+        preferred_auth_user=preferred_auth_user,
+    )
+    _sync_auth_user_cargo(usuario, auth_user)
+    return auth_user
+
+
 def _usuario_password_matches(usuario: Usuario, raw_password: str) -> bool:
     if is_password_hash(usuario.senha):
         return check_password(raw_password, usuario.senha)
@@ -196,6 +240,71 @@ def _usuario_password_matches(usuario: Usuario, raw_password: str) -> bool:
     usuario.senha = make_password(raw_password)
     usuario.save(update_fields=["senha"])
     return True
+
+
+def _google_default_cargo_name() -> str:
+    configured_cargo = getattr(settings, "GOOGLE_DEFAULT_CARGO", "").strip()
+    return configured_cargo or ESTAGIARIO_CARGO_NAME
+
+
+def _verify_google_credential(credential: str) -> dict[str, Any]:
+    client_id = getattr(settings, "GOOGLE_CLIENT_ID", "").strip()
+    if not client_id:
+        raise GoogleLoginConfigurationError("Login com Google nao configurado.")
+
+    response = requests.get(
+        "https://oauth2.googleapis.com/tokeninfo",
+        params={"id_token": credential},
+        timeout=10,
+    )
+    response.raise_for_status()
+    idinfo = response.json()
+
+    if idinfo.get("aud") != client_id:
+        raise ValueError("Token Google emitido para outro client ID.")
+
+    hosted_domain = getattr(settings, "GOOGLE_ALLOWED_HOSTED_DOMAIN", "").strip()
+    if hosted_domain and idinfo.get("hd") != hosted_domain:
+        raise ValueError("Conta Google fora do dominio permitido.")
+
+    email_verified = idinfo.get("email_verified")
+    if not idinfo.get("email") or str(email_verified).lower() != "true":
+        raise ValueError("Conta Google sem email verificado.")
+
+    return idinfo
+
+
+def _get_or_create_google_usuario(idinfo: dict[str, Any]) -> Usuario | None:
+    google_sub = str(idinfo.get("sub") or "").strip()
+    email = str(idinfo.get("email") or "").strip().lower()
+    nome = str(idinfo.get("name") or "").strip() or email.split("@")[0]
+
+    if not google_sub or not email:
+        raise ValueError("Resposta invalida do Google.")
+
+    usuario = Usuario.objects.filter(google_sub=google_sub).first()
+    if usuario is not None:
+        return usuario
+
+    usuario = Usuario.objects.filter(email__iexact=email).first()
+    if usuario is not None:
+        if usuario.google_sub and usuario.google_sub != google_sub:
+            raise ValueError("Esta conta ja esta vinculada a outro login Google.")
+        usuario.google_sub = google_sub
+        usuario.save(update_fields=["google_sub"])
+        return usuario
+
+    if not getattr(settings, "GOOGLE_LOGIN_AUTO_CREATE", False):
+        return None
+
+    _ensure_default_cargos()
+    return Usuario.objects.create(
+        nome=nome,
+        email=email,
+        senha=make_password(get_random_string(48)),
+        cargo=_google_default_cargo_name(),
+        google_sub=google_sub,
+    )
 
 
 def _get_cargos() -> list[Group]:
@@ -258,9 +367,25 @@ def serialize_cargo(cargo: Group):
     }
 
 
-def serialize_usuario(usuario: Usuario):
+def _cargo_map_for_usuarios(usuarios: list[Usuario]) -> dict[str, Cargo]:
+    cargo_names = {
+        cargo_name
+        for usuario in usuarios
+        if (cargo_name := normalize_cargo_name(usuario.cargo))
+    }
+    return {cargo.name: cargo for cargo in Cargo.objects.filter(name__in=cargo_names)}
+
+
+def serialize_usuario(
+    usuario: Usuario,
+    cargos_by_name: dict[str, Cargo] | None = None,
+):
     cargo_nome = normalize_cargo_name(usuario.cargo)
-    cargo = Cargo.objects.filter(name=cargo_nome).first()
+    cargo = (
+        cargos_by_name.get(cargo_nome)
+        if cargos_by_name is not None
+        else Cargo.objects.filter(name=cargo_nome).first()
+    )
     return {
         "id": str(usuario.pk),
         "pk": usuario.pk,
@@ -270,6 +395,35 @@ def serialize_usuario(usuario: Usuario):
         "cargo": cargo_nome,
         "roleId": str(cargo.pk) if cargo else cargo_nome,
     }
+
+
+def serialize_usuarios(usuarios):
+    usuarios = list(usuarios)
+    cargos_by_name = _cargo_map_for_usuarios(usuarios)
+    return [
+        serialize_usuario(usuario, cargos_by_name=cargos_by_name)
+        for usuario in usuarios
+    ]
+
+
+def _usuario_response(usuario: Usuario):
+    serialized = serialize_usuario(usuario)
+    return {"usuario": serialized, "user": serialized}
+
+
+def _usuarios_response(usuarios):
+    serialized = serialize_usuarios(usuarios)
+    return {"usuarios": serialized, "users": serialized}
+
+
+def _cargo_response(cargo: Group):
+    serialized = serialize_cargo(cargo)
+    return {"cargo": serialized, "role": serialized}
+
+
+def _cargos_response(cargos):
+    serialized = [serialize_cargo(cargo) for cargo in cargos]
+    return {"cargos": serialized, "roles": serialized}
 
 
 def _resolve_cargo_api_value(value):
@@ -332,9 +486,7 @@ def listar_usuarios(request):
         return method_not_allowed(["GET"])
 
     _ensure_default_cargos()
-    usuarios = Usuario.objects.all()
-    serialized = [serialize_usuario(usuario) for usuario in usuarios]
-    return success_response({"usuarios": serialized, "users": serialized})
+    return success_response(_usuarios_response(Usuario.objects.all()))
 
 
 @app_permissions_required("usuarios.add_usuario")
@@ -352,11 +504,9 @@ def criar_usuario(request):
     form = UsuarioForm(payload)
     if form.is_valid():
         usuario = form.save()
-        auth_user = _get_or_sync_auth_user(usuario)
-        _sync_auth_user_cargo(usuario, auth_user)
-        serialized = serialize_usuario(usuario)
+        _sync_usuario_auth(usuario)
         return success_response(
-            {"usuario": serialized, "user": serialized},
+            _usuario_response(usuario),
             message="Usuario criado com sucesso.",
             status=201,
         )
@@ -370,35 +520,14 @@ def detalhes_usuario(request, usuario_id):
         return method_not_allowed(["GET"])
 
     usuario = get_object_or_404(Usuario, pk=usuario_id)
-    auth_user = _get_or_sync_auth_user(usuario)
-    _sync_auth_user_cargo(usuario, auth_user)
-    processos = Processo.objects.filter(
-        advogado_responsavel=usuario.nome
-    ).select_related("cliente")
-    eventos = Evento.objects.filter(responsavel=usuario.nome).select_related(
-        "cliente", "processo"
-    )
-
-    from agenda.views import serialize_evento
-    from processos.views import serialize_processo
-
-    serialized_processos = [serialize_processo(processo) for processo in processos]
-    serialized_eventos = [serialize_evento(evento) for evento in eventos]
-    serialized_cargos = [
-        serialize_cargo(cargo) for cargo in auth_user.groups.order_by("name")
-    ]
-    serialized_usuario = serialize_usuario(usuario)
+    auth_user = _sync_usuario_auth(usuario)
+    cargos = [serialize_cargo(cargo) for cargo in auth_user.groups.order_by("name")]
 
     return success_response(
         {
-            "usuario": serialized_usuario,
-            "user": serialized_usuario,
-            "processos": serialized_processos,
-            "processes": serialized_processos,
-            "eventos": serialized_eventos,
-            "events": serialized_eventos,
-            "cargos": serialized_cargos,
-            "roles": serialized_cargos,
+            **_usuario_response(usuario),
+            "cargos": cargos,
+            "roles": cargos,
             "permissoes_total": len(auth_user.get_group_permissions()),
         }
     )
@@ -424,11 +553,9 @@ def editar_usuario(request, usuario_id):
     form = UsuarioForm(payload, instance=usuario)
     if form.is_valid():
         usuario = form.save()
-        auth_user = _get_or_sync_auth_user(usuario, previous_email=previous_email)
-        _sync_auth_user_cargo(usuario, auth_user)
-        serialized = serialize_usuario(usuario)
+        _sync_usuario_auth(usuario, previous_email=previous_email)
         return success_response(
-            {"usuario": serialized, "user": serialized},
+            _usuario_response(usuario),
             message="Usuario atualizado com sucesso.",
         )
 
@@ -449,21 +576,12 @@ def excluir_usuario(request, usuario_id):
     return success_response({"id": deleted_id}, message="Usuario excluido com sucesso.")
 
 
-@app_any_permissions_required(
-    "auth.view_group",
-    "auth.add_group",
-    "auth.change_group",
-    "usuarios.view_usuario",
-    "usuarios.add_usuario",
-    "usuarios.change_usuario",
-)
+@app_any_permissions_required(*CARGO_LIST_PERMISSIONS)
 def listar_cargos(request):
     if request.method != "GET":
         return method_not_allowed(["GET"])
 
-    cargos = _get_cargos()
-    serialized = [serialize_cargo(cargo) for cargo in cargos]
-    return success_response({"cargos": serialized, "roles": serialized})
+    return success_response(_cargos_response(_get_cargos()))
 
 
 @app_permissions_required("auth.add_group")
@@ -479,9 +597,8 @@ def criar_cargo(request):
     form = CargoForm(payload)
     if form.is_valid():
         cargo = form.save()
-        serialized = serialize_cargo(cargo)
         return success_response(
-            {"cargo": serialized, "role": serialized},
+            _cargo_response(cargo),
             message="Cargo criado com sucesso.",
             status=201,
         )
@@ -496,36 +613,12 @@ def detalhes_cargo(request, cargo_id):
 
     cargo = get_object_or_404(Cargo, pk=cargo_id)
     usuarios_vinculados = _usuarios_for_cargo(cargo).order_by("nome")
-    permission_sections = []
-    for section in cargo_permissions_for_display(
-        cargo.permissions.select_related("content_type").all()
-    ):
-        permission_sections.append(
-            {
-                "key": section["key"],
-                "label": section["label"],
-                "permissions": [
-                    {
-                        "permission": serialize_permission(item["permission"]),
-                        "display_name": item["display_name"],
-                        "model_label": item["model_label"],
-                    }
-                    for item in section["permissions"]
-                ],
-            }
-        )
-
-    serialized_cargo = serialize_cargo(cargo)
-    serialized_usuarios = [
-        serialize_usuario(usuario) for usuario in usuarios_vinculados
-    ]
+    usuarios = serialize_usuarios(usuarios_vinculados)
     return success_response(
         {
-            "cargo": serialized_cargo,
-            "role": serialized_cargo,
-            "usuarios_vinculados": serialized_usuarios,
-            "users": serialized_usuarios,
-            "permission_sections": permission_sections,
+            **_cargo_response(cargo),
+            "usuarios_vinculados": usuarios,
+            "users": usuarios,
         }
     )
 
@@ -550,9 +643,8 @@ def editar_cargo(request, cargo_id):
             Usuario.objects.filter(
                 cargo__in=cargo_lookup_values(previous_name)
             ).update(cargo=cargo.name)
-        serialized = serialize_cargo(cargo)
         return success_response(
-            {"cargo": serialized, "role": serialized},
+            _cargo_response(cargo),
             message="Cargo atualizado com sucesso.",
         )
 
@@ -586,14 +678,7 @@ def login(request: HttpRequest):
     if request.method != "POST":
         return method_not_allowed(["POST"])
 
-    request_user = cast(User | AnonymousUser, getattr(request, "user", None))
-    auth_user = (
-        request_user
-        if isinstance(request_user, User) and request_user.is_authenticated
-        else None
-    )
-
-    if auth_user is not None:
+    if _authenticated_user(request) is not None:
         auth_logout(request)
     _clear_usuario_session(request)
 
@@ -613,28 +698,89 @@ def login(request: HttpRequest):
         if usuario is None or not _usuario_password_matches(usuario, senha):
             form.add_error(None, "Email ou senha invalidos.")
         else:
-            auth_user = _get_or_sync_auth_user(usuario)
-            _sync_auth_user_cargo(usuario, auth_user)
+            auth_user = _sync_usuario_auth(usuario)
             auth_login(
                 request, auth_user, backend="django.contrib.auth.backends.ModelBackend"
             )
-            request.session["usuario_id"] = usuario.pk
-            request.session["usuario_nome"] = usuario.nome
-            request.session["usuario_email"] = usuario.email
-            serialized = serialize_usuario(usuario)
+            _remember_usuario_session(request, usuario)
             return success_response(
-                {"usuario": serialized, "user": serialized},
+                _usuario_response(usuario),
                 message=f"Bem-vindo, {usuario.nome}.",
             )
 
     return error_response(form_errors(form), status=400)
 
 
+def google_login(request: HttpRequest):
+    if request.method != "POST":
+        return method_not_allowed(["POST"])
+
+    if _authenticated_user(request) is not None:
+        auth_logout(request)
+    _clear_usuario_session(request)
+
+    try:
+        payload = parse_body(request)
+    except ValueError as exc:
+        return error_response(str(exc), status=400)
+
+    credential = str(
+        payload.get("credential") or payload.get("idToken") or payload.get("token") or ""
+    ).strip()
+    if not credential:
+        return error_response({"credential": ["Token do Google ausente."]}, status=400)
+
+    try:
+        idinfo = _verify_google_credential(credential)
+        usuario = _get_or_create_google_usuario(idinfo)
+    except GoogleLoginConfigurationError as exc:
+        return error_response(str(exc), status=503)
+    except ValueError as exc:
+        return error_response(str(exc), status=400)
+    except requests.RequestException:
+        return error_response(
+            "Nao foi possivel validar o login com Google.",
+            status=503,
+        )
+
+    if usuario is None:
+        return error_response(
+            {
+                "google": [
+                    "Conta Google validada, mas sem usuario cadastrado no sistema."
+                ]
+            },
+            status=403,
+        )
+
+    auth_user = _sync_usuario_auth(usuario)
+    auth_login(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
+    _remember_usuario_session(request, usuario)
+    return success_response(
+        _usuario_response(usuario),
+        message=f"Bem-vindo, {usuario.nome}.",
+    )
+
+
+def google_login_config(request: HttpRequest):
+    if request.method != "GET":
+        return method_not_allowed(["GET"])
+
+    client_id = getattr(settings, "GOOGLE_CLIENT_ID", "").strip()
+    return success_response(
+        {
+            "enabled": bool(client_id),
+            "clientId": client_id,
+            "googleClientId": client_id,
+        }
+    )
+
+
 def logout(request: HttpRequest):
     if request.method not in {"POST", "DELETE"}:
         return method_not_allowed(["POST", "DELETE"])
 
-    if request.user.is_authenticated:
+    if _authenticated_user(request) is not None:
         auth_logout(request)
     _clear_usuario_session(request)
     return success_response(message="Sessao encerrada.")
@@ -645,10 +791,9 @@ def current_usuario(request: HttpRequest):
         return method_not_allowed(["GET"])
 
     usuario = get_current_usuario(request)["usuario_logado"]
-    request_user = cast(User | AnonymousUser, getattr(request, "user", None))
-    if usuario and isinstance(request_user, User) and request_user.is_authenticated:
-        auth_user = _get_or_sync_auth_user(usuario, preferred_auth_user=request_user)
-        _sync_auth_user_cargo(usuario, auth_user)
+    auth_user = _authenticated_user(request)
+    if usuario and auth_user is not None:
+        _sync_usuario_auth(usuario, preferred_auth_user=auth_user)
 
     return success_response(
         {"usuario": serialize_usuario(usuario) if usuario else None}
@@ -662,16 +807,12 @@ def get_current_usuario(request: HttpRequest):
     if usuario_id:
         usuario = Usuario.objects.filter(pk=usuario_id).first()
 
-    request_user = cast(User | AnonymousUser, getattr(request, "user", None))
-    if usuario is None and request_user and request_user.is_authenticated:
-        auth_identifier = getattr(request_user, "email", "") or getattr(
-            request_user, "username", ""
-        )
+    auth_user = _authenticated_user(request)
+    if usuario is None and auth_user is not None:
+        auth_identifier = auth_user.email or auth_user.username
         if auth_identifier:
             usuario = Usuario.objects.filter(email=auth_identifier).first()
             if usuario:
-                request.session["usuario_id"] = usuario.pk
-                request.session["usuario_nome"] = usuario.nome
-                request.session["usuario_email"] = usuario.email
+                _remember_usuario_session(request, usuario)
 
     return {"usuario_logado": usuario}

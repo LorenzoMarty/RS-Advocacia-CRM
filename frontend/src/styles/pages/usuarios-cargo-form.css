@@ -86,9 +86,16 @@
 
 .permissions-panel{
     padding:18px;
-    border-radius:20px;
+    border-radius:8px;
     border:1px solid var(--line);
     background:var(--ghost);
+}
+
+.permission-guide{
+    margin:12px 0 16px;
+    color:var(--soft);
+    font-size:.86rem;
+    line-height:1.55;
 }
 
 .permissions-sections{
@@ -98,12 +105,16 @@
 
 .permission-section{
     padding:16px;
-    border-radius:18px;
+    border-radius:8px;
     border:1px solid var(--line);
     background:rgba(255,255,255,.02);
 }
 
 .permission-section-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
     margin-bottom:12px;
 }
 
@@ -118,62 +129,131 @@
     margin:4px 0 0;
     color:var(--soft);
     font-size:.82rem;
+    line-height:1.5;
 }
 
-.permission-grid{
-    display:grid;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:10px;
-}
-
-.permission-item{
+.permission-section-tools{
     display:flex;
-    align-items:flex-start;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+    flex:0 0 auto;
+}
+
+.permission-section-tools span{
+    color:var(--muted);
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+}
+
+.permission-section-tools button{
+    min-height:34px;
+    padding:0 11px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--ghost);
+    color:var(--text);
+    font-size:.78rem;
+    font-weight:700;
+}
+
+.permission-resource-list{
+    display:grid;
     gap:10px;
-    padding:14px;
-    border-radius:16px;
+}
+
+.permission-resource{
+    display:grid;
+    grid-template-columns:minmax(180px, .85fr) minmax(0, 1fr);
+    gap:12px;
+    align-items:stretch;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.02);
+}
+
+.permission-resource-copy{
+    display:grid;
+    align-content:center;
+    gap:5px;
+    min-width:0;
+}
+
+.permission-resource-copy h4{
+    margin:0;
+    font-size:.95rem;
+    line-height:1.35;
+    font-weight:700;
+}
+
+.permission-resource-copy p{
+    margin:0;
+    color:var(--soft);
+    font-size:.8rem;
+    line-height:1.45;
+}
+
+.permission-action-grid{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(86px, 1fr));
+    gap:8px;
+}
+
+.permission-action-option{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-height:54px;
+    padding:9px 10px;
+    border-radius:8px;
     border:1px solid var(--line);
     background:rgba(255,255,255,.02);
     cursor:pointer;
     transition:border-color .2s ease,background .2s ease,transform .2s ease;
 }
 
-.permission-item:hover{
+.permission-action-option:hover{
     transform:translateY(-1px);
     border-color:rgba(194,154,99,.18);
     background:rgba(194,154,99,.06);
 }
 
-.permission-item input{
-    width:18px;
-    height:18px;
-    margin-top:2px;
+.permission-action-option:has(input:checked){
+    border-color:rgba(194,154,99,.34);
+    background:rgba(194,154,99,.12);
+}
+
+.permission-action-option input{
+    width:16px;
+    height:16px;
     accent-color:var(--gold);
     flex:0 0 auto;
 }
 
-.permission-copy{
+.permission-action-option span{
     display:grid;
-    gap:4px;
+    gap:2px;
     min-width:0;
 }
 
-.permission-copy strong{
+.permission-action-option strong{
     display:block;
-    font-size:.92rem;
-    line-height:1.35;
+    font-size:.84rem;
+    line-height:1.25;
 }
 
-.permission-copy span{
+.permission-action-option small{
     color:var(--soft);
-    font-size:.8rem;
-    line-height:1.45;
-    text-transform:capitalize;
+    font-size:.68rem;
+    line-height:1.25;
 }
 
 .selection-empty{
     padding:14px;
-    border-radius:16px;
+    border-radius:8px;
     border:1px dashed var(--line);
     color:var(--soft);
     font-size:.84rem;
@@ -193,7 +273,10 @@
 }
 
 html[data-theme="light"] .permissions-panel,
-html[data-theme="light"] .permission-section{
+html[data-theme="light"] .permission-section,
+html[data-theme="light"] .permission-resource,
+html[data-theme="light"] .permission-action-option,
+html[data-theme="light"] .permission-section-tools button{
     background:rgba(24,30,42,.04);
     border-color:rgba(30,34,45,.1);
 }
@@ -220,7 +303,20 @@ html[data-theme="light"] .permission-section{
         line-height:1.5;
     }
 
-    .permission-grid{
+    .permission-section-head{
+        flex-direction:column;
+    }
+
+    .permission-section-tools{
+        width:100%;
+        justify-content:space-between;
+    }
+
+    .permission-resource{
+        grid-template-columns:1fr;
+    }
+
+    .permission-action-grid{
         grid-template-columns:1fr;
     }
 

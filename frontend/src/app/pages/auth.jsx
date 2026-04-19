@@ -1,19 +1,79 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 
+import { api, isApiEnabled } from '../api';
 import { useAppState } from '../store';
+
+const envGoogleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login, loginHint } = useAppState();
+  const { login, loginHint, loginWithGoogle } = useAppState();
   const [form, setForm] = useState({
     email: loginHint?.email || '',
     password: loginHint?.password || '',
   });
+  const [googleClientId, setGoogleClientId] = useState(envGoogleClientId);
   const [error, setError] = useState('');
+  const [googleError, setGoogleError] = useState('');
+
+  const handleGoogleCredential = useCallback(async (credentialResponse) => {
+    console.log('Google login origin:', window.location.origin);
+
+    if (!credentialResponse?.credential) {
+      setGoogleError('Nao foi possivel receber o token do Google.');
+      return;
+    }
+
+    setError('');
+    setGoogleError('');
+    const hasSession = await loginWithGoogle(credentialResponse.credential);
+    if (!hasSession) {
+      setGoogleError('Nao foi possivel entrar com Google.');
+      return;
+    }
+
+    navigate('/', { replace: true });
+  }, [loginWithGoogle, navigate]);
+
+  useEffect(() => {
+    if (envGoogleClientId || !isApiEnabled) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    async function loadGoogleLoginConfig() {
+      try {
+        const payload = await api.googleLoginConfig();
+        const clientId = String(
+          payload.clientId || payload.googleClientId || payload.google?.clientId || '',
+        ).trim();
+        if (!cancelled) {
+          setGoogleClientId(clientId);
+        }
+      } catch {
+        if (!cancelled) {
+          setGoogleClientId('');
+        }
+      }
+    }
+
+    loadGoogleLoginConfig();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log('Google login origin:', window.location.origin);
+  }, []);
 
   async function handleSubmit(event) {
     event.preventDefault();
+    setGoogleError('');
 
     const hasSession = await login(form.email, form.password);
     if (!hasSession) {
@@ -42,9 +102,9 @@ export function LoginPage() {
           <p className="login-subtitle">Acesse sua conta para continuar no painel.</p>
         </header>
 
-        {error ? (
+        {error || googleError ? (
           <div className="login-alert login-alert-error" role="alert">
-            <span>{error}</span>
+            <span>{error || googleError}</span>
           </div>
         ) : null}
 
@@ -93,6 +153,21 @@ export function LoginPage() {
 
           <button className="btn login-submit" type="submit">Entrar</button>
         </form>
+
+        {googleClientId ? (
+          <div className="login-google">
+            <div className="login-divider"><span>ou</span></div>
+            <GoogleOAuthProvider clientId={googleClientId}>
+              <div className="login-google-button">
+                <GoogleLogin
+                  onSuccess={handleGoogleCredential}
+                  onError={() => setGoogleError('Nao foi possivel entrar com Google.')}
+                  useOneTap={false}
+                />
+              </div>
+            </GoogleOAuthProvider>
+          </div>
+        ) : null}
 
         <footer className="login-footer" id="login-help">
           <p>Use o email e a senha cadastrados em usuários para acessar.</p>

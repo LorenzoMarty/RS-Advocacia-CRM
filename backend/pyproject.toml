@@ -10,5 +10,6 @@ dependencies = [
     "django>=6.0.3",
     "pillow>=11.3.0",
     "psycopg[binary]>=3.3.3",
+    "requests>=2.33.1",
     "whitenoise>=6.12.0",
 ]

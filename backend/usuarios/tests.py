@@ -1,9 +1,10 @@
 import json
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import Group, Permission
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from usuarios.models import Usuario
@@ -178,6 +179,110 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(response.status_code, 200, payload)
         self.assertTrue(payload["success"])
         self.assertTrue(check_password("123456", Usuario.objects.get(email="legado@example.com").senha))
+
+    @override_settings(GOOGLE_CLIENT_ID="")
+    def test_google_login_exige_client_id_configurado(self):
+        response = self.client.post(
+            reverse("google_login"),
+            data=json.dumps({"credential": "token-google"}),
+            content_type="application/json",
+        )
+        payload = response.json()
+
+        self.assertEqual(response.status_code, 503)
+        self.assertFalse(payload["success"])
+
+    @override_settings(GOOGLE_CLIENT_ID="google-client-id")
+    def test_google_login_config_expõe_client_id_publico(self):
+        response = self.client.get(reverse("google_login_config"))
+        payload = response.json()
+
+        self.assertEqual(response.status_code, 200, payload)
+        self.assertTrue(payload["success"])
+        self.assertTrue(payload["data"]["enabled"])
+        self.assertEqual(payload["data"]["clientId"], "google-client-id")
+
+    @override_settings(GOOGLE_CLIENT_ID="google-client-id")
+    @patch("usuarios.views.requests.get")
+    def test_google_login_vincula_usuario_existente(self, requests_get):
+        requests_get.return_value.json.return_value = {
+            "sub": "google-sub-123",
+            "email": "google-user@example.com",
+            "email_verified": "true",
+            "name": "Google User",
+            "aud": "google-client-id",
+        }
+        usuario = Usuario.objects.create(
+            nome="Google User",
+            email="google-user@example.com",
+            senha="123456",
+            cargo="Operacional",
+        )
+
+        response = self.client.post(
+            reverse("google_login"),
+            data=json.dumps({"token": "token-google"}),
+            content_type="application/json",
+        )
+        payload = response.json()
+
+        usuario.refresh_from_db()
+        self.assertEqual(response.status_code, 200, payload)
+        self.assertTrue(payload["success"])
+        self.assertEqual(payload["data"]["user"]["email"], usuario.email)
+        self.assertEqual(usuario.google_sub, "google-sub-123")
+        self.assertEqual(self.client.session["usuario_id"], usuario.pk)
+
+    @override_settings(GOOGLE_CLIENT_ID="google-client-id")
+    @patch("usuarios.views.requests.get")
+    def test_google_login_bloqueia_usuario_nao_cadastrado(self, requests_get):
+        requests_get.return_value.json.return_value = {
+            "sub": "google-sub-456",
+            "email": "sem-cadastro@example.com",
+            "email_verified": "true",
+            "name": "Sem Cadastro",
+            "aud": "google-client-id",
+        }
+
+        response = self.client.post(
+            reverse("google_login"),
+            data=json.dumps({"token": "token-google"}),
+            content_type="application/json",
+        )
+        payload = response.json()
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(payload["success"])
+        self.assertFalse(Usuario.objects.filter(email="sem-cadastro@example.com").exists())
+
+    @override_settings(
+        GOOGLE_CLIENT_ID="google-client-id",
+        GOOGLE_LOGIN_AUTO_CREATE=True,
+        GOOGLE_DEFAULT_CARGO="Operacional",
+    )
+    @patch("usuarios.views.requests.get")
+    def test_google_login_cria_usuario_quando_habilitado(self, requests_get):
+        requests_get.return_value.json.return_value = {
+            "sub": "google-sub-789",
+            "email": "novo-google@example.com",
+            "email_verified": "true",
+            "name": "Novo Google",
+            "aud": "google-client-id",
+        }
+
+        response = self.client.post(
+            reverse("google_login"),
+            data=json.dumps({"token": "token-google"}),
+            content_type="application/json",
+        )
+        payload = response.json()
+
+        self.assertEqual(response.status_code, 200, payload)
+        self.assertTrue(payload["success"])
+        usuario = Usuario.objects.get(email="novo-google@example.com")
+        self.assertEqual(usuario.nome, "Novo Google")
+        self.assertEqual(usuario.cargo, "Operacional")
+        self.assertEqual(usuario.google_sub, "google-sub-789")
 
     def test_admin_abre_formulario_de_adicionar_usuario(self):
         Group.objects.create(name="Operacional")

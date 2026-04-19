@@ -13,7 +13,13 @@ from core.utils import method_not_allowed, success_response
 from processos.models import Processo
 from processos.views import serialize_processo
 from usuarios.models import Usuario
-from usuarios.views import serialize_cargo, serialize_permission_groups, serialize_usuario, _get_cargos
+from usuarios.views import (
+    CARGO_LIST_PERMISSIONS,
+    serialize_cargo,
+    serialize_permission_groups,
+    serialize_usuarios,
+    _get_cargos,
+)
 
 
 @app_permissions_required(
@@ -59,17 +65,7 @@ def bootstrap(request):
     serialized_processos = [serialize_processo(processo) for processo in processos]
     serialized_eventos = [serialize_evento(evento) for evento in eventos]
 
-    can_include_cargos = user_has_any_permissions(
-        request,
-        (
-            "auth.view_group",
-            "auth.add_group",
-            "auth.change_group",
-            "usuarios.view_usuario",
-            "usuarios.add_usuario",
-            "usuarios.change_usuario",
-        ),
-    )
+    can_include_cargos = user_has_any_permissions(request, CARGO_LIST_PERMISSIONS)
     serialized_cargos = []
     if can_include_cargos:
         cargos = _get_cargos()
@@ -86,8 +82,7 @@ def bootstrap(request):
     }
 
     if user_has_permission(request, "usuarios.view_usuario"):
-        usuarios = Usuario.objects.all()
-        serialized_usuarios = [serialize_usuario(usuario) for usuario in usuarios]
+        serialized_usuarios = serialize_usuarios(Usuario.objects.all())
         data["usuarios"] = serialized_usuarios
         data["users"] = serialized_usuarios
 
