@@ -248,6 +248,7 @@ DEFAULT_REACT_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+FRONTEND_URL = os.getenv("FRONTEND_URL", DEFAULT_REACT_ORIGINS[0]).strip().rstrip("/")
 
 CORS_ALLOW_ALL_ORIGINS = _env_flag("CORS_ALLOW_ALL_ORIGINS", default=True)
 CORS_ALLOWED_ORIGINS = sorted(
@@ -287,6 +288,8 @@ SESSION_COOKIE_HTTPONLY = True
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "").strip()
 GOOGLE_ALLOWED_HOSTED_DOMAIN = os.getenv("GOOGLE_ALLOWED_HOSTED_DOMAIN", "").strip()
 GOOGLE_DEFAULT_CARGO = os.getenv("GOOGLE_DEFAULT_CARGO", "").strip()
 

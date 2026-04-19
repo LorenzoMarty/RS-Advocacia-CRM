@@ -1,11 +1,14 @@
+from secrets import token_urlsafe
 from typing import Any, cast
+from urllib.parse import urlencode
 
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
 from django.conf import settings
 from django.db.models import Q
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 import requests
 
 from core.permissions import app_any_permissions_required, app_permissions_required
@@ -80,6 +83,10 @@ CARGO_LIST_PERMISSIONS = (
 
 class GoogleLoginConfigurationError(Exception):
     pass
+
+
+GOOGLE_AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 
 
 def _clear_usuario_session(request: HttpRequest) -> None:
@@ -229,10 +236,46 @@ def _google_default_cargo_name() -> str:
     return configured_cargo or ESTAGIARIO_CARGO_NAME
 
 
-def _verify_google_credential(credential: str) -> dict[str, Any]:
+def _google_client_id() -> str:
     client_id = getattr(settings, "GOOGLE_CLIENT_ID", "").strip()
     if not client_id:
         raise GoogleLoginConfigurationError("Login com Google nao configurado.")
+    return client_id
+
+
+def _google_client_secret() -> str:
+    client_secret = getattr(settings, "GOOGLE_CLIENT_SECRET", "").strip()
+    if not client_secret:
+        raise GoogleLoginConfigurationError("Login com Google nao configurado.")
+    return client_secret
+
+
+def _google_redirect_uri(request: HttpRequest) -> str:
+    configured_uri = getattr(settings, "GOOGLE_REDIRECT_URI", "").strip()
+    if configured_uri:
+        return configured_uri
+    return request.build_absolute_uri(reverse("google_callback"))
+
+
+def _frontend_redirect_url(path: str = "/", params: dict[str, str] | None = None) -> str:
+    frontend_url = getattr(settings, "FRONTEND_URL", "").strip()
+    if not frontend_url:
+        frontend_url = settings.DEFAULT_REACT_ORIGINS[0]
+
+    frontend_url = frontend_url.rstrip("/")
+    hash_path = path if path.startswith("/") else f"/{path}"
+    query = f"?{urlencode(params)}" if params else ""
+    return f"{frontend_url}/#{hash_path}{query}"
+
+
+def _google_error_redirect(message: str) -> HttpResponseRedirect:
+    return HttpResponseRedirect(
+        _frontend_redirect_url("/login", {"google_error": message})
+    )
+
+
+def _verify_google_credential(credential: str) -> dict[str, Any]:
+    client_id = _google_client_id()
 
     response = requests.get(
         "https://oauth2.googleapis.com/tokeninfo",
@@ -255,6 +298,28 @@ def _verify_google_credential(credential: str) -> dict[str, Any]:
         raise ValueError("Conta Google sem email verificado.")
 
     return idinfo
+
+
+def _exchange_google_code(code: str, redirect_uri: str) -> str:
+    response = requests.post(
+        GOOGLE_TOKEN_URL,
+        data={
+            "code": code,
+            "client_id": _google_client_id(),
+            "client_secret": _google_client_secret(),
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        },
+        timeout=10,
+    )
+    if response.status_code != 200:
+        raise ValueError("Nao foi possivel concluir o login com Google.")
+
+    token_payload = response.json()
+    id_token = str(token_payload.get("id_token") or "").strip()
+    if not id_token:
+        raise ValueError("Google nao retornou um token de identidade.")
+    return id_token
 
 
 def _get_or_create_google_usuario(idinfo: dict[str, Any]) -> Usuario:
@@ -644,45 +709,78 @@ def excluir_cargo(request, cargo_id):
     return success_response({"id": deleted_id}, message="Cargo excluido com sucesso.")
 
 
-def google_login(request: HttpRequest):
-    if request.method != "POST":
-        return method_not_allowed(["POST"])
+def _sign_in_google_usuario(request: HttpRequest, idinfo: dict[str, Any]) -> Usuario:
+    usuario = _get_or_create_google_usuario(idinfo)
 
     if _authenticated_user(request) is not None:
         auth_logout(request)
     _clear_usuario_session(request)
 
-    try:
-        payload = parse_body(request)
-    except ValueError as exc:
-        return error_response(str(exc), status=400)
-
-    credential = str(
-        payload.get("credential") or payload.get("idToken") or payload.get("token") or ""
-    ).strip()
-    if not credential:
-        return error_response({"credential": ["Token do Google ausente."]}, status=400)
-
-    try:
-        idinfo = _verify_google_credential(credential)
-        usuario = _get_or_create_google_usuario(idinfo)
-    except GoogleLoginConfigurationError as exc:
-        return error_response(str(exc), status=503)
-    except ValueError as exc:
-        return error_response(str(exc), status=400)
-    except requests.RequestException:
-        return error_response(
-            "Nao foi possivel validar o login com Google.",
-            status=503,
-        )
-
     auth_user = _sync_usuario_auth(usuario)
     auth_login(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
     _remember_usuario_session(request, usuario)
-    return success_response(
-        _usuario_response(usuario),
-        message=f"Bem-vindo, {usuario.nome}.",
+    return usuario
+
+
+def google_login(request: HttpRequest):
+    if request.method != "GET":
+        return method_not_allowed(["GET"])
+
+    try:
+        _google_client_id()
+        _google_client_secret()
+        redirect_uri = _google_redirect_uri(request)
+    except GoogleLoginConfigurationError as exc:
+        return error_response(str(exc), status=503)
+
+    if _authenticated_user(request) is not None:
+        auth_logout(request)
+    _clear_usuario_session(request)
+
+    state = token_urlsafe(32)
+    request.session["google_oauth_state"] = state
+
+    query = urlencode(
+        {
+            "client_id": _google_client_id(),
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "scope": "openid email profile",
+            "state": state,
+            "prompt": "select_account",
+        }
     )
+    return HttpResponseRedirect(f"{GOOGLE_AUTHORIZATION_URL}?{query}")
+
+
+def google_callback(request: HttpRequest):
+    if request.method != "GET":
+        return method_not_allowed(["GET"])
+
+    if request.GET.get("error"):
+        return _google_error_redirect("Login com Google cancelado.")
+
+    received_state = str(request.GET.get("state") or "")
+    expected_state = str(request.session.pop("google_oauth_state", "") or "")
+    if not received_state or not expected_state or received_state != expected_state:
+        return _google_error_redirect("Sessao de login expirada. Tente novamente.")
+
+    code = str(request.GET.get("code") or "").strip()
+    if not code:
+        return _google_error_redirect("Google nao retornou o codigo de autorizacao.")
+
+    try:
+        id_token = _exchange_google_code(code, _google_redirect_uri(request))
+        idinfo = _verify_google_credential(id_token)
+        _sign_in_google_usuario(request, idinfo)
+    except GoogleLoginConfigurationError:
+        return _google_error_redirect("Login com Google nao configurado.")
+    except ValueError as exc:
+        return _google_error_redirect(str(exc))
+    except requests.RequestException:
+        return _google_error_redirect("Nao foi possivel validar o login com Google.")
+
+    return HttpResponseRedirect(_frontend_redirect_url("/"))
 
 
 def logout(request: HttpRequest):

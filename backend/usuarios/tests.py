@@ -1,5 +1,6 @@
 import json
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlsplit
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
@@ -9,13 +10,12 @@ from django.urls import reverse
 from usuarios.models import Usuario
 
 
-def make_google_response(payload):
+def make_google_response(payload, status_code=200):
     class Response:
-        status_code = 200
-
         def json(self):
             return payload
 
+    Response.status_code = status_code
     return Response()
 
 
@@ -119,21 +119,52 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(response.status_code, 200, payload)
         self.assertEqual(serialized_user["roleId"], str(cargo.pk))
 
-    @override_settings(GOOGLE_CLIENT_ID="")
+    @override_settings(GOOGLE_CLIENT_ID="", GOOGLE_CLIENT_SECRET="")
     def test_google_login_exige_client_id_configurado(self):
-        response = self.client.post(
-            reverse("google_login"),
-            data=json.dumps({"credential": "token-google"}),
-            content_type="application/json",
-        )
+        response = self.client.get(reverse("google_login"))
         payload = response.json()
 
         self.assertEqual(response.status_code, 503)
         self.assertFalse(payload["success"])
 
-    @override_settings(GOOGLE_CLIENT_ID="google-client-id")
+    @override_settings(
+        GOOGLE_CLIENT_ID="google-client-id",
+        GOOGLE_CLIENT_SECRET="google-client-secret",
+        GOOGLE_REDIRECT_URI="http://testserver/api/auth/google/callback/",
+    )
+    def test_google_login_redireciona_para_pagina_do_google(self):
+        response = self.client.get(reverse("google_login"))
+
+        self.assertEqual(response.status_code, 302)
+        location = response["Location"]
+        parsed = urlsplit(location)
+        query = parse_qs(parsed.query)
+        self.assertEqual(
+            f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
+            "https://accounts.google.com/o/oauth2/v2/auth",
+        )
+        self.assertEqual(query["client_id"], ["google-client-id"])
+        self.assertEqual(
+            query["redirect_uri"], ["http://testserver/api/auth/google/callback/"]
+        )
+        self.assertEqual(query["response_type"], ["code"])
+        self.assertEqual(query["scope"], ["openid email profile"])
+        self.assertEqual(query["prompt"], ["select_account"])
+        self.assertEqual(query["state"], [self.client.session["google_oauth_state"]])
+
+    @override_settings(
+        GOOGLE_CLIENT_ID="google-client-id",
+        GOOGLE_CLIENT_SECRET="google-client-secret",
+        GOOGLE_REDIRECT_URI="http://testserver/api/auth/google/callback/",
+        FRONTEND_URL="http://localhost:5173",
+    )
     @patch("usuarios.views.requests.get")
-    def test_google_login_vincula_usuario_existente(self, requests_get):
+    @patch("usuarios.views.requests.post")
+    def test_google_callback_vincula_usuario_existente(self, requests_post, requests_get):
+        session = self.client.session
+        session["google_oauth_state"] = "state-123"
+        session.save()
+        requests_post.return_value = make_google_response({"id_token": "id-token"})
         requests_get.return_value = make_google_response(
             {
                 "sub": "google-sub-123",
@@ -150,29 +181,48 @@ class ExcluirCargoTests(TestCase):
             cargo="Operacional",
         )
 
-        response = self.client.post(
-            reverse("google_login"),
-            data=json.dumps({"token": "token-google"}),
-            content_type="application/json",
+        response = self.client.get(
+            reverse("google_callback"),
+            {"code": "auth-code", "state": "state-123"},
         )
-        payload = response.json()
 
         usuario.refresh_from_db()
-        self.assertEqual(response.status_code, 200, payload)
-        self.assertTrue(payload["success"])
-        self.assertEqual(payload["data"]["user"]["email"], usuario.email)
-        self.assertEqual(payload["data"]["user"]["picture"], "https://example.com/avatar.png")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "http://localhost:5173/#/")
+        self.assertEqual(usuario.picture, "https://example.com/avatar.png")
         self.assertEqual(usuario.google_sub, "google-sub-123")
         self.assertEqual(self.client.session["usuario_id"], usuario.pk)
+        requests_post.assert_called_once_with(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": "auth-code",
+                "client_id": "google-client-id",
+                "client_secret": "google-client-secret",
+                "redirect_uri": "http://testserver/api/auth/google/callback/",
+                "grant_type": "authorization_code",
+            },
+            timeout=10,
+        )
         requests_get.assert_called_once_with(
             "https://oauth2.googleapis.com/tokeninfo",
-            params={"id_token": "token-google"},
+            params={"id_token": "id-token"},
             timeout=10,
         )
 
-    @override_settings(GOOGLE_CLIENT_ID="google-client-id", GOOGLE_DEFAULT_CARGO="Operacional")
+    @override_settings(
+        GOOGLE_CLIENT_ID="google-client-id",
+        GOOGLE_CLIENT_SECRET="google-client-secret",
+        GOOGLE_REDIRECT_URI="http://testserver/api/auth/google/callback/",
+        GOOGLE_DEFAULT_CARGO="Operacional",
+        FRONTEND_URL="http://localhost:5173",
+    )
     @patch("usuarios.views.requests.get")
-    def test_google_login_cria_usuario_automaticamente(self, requests_get):
+    @patch("usuarios.views.requests.post")
+    def test_google_callback_cria_usuario_automaticamente(self, requests_post, requests_get):
+        session = self.client.session
+        session["google_oauth_state"] = "state-456"
+        session.save()
+        requests_post.return_value = make_google_response({"id_token": "id-token"})
         requests_get.return_value = make_google_response(
             {
                 "sub": "google-sub-789",
@@ -184,24 +234,32 @@ class ExcluirCargoTests(TestCase):
             }
         )
 
-        response = self.client.post(
-            reverse("google_login"),
-            data=json.dumps({"token": "token-google"}),
-            content_type="application/json",
+        response = self.client.get(
+            reverse("google_callback"),
+            {"code": "auth-code", "state": "state-456"},
         )
-        payload = response.json()
 
-        self.assertEqual(response.status_code, 200, payload)
-        self.assertTrue(payload["success"])
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "http://localhost:5173/#/")
         usuario = Usuario.objects.get(email="novo-google@example.com")
         self.assertEqual(usuario.nome, "Novo Google")
         self.assertEqual(usuario.cargo, "Operacional")
         self.assertEqual(usuario.google_sub, "google-sub-789")
         self.assertEqual(usuario.picture, "https://example.com/novo.png")
 
-    @override_settings(GOOGLE_CLIENT_ID="google-client-id")
+    @override_settings(
+        GOOGLE_CLIENT_ID="google-client-id",
+        GOOGLE_CLIENT_SECRET="google-client-secret",
+        GOOGLE_REDIRECT_URI="http://testserver/api/auth/google/callback/",
+        FRONTEND_URL="http://localhost:5173",
+    )
     @patch("usuarios.views.requests.get")
-    def test_google_login_rejeita_client_id_invalido(self, requests_get):
+    @patch("usuarios.views.requests.post")
+    def test_google_callback_rejeita_client_id_invalido(self, requests_post, requests_get):
+        session = self.client.session
+        session["google_oauth_state"] = "state-789"
+        session.save()
+        requests_post.return_value = make_google_response({"id_token": "id-token"})
         requests_get.return_value = make_google_response(
             {
                 "sub": "google-sub-bad",
@@ -212,14 +270,30 @@ class ExcluirCargoTests(TestCase):
             }
         )
 
-        response = self.client.post(
-            reverse("google_login"),
-            data=json.dumps({"token": "token-google"}),
-            content_type="application/json",
+        response = self.client.get(
+            reverse("google_callback"),
+            {"code": "auth-code", "state": "state-789"},
         )
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/#/login?google_error=", response["Location"])
         self.assertFalse(Usuario.objects.filter(email="bad@example.com").exists())
+
+    @override_settings(FRONTEND_URL="http://localhost:5173")
+    @patch("usuarios.views.requests.post")
+    def test_google_callback_rejeita_state_invalido(self, requests_post):
+        session = self.client.session
+        session["google_oauth_state"] = "state-real"
+        session.save()
+
+        response = self.client.get(
+            reverse("google_callback"),
+            {"code": "auth-code", "state": "state-falso"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/#/login?google_error=", response["Location"])
+        requests_post.assert_not_called()
 
     def test_admin_nao_abre_cadastro_manual_de_usuario(self):
         response = self.client.get(reverse("admin:usuarios_usuario_add"))

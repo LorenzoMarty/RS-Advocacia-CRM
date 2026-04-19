@@ -17,6 +17,10 @@ function buildUrl(path, baseUrl = apiBaseUrl) {
   return `${baseUrl}${normalizedPath}`;
 }
 
+export function apiUrl(path) {
+  return buildUrl(path);
+}
+
 export function getCookie(name) {
   let cookieValue = '';
 
@@ -133,7 +137,7 @@ function eventRequest(path = '', options = {}) {
 export const api = {
   bootstrap: () => apiRequest('/api/bootstrap/'),
   getCurrentUser: () => apiRequest('/api/usuarios/atual/'),
-  googleLogin: (payload) => apiRequest('/api/auth/google/', jsonOptions('POST', payload)),
+  googleRedirectUrl: () => apiUrl('/api/auth/google/'),
   logout: () => apiRequest('/api/auth/logout/', { method: 'POST' }),
   listClients: () => apiRequest('/api/clientes/'),
   createClient: (payload) => apiRequest('/api/clientes/criar/', jsonOptions('POST', payload)),

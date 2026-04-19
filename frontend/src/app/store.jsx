@@ -260,28 +260,6 @@ export function AppStateProvider({ children }) {
     setFlashes((currentFlashes) => currentFlashes.filter((flash) => flash.id !== flashId));
   }
 
-  async function loginWithGoogle(credential) {
-    if (!isApiEnabled) {
-      addFlash('Login com Google precisa da API ativa.', 'error');
-      return false;
-    }
-
-    try {
-      const payload = await api.googleLogin({ token: credential });
-      const user = userFromResponse(payload);
-      if (!user) {
-        throw new Error('Resposta invalida da API de login com Google.');
-      }
-      syncCurrentUser(user);
-      await loadRemoteCollections();
-      addFlash('SessÃ£o iniciada com Google.', 'success');
-      return true;
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return false;
-    }
-  }
-
   async function logout() {
     if (isApiEnabled) {
       try {
@@ -601,7 +579,6 @@ export function AppStateProvider({ children }) {
     apiStatus,
     removeFlash,
     addFlash,
-    loginWithGoogle,
     logout,
     saveClient,
     saveProcess,

@@ -1,38 +1,25 @@
-import { useCallback, useEffect, useState } from 'react';
-import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
-import { useAppState } from '../store';
-
-const envGoogleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+import { api, isApiEnabled } from '../api';
 
 export function LoginPage() {
-  const navigate = useNavigate();
-  const { loginWithGoogle } = useAppState();
-  const googleClientId = envGoogleClientId;
+  const location = useLocation();
   const [googleError, setGoogleError] = useState('');
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const redirectError = new URLSearchParams(location.search).get('google_error') || '';
+  const visibleError = googleError || redirectError;
 
-  const handleGoogleCredential = useCallback(async (credentialResponse) => {
-    console.log('Google login origin:', window.location.origin);
-
-    if (!credentialResponse?.credential) {
-      setGoogleError('Nao foi possivel receber o token do Google.');
+  function handleGoogleRedirect() {
+    if (!isApiEnabled) {
+      setGoogleError('API nao configurada.');
       return;
     }
 
     setGoogleError('');
-    const hasSession = await loginWithGoogle(credentialResponse.credential);
-    if (!hasSession) {
-      setGoogleError('Nao foi possivel entrar com Google.');
-      return;
-    }
-
-    navigate('/', { replace: true });
-  }, [loginWithGoogle, navigate]);
-
-  useEffect(() => {
-    console.log('Google login origin:', window.location.origin);
-  }, []);
+    setIsRedirecting(true);
+    window.location.assign(api.googleRedirectUrl());
+  }
 
   return (
     <main className="login-shell">
@@ -49,35 +36,28 @@ export function LoginPage() {
 
         <header className="login-header">
           <h1 className="login-title" id="login-title">Entrar</h1>
-          <p className="login-subtitle">Use sua conta Google para continuar no painel.</p>
+          <p className="login-subtitle">Continue pela pagina segura do Google.</p>
         </header>
 
-        {googleError ? (
+        {visibleError ? (
           <div className="login-alert login-alert-error" role="alert">
-            <span>{googleError}</span>
+            <span>{visibleError}</span>
           </div>
         ) : null}
 
-        {googleClientId ? (
-          <div className="login-google">
-            <GoogleOAuthProvider clientId={googleClientId}>
-              <div className="login-google-button">
-                <GoogleLogin
-                  onSuccess={handleGoogleCredential}
-                  onError={() => setGoogleError('Nao foi possivel entrar com Google.')}
-                  useOneTap={false}
-                />
-              </div>
-            </GoogleOAuthProvider>
-          </div>
-        ) : (
-          <div className="login-alert login-alert-error" role="alert">
-            <span>Login com Google nao configurado.</span>
-          </div>
-        )}
+        <div className="login-google">
+          <button
+            className="btn login-submit"
+            type="button"
+            disabled={isRedirecting}
+            onClick={handleGoogleRedirect}
+          >
+            {isRedirecting ? 'Redirecionando...' : 'Entrar com Google'}
+          </button>
+        </div>
 
         <footer className="login-footer" id="login-help">
-          <p>Entre apenas com o email Google autorizado.</p>
+          <p>Depois do login, voce volta automaticamente para o dashboard.</p>
         </footer>
       </section>
     </main>
