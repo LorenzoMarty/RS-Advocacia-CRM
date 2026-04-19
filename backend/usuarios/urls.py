@@ -17,8 +17,4 @@ urlpatterns = [
     path("api/cargos/<int:cargo_id>/excluir/", views.excluir_cargo, name="excluir_cargo"),
     path("api/login/", views.login, name="login"),
     path("api/logout/", views.logout, name="logout"),
-    path("api/auth/login/", views.login, name="auth_login"),
-    path("api/auth/google/", views.google_login, name="google_login"),
-    path("api/auth/google/config/", views.google_login_config, name="google_login_config"),
-    path("api/auth/logout/", views.logout, name="auth_logout"),
 ]
