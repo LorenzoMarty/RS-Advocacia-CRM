@@ -5,7 +5,6 @@ from usuarios import views
 
 urlpatterns = [
     path("api/usuarios/", views.listar_usuarios, name="listar_usuarios"),
-    path("api/usuarios/criar/", views.criar_usuario, name="criar_usuario"),
     path("api/usuarios/atual/", views.current_usuario, name="current_usuario"),
     path("api/usuarios/<int:usuario_id>/", views.detalhes_usuario, name="detalhes_usuario"),
     path("api/usuarios/<int:usuario_id>/editar/", views.editar_usuario, name="editar_usuario"),
@@ -15,6 +14,4 @@ urlpatterns = [
     path("api/cargos/<int:cargo_id>/", views.detalhes_cargo, name="detalhes_cargo"),
     path("api/cargos/<int:cargo_id>/editar/", views.editar_cargo, name="editar_cargo"),
     path("api/cargos/<int:cargo_id>/excluir/", views.excluir_cargo, name="excluir_cargo"),
-    path("api/login/", views.login, name="login"),
-    path("api/logout/", views.logout, name="logout"),
 ]

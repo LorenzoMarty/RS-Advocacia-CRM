@@ -196,63 +196,6 @@
         line-height:1.45;
     }
 
-    .password-wrap{
-        position:relative;
-    }
-
-    .password-wrap input{
-        padding-right:52px;
-    }
-
-    .password-toggle{
-        position:absolute;
-        top:0;
-        bottom:0;
-        right:10px;
-        width:34px;
-        height:34px;
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        margin:auto 0;
-        padding:0;
-        border-radius:12px;
-        border:1px solid transparent;
-        color:var(--muted);
-        line-height:0;
-        transition:background .2s ease,border-color .2s ease,color .2s ease;
-    }
-
-    .password-toggle svg{
-        flex:0 0 auto;
-    }
-
-    .password-toggle:hover{
-        color:var(--text);
-        background:var(--hover);
-        border-color:rgba(194,154,99,.18);
-    }
-
-    .password-toggle:focus-visible{
-        outline:0;
-        color:var(--text);
-        background:var(--hover);
-        border-color:rgba(194,154,99,.24);
-        box-shadow:0 0 0 4px rgba(194,154,99,.08);
-    }
-
-    .password-toggle .icon-hide{
-        display:none;
-    }
-
-    .password-toggle.is-visible .icon-show{
-        display:none;
-    }
-
-    .password-toggle.is-visible .icon-hide{
-        display:block;
-    }
-
     .form-actions{
         display:flex;
         gap:10px;

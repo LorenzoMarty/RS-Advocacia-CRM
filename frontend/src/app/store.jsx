@@ -260,37 +260,6 @@ export function AppStateProvider({ children }) {
     setFlashes((currentFlashes) => currentFlashes.filter((flash) => flash.id !== flashId));
   }
 
-  async function login(email, password) {
-    if (isApiEnabled) {
-      try {
-        const payload = await api.login({ email, username: email, password });
-        const user = userFromResponse(payload);
-        if (!user) {
-          throw new Error('Resposta invalida da API de login.');
-        }
-        syncCurrentUser(user);
-        await loadRemoteCollections();
-        addFlash('Sessão iniciada.', 'success');
-        return true;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return false;
-      }
-    }
-
-    const matchedUser = users.find(
-      (user) => user.email.toLowerCase() === email.toLowerCase() && user.password === password,
-    );
-
-    if (!matchedUser) {
-      return false;
-    }
-
-    setCurrentUserId(matchedUser.id);
-    addFlash('Sessão iniciada.', 'success');
-    return true;
-  }
-
   async function loginWithGoogle(credential) {
     if (!isApiEnabled) {
       addFlash('Login com Google precisa da API ativa.', 'error');
@@ -454,11 +423,14 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveUser(payload) {
+    if (!payload.id) {
+      addFlash('Usuarios sao criados automaticamente pelo Google Login.', 'error');
+      return null;
+    }
+
     if (isApiEnabled) {
       try {
-        const response = payload.id
-          ? await api.updateUser(payload.id, payload)
-          : await api.createUser(payload);
+        const response = await api.updateUser(payload.id, payload);
         const savedUser = userFromResponse(response);
         if (!savedUser) {
           throw new Error('Resposta invalida da API de usuarios.');
@@ -467,7 +439,7 @@ export function AppStateProvider({ children }) {
         if (savedUser.id === currentUserId) {
           setCurrentSessionUser(savedUser);
         }
-        addFlash(payload.id ? 'Usuário atualizado.' : 'Usuário salvo.', 'success');
+        addFlash('Usuario atualizado.', 'success');
         return savedUser;
       } catch (error) {
         addFlash(errorMessage(error), 'error');
@@ -475,26 +447,19 @@ export function AppStateProvider({ children }) {
       }
     }
 
-    if (payload.id) {
-      let savedUser = null;
-      setUsers((currentUsers) =>
-        sortByName(currentUsers.map((user) => {
-          if (user.id !== payload.id) {
-            return user;
-          }
+    let savedUser = null;
+    setUsers((currentUsers) =>
+      sortByName(currentUsers.map((user) => {
+        if (user.id !== payload.id) {
+          return user;
+        }
 
-          savedUser = { ...user, ...payload, password: payload.password || user.password };
-          return savedUser;
-        })),
-      );
-      addFlash('Usuário atualizado.', 'success');
-      return savedUser || payload;
-    }
-
-    const nextUser = { ...payload, id: nextId('user') };
-    setUsers((currentUsers) => sortByName([...currentUsers, nextUser]));
-    addFlash('Usuário salvo.', 'success');
-    return nextUser;
+        savedUser = { ...user, ...payload };
+        return savedUser;
+      })),
+    );
+    addFlash('Usuario atualizado.', 'success');
+    return savedUser || payload;
   }
 
   async function saveRole(payload) {
@@ -634,10 +599,8 @@ export function AppStateProvider({ children }) {
     isLoading,
     isEventsLoading,
     apiStatus,
-    loginHint: { email: '', password: '' },
     removeFlash,
     addFlash,
-    login,
     loginWithGoogle,
     logout,
     saveClient,

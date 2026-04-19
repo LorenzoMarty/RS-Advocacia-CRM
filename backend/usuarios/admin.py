@@ -19,6 +19,9 @@ class UsuarioAdmin(admin.ModelAdmin):
     search_fields = ("nome", "email")
     list_filter = ("cargo",)
 
+    def has_add_permission(self, request):
+        return False
+
 
 @admin.register(Cargo)
 class CargoAdmin(admin.ModelAdmin):

@@ -16,7 +16,6 @@ function validateUserForm(form, users, currentId) {
   if (!form.name.trim()) nextErrors.name = 'Informe o nome.';
   if (!form.email.trim()) nextErrors.email = 'Informe o email.';
   if (!form.roleId) nextErrors.roleId = 'Selecione um cargo.';
-  if (!currentId && !form.password.trim()) nextErrors.password = 'Informe a senha.';
   if (users.some((user) => user.email.toLowerCase() === form.email.toLowerCase() && user.id !== currentId)) {
     nextErrors.email = 'Já existe um usuário com este email.';
   }
@@ -51,7 +50,6 @@ export function UsersListPage() {
 
             <div className="list-intro-actions">
               <Link className="btn btn-secondary list-intro-action" to="/cargos">Cargos</Link>
-              <Link className="btn list-intro-action" to="/usuarios/novo">Novo</Link>
             </div>
           </div>
         </section>
@@ -96,7 +94,7 @@ export function UsersListPage() {
               </div>
             </>
           ) : (
-            <EmptyState title="Nenhum usuário encontrado." copy="Ajuste a busca para localizar o registro desejado." actions={<Link className="btn" to="/usuarios/novo">Novo</Link>} />
+            <EmptyState title="Nenhum usuário encontrado." copy="Entre com Google para criar o primeiro usuario automaticamente." />
           )}
         </section>
       </div>
@@ -110,17 +108,15 @@ export function UserFormPage() {
   const isEditing = Boolean(params.userId);
   const { roles, saveUser, users } = useAppState();
   const user = users.find((item) => item.id === params.userId) || null;
-  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState(() => ({
     id: user?.id || '',
     name: user?.name || '',
     email: user?.email || '',
     roleId: user?.roleId || '',
-    password: '',
   }));
   const [errors, setErrors] = useState({});
 
-  if (isEditing && !user) {
+  if (!isEditing || !user) {
     return <NotFoundState title="Usuário não encontrado." />;
   }
 
@@ -138,7 +134,6 @@ export function UserFormPage() {
       name: form.name.trim(),
       email: form.email.trim(),
       roleId: form.roleId,
-      password: form.password,
     });
 
     if (!savedUser) {
@@ -150,22 +145,22 @@ export function UserFormPage() {
 
   return (
     <>
-      <PageChrome label={isEditing ? 'Editar usuário' : 'Novo usuário'} />
+      <PageChrome label="Editar usuario" />
 
       <div className="create-page">
         <section className="surface create-intro">
           <div className="intro-grid">
-            <Link className="intro-link" to={isEditing ? `/usuarios/${user.id}` : '/usuarios'}>
+            <Link className="intro-link" to={`/usuarios/${user.id}`}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m15 18-6-6 6-6" />
               </svg>
-              {isEditing ? 'Voltar para o usuário' : 'Voltar para usuários'}
+              Voltar para o usuario
             </Link>
             <div className="section-head">
               <div>
-                <h1 className="intro-title">{isEditing ? 'Editar usuário' : 'Novo usuário'}</h1>
+                <h1 className="intro-title">Editar usuario</h1>
                 <p className="intro-note">
-                  {isEditing ? 'Atualize os dados do perfil sem perder o contexto atual.' : 'Cadastro direto da equipe.'}
+                  Atualize os dados do perfil sem perder o contexto atual.
                 </p>
                 <p className="intro-note">O cargo define automaticamente as permissões herdadas no sistema.</p>
               </div>
@@ -197,44 +192,11 @@ export function UserFormPage() {
                 </select>
               </Field>
 
-              <Field
-                id="user-password"
-                label="Senha"
-                error={errors.password}
-                note={isEditing ? 'Deixe em branco para manter a senha atual.' : null}
-              >
-                <div className="password-wrap">
-                  <input
-                    id="user-password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={form.password}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, password: event.target.value }))}
-                  />
-                  <button
-                    className={`password-toggle${showPassword ? ' is-visible' : ''}`}
-                    type="button"
-                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                    title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                    onClick={() => setShowPassword((currentValue) => !currentValue)}
-                  >
-                    <svg className="icon-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                    <svg className="icon-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m3 3 18 18" />
-                      <path d="M10.6 10.7a3 3 0 0 0 4.2 4.2" />
-                      <path d="M9.4 5.5A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a17.7 17.7 0 0 1-3 3.8" />
-                      <path d="M6.6 6.7C4 8.4 2 12 2 12a17.3 17.3 0 0 0 5.1 5.2" />
-                    </svg>
-                  </button>
-                </div>
-              </Field>
             </div>
 
             <div className="form-actions">
-              <button className="btn" type="submit">{isEditing ? 'Atualizar' : 'Salvar'}</button>
-              <Link className="btn btn-secondary" to={isEditing ? `/usuarios/${user.id}` : '/usuarios'}>Cancelar</Link>
+              <button className="btn" type="submit">Atualizar</button>
+              <Link className="btn btn-secondary" to={`/usuarios/${user.id}`}>Cancelar</Link>
             </div>
           </form>
         </section>

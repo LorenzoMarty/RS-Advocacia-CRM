@@ -1,7 +1,6 @@
 from collections import OrderedDict
 
 from django import forms
-from django.contrib.auth.hashers import identify_hasher, make_password
 from django.contrib.auth.models import Permission
 
 from usuarios.models import Cargo, Usuario
@@ -75,17 +74,6 @@ def normalize_cargo_name(cargo_value):
     return dict(Usuario.TIPOS).get(cargo_value, cargo_value)
 
 
-def is_password_hash(value):
-    if not value:
-        return False
-
-    try:
-        identify_hasher(value)
-    except ValueError:
-        return False
-    return True
-
-
 def get_available_cargo_choices(current_value=None):
     cargos = list(Cargo.objects.order_by("name").values_list("name", flat=True))
 
@@ -105,10 +93,7 @@ class UsuarioForm(forms.ModelForm):
 
     class Meta:
         model = Usuario
-        fields = ["nome", "email", "senha", "cargo"]
-        widgets = {
-            "senha": forms.PasswordInput(render_value=True),
-        }
+        fields = ["nome", "email", "cargo"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -116,19 +101,6 @@ class UsuarioForm(forms.ModelForm):
         self.fields["cargo"].choices = get_available_cargo_choices(current_value)
         if current_value:
             self.initial["cargo"] = normalize_cargo_name(current_value)
-
-    def save(self, commit=True):
-        usuario = super().save(commit=False)
-        senha = self.cleaned_data.get("senha")
-        if senha and not is_password_hash(senha):
-            usuario.senha = make_password(senha)
-
-        if commit:
-            usuario.save()
-            self.save_m2m()
-
-        return usuario
-
 
 class CargoForm(forms.ModelForm):
     permissions = forms.ModelMultipleChoiceField(
@@ -155,25 +127,3 @@ class CargoForm(forms.ModelForm):
             }
         )
         self.permission_sections = cargo_permissions_for_display(self.fields["permissions"].queryset)
-
-
-class LoginForm(forms.Form):
-    email = forms.EmailField(
-        label="Email",
-        widget=forms.EmailInput(
-            attrs={
-                "placeholder": "voce@empresa.com",
-                "autocomplete": "email",
-                "inputmode": "email",
-            }
-        ),
-    )
-    senha = forms.CharField(
-        label="Senha",
-        widget=forms.PasswordInput(
-            attrs={
-                "placeholder": "Digite sua senha",
-                "autocomplete": "current-password",
-            }
-        ),
-    )

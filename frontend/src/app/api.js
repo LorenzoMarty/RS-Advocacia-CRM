@@ -133,9 +133,7 @@ function eventRequest(path = '', options = {}) {
 export const api = {
   bootstrap: () => apiRequest('/api/bootstrap/'),
   getCurrentUser: () => apiRequest('/api/usuarios/atual/'),
-  login: (payload) => apiRequest('/api/auth/login/', jsonOptions('POST', payload)),
   googleLogin: (payload) => apiRequest('/api/auth/google/', jsonOptions('POST', payload)),
-  googleLoginConfig: () => apiRequest('/api/auth/google/config/'),
   logout: () => apiRequest('/api/auth/logout/', { method: 'POST' }),
   listClients: () => apiRequest('/api/clientes/'),
   createClient: (payload) => apiRequest('/api/clientes/criar/', jsonOptions('POST', payload)),
@@ -151,7 +149,6 @@ export const api = {
   updateEvent: (id, payload) => eventRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
   deleteEvent: (id) => eventRequest(`${id}/excluir/`, { method: 'DELETE' }),
   listUsers: () => apiRequest('/api/usuarios/'),
-  createUser: (payload) => apiRequest('/api/usuarios/criar/', jsonOptions('POST', payload)),
   updateUser: (id, payload) => apiRequest(`/api/usuarios/${id}/editar/`, jsonOptions('PUT', payload)),
   deleteUser: (id) => apiRequest(`/api/usuarios/${id}/excluir/`, { method: 'DELETE' }),
   listRoles: () => apiRequest('/api/cargos/'),

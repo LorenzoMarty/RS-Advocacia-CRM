@@ -2,7 +2,6 @@ import json
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import Group, Permission
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -10,12 +9,21 @@ from django.urls import reverse
 from usuarios.models import Usuario
 
 
+def make_google_response(payload):
+    class Response:
+        status_code = 200
+
+        def json(self):
+            return payload
+
+    return Response()
+
+
 class ExcluirCargoTests(TestCase):
     def setUp(self):
         self.auth_user = get_user_model().objects.create_superuser(
             username="admin@example.com",
             email="admin@example.com",
-            password="senha-forte-123",
         )
         self.client.force_login(self.auth_user)
 
@@ -50,7 +58,6 @@ class ExcluirCargoTests(TestCase):
         staff = get_user_model().objects.create_user(
             username="staff@example.com",
             email="staff@example.com",
-            password="senha-forte-123",
         )
         permission = Permission.objects.get(
             content_type__app_label="usuarios",
@@ -70,13 +77,11 @@ class ExcluirCargoTests(TestCase):
         usuario = Usuario.objects.create(
             nome="Admin Front",
             email="admin-front@example.com",
-            senha="123456",
             cargo="Administrador",
         )
         auth_user = get_user_model().objects.create_user(
             username=usuario.email,
             email=usuario.email,
-            password="senha-forte-123",
         )
         self.client.force_login(auth_user)
         session = self.client.session
@@ -101,7 +106,6 @@ class ExcluirCargoTests(TestCase):
         usuario = Usuario.objects.create(
             nome="Usuario Admin",
             email="usuario-admin@example.com",
-            senha="123456",
             cargo="admin",
         )
 
@@ -114,71 +118,6 @@ class ExcluirCargoTests(TestCase):
         )
         self.assertEqual(response.status_code, 200, payload)
         self.assertEqual(serialized_user["roleId"], str(cargo.pk))
-
-    def test_cria_usuario_com_cargo_dinamico(self):
-        cargo = Group.objects.create(name="Operacional")
-
-        response = self.client.post(
-            reverse("criar_usuario"),
-            data=json.dumps(
-                {
-                    "name": "Marina",
-                    "email": "marina@example.com",
-                    "password": "123456",
-                    "roleId": str(cargo.pk),
-                }
-            ),
-            content_type="application/json",
-        )
-        payload = response.json()
-
-        self.assertEqual(response.status_code, 201, payload)
-        self.assertTrue(payload["success"])
-        self.assertEqual(payload["data"]["user"]["email"], "marina@example.com")
-        self.assertEqual(payload["data"]["user"]["roleId"], str(cargo.pk))
-        usuario = Usuario.objects.get(email="marina@example.com")
-        self.assertEqual(usuario.cargo, "Operacional")
-        self.assertTrue(check_password("123456", usuario.senha))
-
-    def test_admin_adiciona_usuario_com_cargo_dinamico(self):
-        cargo = Group.objects.create(name="Operacional")
-
-        response = self.client.post(
-            reverse("admin:usuarios_usuario_add"),
-            data={
-                "nome": "Ana Paula",
-                "email": "ana@example.com",
-                "senha": "123456",
-                "cargo": cargo.name,
-                "_save": "Salvar",
-            },
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(Usuario.objects.filter(email="ana@example.com").exists())
-        usuario = Usuario.objects.get(email="ana@example.com")
-        self.assertEqual(usuario.cargo, cargo.name)
-        self.assertTrue(check_password("123456", usuario.senha))
-
-    def test_login_aceita_senha_legada_e_atualiza_para_hash(self):
-        Group.objects.create(name="Operacional")
-        Usuario.objects.create(
-            nome="Usuario Legado",
-            email="legado@example.com",
-            senha="123456",
-            cargo="Operacional",
-        )
-
-        response = self.client.post(
-            reverse("login"),
-            data=json.dumps({"email": "legado@example.com", "password": "123456"}),
-            content_type="application/json",
-        )
-        payload = response.json()
-
-        self.assertEqual(response.status_code, 200, payload)
-        self.assertTrue(payload["success"])
-        self.assertTrue(check_password("123456", Usuario.objects.get(email="legado@example.com").senha))
 
     @override_settings(GOOGLE_CLIENT_ID="")
     def test_google_login_exige_client_id_configurado(self):
@@ -193,29 +132,21 @@ class ExcluirCargoTests(TestCase):
         self.assertFalse(payload["success"])
 
     @override_settings(GOOGLE_CLIENT_ID="google-client-id")
-    def test_google_login_config_expõe_client_id_publico(self):
-        response = self.client.get(reverse("google_login_config"))
-        payload = response.json()
-
-        self.assertEqual(response.status_code, 200, payload)
-        self.assertTrue(payload["success"])
-        self.assertTrue(payload["data"]["enabled"])
-        self.assertEqual(payload["data"]["clientId"], "google-client-id")
-
-    @override_settings(GOOGLE_CLIENT_ID="google-client-id")
     @patch("usuarios.views.requests.get")
     def test_google_login_vincula_usuario_existente(self, requests_get):
-        requests_get.return_value.json.return_value = {
-            "sub": "google-sub-123",
-            "email": "google-user@example.com",
-            "email_verified": "true",
-            "name": "Google User",
-            "aud": "google-client-id",
-        }
+        requests_get.return_value = make_google_response(
+            {
+                "sub": "google-sub-123",
+                "email": "google-user@example.com",
+                "email_verified": "true",
+                "name": "Google User",
+                "picture": "https://example.com/avatar.png",
+                "aud": "google-client-id",
+            }
+        )
         usuario = Usuario.objects.create(
             nome="Google User",
             email="google-user@example.com",
-            senha="123456",
             cargo="Operacional",
         )
 
@@ -230,45 +161,28 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(response.status_code, 200, payload)
         self.assertTrue(payload["success"])
         self.assertEqual(payload["data"]["user"]["email"], usuario.email)
+        self.assertEqual(payload["data"]["user"]["picture"], "https://example.com/avatar.png")
         self.assertEqual(usuario.google_sub, "google-sub-123")
         self.assertEqual(self.client.session["usuario_id"], usuario.pk)
-
-    @override_settings(GOOGLE_CLIENT_ID="google-client-id")
-    @patch("usuarios.views.requests.get")
-    def test_google_login_bloqueia_usuario_nao_cadastrado(self, requests_get):
-        requests_get.return_value.json.return_value = {
-            "sub": "google-sub-456",
-            "email": "sem-cadastro@example.com",
-            "email_verified": "true",
-            "name": "Sem Cadastro",
-            "aud": "google-client-id",
-        }
-
-        response = self.client.post(
-            reverse("google_login"),
-            data=json.dumps({"token": "token-google"}),
-            content_type="application/json",
+        requests_get.assert_called_once_with(
+            "https://oauth2.googleapis.com/tokeninfo",
+            params={"id_token": "token-google"},
+            timeout=10,
         )
-        payload = response.json()
 
-        self.assertEqual(response.status_code, 403)
-        self.assertFalse(payload["success"])
-        self.assertFalse(Usuario.objects.filter(email="sem-cadastro@example.com").exists())
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_LOGIN_AUTO_CREATE=True,
-        GOOGLE_DEFAULT_CARGO="Operacional",
-    )
+    @override_settings(GOOGLE_CLIENT_ID="google-client-id", GOOGLE_DEFAULT_CARGO="Operacional")
     @patch("usuarios.views.requests.get")
-    def test_google_login_cria_usuario_quando_habilitado(self, requests_get):
-        requests_get.return_value.json.return_value = {
-            "sub": "google-sub-789",
-            "email": "novo-google@example.com",
-            "email_verified": "true",
-            "name": "Novo Google",
-            "aud": "google-client-id",
-        }
+    def test_google_login_cria_usuario_automaticamente(self, requests_get):
+        requests_get.return_value = make_google_response(
+            {
+                "sub": "google-sub-789",
+                "email": "novo-google@example.com",
+                "email_verified": "true",
+                "name": "Novo Google",
+                "picture": "https://example.com/novo.png",
+                "aud": "google-client-id",
+            }
+        )
 
         response = self.client.post(
             reverse("google_login"),
@@ -283,14 +197,34 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(usuario.nome, "Novo Google")
         self.assertEqual(usuario.cargo, "Operacional")
         self.assertEqual(usuario.google_sub, "google-sub-789")
+        self.assertEqual(usuario.picture, "https://example.com/novo.png")
 
-    def test_admin_abre_formulario_de_adicionar_usuario(self):
-        Group.objects.create(name="Operacional")
+    @override_settings(GOOGLE_CLIENT_ID="google-client-id")
+    @patch("usuarios.views.requests.get")
+    def test_google_login_rejeita_client_id_invalido(self, requests_get):
+        requests_get.return_value = make_google_response(
+            {
+                "sub": "google-sub-bad",
+                "email": "bad@example.com",
+                "email_verified": "true",
+                "name": "Bad Client",
+                "aud": "outro-client-id",
+            }
+        )
 
+        response = self.client.post(
+            reverse("google_login"),
+            data=json.dumps({"token": "token-google"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Usuario.objects.filter(email="bad@example.com").exists())
+
+    def test_admin_nao_abre_cadastro_manual_de_usuario(self):
         response = self.client.get(reverse("admin:usuarios_usuario_add"))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Operacional")
+        self.assertEqual(response.status_code, 403)
 
     def test_admin_abre_formulario_de_editar_cargo(self):
         cargo = Group.objects.create(name="Operacional")
@@ -308,7 +242,6 @@ class ExcluirCargoTests(TestCase):
         staff = get_user_model().objects.create_user(
             username="staff@example.com",
             email="staff@example.com",
-            password="senha-forte-123",
             is_staff=True,
         )
         permissions = Permission.objects.filter(
@@ -329,7 +262,6 @@ class ExcluirCargoTests(TestCase):
         Usuario.objects.create(
             nome="Bianca",
             email="bianca@example.com",
-            senha="123456",
             cargo=cargo.name,
         )
 
@@ -355,7 +287,6 @@ class ExcluirCargoTests(TestCase):
         Usuario.objects.create(
             nome="Renata",
             email="renata@example.com",
-            senha="123456",
             cargo=cargo.name,
         )
 
@@ -372,7 +303,6 @@ class ExcluirCargoTests(TestCase):
         Usuario.objects.create(
             nome="Lorena",
             email="lorena@example.com",
-            senha="123456",
             cargo=cargo.name,
         )
 

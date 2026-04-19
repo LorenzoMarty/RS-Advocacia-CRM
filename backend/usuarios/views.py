@@ -1,13 +1,11 @@
 from typing import Any, cast
 
 from django.contrib.auth import login as auth_login, logout as auth_logout
-from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
 from django.conf import settings
 from django.db.models import Q
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
-from django.utils.crypto import get_random_string
 import requests
 
 from core.permissions import app_any_permissions_required, app_permissions_required
@@ -21,11 +19,9 @@ from core.utils import (
 )
 from usuarios.forms import (
     CargoForm,
-    LoginForm,
     PERMISSION_APP_LABELS,
     UsuarioForm,
     _format_permission_name,
-    is_password_hash,
     normalize_cargo_name,
 )
 from usuarios.models import Cargo, Usuario, cargo_lookup_values
@@ -58,7 +54,6 @@ DEFAULT_CARGO_PERMISSIONS = {
 
 USUARIO_API_ALIASES = {
     "name": "nome",
-    "password": "senha",
     "role": "cargo",
 }
 
@@ -182,7 +177,6 @@ def _get_or_sync_auth_user(
         updated_fields.append("first_name")
     if created:
         auth_user.set_unusable_password()
-        updated_fields.append("password")
 
     if updated_fields:
         if created:
@@ -230,18 +224,6 @@ def _sync_usuario_auth(
     return auth_user
 
 
-def _usuario_password_matches(usuario: Usuario, raw_password: str) -> bool:
-    if is_password_hash(usuario.senha):
-        return check_password(raw_password, usuario.senha)
-
-    if usuario.senha != raw_password:
-        return False
-
-    usuario.senha = make_password(raw_password)
-    usuario.save(update_fields=["senha"])
-    return True
-
-
 def _google_default_cargo_name() -> str:
     configured_cargo = getattr(settings, "GOOGLE_DEFAULT_CARGO", "").strip()
     return configured_cargo or ESTAGIARIO_CARGO_NAME
@@ -257,7 +239,8 @@ def _verify_google_credential(credential: str) -> dict[str, Any]:
         params={"id_token": credential},
         timeout=10,
     )
-    response.raise_for_status()
+    if response.status_code != 200:
+        raise ValueError("Token Google invalido.")
     idinfo = response.json()
 
     if idinfo.get("aud") != client_id:
@@ -274,16 +257,26 @@ def _verify_google_credential(credential: str) -> dict[str, Any]:
     return idinfo
 
 
-def _get_or_create_google_usuario(idinfo: dict[str, Any]) -> Usuario | None:
+def _get_or_create_google_usuario(idinfo: dict[str, Any]) -> Usuario:
     google_sub = str(idinfo.get("sub") or "").strip()
     email = str(idinfo.get("email") or "").strip().lower()
     nome = str(idinfo.get("name") or "").strip() or email.split("@")[0]
+    picture = str(idinfo.get("picture") or "").strip()
 
     if not google_sub or not email:
         raise ValueError("Resposta invalida do Google.")
 
     usuario = Usuario.objects.filter(google_sub=google_sub).first()
     if usuario is not None:
+        update_fields = []
+        if picture and usuario.picture != picture:
+            usuario.picture = picture
+            update_fields.append("picture")
+        if nome and usuario.nome != nome:
+            usuario.nome = nome
+            update_fields.append("nome")
+        if update_fields:
+            usuario.save(update_fields=update_fields)
         return usuario
 
     usuario = Usuario.objects.filter(email__iexact=email).first()
@@ -291,19 +284,23 @@ def _get_or_create_google_usuario(idinfo: dict[str, Any]) -> Usuario | None:
         if usuario.google_sub and usuario.google_sub != google_sub:
             raise ValueError("Esta conta ja esta vinculada a outro login Google.")
         usuario.google_sub = google_sub
-        usuario.save(update_fields=["google_sub"])
+        update_fields = ["google_sub"]
+        if picture and usuario.picture != picture:
+            usuario.picture = picture
+            update_fields.append("picture")
+        if nome and usuario.nome != nome:
+            usuario.nome = nome
+            update_fields.append("nome")
+        usuario.save(update_fields=update_fields)
         return usuario
-
-    if not getattr(settings, "GOOGLE_LOGIN_AUTO_CREATE", False):
-        return None
 
     _ensure_default_cargos()
     return Usuario.objects.create(
         nome=nome,
         email=email,
-        senha=make_password(get_random_string(48)),
         cargo=_google_default_cargo_name(),
         google_sub=google_sub,
+        picture=picture,
     )
 
 
@@ -392,6 +389,7 @@ def serialize_usuario(
         "nome": usuario.nome,
         "name": usuario.nome,
         "email": usuario.email,
+        "picture": usuario.picture,
         "cargo": cargo_nome,
         "roleId": str(cargo.pk) if cargo else cargo_nome,
     }
@@ -489,31 +487,6 @@ def listar_usuarios(request):
     return success_response(_usuarios_response(Usuario.objects.all()))
 
 
-@app_permissions_required("usuarios.add_usuario")
-def criar_usuario(request):
-    if request.method != "POST":
-        return method_not_allowed(["POST"])
-
-    _ensure_default_cargos()
-
-    try:
-        payload = _usuario_api_payload(request)
-    except ValueError as exc:
-        return error_response(str(exc), status=400)
-
-    form = UsuarioForm(payload)
-    if form.is_valid():
-        usuario = form.save()
-        _sync_usuario_auth(usuario)
-        return success_response(
-            _usuario_response(usuario),
-            message="Usuario criado com sucesso.",
-            status=201,
-        )
-
-    return error_response(form_errors(form), status=400)
-
-
 @app_permissions_required("usuarios.view_usuario")
 def detalhes_usuario(request, usuario_id):
     if request.method != "GET":
@@ -546,9 +519,6 @@ def editar_usuario(request, usuario_id):
         payload = _usuario_api_payload(request)
     except ValueError as exc:
         return error_response(str(exc), status=400)
-
-    if not payload.get("senha"):
-        payload["senha"] = usuario.senha
 
     form = UsuarioForm(payload, instance=usuario)
     if form.is_valid():
@@ -674,43 +644,6 @@ def excluir_cargo(request, cargo_id):
     return success_response({"id": deleted_id}, message="Cargo excluido com sucesso.")
 
 
-def login(request: HttpRequest):
-    if request.method != "POST":
-        return method_not_allowed(["POST"])
-
-    if _authenticated_user(request) is not None:
-        auth_logout(request)
-    _clear_usuario_session(request)
-
-    try:
-        payload = parse_body(request)
-    except ValueError as exc:
-        return error_response(str(exc), status=400)
-
-    form = LoginForm(
-        payload_with_aliases(payload, {"password": "senha", "username": "email"})
-    )
-    if form.is_valid():
-        email = form.cleaned_data["email"]
-        senha = form.cleaned_data["senha"]
-
-        usuario = Usuario.objects.filter(email=email).first()
-        if usuario is None or not _usuario_password_matches(usuario, senha):
-            form.add_error(None, "Email ou senha invalidos.")
-        else:
-            auth_user = _sync_usuario_auth(usuario)
-            auth_login(
-                request, auth_user, backend="django.contrib.auth.backends.ModelBackend"
-            )
-            _remember_usuario_session(request, usuario)
-            return success_response(
-                _usuario_response(usuario),
-                message=f"Bem-vindo, {usuario.nome}.",
-            )
-
-    return error_response(form_errors(form), status=400)
-
-
 def google_login(request: HttpRequest):
     if request.method != "POST":
         return method_not_allowed(["POST"])
@@ -743,36 +676,12 @@ def google_login(request: HttpRequest):
             status=503,
         )
 
-    if usuario is None:
-        return error_response(
-            {
-                "google": [
-                    "Conta Google validada, mas sem usuario cadastrado no sistema."
-                ]
-            },
-            status=403,
-        )
-
     auth_user = _sync_usuario_auth(usuario)
     auth_login(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
     _remember_usuario_session(request, usuario)
     return success_response(
         _usuario_response(usuario),
         message=f"Bem-vindo, {usuario.nome}.",
-    )
-
-
-def google_login_config(request: HttpRequest):
-    if request.method != "GET":
-        return method_not_allowed(["GET"])
-
-    client_id = getattr(settings, "GOOGLE_CLIENT_ID", "").strip()
-    return success_response(
-        {
-            "enabled": bool(client_id),
-            "clientId": client_id,
-            "googleClientId": client_id,
-        }
     )
 
 

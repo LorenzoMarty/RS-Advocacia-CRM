@@ -64,7 +64,7 @@ function EventFormRoute() {
 
 function UserFormRoute() {
   const { userId } = useParams();
-  return <UserFormPage key={userId || "user-new"} />;
+  return <UserFormPage key={userId} />;
 }
 
 function RoleFormRoute() {
@@ -125,7 +125,6 @@ export default function App() {
             />
 
             <Route path="/usuarios" element={<UsersListPage />} />
-            <Route path="/usuarios/novo" element={<UserFormRoute />} />
             <Route path="/usuarios/:userId" element={<UserDetailPage />} />
             <Route
               path="/usuarios/:userId/editar"

@@ -12,9 +12,10 @@ class Usuario(models.Model):
 
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    senha = models.CharField(max_length=100)
     cargo = models.CharField(max_length=150)
     google_sub = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    picture = models.URLField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     @property
     def cargo_label(self):
