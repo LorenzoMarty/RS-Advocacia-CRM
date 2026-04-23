@@ -3,25 +3,14 @@ from django.shortcuts import get_object_or_404
 
 from core.permissions import app_permissions_required
 from core.utils import (
-    error_response,
-    form_errors,
-    method_not_allowed,
-    parse_body,
-    payload_with_aliases,
-    success_response,
+    resposta_erro,
+    erros_formulario,
+    metodo_nao_permitido,
+    ler_corpo_json,
+    resposta_sucesso,
 )
 from processos.forms import ProcessoForm
 from processos.models import Processo
-
-
-PROCESSO_API_ALIASES = {
-    "number": "numero_processo",
-    "clientId": "cliente",
-    "description": "descricao",
-    "court": "vara",
-    "area": "area_juridica",
-    "owner": "advogado_responsavel",
-}
 
 
 def _filtrar_processos(request):
@@ -47,104 +36,96 @@ def serialize_processo(processo):
         "id": str(processo.pk),
         "pk": processo.pk,
         "numero_processo": processo.numero_processo,
-        "number": processo.numero_processo,
         "cliente_id": str(processo.cliente_id),
-        "clientId": str(processo.cliente_id),
         "cliente_nome": cliente_nome,
-        "clientName": cliente_nome,
         "descricao": processo.descricao,
-        "description": processo.descricao,
         "vara": processo.vara,
-        "court": processo.vara,
         "area_juridica": processo.area_juridica,
-        "area": processo.area_juridica,
         "status": processo.status,
         "advogado_responsavel": processo.advogado_responsavel,
-        "owner": processo.advogado_responsavel,
     }
 
 
 def _processo_api_payload(request):
-    payload = parse_body(request)
-    return payload_with_aliases(payload, PROCESSO_API_ALIASES)
+    return ler_corpo_json(request)
 
 
 @app_permissions_required("processos.view_processo")
 def listar_processos(request):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
     processos, busca = _filtrar_processos(request)
     processos = processos.select_related("cliente")
     serialized = [serialize_processo(processo) for processo in processos]
-    return success_response({"processos": serialized, "processes": serialized, "busca": busca})
+    return resposta_sucesso({"processos": serialized, "busca": busca})
 
 
 @app_permissions_required("processos.add_processo")
 def criar_processo(request):
     if request.method != "POST":
-        return method_not_allowed(["POST"])
+        return metodo_nao_permitido(["POST"])
 
     try:
         payload = _processo_api_payload(request)
     except ValueError as exc:
-        return error_response(str(exc), status=400)
+        return resposta_erro(str(exc), status=400)
 
     form = ProcessoForm(payload)
     if form.is_valid():
         processo = form.save()
         processo = Processo.objects.select_related("cliente").get(pk=processo.pk)
         serialized = serialize_processo(processo)
-        return success_response(
-            {"processo": serialized, "process": serialized},
-            message="Processo criado com sucesso.",
+        return resposta_sucesso(
+            {"processo": serialized},
+            mensagem="Processo criado com sucesso.",
             status=201,
         )
 
-    return error_response(form_errors(form), status=400)
+    return resposta_erro(erros_formulario(form), status=400)
 
 
 @app_permissions_required("processos.view_processo")
 def detalhes_processo(request, processo_id):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
     processo = get_object_or_404(Processo.objects.select_related("cliente"), pk=processo_id)
     serialized = serialize_processo(processo)
-    return success_response({"processo": serialized, "process": serialized})
+    return resposta_sucesso({"processo": serialized})
 
 
 @app_permissions_required("processos.change_processo")
 def editar_processo(request, processo_id):
     if request.method not in {"PUT", "PATCH"}:
-        return method_not_allowed(["PUT", "PATCH"])
+        return metodo_nao_permitido(["PUT", "PATCH"])
 
     processo = get_object_or_404(Processo, pk=processo_id)
 
     try:
         payload = _processo_api_payload(request)
     except ValueError as exc:
-        return error_response(str(exc), status=400)
+        return resposta_erro(str(exc), status=400)
 
     form = ProcessoForm(payload, instance=processo)
     if form.is_valid():
         processo = form.save()
         processo = Processo.objects.select_related("cliente").get(pk=processo.pk)
         serialized = serialize_processo(processo)
-        return success_response(
-            {"processo": serialized, "process": serialized},
-            message="Processo atualizado com sucesso.",
+        return resposta_sucesso(
+            {"processo": serialized},
+            mensagem="Processo atualizado com sucesso.",
         )
 
-    return error_response(form_errors(form), status=400)
+    return resposta_erro(erros_formulario(form), status=400)
 
 
 @app_permissions_required("processos.delete_processo")
 def excluir_processo(request, processo_id):
     if request.method != "DELETE":
-        return method_not_allowed(["DELETE"])
+        return metodo_nao_permitido(["DELETE"])
 
     processo = get_object_or_404(Processo, pk=processo_id)
     deleted_id = str(processo.pk)
     processo.delete()
-    return success_response({"id": deleted_id}, message="Processo excluido com sucesso.")
+    return resposta_sucesso({"id": deleted_id}, mensagem="Processo excluído com sucesso.")

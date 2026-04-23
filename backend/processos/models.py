@@ -1,6 +1,6 @@
 from django.db import models
 
-# Create your models here.
+# Modelos de processos.
 class Processo(models.Model):
     numero_processo = models.CharField(max_length=30)
     cliente = models.ForeignKey('clientes.Cliente', on_delete=models.CASCADE)

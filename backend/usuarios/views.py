@@ -2,7 +2,7 @@ from secrets import token_urlsafe
 from typing import Any, cast
 from urllib.parse import urlencode
 
-from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.contrib.auth import login as autenticar_django, logout as encerrar_sessao_django
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
 from django.conf import settings
 from django.db.models import Q
@@ -13,12 +13,11 @@ import requests
 
 from core.permissions import app_any_permissions_required, app_permissions_required
 from core.utils import (
-    error_response,
-    form_errors,
-    method_not_allowed,
-    parse_body,
-    payload_with_aliases,
-    success_response,
+    resposta_erro,
+    erros_formulario,
+    metodo_nao_permitido,
+    ler_corpo_json,
+    resposta_sucesso,
 )
 from usuarios.forms import (
     CargoForm,
@@ -55,20 +54,11 @@ DEFAULT_CARGO_PERMISSIONS = {
     },
 }
 
-USUARIO_API_ALIASES = {
-    "name": "nome",
-    "role": "cargo",
-}
-
-CARGO_API_ALIASES = {
-    "permissionIds": "permissions",
-}
-
 PERMISSION_ACTION_API_LABELS = {
-    "add": "create",
-    "change": "edit",
-    "delete": "delete",
-    "view": "view",
+    "add": "criar",
+    "change": "editar",
+    "delete": "excluir",
+    "view": "visualizar",
 }
 
 CARGO_LIST_PERMISSIONS = (
@@ -239,14 +229,14 @@ def _google_default_cargo_name() -> str:
 def _google_client_id() -> str:
     client_id = getattr(settings, "GOOGLE_CLIENT_ID", "").strip()
     if not client_id:
-        raise GoogleLoginConfigurationError("Login com Google nao configurado.")
+        raise GoogleLoginConfigurationError("Login com Google não configurado.")
     return client_id
 
 
 def _google_client_secret() -> str:
     client_secret = getattr(settings, "GOOGLE_CLIENT_SECRET", "").strip()
     if not client_secret:
-        raise GoogleLoginConfigurationError("Login com Google nao configurado.")
+        raise GoogleLoginConfigurationError("Login com Google não configurado.")
     return client_secret
 
 
@@ -254,7 +244,7 @@ def _google_redirect_uri(request: HttpRequest) -> str:
     configured_uri = getattr(settings, "GOOGLE_REDIRECT_URI", "").strip()
     if configured_uri:
         return configured_uri
-    return request.build_absolute_uri(reverse("google_callback"))
+    return request.build_absolute_uri(reverse("retorno_google"))
 
 
 def _frontend_redirect_url(path: str = "/", params: dict[str, str] | None = None) -> str:
@@ -283,19 +273,19 @@ def _verify_google_credential(credential: str) -> dict[str, Any]:
         timeout=10,
     )
     if response.status_code != 200:
-        raise ValueError("Token Google invalido.")
+        raise ValueError("Token Google inválido.")
     idinfo = response.json()
 
     if idinfo.get("aud") != client_id:
-        raise ValueError("Token Google emitido para outro client ID.")
+        raise ValueError("Token Google emitido para outro ID de cliente.")
 
     hosted_domain = getattr(settings, "GOOGLE_ALLOWED_HOSTED_DOMAIN", "").strip()
     if hosted_domain and idinfo.get("hd") != hosted_domain:
-        raise ValueError("Conta Google fora do dominio permitido.")
+        raise ValueError("Conta Google fora do domínio permitido.")
 
     email_verified = idinfo.get("email_verified")
     if not idinfo.get("email") or str(email_verified).lower() != "true":
-        raise ValueError("Conta Google sem email verificado.")
+        raise ValueError("Conta Google sem e-mail verificado.")
 
     return idinfo
 
@@ -313,12 +303,12 @@ def _exchange_google_code(code: str, redirect_uri: str) -> str:
         timeout=10,
     )
     if response.status_code != 200:
-        raise ValueError("Nao foi possivel concluir o login com Google.")
+        raise ValueError("Não foi possível concluir o login com Google.")
 
     token_payload = response.json()
     id_token = str(token_payload.get("id_token") or "").strip()
     if not id_token:
-        raise ValueError("Google nao retornou um token de identidade.")
+        raise ValueError("Google não retornou um token de identidade.")
     return id_token
 
 
@@ -329,7 +319,7 @@ def _get_or_create_google_usuario(idinfo: dict[str, Any]) -> Usuario:
     picture = str(idinfo.get("picture") or "").strip()
 
     if not google_sub or not email:
-        raise ValueError("Resposta invalida do Google.")
+        raise ValueError("Resposta inválida do Google.")
 
     usuario = Usuario.objects.filter(google_sub=google_sub).first()
     if usuario is not None:
@@ -347,7 +337,7 @@ def _get_or_create_google_usuario(idinfo: dict[str, Any]) -> Usuario:
     usuario = Usuario.objects.filter(email__iexact=email).first()
     if usuario is not None:
         if usuario.google_sub and usuario.google_sub != google_sub:
-            raise ValueError("Esta conta ja esta vinculada a outro login Google.")
+            raise ValueError("Esta conta já está vinculada a outro login Google.")
         usuario.google_sub = google_sub
         update_fields = ["google_sub"]
         if picture and usuario.picture != picture:
@@ -379,12 +369,12 @@ def serialize_permission(permission: Permission):
     action_label = PERMISSION_ACTION_API_LABELS.get(action, action)
     return {
         "id": str(permission.pk),
-        "path": f"{permission.content_type.app_label}.{permission.codename}",
-        "displayName": _format_permission_name(permission),
-        "modelLabel": model_name.replace("_", " ").title()
+        "caminho": f"{permission.content_type.app_label}.{permission.codename}",
+        "nome": _format_permission_name(permission),
+        "modelo": model_name.replace("_", " ").title()
         or permission.content_type.model.title(),
-        "app": permission.content_type.app_label,
-        "action": action_label,
+        "modulo": permission.content_type.app_label,
+        "acao": action_label,
     }
 
 
@@ -401,12 +391,12 @@ def serialize_permission_groups():
         grouped.setdefault(
             app_label,
             {
-                "key": app_label,
-                "label": PERMISSION_APP_LABELS.get(app_label, app_label.title()),
-                "permissions": [],
+                "chave": app_label,
+                "rotulo": PERMISSION_APP_LABELS.get(app_label, app_label.title()),
+                "permissoes": [],
             },
         )
-        grouped[app_label]["permissions"].append(serialize_permission(permission))
+        grouped[app_label]["permissoes"].append(serialize_permission(permission))
 
     return list(grouped.values())
 
@@ -420,10 +410,8 @@ def serialize_cargo(cargo: Group):
     return {
         "id": str(cargo.pk),
         "pk": cargo.pk,
-        "name": cargo.name,
         "nome": cargo.name,
-        "permissions": permission_ids,
-        "permissionIds": permission_ids,
+        "permissoes": permission_ids,
         "permissoes_total": cargo.permissions.count(),
         "usuarios_total": _usuarios_for_cargo(cargo).count(),
     }
@@ -452,11 +440,10 @@ def serialize_usuario(
         "id": str(usuario.pk),
         "pk": usuario.pk,
         "nome": usuario.nome,
-        "name": usuario.nome,
         "email": usuario.email,
-        "picture": usuario.picture,
+        "foto": usuario.picture,
         "cargo": cargo_nome,
-        "roleId": str(cargo.pk) if cargo else cargo_nome,
+        "cargo_id": str(cargo.pk) if cargo else cargo_nome,
     }
 
 
@@ -471,22 +458,22 @@ def serialize_usuarios(usuarios):
 
 def _usuario_response(usuario: Usuario):
     serialized = serialize_usuario(usuario)
-    return {"usuario": serialized, "user": serialized}
+    return {"usuario": serialized}
 
 
 def _usuarios_response(usuarios):
     serialized = serialize_usuarios(usuarios)
-    return {"usuarios": serialized, "users": serialized}
+    return {"usuarios": serialized}
 
 
 def _cargo_response(cargo: Group):
     serialized = serialize_cargo(cargo)
-    return {"cargo": serialized, "role": serialized}
+    return {"cargo": serialized}
 
 
 def _cargos_response(cargos):
     serialized = [serialize_cargo(cargo) for cargo in cargos]
-    return {"cargos": serialized, "roles": serialized}
+    return {"cargos": serialized}
 
 
 def _resolve_cargo_api_value(value):
@@ -527,18 +514,22 @@ def _normalize_permission_values(values):
 
 
 def _usuario_api_payload(request):
-    payload = parse_body(request)
-    data = payload_with_aliases(payload, USUARIO_API_ALIASES)
-    if "roleId" in payload and "cargo" not in data:
-        data["cargo"] = payload["roleId"]
+    payload = ler_corpo_json(request)
+    data = dict(payload)
+    if "cargo_id" in payload and "cargo" not in data:
+        data["cargo"] = payload["cargo_id"]
     if "cargo" in data:
         data["cargo"] = _resolve_cargo_api_value(data["cargo"])
     return data
 
 
 def _cargo_api_payload(request):
-    payload = parse_body(request)
-    data = payload_with_aliases(payload, CARGO_API_ALIASES)
+    payload = ler_corpo_json(request)
+    data = dict(payload)
+    if "nome" in payload and "name" not in data:
+        data["name"] = payload["nome"]
+    if "permissoes" in payload and "permissions" not in data:
+        data["permissions"] = payload["permissoes"]
     data["permissions"] = _normalize_permission_values(data.get("permissions"))
     return data
 
@@ -546,26 +537,25 @@ def _cargo_api_payload(request):
 @app_permissions_required("usuarios.view_usuario")
 def listar_usuarios(request):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
     _ensure_default_cargos()
-    return success_response(_usuarios_response(Usuario.objects.all()))
+    return resposta_sucesso(_usuarios_response(Usuario.objects.all()))
 
 
 @app_permissions_required("usuarios.view_usuario")
 def detalhes_usuario(request, usuario_id):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
     usuario = get_object_or_404(Usuario, pk=usuario_id)
     auth_user = _sync_usuario_auth(usuario)
     cargos = [serialize_cargo(cargo) for cargo in auth_user.groups.order_by("name")]
 
-    return success_response(
+    return resposta_sucesso(
         {
             **_usuario_response(usuario),
             "cargos": cargos,
-            "roles": cargos,
             "permissoes_total": len(auth_user.get_group_permissions()),
         }
     )
@@ -574,7 +564,7 @@ def detalhes_usuario(request, usuario_id):
 @app_permissions_required("usuarios.change_usuario")
 def editar_usuario(request, usuario_id):
     if request.method not in {"PUT", "PATCH"}:
-        return method_not_allowed(["PUT", "PATCH"])
+        return metodo_nao_permitido(["PUT", "PATCH"])
 
     _ensure_default_cargos()
     usuario = get_object_or_404(Usuario, pk=usuario_id)
@@ -583,24 +573,24 @@ def editar_usuario(request, usuario_id):
     try:
         payload = _usuario_api_payload(request)
     except ValueError as exc:
-        return error_response(str(exc), status=400)
+        return resposta_erro(str(exc), status=400)
 
     form = UsuarioForm(payload, instance=usuario)
     if form.is_valid():
         usuario = form.save()
         _sync_usuario_auth(usuario, previous_email=previous_email)
-        return success_response(
+        return resposta_sucesso(
             _usuario_response(usuario),
-            message="Usuario atualizado com sucesso.",
+            mensagem="Usuário atualizado com sucesso.",
         )
 
-    return error_response(form_errors(form), status=400)
+    return resposta_erro(erros_formulario(form), status=400)
 
 
 @app_permissions_required("usuarios.delete_usuario")
 def excluir_usuario(request, usuario_id):
     if request.method != "DELETE":
-        return method_not_allowed(["DELETE"])
+        return metodo_nao_permitido(["DELETE"])
 
     usuario = get_object_or_404(Usuario, pk=usuario_id)
     deleted_id = str(usuario.pk)
@@ -608,52 +598,51 @@ def excluir_usuario(request, usuario_id):
     if auth_user is not None:
         auth_user.delete()
     usuario.delete()
-    return success_response({"id": deleted_id}, message="Usuario excluido com sucesso.")
+    return resposta_sucesso({"id": deleted_id}, mensagem="Usuário excluído com sucesso.")
 
 
 @app_any_permissions_required(*CARGO_LIST_PERMISSIONS)
 def listar_cargos(request):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
-    return success_response(_cargos_response(_get_cargos()))
+    return resposta_sucesso(_cargos_response(_get_cargos()))
 
 
 @app_permissions_required("auth.add_group")
 def criar_cargo(request):
     if request.method != "POST":
-        return method_not_allowed(["POST"])
+        return metodo_nao_permitido(["POST"])
 
     try:
         payload = _cargo_api_payload(request)
     except ValueError as exc:
-        return error_response(str(exc), status=400)
+        return resposta_erro(str(exc), status=400)
 
     form = CargoForm(payload)
     if form.is_valid():
         cargo = form.save()
-        return success_response(
+        return resposta_sucesso(
             _cargo_response(cargo),
-            message="Cargo criado com sucesso.",
+            mensagem="Cargo criado com sucesso.",
             status=201,
         )
 
-    return error_response(form_errors(form), status=400)
+    return resposta_erro(erros_formulario(form), status=400)
 
 
 @app_permissions_required("auth.view_group")
 def detalhes_cargo(request, cargo_id):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
     cargo = get_object_or_404(Cargo, pk=cargo_id)
     usuarios_vinculados = _usuarios_for_cargo(cargo).order_by("nome")
     usuarios = serialize_usuarios(usuarios_vinculados)
-    return success_response(
+    return resposta_sucesso(
         {
             **_cargo_response(cargo),
             "usuarios_vinculados": usuarios,
-            "users": usuarios,
         }
     )
 
@@ -661,7 +650,7 @@ def detalhes_cargo(request, cargo_id):
 @app_permissions_required("auth.change_group")
 def editar_cargo(request, cargo_id):
     if request.method not in {"PUT", "PATCH"}:
-        return method_not_allowed(["PUT", "PATCH"])
+        return metodo_nao_permitido(["PUT", "PATCH"])
 
     cargo = get_object_or_404(Cargo, pk=cargo_id)
     previous_name = cargo.name
@@ -669,7 +658,7 @@ def editar_cargo(request, cargo_id):
     try:
         payload = _cargo_api_payload(request)
     except ValueError as exc:
-        return error_response(str(exc), status=400)
+        return resposta_erro(str(exc), status=400)
 
     form = CargoForm(payload, instance=cargo)
     if form.is_valid():
@@ -678,27 +667,27 @@ def editar_cargo(request, cargo_id):
             Usuario.objects.filter(
                 cargo__in=cargo_lookup_values(previous_name)
             ).update(cargo=cargo.name)
-        return success_response(
+        return resposta_sucesso(
             _cargo_response(cargo),
-            message="Cargo atualizado com sucesso.",
+            mensagem="Cargo atualizado com sucesso.",
         )
 
-    return error_response(form_errors(form), status=400)
+    return resposta_erro(erros_formulario(form), status=400)
 
 
 @app_permissions_required("auth.delete_group")
 def excluir_cargo(request, cargo_id):
     if request.method != "DELETE":
-        return method_not_allowed(["DELETE"])
+        return metodo_nao_permitido(["DELETE"])
 
     cargo = get_object_or_404(Cargo, pk=cargo_id)
     usuarios_vinculados = _usuarios_for_cargo(cargo).count()
 
     if usuarios_vinculados:
-        return error_response(
+        return resposta_erro(
             {
                 "cargo": [
-                    "Remova ou altere os usuarios vinculados antes de excluir este cargo."
+                    "Remova ou altere os usuários vinculados antes de excluir este cargo."
                 ]
             },
             status=409,
@@ -706,35 +695,35 @@ def excluir_cargo(request, cargo_id):
 
     deleted_id = str(cargo.pk)
     cargo.delete()
-    return success_response({"id": deleted_id}, message="Cargo excluido com sucesso.")
+    return resposta_sucesso({"id": deleted_id}, mensagem="Cargo excluído com sucesso.")
 
 
 def _sign_in_google_usuario(request: HttpRequest, idinfo: dict[str, Any]) -> Usuario:
     usuario = _get_or_create_google_usuario(idinfo)
 
     if _authenticated_user(request) is not None:
-        auth_logout(request)
+        encerrar_sessao_django(request)
     _clear_usuario_session(request)
 
     auth_user = _sync_usuario_auth(usuario)
-    auth_login(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
+    autenticar_django(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
     _remember_usuario_session(request, usuario)
     return usuario
 
 
-def google_login(request: HttpRequest):
+def login_google(request: HttpRequest):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
     try:
         _google_client_id()
         _google_client_secret()
         redirect_uri = _google_redirect_uri(request)
     except GoogleLoginConfigurationError as exc:
-        return error_response(str(exc), status=503)
+        return resposta_erro(str(exc), status=503)
 
     if _authenticated_user(request) is not None:
-        auth_logout(request)
+        encerrar_sessao_django(request)
     _clear_usuario_session(request)
 
     state = token_urlsafe(32)
@@ -753,9 +742,9 @@ def google_login(request: HttpRequest):
     return HttpResponseRedirect(f"{GOOGLE_AUTHORIZATION_URL}?{query}")
 
 
-def google_callback(request: HttpRequest):
+def retorno_google(request: HttpRequest):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
     if request.GET.get("error"):
         return _google_error_redirect("Login com Google cancelado.")
@@ -763,51 +752,51 @@ def google_callback(request: HttpRequest):
     received_state = str(request.GET.get("state") or "")
     expected_state = str(request.session.pop("google_oauth_state", "") or "")
     if not received_state or not expected_state or received_state != expected_state:
-        return _google_error_redirect("Sessao de login expirada. Tente novamente.")
+        return _google_error_redirect("Sessão de login expirada. Tente novamente.")
 
     code = str(request.GET.get("code") or "").strip()
     if not code:
-        return _google_error_redirect("Google nao retornou o codigo de autorizacao.")
+        return _google_error_redirect("Google não retornou o código de autorização.")
 
     try:
         id_token = _exchange_google_code(code, _google_redirect_uri(request))
         idinfo = _verify_google_credential(id_token)
         _sign_in_google_usuario(request, idinfo)
     except GoogleLoginConfigurationError:
-        return _google_error_redirect("Login com Google nao configurado.")
+        return _google_error_redirect("Login com Google não configurado.")
     except ValueError as exc:
         return _google_error_redirect(str(exc))
     except requests.RequestException:
-        return _google_error_redirect("Nao foi possivel validar o login com Google.")
+        return _google_error_redirect("Não foi possível validar o login com Google.")
 
     return HttpResponseRedirect(_frontend_redirect_url("/"))
 
 
-def logout(request: HttpRequest):
+def sair(request: HttpRequest):
     if request.method not in {"POST", "DELETE"}:
-        return method_not_allowed(["POST", "DELETE"])
+        return metodo_nao_permitido(["POST", "DELETE"])
 
     if _authenticated_user(request) is not None:
-        auth_logout(request)
+        encerrar_sessao_django(request)
     _clear_usuario_session(request)
-    return success_response(message="Sessao encerrada.")
+    return resposta_sucesso(mensagem="Sessão encerrada.")
 
 
-def current_usuario(request: HttpRequest):
+def usuario_atual(request: HttpRequest):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
-    usuario = get_current_usuario(request)["usuario_logado"]
+    usuario = get_usuario_atual(request)["usuario_logado"]
     auth_user = _authenticated_user(request)
     if usuario and auth_user is not None:
         _sync_usuario_auth(usuario, preferred_auth_user=auth_user)
 
-    return success_response(
+    return resposta_sucesso(
         {"usuario": serialize_usuario(usuario) if usuario else None}
     )
 
 
-def get_current_usuario(request: HttpRequest):
+def get_usuario_atual(request: HttpRequest):
     usuario = None
     usuario_id = request.session.get("usuario_id")
 

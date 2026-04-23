@@ -34,8 +34,8 @@ class ExcluirCargoTests(TestCase):
         payload = response.json()
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(payload["success"])
-        self.assertEqual(payload["data"]["id"], str(cargo.pk))
+        self.assertTrue(payload["sucesso"])
+        self.assertEqual(payload["dados"]["id"], str(cargo.pk))
         self.assertFalse(Group.objects.filter(pk=cargo.pk).exists())
 
     def test_listagem_inclui_cargo_serializado(self):
@@ -45,12 +45,12 @@ class ExcluirCargoTests(TestCase):
         payload = response.json()
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(payload["success"])
+        self.assertTrue(payload["sucesso"])
         self.assertIn(
-            {"id": str(cargo.pk), "name": cargo.name},
+            {"id": str(cargo.pk), "nome": cargo.name},
             [
-                {"id": item["id"], "name": item["name"]}
-                for item in payload["data"]["cargos"]
+                {"id": item["id"], "nome": item["nome"]}
+                for item in payload["dados"]["cargos"]
             ],
         )
 
@@ -70,8 +70,8 @@ class ExcluirCargoTests(TestCase):
         payload = response.json()
 
         self.assertEqual(response.status_code, 200, payload)
-        self.assertTrue(payload["success"])
-        self.assertTrue(payload["data"]["roles"])
+        self.assertTrue(payload["sucesso"])
+        self.assertTrue(payload["dados"]["cargos"])
 
     def test_usuario_atual_ressincroniza_permissoes_do_cargo(self):
         usuario = Usuario.objects.create(
@@ -88,10 +88,10 @@ class ExcluirCargoTests(TestCase):
         session["usuario_id"] = usuario.pk
         session.save()
 
-        current_response = self.client.get(reverse("current_usuario"))
+        current_response = self.client.get(reverse("usuario_atual"))
         create_response = self.client.post(
             reverse("criar_cargo"),
-            data=json.dumps({"name": "Financeiro", "permissionIds": []}),
+            data=json.dumps({"nome": "Financeiro", "permissoes": []}),
             content_type="application/json",
         )
 
@@ -102,38 +102,38 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(create_response.status_code, 201, create_response.json())
         self.assertTrue(Group.objects.filter(name="Financeiro").exists())
 
-    def test_bootstrap_serializa_role_id_com_id_do_cargo(self):
+    def test_inicializacao_serializa_cargo_id_com_id_do_cargo(self):
         usuario = Usuario.objects.create(
             nome="Usuario Admin",
             email="usuario-admin@example.com",
             cargo="admin",
         )
 
-        response = self.client.get(reverse("bootstrap"))
+        response = self.client.get(reverse("inicializacao"))
         payload = response.json()
 
         cargo = Group.objects.get(name="Administrador")
         serialized_user = next(
-            item for item in payload["data"]["users"] if item["id"] == str(usuario.pk)
+            item for item in payload["dados"]["usuarios"] if item["id"] == str(usuario.pk)
         )
         self.assertEqual(response.status_code, 200, payload)
-        self.assertEqual(serialized_user["roleId"], str(cargo.pk))
+        self.assertEqual(serialized_user["cargo_id"], str(cargo.pk))
 
     @override_settings(GOOGLE_CLIENT_ID="", GOOGLE_CLIENT_SECRET="")
-    def test_google_login_exige_client_id_configurado(self):
-        response = self.client.get(reverse("google_login"))
+    def test_login_google_exige_id_de_cliente_configurado(self):
+        response = self.client.get(reverse("login_google"))
         payload = response.json()
 
         self.assertEqual(response.status_code, 503)
-        self.assertFalse(payload["success"])
+        self.assertFalse(payload["sucesso"])
 
     @override_settings(
         GOOGLE_CLIENT_ID="google-client-id",
         GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI="http://testserver/api/auth/google/callback/",
+        GOOGLE_REDIRECT_URI="http://testserver/api/autenticacao/google/retorno/",
     )
-    def test_google_login_redireciona_para_pagina_do_google(self):
-        response = self.client.get(reverse("google_login"))
+    def test_login_google_redireciona_para_pagina_do_google(self):
+        response = self.client.get(reverse("login_google"))
 
         self.assertEqual(response.status_code, 302)
         location = response["Location"]
@@ -145,7 +145,7 @@ class ExcluirCargoTests(TestCase):
         )
         self.assertEqual(query["client_id"], ["google-client-id"])
         self.assertEqual(
-            query["redirect_uri"], ["http://testserver/api/auth/google/callback/"]
+            query["redirect_uri"], ["http://testserver/api/autenticacao/google/retorno/"]
         )
         self.assertEqual(query["response_type"], ["code"])
         self.assertEqual(query["scope"], ["openid email profile"])
@@ -155,12 +155,12 @@ class ExcluirCargoTests(TestCase):
     @override_settings(
         GOOGLE_CLIENT_ID="google-client-id",
         GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI="http://testserver/api/auth/google/callback/",
+        GOOGLE_REDIRECT_URI="http://testserver/api/autenticacao/google/retorno/",
         FRONTEND_URL="http://localhost:5173",
     )
     @patch("usuarios.views.requests.get")
     @patch("usuarios.views.requests.post")
-    def test_google_callback_vincula_usuario_existente(self, requests_post, requests_get):
+    def test_retorno_google_vincula_usuario_existente(self, requests_post, requests_get):
         session = self.client.session
         session["google_oauth_state"] = "state-123"
         session.save()
@@ -182,7 +182,7 @@ class ExcluirCargoTests(TestCase):
         )
 
         response = self.client.get(
-            reverse("google_callback"),
+            reverse("retorno_google"),
             {"code": "auth-code", "state": "state-123"},
         )
 
@@ -198,7 +198,7 @@ class ExcluirCargoTests(TestCase):
                 "code": "auth-code",
                 "client_id": "google-client-id",
                 "client_secret": "google-client-secret",
-                "redirect_uri": "http://testserver/api/auth/google/callback/",
+                "redirect_uri": "http://testserver/api/autenticacao/google/retorno/",
                 "grant_type": "authorization_code",
             },
             timeout=10,
@@ -212,13 +212,13 @@ class ExcluirCargoTests(TestCase):
     @override_settings(
         GOOGLE_CLIENT_ID="google-client-id",
         GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI="http://testserver/api/auth/google/callback/",
+        GOOGLE_REDIRECT_URI="http://testserver/api/autenticacao/google/retorno/",
         GOOGLE_DEFAULT_CARGO="Operacional",
         FRONTEND_URL="http://localhost:5173",
     )
     @patch("usuarios.views.requests.get")
     @patch("usuarios.views.requests.post")
-    def test_google_callback_cria_usuario_automaticamente(self, requests_post, requests_get):
+    def test_retorno_google_cria_usuario_automaticamente(self, requests_post, requests_get):
         session = self.client.session
         session["google_oauth_state"] = "state-456"
         session.save()
@@ -235,7 +235,7 @@ class ExcluirCargoTests(TestCase):
         )
 
         response = self.client.get(
-            reverse("google_callback"),
+            reverse("retorno_google"),
             {"code": "auth-code", "state": "state-456"},
         )
 
@@ -250,12 +250,12 @@ class ExcluirCargoTests(TestCase):
     @override_settings(
         GOOGLE_CLIENT_ID="google-client-id",
         GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI="http://testserver/api/auth/google/callback/",
+        GOOGLE_REDIRECT_URI="http://testserver/api/autenticacao/google/retorno/",
         FRONTEND_URL="http://localhost:5173",
     )
     @patch("usuarios.views.requests.get")
     @patch("usuarios.views.requests.post")
-    def test_google_callback_rejeita_client_id_invalido(self, requests_post, requests_get):
+    def test_retorno_google_rejeita_id_de_cliente_invalido(self, requests_post, requests_get):
         session = self.client.session
         session["google_oauth_state"] = "state-789"
         session.save()
@@ -271,7 +271,7 @@ class ExcluirCargoTests(TestCase):
         )
 
         response = self.client.get(
-            reverse("google_callback"),
+            reverse("retorno_google"),
             {"code": "auth-code", "state": "state-789"},
         )
 
@@ -281,13 +281,13 @@ class ExcluirCargoTests(TestCase):
 
     @override_settings(FRONTEND_URL="http://localhost:5173")
     @patch("usuarios.views.requests.post")
-    def test_google_callback_rejeita_state_invalido(self, requests_post):
+    def test_retorno_google_rejeita_estado_invalido(self, requests_post):
         session = self.client.session
         session["google_oauth_state"] = "state-real"
         session.save()
 
         response = self.client.get(
-            reverse("google_callback"),
+            reverse("retorno_google"),
             {"code": "auth-code", "state": "state-falso"},
         )
 
@@ -368,8 +368,8 @@ class ExcluirCargoTests(TestCase):
         payload = response.json()
 
         self.assertEqual(response.status_code, 409)
-        self.assertFalse(payload["success"])
-        self.assertIn("cargo", payload["errors"])
+        self.assertFalse(payload["sucesso"])
+        self.assertIn("cargo", payload["erros"])
         self.assertTrue(Group.objects.filter(pk=cargo.pk).exists())
 
     def test_nao_exclui_cargo_com_usuarios_vinculados(self):
@@ -384,9 +384,9 @@ class ExcluirCargoTests(TestCase):
         payload = response.json()
 
         self.assertEqual(response.status_code, 409)
-        self.assertFalse(payload["success"])
+        self.assertFalse(payload["sucesso"])
         self.assertEqual(
-            payload["errors"]["cargo"],
-            ["Remova ou altere os usuarios vinculados antes de excluir este cargo."],
+            payload["erros"]["cargo"],
+            ["Remova ou altere os usuários vinculados antes de excluir este cargo."],
         )
         self.assertTrue(Group.objects.filter(pk=cargo.pk).exists())

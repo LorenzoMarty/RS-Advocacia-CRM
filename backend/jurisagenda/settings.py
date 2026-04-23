@@ -86,16 +86,16 @@ def _database_url_from_env() -> str:
 
     if not database_url:
         raise ImproperlyConfigured(
-            "Defina DATABASE_URL com a connection string PostgreSQL. "
-            "SQLite nao e mais suportado neste projeto."
+            "Defina DATABASE_URL com a string de conexão PostgreSQL. "
+            "SQLite não é mais suportado neste projeto."
         )
 
     database_scheme = urlsplit(database_url).scheme
     if database_scheme in {"http", "https"}:
         raise ImproperlyConfigured(
-            "DATABASE_URL deve ser uma connection string de banco, "
+            "DATABASE_URL deve ser uma string de conexão de banco, "
             "como postgresql://usuario:senha@host:5432/banco. "
-            "Nao use uma URL https:// de app, dashboard ou API."
+            "Não use uma URL https:// de aplicativo, painel ou API."
         )
 
     return _clean_database_url(database_url)
@@ -188,7 +188,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "jurisagenda.wsgi.application"
 
 
-# Database
+# Banco de dados
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
@@ -208,25 +208,25 @@ if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
         DATABASES["default"]["OPTIONS"].setdefault("sslmode", "require")
 
 
-# Password validation
+# Validação de senha
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = []
 
 
-# Internationalization
+# Internacionalização
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "pt-br"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "America/Sao_Paulo"
 
 USE_I18N = True
 
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
+# Arquivos estáticos (CSS, JavaScript e imagens)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "/static/"
@@ -241,7 +241,7 @@ if not DEBUG:
         }
     }
 
-# CORS/CSRF for the React frontend. Keep this as an explicit allowlist in production.
+# CORS/CSRF para a interface React. Mantenha esta lista explícita em produção.
 DEFAULT_REACT_ORIGINS = [
     "https://agenda-juri-orcin.vercel.app",
     "http://localhost",

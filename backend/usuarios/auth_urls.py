@@ -4,7 +4,7 @@ from usuarios import views
 
 
 urlpatterns = [
-    path("google/", views.google_login, name="google_login"),
-    path("google/callback/", views.google_callback, name="google_callback"),
-    path("logout/", views.logout, name="auth_logout"),
+    path("google/", views.login_google, name="login_google"),
+    path("google/retorno/", views.retorno_google, name="retorno_google"),
+    path("sair/", views.sair, name="sair_autenticacao"),
 ]

@@ -12,13 +12,13 @@ export function LoginPage() {
 
   function handleGoogleRedirect() {
     if (!isApiEnabled) {
-      setGoogleError('API nao configurada.');
+      setGoogleError('API não configurada.');
       return;
     }
 
     setGoogleError('');
     setIsRedirecting(true);
-    window.location.assign(api.googleRedirectUrl());
+    window.location.assign(api.urlLoginGoogle());
   }
 
   return (
@@ -29,14 +29,14 @@ export function LoginPage() {
         <div className="login-brand">
           <div className="login-brand-mark" aria-hidden="true">RS</div>
           <div className="login-brand-copy">
-            <span className="login-kicker">Plataforma juridica</span>
+            <span className="login-kicker">Plataforma jurídica</span>
             <strong>RS Advocacia</strong>
           </div>
         </div>
 
         <header className="login-header">
           <h1 className="login-title" id="login-title">Entrar</h1>
-          <p className="login-subtitle">Continue pela pagina segura do Google.</p>
+          <p className="login-subtitle">Continue pela página segura do Google.</p>
         </header>
 
         {visibleError ? (
@@ -57,7 +57,7 @@ export function LoginPage() {
         </div>
 
         <footer className="login-footer" id="login-help">
-          <p>Depois do login, voce volta automaticamente para o dashboard.</p>
+          <p>Depois do login, você volta automaticamente para o painel.</p>
         </footer>
       </section>
     </main>

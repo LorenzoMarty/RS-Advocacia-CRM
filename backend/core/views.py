@@ -9,7 +9,7 @@ from clientes.models import Cliente
 from clientes.views import serialize_cliente
 from core.permissions import app_permissions_required
 from core.permission_utils import user_has_any_permissions, user_has_permission
-from core.utils import method_not_allowed, success_response
+from core.utils import metodo_nao_permitido, resposta_sucesso
 from processos.models import Processo
 from processos.views import serialize_processo
 from usuarios.models import Usuario
@@ -27,9 +27,9 @@ from usuarios.views import (
     "clientes.view_cliente",
     "processos.view_processo",
 )
-def dashboard(request):
+def painel(request):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
     hoje = date.today()
     eventos_hoje = Evento.objects.filter(data_inicio__date=hoje).select_related("cliente", "processo")
@@ -39,7 +39,7 @@ def dashboard(request):
         .order_by("data_inicio")[:5]
     )
 
-    return success_response(
+    return resposta_sucesso(
         {
             "eventos_hoje": [serialize_evento(evento) for evento in eventos_hoje],
             "proximos_eventos": [serialize_evento(evento) for evento in proximos_eventos],
@@ -54,9 +54,9 @@ def dashboard(request):
     "clientes.view_cliente",
     "processos.view_processo",
 )
-def bootstrap(request):
+def inicializacao(request):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
     clientes = Cliente.objects.all()
     processos = Processo.objects.select_related("cliente").all()
@@ -73,29 +73,24 @@ def bootstrap(request):
 
     data = {
         "clientes": serialized_clientes,
-        "clients": serialized_clientes,
         "processos": serialized_processos,
-        "processes": serialized_processos,
         "eventos": serialized_eventos,
-        "events": serialized_eventos,
-        "permissionGroups": serialize_permission_groups(),
+        "grupos_permissoes": serialize_permission_groups(),
     }
 
     if user_has_permission(request, "usuarios.view_usuario"):
         serialized_usuarios = serialize_usuarios(Usuario.objects.all())
         data["usuarios"] = serialized_usuarios
-        data["users"] = serialized_usuarios
 
     if can_include_cargos:
         data["cargos"] = serialized_cargos
-        data["roles"] = serialized_cargos
 
-    return success_response(data)
+    return resposta_sucesso(data)
 
 
 @ensure_csrf_cookie
 def csrf_token(request):
     if request.method != "GET":
-        return method_not_allowed(["GET"])
+        return metodo_nao_permitido(["GET"])
 
-    return success_response({"csrfToken": get_token(request)}, message="CSRF cookie set")
+    return resposta_sucesso({"csrf_token": get_token(request)}, mensagem="Token CSRF definido.")

@@ -1,5 +1,5 @@
 export const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard', mobileLabel: 'Painel', to: '/' },
+  { key: 'painel', label: 'Painel', mobileLabel: 'Painel', to: '/' },
   { key: 'clientes', label: 'Clientes', mobileLabel: 'Clientes', to: '/clientes' },
   { key: 'processos', label: 'Processos', mobileLabel: 'Processos', to: '/processos' },
   { key: 'agenda', label: 'Agenda', mobileLabel: 'Agenda', to: '/agenda' },

@@ -21,7 +21,7 @@ function validateClientForm(form) {
   const nextErrors = {};
 
   if (!form.name.trim()) nextErrors.name = 'Informe o nome.';
-  if (!form.email.trim()) nextErrors.email = 'Informe o email.';
+  if (!form.email.trim()) nextErrors.email = 'Informe o e-mail.';
   if (!form.phone.trim()) nextErrors.phone = 'Informe o telefone.';
   if (!stripDocument(form.document)) nextErrors.document = 'Informe o CPF ou CNPJ.';
 
@@ -268,7 +268,7 @@ export function ClientFormPage() {
                   />
                 </Field>
 
-                <Field id="client-email" label="Email" error={errors.email}>
+                <Field id="client-email" label="E-mail" error={errors.email}>
                   <input
                     id="client-email"
                     type="email"
@@ -366,7 +366,7 @@ export function ClientDetailPage() {
                   <a href={`tel:${client.phone}`}>{client.phone}</a>
                 </article>
                 <article className="detail-item">
-                  <span>Email</span>
+                  <span>E-mail</span>
                   <a href={`mailto:${client.email}`}>{client.email}</a>
                 </article>
                 <article className="detail-item">

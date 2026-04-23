@@ -13,7 +13,7 @@ function createNavClass(isActive, baseClass) {
 
 function NavigationIcon({ icon }) {
   switch (icon) {
-    case 'dashboard':
+    case 'painel':
       return (
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="3" width="7" height="8" rx="1.5" />
@@ -239,7 +239,7 @@ export function GuestLayout() {
 }
 
 export function ProtectedLayout() {
-  const { currentUser, isLoading, logout } = useAppState();
+  const { currentUser, isLoading, sair } = useAppState();
   const location = useLocation();
   const [chrome, setChrome] = useState(PAGE_CHROME_DEFAULT);
   const { sidebarCollapsed, toggleTheme, toggleSidebar } = useShellPreferences();
@@ -276,8 +276,8 @@ export function ProtectedLayout() {
             type="button"
             aria-controls="app-sidebar"
             aria-expanded={sidebarCollapsed ? 'false' : 'true'}
-            aria-label={sidebarCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
-            title={sidebarCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
+            aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+            title={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
             onClick={toggleSidebar}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -312,7 +312,7 @@ export function ProtectedLayout() {
                 </div>
               </div>
 
-              <button className="nav-link sidebar-logout" type="button" aria-label="Sair" title="Sair" onClick={logout}>
+              <button className="nav-link sidebar-logout" type="button" aria-label="Sair" title="Sair" onClick={sair}>
                 <span className="nav-icon" aria-hidden="true">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="m16 17 5-5-5-5" />
@@ -365,7 +365,7 @@ export function ProtectedLayout() {
                     </div>
                   </div>
 
-                  <button className="topbar-icon-link logout-link topbar-logout-mobile" type="button" aria-label="Sair" title="Sair" onClick={logout}>
+                  <button className="topbar-icon-link logout-link topbar-logout-mobile" type="button" aria-label="Sair" title="Sair" onClick={sair}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="m16 17 5-5-5-5" />
                       <path d="M21 12H9" />

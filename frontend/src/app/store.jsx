@@ -31,67 +31,232 @@ function errorMessage(error) {
   return error instanceof Error ? error.message : 'Falha ao comunicar com a API.';
 }
 
-function collectionFromResponse(payload, englishKey, portugueseKey) {
+function collectionFromResponse(payload, key) {
   if (Array.isArray(payload)) {
     return payload;
   }
 
-  return payload?.[englishKey] || payload?.[portugueseKey] || [];
+  return payload?.[key] || [];
 }
 
-function itemFromResponse(payload, englishKey, portugueseKey) {
+function itemFromResponse(payload, key) {
   if (payload?.id) {
     return payload;
   }
 
-  return payload?.[englishKey] || payload?.[portugueseKey] || null;
+  return payload?.[key] || null;
 }
 
 function usersFromResponse(payload) {
-  return collectionFromResponse(payload, 'users', 'usuarios');
+  return collectionFromResponse(payload, 'usuarios').map(userFromApi).filter(Boolean);
 }
 
 function userFromResponse(payload) {
-  return itemFromResponse(payload, 'user', 'usuario');
+  return userFromApi(itemFromResponse(payload, 'usuario'));
 }
 
 function rolesFromResponse(payload) {
-  return collectionFromResponse(payload, 'roles', 'cargos')
-    .map((role) => ({
-      ...role,
-      id: String(role.id || role.pk || role.name || role.nome),
-      name: role.name || role.nome || '',
-      permissionIds: (role.permissionIds || role.permissions || []).map(String),
-    }))
-    .filter((role) => role.id && role.name);
+  return collectionFromResponse(payload, 'cargos')
+    .map(roleFromApi)
+    .filter((role) => role && role.id && role.name);
 }
 
 function roleFromResponse(payload) {
-  return itemFromResponse(payload, 'role', 'cargo');
+  return roleFromApi(itemFromResponse(payload, 'cargo'));
 }
 
 function clientsFromResponse(payload) {
-  return collectionFromResponse(payload, 'clients', 'clientes');
+  return collectionFromResponse(payload, 'clientes').map(clientFromApi).filter(Boolean);
 }
 
 function clientFromResponse(payload) {
-  return itemFromResponse(payload, 'client', 'cliente');
+  return clientFromApi(itemFromResponse(payload, 'cliente'));
 }
 
 function processesFromResponse(payload) {
-  return collectionFromResponse(payload, 'processes', 'processos');
+  return collectionFromResponse(payload, 'processos').map(processFromApi).filter(Boolean);
 }
 
 function processFromResponse(payload) {
-  return itemFromResponse(payload, 'process', 'processo');
+  return processFromApi(itemFromResponse(payload, 'processo'));
 }
 
 function eventsFromResponse(payload) {
-  return collectionFromResponse(payload, 'events', 'eventos');
+  return collectionFromResponse(payload, 'eventos').map(eventFromApi).filter(Boolean);
 }
 
 function eventFromResponse(payload) {
-  return itemFromResponse(payload, 'event', 'evento');
+  return eventFromApi(itemFromResponse(payload, 'evento'));
+}
+
+function permissionGroupsFromResponse(payload) {
+  return collectionFromResponse(payload, 'grupos_permissoes').map((group) => ({
+    key: group.chave || '',
+    label: group.rotulo || '',
+    permissions: (group.permissoes || []).map((permission) => ({
+      id: String(permission.id),
+      path: permission.caminho || '',
+      displayName: permission.nome || '',
+      modelLabel: permission.modelo || '',
+      app: permission.modulo || '',
+      action: {
+        criar: 'create',
+        editar: 'edit',
+        excluir: 'delete',
+        visualizar: 'view',
+      }[permission.acao] || permission.acao || 'view',
+    })),
+  }));
+}
+
+function roleFromApi(role) {
+  if (!role) {
+    return null;
+  }
+
+  return {
+    ...role,
+    id: String(role.id || role.pk || role.nome),
+    name: role.nome || '',
+    permissionIds: (role.permissoes || [])
+      .map(String),
+  };
+}
+
+function userFromApi(user) {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    ...user,
+    id: String(user.id || user.pk),
+    name: user.nome || '',
+    email: user.email || '',
+    picture: user.foto || '',
+    roleId: String(user.cargo_id || user.cargo || ''),
+  };
+}
+
+function clientFromApi(client) {
+  if (!client) {
+    return null;
+  }
+
+  return {
+    ...client,
+    id: String(client.id || client.pk),
+    name: client.nome || '',
+    email: client.email || '',
+    phone: client.telefone || '',
+    document: client.cpf || '',
+    clientType: client.tipo_cliente || 'esporadico',
+    notes: client.obs || '',
+  };
+}
+
+function processFromApi(process) {
+  if (!process) {
+    return null;
+  }
+
+  return {
+    ...process,
+    id: String(process.id || process.pk),
+    number: process.numero_processo || '',
+    clientId: String(process.cliente_id || ''),
+    clientName: process.cliente_nome || '',
+    description: process.descricao || '',
+    court: process.vara || '',
+    area: process.area_juridica || '',
+    status: process.status || '',
+    owner: process.advogado_responsavel || '',
+  };
+}
+
+function eventFromApi(event) {
+  if (!event) {
+    return null;
+  }
+
+  return {
+    ...event,
+    id: String(event.id || event.pk),
+    title: event.titulo || '',
+    description: event.descricao || '',
+    start: event.data_inicio || '',
+    end: event.data_fim || '',
+    type: event.tipo_evento || '',
+    status: event.status || '',
+    priority: event.prioridade || '',
+    clientId: String(event.cliente_id || ''),
+    clientName: event.cliente_nome || '',
+    processId: String(event.processo_id || ''),
+    processNumber: event.processo_numero || '',
+    responsible: event.responsavel || '',
+    createdBy: event.criado_por || '',
+    location: event.local || '',
+    notes: event.observacoes || '',
+    reminderAt: event.lembrete_em || '',
+    completed: Boolean(event.concluido),
+  };
+}
+
+function clientToPayload(client) {
+  return {
+    nome: client.name,
+    cpf: client.document,
+    tipo_cliente: client.clientType,
+    telefone: client.phone,
+    email: client.email,
+    obs: client.notes,
+  };
+}
+
+function processToPayload(process) {
+  return {
+    numero_processo: process.number,
+    cliente: process.clientId,
+    descricao: process.description,
+    vara: process.court,
+    area_juridica: process.area,
+    status: process.status,
+    advogado_responsavel: process.owner,
+  };
+}
+
+function eventToPayload(event) {
+  return {
+    titulo: event.title,
+    tipo_evento: event.type,
+    prioridade: event.priority,
+    descricao: event.description,
+    data_inicio: event.start,
+    data_fim: event.end,
+    lembrete_em: event.reminderAt || null,
+    cliente: event.clientId,
+    processo: event.processId,
+    responsavel: event.responsible,
+    status: event.status,
+    local: event.location,
+    observacoes: event.notes,
+    concluido: Boolean(event.completed),
+  };
+}
+
+function userToPayload(user) {
+  return {
+    nome: user.name,
+    email: user.email,
+    cargo_id: user.roleId,
+  };
+}
+
+function roleToPayload(role) {
+  return {
+    nome: role.name,
+    permissoes: role.permissionIds,
+  };
 }
 
 export function AppStateProvider({ children }) {
@@ -122,19 +287,19 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadCurrentUser() {
-    const payload = await api.getCurrentUser();
+    const payload = await api.obterUsuarioAtual();
     return syncCurrentUser(userFromResponse(payload));
   }
 
   function applyBootstrapPayload(payload) {
-    if (payload.permissionGroups) {
-      setPermissionGroups(payload.permissionGroups);
+    if (payload.grupos_permissoes) {
+      setPermissionGroups(permissionGroupsFromResponse(payload));
     }
 
-    if (Object.prototype.hasOwnProperty.call(payload, 'roles') || Object.prototype.hasOwnProperty.call(payload, 'cargos')) {
+    if (Object.prototype.hasOwnProperty.call(payload, 'cargos')) {
       setRoles(sortByName(rolesFromResponse(payload)));
     }
-    if (Object.prototype.hasOwnProperty.call(payload, 'users') || Object.prototype.hasOwnProperty.call(payload, 'usuarios')) {
+    if (Object.prototype.hasOwnProperty.call(payload, 'usuarios')) {
       setUsers((currentUsers) => sortByName(mergeById(currentUsers, usersFromResponse(payload))));
     }
     setClients(sortByName(clientsFromResponse(payload)));
@@ -165,9 +330,9 @@ export function AppStateProvider({ children }) {
     ];
 
     try {
-      const payload = await api.bootstrap();
+      const payload = await api.carregarInicializacao();
       applyBootstrapPayload(payload);
-      const canLoadUsers = Object.prototype.hasOwnProperty.call(payload, 'users') || Object.prototype.hasOwnProperty.call(payload, 'usuarios');
+      const canLoadUsers = Object.prototype.hasOwnProperty.call(payload, 'usuarios');
       if (canLoadUsers) {
         loaders.push({
           load: api.listUsers,
@@ -260,10 +425,10 @@ export function AppStateProvider({ children }) {
     setFlashes((currentFlashes) => currentFlashes.filter((flash) => flash.id !== flashId));
   }
 
-  async function logout() {
+  async function sair() {
     if (isApiEnabled) {
       try {
-        await api.logout();
+        await api.sair();
       } catch (error) {
         addFlash(errorMessage(error), 'error');
       }
@@ -283,11 +448,11 @@ export function AppStateProvider({ children }) {
     if (isApiEnabled) {
       try {
         const response = payload.id
-          ? await api.updateClient(payload.id, payload)
-          : await api.createClient(payload);
+          ? await api.updateClient(payload.id, clientToPayload(payload))
+          : await api.createClient(clientToPayload(payload));
         const savedClient = clientFromResponse(response);
         if (!savedClient) {
-          throw new Error('Resposta invalida da API de clientes.');
+          throw new Error('Resposta inválida da API de clientes.');
         }
         setClients((currentClients) => sortByName(replaceById(currentClients, savedClient)));
         addFlash(payload.id ? 'Cliente atualizado.' : 'Cliente salvo.', 'success');
@@ -316,11 +481,11 @@ export function AppStateProvider({ children }) {
     if (isApiEnabled) {
       try {
         const response = payload.id
-          ? await api.updateProcess(payload.id, payload)
-          : await api.createProcess(payload);
+          ? await api.updateProcess(payload.id, processToPayload(payload))
+          : await api.createProcess(processToPayload(payload));
         const savedProcess = processFromResponse(response);
         if (!savedProcess) {
-          throw new Error('Resposta invalida da API de processos.');
+          throw new Error('Resposta inválida da API de processos.');
         }
         setProcesses((currentProcesses) => replaceById(currentProcesses, savedProcess));
         addFlash(payload.id ? 'Processo atualizado.' : 'Processo salvo.', 'success');
@@ -349,11 +514,11 @@ export function AppStateProvider({ children }) {
     if (isEventsApiEnabled) {
       try {
         const response = payload.id
-          ? await api.updateEvent(payload.id, payload)
-          : await api.createEvent(payload);
+          ? await api.updateEvent(payload.id, eventToPayload(payload))
+          : await api.createEvent(eventToPayload(payload));
         const savedEvent = eventFromResponse(response);
         if (!savedEvent) {
-          throw new Error('Resposta invalida da API de eventos.');
+          throw new Error('Resposta inválida da API de eventos.');
         }
         setEvents((currentEvents) => replaceById(currentEvents, savedEvent));
         addFlash(payload.id ? 'Compromisso atualizado.' : 'Compromisso salvo.', 'success');
@@ -402,22 +567,22 @@ export function AppStateProvider({ children }) {
 
   async function saveUser(payload) {
     if (!payload.id) {
-      addFlash('Usuarios sao criados automaticamente pelo Google Login.', 'error');
+      addFlash('Usuários são criados automaticamente pelo login com Google.', 'error');
       return null;
     }
 
     if (isApiEnabled) {
       try {
-        const response = await api.updateUser(payload.id, payload);
+        const response = await api.updateUser(payload.id, userToPayload(payload));
         const savedUser = userFromResponse(response);
         if (!savedUser) {
-          throw new Error('Resposta invalida da API de usuarios.');
+          throw new Error('Resposta inválida da API de usuários.');
         }
         setUsers((currentUsers) => sortByName(replaceById(currentUsers, savedUser)));
         if (savedUser.id === currentUserId) {
           setCurrentSessionUser(savedUser);
         }
-        addFlash('Usuario atualizado.', 'success');
+        addFlash('Usuário atualizado.', 'success');
         return savedUser;
       } catch (error) {
         addFlash(errorMessage(error), 'error');
@@ -436,7 +601,7 @@ export function AppStateProvider({ children }) {
         return savedUser;
       })),
     );
-    addFlash('Usuario atualizado.', 'success');
+    addFlash('Usuário atualizado.', 'success');
     return savedUser || payload;
   }
 
@@ -444,11 +609,11 @@ export function AppStateProvider({ children }) {
     if (isApiEnabled) {
       try {
         const response = payload.id
-          ? await api.updateRole(payload.id, payload)
-          : await api.createRole(payload);
+          ? await api.updateRole(payload.id, roleToPayload(payload))
+          : await api.createRole(roleToPayload(payload));
         const savedRole = roleFromResponse(response);
         if (!savedRole) {
-          throw new Error('Resposta invalida da API de cargos.');
+          throw new Error('Resposta inválida da API de cargos.');
         }
         setRoles((currentRoles) => sortByName(replaceById(currentRoles, savedRole)));
         addFlash(payload.id ? 'Cargo atualizado.' : 'Cargo salvo.', 'success');
@@ -579,7 +744,7 @@ export function AppStateProvider({ children }) {
     apiStatus,
     removeFlash,
     addFlash,
-    logout,
+    sair,
     saveClient,
     saveProcess,
     saveEvent,
@@ -600,7 +765,7 @@ export function useAppState() {
   const context = useContext(AppStateContext);
 
   if (!context) {
-    throw new Error('useAppState must be used inside AppStateProvider.');
+    throw new Error('useAppState deve ser usado dentro de AppStateProvider.');
   }
 
   return context;

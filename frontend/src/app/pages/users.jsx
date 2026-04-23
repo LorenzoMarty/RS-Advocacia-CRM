@@ -14,10 +14,10 @@ function validateUserForm(form, users, currentId) {
   const nextErrors = {};
 
   if (!form.name.trim()) nextErrors.name = 'Informe o nome.';
-  if (!form.email.trim()) nextErrors.email = 'Informe o email.';
+  if (!form.email.trim()) nextErrors.email = 'Informe o e-mail.';
   if (!form.roleId) nextErrors.roleId = 'Selecione um cargo.';
   if (users.some((user) => user.email.toLowerCase() === form.email.toLowerCase() && user.id !== currentId)) {
-    nextErrors.email = 'Já existe um usuário com este email.';
+    nextErrors.email = 'Já existe um usuário com este e-mail.';
   }
 
   return nextErrors;
@@ -94,7 +94,7 @@ export function UsersListPage() {
               </div>
             </>
           ) : (
-            <EmptyState title="Nenhum usuário encontrado." copy="Entre com Google para criar o primeiro usuario automaticamente." />
+            <EmptyState title="Nenhum usuário encontrado." copy="Entre com Google para criar o primeiro usuário automaticamente." />
           )}
         </section>
       </div>
@@ -145,7 +145,7 @@ export function UserFormPage() {
 
   return (
     <>
-      <PageChrome label="Editar usuario" />
+      <PageChrome label="Editar usuário" />
 
       <div className="create-page">
         <section className="surface create-intro">
@@ -154,11 +154,11 @@ export function UserFormPage() {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m15 18-6-6 6-6" />
               </svg>
-              Voltar para o usuario
+              Voltar para o usuário
             </Link>
             <div className="section-head">
               <div>
-                <h1 className="intro-title">Editar usuario</h1>
+                <h1 className="intro-title">Editar usuário</h1>
                 <p className="intro-note">
                   Atualize os dados do perfil sem perder o contexto atual.
                 </p>
@@ -175,7 +175,7 @@ export function UserFormPage() {
                 <input id="user-name" value={form.name} onChange={(event) => setForm((currentForm) => ({ ...currentForm, name: event.target.value }))} />
               </Field>
 
-              <Field id="user-email" label="Email" error={errors.email}>
+              <Field id="user-email" label="E-mail" error={errors.email}>
                 <input id="user-email" type="email" value={form.email} onChange={(event) => setForm((currentForm) => ({ ...currentForm, email: event.target.value }))} />
               </Field>
 
@@ -272,7 +272,7 @@ export function UserDetailPage() {
                   <strong>{user.name}</strong>
                 </article>
                 <article className="detail-item">
-                  <span>Email</span>
+                  <span>E-mail</span>
                   <a href={`mailto:${user.email}`}>{user.email}</a>
                 </article>
                 <article className="detail-item">

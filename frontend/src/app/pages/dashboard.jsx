@@ -21,7 +21,7 @@ export function DashboardPage() {
 
   return (
     <>
-      <PageChrome label="Dashboard" />
+      <PageChrome label="Painel" />
 
       <section className="surface hero">
         <div className="hero-grid">

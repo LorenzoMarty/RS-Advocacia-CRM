@@ -7,50 +7,57 @@ from django.http import HttpRequest, JsonResponse
 from django.utils.dateparse import parse_datetime
 
 
-def success_response(data: Any = None, message: str = "", status: int = 200) -> JsonResponse:
+def resposta_sucesso(
+    dados: Any = None,
+    mensagem: str = "",
+    status: int = 200,
+) -> JsonResponse:
     payload: dict[str, Any] = {
-        "success": True,
-        "data": data if data is not None else {},
+        "sucesso": True,
+        "dados": dados if dados is not None else {},
     }
-    if message:
-        payload["message"] = message
+    if mensagem:
+        payload["mensagem"] = mensagem
     return JsonResponse(payload, status=status, encoder=DjangoJSONEncoder)
 
 
-def error_response(errors: Any, status: int = 400) -> JsonResponse:
-    if isinstance(errors, str):
-        errors = {"detail": [errors]}
-    return JsonResponse({"success": False, "errors": errors}, status=status)
+def resposta_erro(erros: Any, status: int = 400) -> JsonResponse:
+    if isinstance(erros, str):
+        erros = {"detalhe": [erros]}
+    return JsonResponse({"sucesso": False, "erros": erros}, status=status)
 
 
-def form_errors(form) -> dict[str, list[str]]:
+def erros_formulario(form) -> dict[str, list[str]]:
     return {
         field: [error["message"] for error in field_errors]
         for field, field_errors in form.errors.get_json_data().items()
     }
 
 
-def method_not_allowed(allowed_methods: Iterable[str]) -> JsonResponse:
-    allowed = ", ".join(allowed_methods)
-    return error_response({"method": [f"Metodo nao permitido. Use: {allowed}."]}, status=405)
+def metodo_nao_permitido(metodos_permitidos: Iterable[str]) -> JsonResponse:
+    permitidos = ", ".join(metodos_permitidos)
+    return resposta_erro(
+        {"metodo": [f"Método não permitido. Use: {permitidos}."]},
+        status=405,
+    )
 
 
-def parse_body(request: HttpRequest) -> dict[str, Any]:
+def ler_corpo_json(request: HttpRequest) -> dict[str, Any]:
     if not request.body:
         return {}
 
     try:
         payload = json.loads(request.body.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ValueError("JSON invalido.") from exc
+        raise ValueError("JSON inválido.") from exc
 
     if not isinstance(payload, dict):
-        raise ValueError("O corpo da requisicao deve ser um objeto JSON.")
+        raise ValueError("O corpo da requisição deve ser um objeto JSON.")
 
     return payload
 
 
-def payload_with_aliases(
+def dados_com_aliases(
     payload: Mapping[str, Any],
     aliases: Mapping[str, str],
 ) -> dict[str, Any]:
@@ -61,25 +68,23 @@ def payload_with_aliases(
     return data
 
 
-def coerce_datetime_fields(payload: Mapping[str, Any], fields: Iterable[str]) -> dict[str, Any]:
+def converter_campos_datahora(
+    payload: Mapping[str, Any],
+    campos: Iterable[str],
+) -> dict[str, Any]:
     data = dict(payload)
 
-    for field in fields:
-        value = data.get(field)
-        if isinstance(value, str):
-            parsed = parse_datetime(value)
-            if parsed is not None:
-                data[field] = parsed
+    for campo in campos:
+        valor = data.get(campo)
+        if isinstance(valor, str):
+            convertido = parse_datetime(valor)
+            if convertido is not None:
+                data[campo] = convertido
 
     return data
 
 
-def isoformat_or_none(value: Any) -> str | None:
-    if value is None:
+def isoformat_ou_nulo(valor: Any) -> str | None:
+    if valor is None:
         return None
-    return value.isoformat()
-
-
-api_success = success_response
-api_error = error_response
-parse_json_body = parse_body
+    return valor.isoformat()

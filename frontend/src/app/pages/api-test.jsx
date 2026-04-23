@@ -46,7 +46,7 @@ export function ApiTestPage() {
     try {
       const data = await apiRequest(API_URL, {
         method: 'POST',
-        body: JSON.stringify({ name: trimmedName }),
+        body: JSON.stringify({ nome: trimmedName }),
       });
       setName('');
       setItems((currentItems) => [data, ...currentItems]);
@@ -64,8 +64,8 @@ export function ApiTestPage() {
 
       <div className="api-test-page">
         <section className="surface api-test-hero">
-          <span className="badge gold">Django REST Framework</span>
-          <h1>Teste de integracao</h1>
+          <span className="badge gold">Integração Django</span>
+          <h1>Teste de integração</h1>
           <p>Envie um nome e veja a resposta salva pelo Django.</p>
         </section>
 
@@ -101,8 +101,8 @@ export function ApiTestPage() {
           {!isLoading && !items.length ? <p>Nenhum nome cadastrado.</p> : null}
           {items.map((item) => (
             <article className="api-test-item" key={item.id}>
-              <strong>{item.name}</strong>
-              <span>{new Date(item.created_at).toLocaleString('pt-BR')}</span>
+              <strong>{item.nome}</strong>
+              <span>{item.criado_em ? new Date(item.criado_em).toLocaleString('pt-BR') : '-'}</span>
             </article>
           ))}
         </section>

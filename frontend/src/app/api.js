@@ -53,11 +53,11 @@ async function ensureCsrfToken(baseUrl = apiBaseUrl) {
     throw new Error(errorMessageFromPayload(payload, response.status));
   }
 
-  return getCookie('csrftoken') || payload.data?.csrfToken || payload.csrfToken || '';
+  return getCookie('csrftoken') || payload.dados?.csrf_token || payload.csrf_token || '';
 }
 
 function errorMessageFromPayload(payload, status) {
-  const error = payload.errors || payload.error || `Falha na API (${status}).`;
+  const error = payload.erros || payload.erro || `Falha na API (${status}).`;
 
   if (typeof error === 'string') {
     return error;
@@ -71,7 +71,7 @@ function errorMessageFromPayload(payload, status) {
     return Object.entries(error)
       .map(([field, messages]) => {
         const text = Array.isArray(messages) ? messages.join(' ') : String(messages);
-        return field === 'detail' ? text : `${field}: ${text}`;
+        return field === 'detalhe' ? text : `${field}: ${text}`;
       })
       .join(' ');
   }
@@ -81,7 +81,7 @@ function errorMessageFromPayload(payload, status) {
 
 export async function apiRequest(path, options = {}, { baseUrl = apiBaseUrl, requireConfiguredApi = true } = {}) {
   if (requireConfiguredApi && !baseUrl) {
-    throw new Error('API nao configurada. Defina VITE_API_URL.');
+    throw new Error('API não configurada. Defina VITE_API_URL.');
   }
 
   const method = (options.method || 'GET').toUpperCase();
@@ -110,11 +110,11 @@ export async function apiRequest(path, options = {}, { baseUrl = apiBaseUrl, req
     throw new Error(errorMessageFromPayload(payload, response.status));
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, 'success')) {
-    if (!payload.success) {
+  if (Object.prototype.hasOwnProperty.call(payload, 'sucesso')) {
+    if (!payload.sucesso) {
       throw new Error(errorMessageFromPayload(payload, response.status));
     }
-    return payload.data || {};
+    return payload.dados || {};
   }
 
   return payload;
@@ -135,10 +135,10 @@ function eventRequest(path = '', options = {}) {
 }
 
 export const api = {
-  bootstrap: () => apiRequest('/api/bootstrap/'),
-  getCurrentUser: () => apiRequest('/api/usuarios/atual/'),
-  googleRedirectUrl: () => apiUrl('/api/auth/google/'),
-  logout: () => apiRequest('/api/auth/logout/', { method: 'POST' }),
+  carregarInicializacao: () => apiRequest('/api/inicializacao/'),
+  obterUsuarioAtual: () => apiRequest('/api/usuarios/atual/'),
+  urlLoginGoogle: () => apiUrl('/api/autenticacao/google/'),
+  sair: () => apiRequest('/api/autenticacao/sair/', { method: 'POST' }),
   listClients: () => apiRequest('/api/clientes/'),
   createClient: (payload) => apiRequest('/api/clientes/criar/', jsonOptions('POST', payload)),
   updateClient: (id, payload) => apiRequest(`/api/clientes/${id}/editar/`, jsonOptions('PUT', payload)),

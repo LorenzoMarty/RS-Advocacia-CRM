@@ -76,5 +76,5 @@ class ClienteListViewTests(TestCase):
         payload = response.json()
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(payload["success"])
-        self.assertEqual(payload["data"]["clientes"][0]["nome"], "Cliente Documento")
+        self.assertTrue(payload["sucesso"])
+        self.assertEqual(payload["dados"]["clientes"][0]["nome"], "Cliente Documento")
