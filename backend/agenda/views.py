@@ -17,6 +17,7 @@ from core.utils import (
     converter_campos_datahora,
     resposta_sucesso,
 )
+from usuarios.models import Usuario
 
 EVENTO_DATETIME_FIELDS = ("data_inicio", "data_fim", "lembrete_em")
 
@@ -40,6 +41,25 @@ def _resolver_criador_evento(request):
                 return valor
 
     return "Interno"
+
+
+def _usuario_google_atual(request):
+    usuario_id = request.session.get("usuario_id")
+    if usuario_id:
+        usuario = Usuario.objects.filter(pk=usuario_id).first()
+        if usuario is not None:
+            return usuario
+
+    usuario_requisicao = getattr(request, "user", None)
+    if usuario_requisicao and getattr(usuario_requisicao, "is_authenticated", False):
+        identificador = (
+            getattr(usuario_requisicao, "email", "")
+            or getattr(usuario_requisicao, "username", "")
+        )
+        if identificador:
+            return Usuario.objects.filter(email__iexact=identificador).first()
+
+    return None
 
 
 def serialize_evento(evento):
@@ -100,7 +120,7 @@ def criar_evento(request):
         evento.save()
 
         try:
-            google_id = criar_evento_google(request.user, evento)
+            google_id = criar_evento_google(_usuario_google_atual(request), evento)
             if google_id:
                 evento.google_event_id = google_id
                 evento.save(update_fields=["google_event_id"])
@@ -148,7 +168,7 @@ def editar_evento(request, evento_id):
         evento = form.save()
 
         try:
-            atualizar_evento_google(request.user, evento)
+            atualizar_evento_google(_usuario_google_atual(request), evento)
         except Exception:
             pass
 
@@ -170,7 +190,7 @@ def excluir_evento(request, evento_id):
     evento = get_object_or_404(Evento, pk=evento_id)
 
     try:
-        deletar_evento_google(request.user, evento)
+        deletar_evento_google(_usuario_google_atual(request), evento)
     except Exception:
         pass
 

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from secrets import token_urlsafe
 from typing import Any, cast
 from urllib.parse import urlencode, urlsplit
@@ -9,6 +10,7 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import Resolver404, resolve, reverse
+from django.utils import timezone
 import requests
 
 from core.permissions import app_any_permissions_required, app_permissions_required
@@ -77,6 +79,13 @@ class GoogleLoginConfigurationError(Exception):
 
 GOOGLE_AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events"
+GOOGLE_OAUTH_SCOPES = (
+    "openid",
+    "email",
+    "profile",
+    GOOGLE_CALENDAR_SCOPE,
+)
 
 
 def _clear_usuario_session(request: HttpRequest) -> None:
@@ -307,7 +316,46 @@ def _verify_google_credential(credential: str) -> dict[str, Any]:
     return idinfo
 
 
-def _exchange_google_code(code: str, redirect_uri: str) -> str:
+def _google_token_expiry(token_payload: dict[str, Any]):
+    expires_in = token_payload.get("expires_in")
+    if expires_in in (None, ""):
+        return None
+
+    try:
+        expires_in_seconds = max(int(expires_in), 0)
+    except (TypeError, ValueError):
+        return None
+
+    return timezone.now() + timedelta(seconds=expires_in_seconds)
+
+
+def _save_google_tokens(usuario: Usuario, token_payload: dict[str, Any]) -> None:
+    access_token = str(token_payload.get("access_token") or "").strip()
+    refresh_token = str(token_payload.get("refresh_token") or "").strip()
+    token_expiry = _google_token_expiry(token_payload)
+
+    if not access_token:
+        raise ValueError("Google nÃ£o retornou um token de acesso.")
+
+    update_fields = []
+
+    if usuario.google_token != access_token:
+        usuario.google_token = access_token
+        update_fields.append("google_token")
+
+    if refresh_token and usuario.google_refresh_token != refresh_token:
+        usuario.google_refresh_token = refresh_token
+        update_fields.append("google_refresh_token")
+
+    if usuario.google_token_expiry != token_expiry:
+        usuario.google_token_expiry = token_expiry
+        update_fields.append("google_token_expiry")
+
+    if update_fields:
+        usuario.save(update_fields=update_fields)
+
+
+def _exchange_google_code(code: str, redirect_uri: str) -> dict[str, Any]:
     response = requests.post(
         GOOGLE_TOKEN_URL,
         data={
@@ -326,7 +374,11 @@ def _exchange_google_code(code: str, redirect_uri: str) -> str:
     id_token = str(token_payload.get("id_token") or "").strip()
     if not id_token:
         raise ValueError("Google não retornou um token de identidade.")
-    return id_token
+    access_token = str(token_payload.get("access_token") or "").strip()
+    if not access_token:
+        raise ValueError("Google nÃ£o retornou um token de acesso.")
+
+    return token_payload
 
 
 def _get_or_create_google_usuario(idinfo: dict[str, Any]) -> Usuario:
@@ -715,8 +767,13 @@ def excluir_cargo(request, cargo_id):
     return resposta_sucesso({"id": deleted_id}, mensagem="Cargo excluído com sucesso.")
 
 
-def _sign_in_google_usuario(request: HttpRequest, idinfo: dict[str, Any]) -> Usuario:
+def _sign_in_google_usuario(
+    request: HttpRequest,
+    idinfo: dict[str, Any],
+    token_payload: dict[str, Any],
+) -> Usuario:
     usuario = _get_or_create_google_usuario(idinfo)
+    _save_google_tokens(usuario, token_payload)
 
     if _authenticated_user(request) is not None:
         encerrar_sessao_django(request)
@@ -751,9 +808,11 @@ def login_google(request: HttpRequest):
             "client_id": _google_client_id(),
             "redirect_uri": redirect_uri,
             "response_type": "code",
-            "scope": "openid email profile",
+            "scope": " ".join(GOOGLE_OAUTH_SCOPES),
             "state": state,
-            "prompt": "select_account",
+            "access_type": "offline",
+            "include_granted_scopes": "true",
+            "prompt": "consent select_account",
         }
     )
     return HttpResponseRedirect(f"{GOOGLE_AUTHORIZATION_URL}?{query}")
@@ -776,9 +835,10 @@ def retorno_google(request: HttpRequest):
         return _google_error_redirect("Google não retornou o código de autorização.")
 
     try:
-        id_token = _exchange_google_code(code, _google_redirect_uri(request))
+        token_payload = _exchange_google_code(code, _google_redirect_uri(request))
+        id_token = str(token_payload.get("id_token") or "").strip()
         idinfo = _verify_google_credential(id_token)
-        _sign_in_google_usuario(request, idinfo)
+        _sign_in_google_usuario(request, idinfo, token_payload)
     except GoogleLoginConfigurationError:
         return _google_error_redirect("Login com Google não configurado.")
     except ValueError as exc:

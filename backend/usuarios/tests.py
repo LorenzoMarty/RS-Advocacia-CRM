@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from usuarios.models import Usuario
 
@@ -149,8 +150,18 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(query["client_id"], ["google-client-id"])
         self.assertEqual(query["redirect_uri"], [GOOGLE_CALLBACK_URL])
         self.assertEqual(query["response_type"], ["code"])
-        self.assertEqual(query["scope"], ["openid email profile"])
-        self.assertEqual(query["prompt"], ["select_account"])
+        self.assertEqual(
+            query["scope"][0].split(),
+            [
+                "openid",
+                "email",
+                "profile",
+                "https://www.googleapis.com/auth/calendar.events",
+            ],
+        )
+        self.assertEqual(query["access_type"], ["offline"])
+        self.assertEqual(query["include_granted_scopes"], ["true"])
+        self.assertEqual(query["prompt"], ["consent select_account"])
         self.assertEqual(query["state"], [self.client.session["google_oauth_state"]])
 
     @override_settings(
@@ -177,7 +188,14 @@ class ExcluirCargoTests(TestCase):
         session = self.client.session
         session["google_oauth_state"] = "state-123"
         session.save()
-        requests_post.return_value = make_google_response({"id_token": "id-token"})
+        requests_post.return_value = make_google_response(
+            {
+                "id_token": "id-token",
+                "access_token": "access-token-123",
+                "refresh_token": "refresh-token-123",
+                "expires_in": 3600,
+            }
+        )
         requests_get.return_value = make_google_response(
             {
                 "sub": "google-sub-123",
@@ -204,6 +222,10 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(response["Location"], "http://localhost:5173/#/")
         self.assertEqual(usuario.picture, "https://example.com/avatar.png")
         self.assertEqual(usuario.google_sub, "google-sub-123")
+        self.assertEqual(usuario.google_token, "access-token-123")
+        self.assertEqual(usuario.google_refresh_token, "refresh-token-123")
+        self.assertIsNotNone(usuario.google_token_expiry)
+        self.assertGreater(usuario.google_token_expiry, timezone.now())
         self.assertEqual(self.client.session["usuario_id"], usuario.pk)
         requests_post.assert_called_once_with(
             "https://oauth2.googleapis.com/token",
@@ -235,7 +257,14 @@ class ExcluirCargoTests(TestCase):
         session = self.client.session
         session["google_oauth_state"] = "state-456"
         session.save()
-        requests_post.return_value = make_google_response({"id_token": "id-token"})
+        requests_post.return_value = make_google_response(
+            {
+                "id_token": "id-token",
+                "access_token": "access-token-456",
+                "refresh_token": "refresh-token-456",
+                "expires_in": 3600,
+            }
+        )
         requests_get.return_value = make_google_response(
             {
                 "sub": "google-sub-789",
@@ -258,6 +287,9 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(usuario.nome, "Novo Google")
         self.assertEqual(usuario.cargo, "Operacional")
         self.assertEqual(usuario.google_sub, "google-sub-789")
+        self.assertEqual(usuario.google_token, "access-token-456")
+        self.assertEqual(usuario.google_refresh_token, "refresh-token-456")
+        self.assertIsNotNone(usuario.google_token_expiry)
         self.assertEqual(usuario.picture, "https://example.com/novo.png")
 
     @override_settings(
@@ -272,7 +304,14 @@ class ExcluirCargoTests(TestCase):
         session = self.client.session
         session["google_oauth_state"] = "state-789"
         session.save()
-        requests_post.return_value = make_google_response({"id_token": "id-token"})
+        requests_post.return_value = make_google_response(
+            {
+                "id_token": "id-token",
+                "access_token": "access-token-789",
+                "refresh_token": "refresh-token-789",
+                "expires_in": 3600,
+            }
+        )
         requests_get.return_value = make_google_response(
             {
                 "sub": "google-sub-bad",
@@ -291,6 +330,54 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/#/login?google_error=", response["Location"])
         self.assertFalse(Usuario.objects.filter(email="bad@example.com").exists())
+
+    @override_settings(
+        GOOGLE_CLIENT_ID="google-client-id",
+        GOOGLE_CLIENT_SECRET="google-client-secret",
+        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
+        FRONTEND_URL="http://localhost:5173",
+    )
+    @patch("usuarios.views.requests.get")
+    @patch("usuarios.views.requests.post")
+    def test_retorno_google_preserva_refresh_token_existente(self, requests_post, requests_get):
+        session = self.client.session
+        session["google_oauth_state"] = "state-999"
+        session.save()
+        requests_post.return_value = make_google_response(
+            {
+                "id_token": "id-token",
+                "access_token": "new-access-token",
+                "expires_in": 1800,
+            }
+        )
+        requests_get.return_value = make_google_response(
+            {
+                "sub": "google-sub-999",
+                "email": "persist@example.com",
+                "email_verified": "true",
+                "name": "Persist User",
+                "aud": "google-client-id",
+            }
+        )
+        usuario = Usuario.objects.create(
+            nome="Persist User",
+            email="persist@example.com",
+            cargo="Operacional",
+            google_sub="google-sub-999",
+            google_token="old-access-token",
+            google_refresh_token="persisted-refresh-token",
+        )
+
+        response = self.client.get(
+            reverse("google_callback"),
+            {"code": "auth-code", "state": "state-999"},
+        )
+
+        usuario.refresh_from_db()
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(usuario.google_token, "new-access-token")
+        self.assertEqual(usuario.google_refresh_token, "persisted-refresh-token")
+        self.assertIsNotNone(usuario.google_token_expiry)
 
     @override_settings(FRONTEND_URL="http://localhost:5173")
     @patch("usuarios.views.requests.post")

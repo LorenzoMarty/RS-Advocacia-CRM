@@ -1,25 +1,64 @@
 from django.conf import settings
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 
+GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events"
+
+
+def _persistir_credenciais_google(usuario, credenciais):
+    if usuario is None:
+        return
+
+    update_fields = []
+
+    token = credenciais.token or ""
+    refresh_token = credenciais.refresh_token or ""
+
+    if getattr(usuario, "google_token", "") != token:
+        usuario.google_token = token
+        update_fields.append("google_token")
+
+    if refresh_token and getattr(usuario, "google_refresh_token", "") != refresh_token:
+        usuario.google_refresh_token = refresh_token
+        update_fields.append("google_refresh_token")
+
+    if getattr(usuario, "google_token_expiry", None) != credenciais.expiry:
+        usuario.google_token_expiry = credenciais.expiry
+        update_fields.append("google_token_expiry")
+
+    if update_fields:
+        usuario.save(update_fields=update_fields)
+
+
 def obter_servico_google(usuario):
     """Recupera o serviço do Google Calendar quando o usuário tem tokens salvos."""
+    if usuario is None:
+        return None
+
     token = getattr(usuario, "google_token", "") or ""
     refresh_token = getattr(usuario, "google_refresh_token", "") or ""
+    token_expiry = getattr(usuario, "google_token_expiry", None)
     client_id = getattr(settings, "GOOGLE_CLIENT_ID", "") or ""
     client_secret = getattr(settings, "GOOGLE_CLIENT_SECRET", "") or ""
 
-    if not token or not client_id or not client_secret:
+    if (not token and not refresh_token) or not client_id or not client_secret:
         return None
 
     credenciais = Credentials(
-        token=token,
+        token=token or None,
         refresh_token=refresh_token or None,
         token_uri="https://oauth2.googleapis.com/token",
         client_id=client_id,
         client_secret=client_secret,
+        expiry=token_expiry,
+        scopes=[GOOGLE_CALENDAR_SCOPE],
     )
+
+    if refresh_token and (not credenciais.token or credenciais.expired):
+        credenciais.refresh(Request())
+        _persistir_credenciais_google(usuario, credenciais)
 
     return build("calendar", "v3", credentials=credenciais, cache_discovery=False)
 
