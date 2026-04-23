@@ -122,6 +122,26 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(response.status_code, 200, payload)
         self.assertEqual(serialized_user["cargo_id"], str(cargo.pk))
 
+    @override_settings(GOOGLE_CALENDAR_ID="juridico@group.calendar.google.com")
+    def test_inicializacao_serializa_destino_do_google_calendar(self):
+        usuario = Usuario.objects.create(
+            nome="Usuario Agenda",
+            email="usuario-agenda@example.com",
+            cargo="Administrador",
+        )
+
+        response = self.client.get(reverse("inicializacao"))
+        payload = response.json()
+
+        serialized_user = next(
+            item for item in payload["dados"]["usuarios"] if item["id"] == str(usuario.pk)
+        )
+        self.assertEqual(response.status_code, 200, payload)
+        self.assertEqual(
+            serialized_user["google_calendar_destino"],
+            "juridico@group.calendar.google.com",
+        )
+
     @override_settings(GOOGLE_CLIENT_ID="", GOOGLE_CLIENT_SECRET="")
     def test_login_google_exige_id_de_cliente_configurado(self):
         response = self.client.get(reverse("login_google"))

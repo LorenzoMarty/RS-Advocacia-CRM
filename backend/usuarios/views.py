@@ -13,6 +13,7 @@ from django.urls import Resolver404, resolve, reverse
 from django.utils import timezone
 import requests
 
+from agenda.services.google_calendar import google_calendar_label
 from core.permissions import app_any_permissions_required, app_permissions_required
 from core.utils import (
     resposta_erro,
@@ -566,6 +567,7 @@ def serialize_usuario(
             (usuario.google_refresh_token or "").strip()
             or (usuario.google_token or "").strip()
         ),
+        "google_calendar_destino": google_calendar_label(),
     }
 
 

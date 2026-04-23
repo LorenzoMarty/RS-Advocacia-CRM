@@ -194,6 +194,8 @@ export function AgendaListPage() {
   const days = calendarDays(viewDate, filteredEvents);
   const googleCalendarStatus = searchParams.get("google_calendar") || "";
   const googleCalendarError = searchParams.get("google_error") || "";
+  const googleCalendarDestination =
+    currentUser?.googleCalendarDestination || "agenda principal do Google";
 
   useEffect(() => {
     if (!googleCalendarStatus && !googleCalendarError) {
@@ -309,15 +311,32 @@ export function AgendaListPage() {
               </div>
             </div>
 
-            <div className="toolbar-actions">
-              <a className="btn btn-secondary" href={api.urlConectarGoogleCalendar()}>
-                {currentUser?.googleCalendarConnected
-                  ? "Reconectar Google Calendar"
-                  : "Conectar Google Calendar"}
-              </a>
-              <Link className="btn" to="/agenda/novo">
-                Novo
-              </Link>
+            <div className="toolbar-side">
+              <div className="toolbar-sync">
+                <span
+                  className={`status-badge ${currentUser?.googleCalendarConnected ? "success" : "warn"}`}
+                >
+                  {currentUser?.googleCalendarConnected
+                    ? "Google Calendar conectado"
+                    : "Google Calendar pendente"}
+                </span>
+                <p className="toolbar-sync-copy">
+                  {currentUser?.googleCalendarConnected
+                    ? `Novos compromissos serao enviados para ${googleCalendarDestination}.`
+                    : `Conecte o Google Calendar para enviar os compromissos para ${googleCalendarDestination}.`}
+                </p>
+              </div>
+
+              <div className="toolbar-actions">
+                <a className="btn btn-secondary" href={api.urlConectarGoogleCalendar()}>
+                  {currentUser?.googleCalendarConnected
+                    ? "Reconectar Google Calendar"
+                    : "Conectar Google Calendar"}
+                </a>
+                <Link className="btn" to="/agenda/novo">
+                  Novo
+                </Link>
+              </div>
             </div>
           </div>
         </section>

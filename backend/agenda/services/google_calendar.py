@@ -7,6 +7,29 @@ from googleapiclient.discovery import build
 GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events"
 
 
+def google_calendar_id():
+    calendar_id = getattr(settings, "GOOGLE_CALENDAR_ID", "primary")
+    return calendar_id.strip() or "primary"
+
+
+def google_calendar_timezone():
+    calendar_timezone = getattr(
+        settings,
+        "GOOGLE_CALENDAR_TIMEZONE",
+        getattr(settings, "TIME_ZONE", "America/Sao_Paulo"),
+    )
+    return calendar_timezone.strip() or getattr(
+        settings, "TIME_ZONE", "America/Sao_Paulo"
+    )
+
+
+def google_calendar_label():
+    calendar_id = google_calendar_id()
+    if calendar_id == "primary":
+        return "agenda principal do Google"
+    return calendar_id
+
+
 def _persistir_credenciais_google(usuario, credenciais):
     if usuario is None:
         return
@@ -65,16 +88,18 @@ def obter_servico_google(usuario):
 
 def evento_para_google(evento):
     """Converte o evento interno para o formato exigido pelo Google Calendar."""
+    calendar_timezone = google_calendar_timezone()
     return {
         "summary": evento.titulo,
         "description": evento.descricao,
+        "location": evento.local,
         "start": {
             "dateTime": evento.data_inicio.isoformat(),
-            "timeZone": "America/Sao_Paulo",
+            "timeZone": calendar_timezone,
         },
         "end": {
             "dateTime": evento.data_fim.isoformat(),
-            "timeZone": "America/Sao_Paulo",
+            "timeZone": calendar_timezone,
         },
     }
 
@@ -85,7 +110,10 @@ def criar_evento_google(usuario, evento):
         return None
 
     corpo = evento_para_google(evento)
-    evento_google = servico.events().insert(calendarId="primary", body=corpo).execute()
+    evento_google = servico.events().insert(
+        calendarId=google_calendar_id(),
+        body=corpo,
+    ).execute()
 
     return evento_google.get("id")
 
@@ -100,7 +128,9 @@ def atualizar_evento_google(usuario, evento):
 
     corpo = evento_para_google(evento)
     servico.events().update(
-        calendarId="primary", eventId=evento.google_event_id, body=corpo
+        calendarId=google_calendar_id(),
+        eventId=evento.google_event_id,
+        body=corpo,
     ).execute()
     return evento.google_event_id
 
@@ -114,7 +144,8 @@ def deletar_evento_google(usuario, evento):
         return
 
     servico.events().delete(
-        calendarId="primary", eventId=evento.google_event_id
+        calendarId=google_calendar_id(),
+        eventId=evento.google_event_id,
     ).execute()
 
 

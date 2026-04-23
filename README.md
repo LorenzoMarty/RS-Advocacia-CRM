@@ -1,35 +1,35 @@
 # Agenda-Juri
 
-Sistema desenvolvido para facilitar a rotina de um escritório de advocacia, com gerenciamento de clientes, processos e compromissos.
+Sistema desenvolvido para facilitar a rotina de um escritorio de advocacia, com gerenciamento de clientes, processos e compromissos.
 
 ## Funcionalidades
 
-- Gestão de clientes
-- Gestão de processos
-- Gestão de compromissos
+- Gestao de clientes
+- Gestao de processos
+- Gestao de compromissos
 - Agenda de compromissos
-- Sistema de autenticação
-- Dashboard enxuto e personalizável
+- Sistema de autenticacao
+- Dashboard enxuto e personalizavel
 
 ## Diferencial
 
 O sistema foi pensado para:
 
-- Aplicação prática do Direito
+- Aplicacao pratica do Direito
 - Interface intuitiva e moderna
-- Integração com demais ferramentas como: Google agenda
+- Integracao com demais ferramentas, incluindo Google Agenda
 
 ## Arquitetura
 
-Fluxos principal:
+Fluxo principal:
 
-1. O usuário loga na sua conta
-2. Um cliente é criado
-3. Um processo para um cliente é criado
-4. Um evento do processo é salvo na agenda
-5. As informações ficam disponíveis centralizadas no dashboard ou em páginas separadas por categoria.
+1. O usuario faz login na sua conta.
+2. Um cliente e criado.
+3. Um processo e criado para esse cliente.
+4. Um evento do processo e salvo na agenda.
+5. As informacoes ficam centralizadas no dashboard e nas paginas por categoria.
 
-## Instalação
+## Instalacao
 
 ```bash
 git clone https://github.com/LorenzoMarty/Agenda-Juri.git
@@ -55,14 +55,17 @@ python manage.py runserver
 
 - Python
 - Django
-- PostgreeSQL
+- PostgreSQL
 - React
 
 ## OAuth Google
 
 - O login com Google usa apenas `openid email profile`.
-- A permissÃ£o sensÃ­vel do Google Calendar fica em um fluxo separado, iniciado pela tela de Agenda.
-- Callback exato do backend em produÃ§Ã£o:
+- A permissao sensivel do Google Calendar fica em um fluxo separado, iniciado pela tela de Agenda.
+- Os compromissos sao enviados para a agenda definida em `GOOGLE_CALENDAR_ID`.
+- Use `GOOGLE_CALENDAR_ID=primary` para gravar na agenda principal da conta conectada ou informe o ID de uma agenda compartilhada do Google Calendar.
+- O usuario que autoriza o Google precisa ter permissao de edicao nessa agenda.
+- Callback exato do backend em producao:
   `https://agenda-juri-backend.vercel.app/api/auth/google/callback/`
 - Origin do frontend publicado atualmente:
   `https://agenda-juri-orcin.vercel.app`

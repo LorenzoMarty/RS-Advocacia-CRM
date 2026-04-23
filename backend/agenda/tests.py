@@ -1,11 +1,18 @@
 import json
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from agenda.models import Evento
+from agenda.services.google_calendar import (
+    atualizar_evento_google,
+    criar_evento_google,
+    deletar_evento_google,
+    evento_para_google,
+)
 from clientes.models import Cliente
 from processos.models import Processo
 from usuarios.models import Usuario
@@ -159,3 +166,90 @@ class AgendaGoogleTests(TestCase):
         self.assertEqual(chamada["usuario_pk"], self.usuario.pk)
         self.assertEqual(chamada["evento_pk"], evento.pk)
         self.assertEqual(chamada["google_event_id"], "google-event-999")
+
+
+class GoogleCalendarServiceTests(TestCase):
+    def _evento(self, **overrides):
+        defaults = {
+            "titulo": "Audiencia de instrucao",
+            "descricao": "Preparar sustentacao oral",
+            "local": "Forum Central",
+            "data_inicio": SimpleNamespace(
+                isoformat=lambda: "2026-04-23T09:00:00-03:00"
+            ),
+            "data_fim": SimpleNamespace(
+                isoformat=lambda: "2026-04-23T10:00:00-03:00"
+            ),
+            "google_event_id": "google-event-123",
+        }
+        defaults.update(overrides)
+        return SimpleNamespace(**defaults)
+
+    @override_settings(
+        GOOGLE_CALENDAR_ID="juridico@group.calendar.google.com",
+        GOOGLE_CALENDAR_TIMEZONE="America/Sao_Paulo",
+    )
+    @patch("agenda.services.google_calendar.obter_servico_google")
+    def test_criar_evento_google_usa_agenda_configurada(
+        self,
+        obter_servico_google,
+    ):
+        servico = MagicMock()
+        obter_servico_google.return_value = servico
+        servico.events.return_value.insert.return_value.execute.return_value = {
+            "id": "google-event-999"
+        }
+
+        google_id = criar_evento_google(object(), self._evento())
+
+        self.assertEqual(google_id, "google-event-999")
+        servico.events.return_value.insert.assert_called_once()
+        chamada = servico.events.return_value.insert.call_args.kwargs
+        self.assertEqual(
+            chamada["calendarId"],
+            "juridico@group.calendar.google.com",
+        )
+        self.assertEqual(chamada["body"]["location"], "Forum Central")
+        self.assertEqual(
+            chamada["body"]["start"]["timeZone"],
+            "America/Sao_Paulo",
+        )
+        self.assertEqual(
+            chamada["body"]["end"]["timeZone"],
+            "America/Sao_Paulo",
+        )
+
+    @override_settings(GOOGLE_CALENDAR_ID="juridico@group.calendar.google.com")
+    @patch("agenda.services.google_calendar.obter_servico_google")
+    def test_atualizar_evento_google_usa_agenda_configurada(
+        self,
+        obter_servico_google,
+    ):
+        servico = MagicMock()
+        obter_servico_google.return_value = servico
+        evento = self._evento(google_event_id="google-event-321")
+
+        returned_event_id = atualizar_evento_google(object(), evento)
+
+        self.assertEqual(returned_event_id, "google-event-321")
+        servico.events.return_value.update.assert_called_once_with(
+            calendarId="juridico@group.calendar.google.com",
+            eventId="google-event-321",
+            body=evento_para_google(evento),
+        )
+
+    @override_settings(GOOGLE_CALENDAR_ID="juridico@group.calendar.google.com")
+    @patch("agenda.services.google_calendar.obter_servico_google")
+    def test_deletar_evento_google_usa_agenda_configurada(
+        self,
+        obter_servico_google,
+    ):
+        servico = MagicMock()
+        obter_servico_google.return_value = servico
+
+        deletar_evento_google(object(), self._evento())
+
+        servico.events.return_value.delete.assert_called_once_with(
+            calendarId="juridico@group.calendar.google.com",
+            eventId="google-event-123",
+        )

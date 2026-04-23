@@ -136,6 +136,7 @@ function userFromApi(user) {
     picture: user.foto || '',
     roleId: String(user.cargo_id || user.cargo || ''),
     googleCalendarConnected: Boolean(user.google_calendar_conectado),
+    googleCalendarDestination: user.google_calendar_destino || 'agenda principal do Google',
   };
 }
 
