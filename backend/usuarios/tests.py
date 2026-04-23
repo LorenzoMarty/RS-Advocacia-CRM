@@ -11,7 +11,6 @@ from usuarios.models import Usuario
 
 
 GOOGLE_CALLBACK_URL = "http://testserver/api/auth/google/callback/"
-DEFAULT_GOOGLE_CALLBACK_URL = "http://testserver/api/autenticacao/google/retorno/"
 
 
 def make_google_response(payload, status_code=200):
@@ -164,7 +163,7 @@ class ExcluirCargoTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         query = parse_qs(urlsplit(response["Location"]).query)
-        self.assertEqual(query["redirect_uri"], [DEFAULT_GOOGLE_CALLBACK_URL])
+        self.assertEqual(query["redirect_uri"], [GOOGLE_CALLBACK_URL])
 
     @override_settings(
         GOOGLE_CLIENT_ID="google-client-id",

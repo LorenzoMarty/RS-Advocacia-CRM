@@ -241,7 +241,7 @@ def _google_client_secret() -> str:
 
 
 def _default_google_redirect_uri(request: HttpRequest) -> str:
-    return request.build_absolute_uri(reverse("retorno_google"))
+    return request.build_absolute_uri(reverse("google_callback"))
 
 
 def _google_redirect_uri(request: HttpRequest) -> str:
