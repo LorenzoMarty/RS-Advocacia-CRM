@@ -10,6 +10,10 @@ from django.urls import reverse
 from usuarios.models import Usuario
 
 
+GOOGLE_CALLBACK_URL = "http://testserver/api/auth/google/callback/"
+DEFAULT_GOOGLE_CALLBACK_URL = "http://testserver/api/autenticacao/google/retorno/"
+
+
 def make_google_response(payload, status_code=200):
     class Response:
         def json(self):
@@ -130,7 +134,7 @@ class ExcluirCargoTests(TestCase):
     @override_settings(
         GOOGLE_CLIENT_ID="google-client-id",
         GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI="http://testserver/api/autenticacao/google/retorno/",
+        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
     )
     def test_login_google_redireciona_para_pagina_do_google(self):
         response = self.client.get(reverse("login_google"))
@@ -144,9 +148,7 @@ class ExcluirCargoTests(TestCase):
             "https://accounts.google.com/o/oauth2/v2/auth",
         )
         self.assertEqual(query["client_id"], ["google-client-id"])
-        self.assertEqual(
-            query["redirect_uri"], ["http://testserver/api/autenticacao/google/retorno/"]
-        )
+        self.assertEqual(query["redirect_uri"], [GOOGLE_CALLBACK_URL])
         self.assertEqual(query["response_type"], ["code"])
         self.assertEqual(query["scope"], ["openid email profile"])
         self.assertEqual(query["prompt"], ["select_account"])
@@ -155,7 +157,19 @@ class ExcluirCargoTests(TestCase):
     @override_settings(
         GOOGLE_CLIENT_ID="google-client-id",
         GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI="http://testserver/api/autenticacao/google/retorno/",
+        GOOGLE_REDIRECT_URI="http://testserver/api/auth/google/callback-inexistente/",
+    )
+    def test_login_google_ignora_redirect_uri_invalida_e_usa_callback_local(self):
+        response = self.client.get(reverse("login_google"))
+
+        self.assertEqual(response.status_code, 302)
+        query = parse_qs(urlsplit(response["Location"]).query)
+        self.assertEqual(query["redirect_uri"], [DEFAULT_GOOGLE_CALLBACK_URL])
+
+    @override_settings(
+        GOOGLE_CLIENT_ID="google-client-id",
+        GOOGLE_CLIENT_SECRET="google-client-secret",
+        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
         FRONTEND_URL="http://localhost:5173",
     )
     @patch("usuarios.views.requests.get")
@@ -182,7 +196,7 @@ class ExcluirCargoTests(TestCase):
         )
 
         response = self.client.get(
-            reverse("retorno_google"),
+            reverse("google_callback"),
             {"code": "auth-code", "state": "state-123"},
         )
 
@@ -198,7 +212,7 @@ class ExcluirCargoTests(TestCase):
                 "code": "auth-code",
                 "client_id": "google-client-id",
                 "client_secret": "google-client-secret",
-                "redirect_uri": "http://testserver/api/autenticacao/google/retorno/",
+                "redirect_uri": GOOGLE_CALLBACK_URL,
                 "grant_type": "authorization_code",
             },
             timeout=10,
@@ -212,7 +226,7 @@ class ExcluirCargoTests(TestCase):
     @override_settings(
         GOOGLE_CLIENT_ID="google-client-id",
         GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI="http://testserver/api/autenticacao/google/retorno/",
+        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
         GOOGLE_DEFAULT_CARGO="Operacional",
         FRONTEND_URL="http://localhost:5173",
     )
@@ -235,7 +249,7 @@ class ExcluirCargoTests(TestCase):
         )
 
         response = self.client.get(
-            reverse("retorno_google"),
+            reverse("google_callback"),
             {"code": "auth-code", "state": "state-456"},
         )
 
@@ -250,7 +264,7 @@ class ExcluirCargoTests(TestCase):
     @override_settings(
         GOOGLE_CLIENT_ID="google-client-id",
         GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI="http://testserver/api/autenticacao/google/retorno/",
+        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
         FRONTEND_URL="http://localhost:5173",
     )
     @patch("usuarios.views.requests.get")
@@ -271,7 +285,7 @@ class ExcluirCargoTests(TestCase):
         )
 
         response = self.client.get(
-            reverse("retorno_google"),
+            reverse("google_callback"),
             {"code": "auth-code", "state": "state-789"},
         )
 
@@ -287,7 +301,7 @@ class ExcluirCargoTests(TestCase):
         session.save()
 
         response = self.client.get(
-            reverse("retorno_google"),
+            reverse("google_callback"),
             {"code": "auth-code", "state": "state-falso"},
         )
 

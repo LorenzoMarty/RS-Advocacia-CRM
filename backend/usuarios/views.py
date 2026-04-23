@@ -1,6 +1,6 @@
 from secrets import token_urlsafe
 from typing import Any, cast
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 from django.contrib.auth import login as autenticar_django, logout as encerrar_sessao_django
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.urls import reverse
+from django.urls import Resolver404, resolve, reverse
 import requests
 
 from core.permissions import app_any_permissions_required, app_permissions_required
@@ -240,11 +240,28 @@ def _google_client_secret() -> str:
     return client_secret
 
 
+def _default_google_redirect_uri(request: HttpRequest) -> str:
+    return request.build_absolute_uri(reverse("retorno_google"))
+
+
 def _google_redirect_uri(request: HttpRequest) -> str:
     configured_uri = getattr(settings, "GOOGLE_REDIRECT_URI", "").strip()
-    if configured_uri:
-        return configured_uri
-    return request.build_absolute_uri(reverse("retorno_google"))
+    if not configured_uri:
+        return _default_google_redirect_uri(request)
+
+    if configured_uri.startswith("/"):
+        candidate_path = configured_uri
+        resolved_uri = request.build_absolute_uri(configured_uri)
+    else:
+        candidate_path = urlsplit(configured_uri).path or ""
+        resolved_uri = configured_uri
+
+    try:
+        resolve(candidate_path)
+    except Resolver404:
+        return _default_google_redirect_uri(request)
+
+    return resolved_uri
 
 
 def _frontend_redirect_url(path: str = "/", params: dict[str, str] | None = None) -> str:
