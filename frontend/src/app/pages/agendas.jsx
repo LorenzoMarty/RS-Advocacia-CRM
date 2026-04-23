@@ -6,6 +6,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 
+import { api } from "../api";
 import { PageChrome, StatusBadge } from "../layout";
 import { useAppState } from "../store";
 import {
@@ -115,7 +116,8 @@ function RailList({ events, clients, processes, emptyTitle, emptyCopy }) {
 }
 
 export function AgendaListPage() {
-  const { clients, events, processes } = useAppState();
+  const { addFlash, clients, currentUser, events, processes } = useAppState();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [eventType, setEventType] = useState("");
   const [responsible, setResponsible] = useState("");
@@ -190,6 +192,25 @@ export function AgendaListPage() {
     .filter((event) => isOverdueEvent(event))
     .slice(0, 6);
   const days = calendarDays(viewDate, filteredEvents);
+  const googleCalendarStatus = searchParams.get("google_calendar") || "";
+  const googleCalendarError = searchParams.get("google_error") || "";
+
+  useEffect(() => {
+    if (!googleCalendarStatus && !googleCalendarError) {
+      return;
+    }
+
+    if (googleCalendarStatus === "connected") {
+      addFlash("Google Calendar conectado. Novos compromissos podem ser sincronizados.", "success");
+    } else if (googleCalendarError) {
+      addFlash(googleCalendarError, "error");
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete("google_calendar");
+    nextSearchParams.delete("google_error");
+    setSearchParams(nextSearchParams, { replace: true });
+  }, [addFlash, googleCalendarError, googleCalendarStatus, searchParams, setSearchParams]);
 
   return (
     <>
@@ -288,9 +309,16 @@ export function AgendaListPage() {
               </div>
             </div>
 
-            <Link className="btn" to="/agenda/novo">
-              Novo
-            </Link>
+            <div className="toolbar-actions">
+              <a className="btn btn-secondary" href={api.urlConectarGoogleCalendar()}>
+                {currentUser?.googleCalendarConnected
+                  ? "Reconectar Google Calendar"
+                  : "Conectar Google Calendar"}
+              </a>
+              <Link className="btn" to="/agenda/novo">
+                Novo
+              </Link>
+            </div>
           </div>
         </section>
 

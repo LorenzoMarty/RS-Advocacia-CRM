@@ -58,6 +58,16 @@ python manage.py runserver
 - PostgreeSQL
 - React
 
+## OAuth Google
+
+- O login com Google usa apenas `openid email profile`.
+- A permissÃ£o sensÃ­vel do Google Calendar fica em um fluxo separado, iniciado pela tela de Agenda.
+- Callback exato do backend em produÃ§Ã£o:
+  `https://agenda-juri-backend.vercel.app/api/auth/google/callback/`
+- Origin do frontend publicado atualmente:
+  `https://agenda-juri-orcin.vercel.app`
+- O mesmo `GOOGLE_CLIENT_ID` deve ser usado no backend que inicia o OAuth e no projeto do Google Cloud onde os test users foram cadastrados.
+
 ## Autor
 
 **Lorenzo Marty**\

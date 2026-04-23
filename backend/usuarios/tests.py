@@ -6,7 +6,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.utils import timezone
 
 from usuarios.models import Usuario
 
@@ -156,13 +155,44 @@ class ExcluirCargoTests(TestCase):
                 "openid",
                 "email",
                 "profile",
-                "https://www.googleapis.com/auth/calendar.events",
             ],
         )
         self.assertEqual(query["access_type"], ["offline"])
         self.assertEqual(query["include_granted_scopes"], ["true"])
         self.assertEqual(query["prompt"], ["consent select_account"])
-        self.assertEqual(query["state"], [self.client.session["google_oauth_state"]])
+        self.assertEqual(
+            query["state"],
+            [self.client.session["google_oauth_state"]["value"]],
+        )
+        self.assertEqual(self.client.session["google_oauth_state"]["flow"], "login")
+
+    @override_settings(
+        GOOGLE_CLIENT_ID="google-client-id",
+        GOOGLE_CLIENT_SECRET="google-client-secret",
+        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
+    )
+    def test_conectar_google_calendar_redireciona_com_escopo_sensivel(self):
+        response = self.client.get(reverse("conectar_google_calendar"))
+
+        self.assertEqual(response.status_code, 302)
+        query = parse_qs(urlsplit(response["Location"]).query)
+        self.assertEqual(
+            query["scope"][0].split(),
+            [
+                "openid",
+                "email",
+                "profile",
+                "https://www.googleapis.com/auth/calendar.events",
+            ],
+        )
+        self.assertEqual(
+            query["state"],
+            [self.client.session["google_oauth_state"]["value"]],
+        )
+        self.assertEqual(
+            self.client.session["google_oauth_state"]["flow"],
+            "calendar",
+        )
 
     @override_settings(
         GOOGLE_CLIENT_ID="google-client-id",
@@ -186,7 +216,7 @@ class ExcluirCargoTests(TestCase):
     @patch("usuarios.views.requests.post")
     def test_retorno_google_vincula_usuario_existente(self, requests_post, requests_get):
         session = self.client.session
-        session["google_oauth_state"] = "state-123"
+        session["google_oauth_state"] = {"value": "state-123", "flow": "login"}
         session.save()
         requests_post.return_value = make_google_response(
             {
@@ -222,10 +252,9 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(response["Location"], "http://localhost:5173/#/")
         self.assertEqual(usuario.picture, "https://example.com/avatar.png")
         self.assertEqual(usuario.google_sub, "google-sub-123")
-        self.assertEqual(usuario.google_token, "access-token-123")
-        self.assertEqual(usuario.google_refresh_token, "refresh-token-123")
-        self.assertIsNotNone(usuario.google_token_expiry)
-        self.assertGreater(usuario.google_token_expiry, timezone.now())
+        self.assertEqual(usuario.google_token, "")
+        self.assertEqual(usuario.google_refresh_token, "")
+        self.assertIsNone(usuario.google_token_expiry)
         self.assertEqual(self.client.session["usuario_id"], usuario.pk)
         requests_post.assert_called_once_with(
             "https://oauth2.googleapis.com/token",
@@ -255,7 +284,7 @@ class ExcluirCargoTests(TestCase):
     @patch("usuarios.views.requests.post")
     def test_retorno_google_cria_usuario_automaticamente(self, requests_post, requests_get):
         session = self.client.session
-        session["google_oauth_state"] = "state-456"
+        session["google_oauth_state"] = {"value": "state-456", "flow": "login"}
         session.save()
         requests_post.return_value = make_google_response(
             {
@@ -287,9 +316,9 @@ class ExcluirCargoTests(TestCase):
         self.assertEqual(usuario.nome, "Novo Google")
         self.assertEqual(usuario.cargo, "Operacional")
         self.assertEqual(usuario.google_sub, "google-sub-789")
-        self.assertEqual(usuario.google_token, "access-token-456")
-        self.assertEqual(usuario.google_refresh_token, "refresh-token-456")
-        self.assertIsNotNone(usuario.google_token_expiry)
+        self.assertEqual(usuario.google_token, "")
+        self.assertEqual(usuario.google_refresh_token, "")
+        self.assertIsNone(usuario.google_token_expiry)
         self.assertEqual(usuario.picture, "https://example.com/novo.png")
 
     @override_settings(
@@ -302,7 +331,7 @@ class ExcluirCargoTests(TestCase):
     @patch("usuarios.views.requests.post")
     def test_retorno_google_rejeita_id_de_cliente_invalido(self, requests_post, requests_get):
         session = self.client.session
-        session["google_oauth_state"] = "state-789"
+        session["google_oauth_state"] = {"value": "state-789", "flow": "login"}
         session.save()
         requests_post.return_value = make_google_response(
             {
@@ -339,9 +368,16 @@ class ExcluirCargoTests(TestCase):
     )
     @patch("usuarios.views.requests.get")
     @patch("usuarios.views.requests.post")
-    def test_retorno_google_preserva_refresh_token_existente(self, requests_post, requests_get):
+    def test_retorno_google_calendar_preserva_refresh_token_existente(
+        self,
+        requests_post,
+        requests_get,
+    ):
         session = self.client.session
-        session["google_oauth_state"] = "state-999"
+        session["google_oauth_state"] = {
+            "value": "state-999",
+            "flow": "calendar",
+        }
         session.save()
         requests_post.return_value = make_google_response(
             {
@@ -375,6 +411,10 @@ class ExcluirCargoTests(TestCase):
 
         usuario.refresh_from_db()
         self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response["Location"],
+            "http://localhost:5173/#/agenda?google_calendar=connected",
+        )
         self.assertEqual(usuario.google_token, "new-access-token")
         self.assertEqual(usuario.google_refresh_token, "persisted-refresh-token")
         self.assertIsNotNone(usuario.google_token_expiry)
@@ -383,7 +423,7 @@ class ExcluirCargoTests(TestCase):
     @patch("usuarios.views.requests.post")
     def test_retorno_google_rejeita_estado_invalido(self, requests_post):
         session = self.client.session
-        session["google_oauth_state"] = "state-real"
+        session["google_oauth_state"] = {"value": "state-real", "flow": "login"}
         session.save()
 
         response = self.client.get(

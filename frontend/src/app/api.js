@@ -138,6 +138,7 @@ export const api = {
   carregarInicializacao: () => apiRequest('/api/inicializacao/'),
   obterUsuarioAtual: () => apiRequest('/api/usuarios/atual/'),
   urlLoginGoogle: () => apiUrl('/api/autenticacao/google/'),
+  urlConectarGoogleCalendar: () => apiUrl('/api/autenticacao/google/calendario/'),
   sair: () => apiRequest('/api/autenticacao/sair/', { method: 'POST' }),
   listClients: () => apiRequest('/api/clientes/'),
   createClient: (payload) => apiRequest('/api/clientes/criar/', jsonOptions('POST', payload)),

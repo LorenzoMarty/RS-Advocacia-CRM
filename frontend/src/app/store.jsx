@@ -135,6 +135,7 @@ function userFromApi(user) {
     email: user.email || '',
     picture: user.foto || '',
     roleId: String(user.cargo_id || user.cargo || ''),
+    googleCalendarConnected: Boolean(user.google_calendar_conectado),
   };
 }
 
