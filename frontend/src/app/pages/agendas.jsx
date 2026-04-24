@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Link,
   useNavigate,
@@ -194,13 +194,28 @@ export function AgendaListPage() {
   const days = calendarDays(viewDate, filteredEvents);
   const googleCalendarStatus = searchParams.get("google_calendar") || "";
   const googleCalendarError = searchParams.get("google_error") || "";
+  const googleCalendarFeedbackKey = googleCalendarStatus
+    ? `status:${googleCalendarStatus}`
+    : googleCalendarError
+      ? `error:${googleCalendarError}`
+      : "";
   const googleCalendarDestination =
     currentUser?.googleCalendarDestination || "agenda principal do Google";
+  const handledGoogleCalendarFeedbackRef = useRef("");
 
   useEffect(() => {
-    if (!googleCalendarStatus && !googleCalendarError) {
+    if (!googleCalendarFeedbackKey) {
+      handledGoogleCalendarFeedbackRef.current = "";
       return;
     }
+
+    if (
+      handledGoogleCalendarFeedbackRef.current === googleCalendarFeedbackKey
+    ) {
+      return;
+    }
+
+    handledGoogleCalendarFeedbackRef.current = googleCalendarFeedbackKey;
 
     if (googleCalendarStatus === "connected") {
       addFlash("Google Calendar conectado. Novos compromissos podem ser sincronizados.", "success");
@@ -212,7 +227,14 @@ export function AgendaListPage() {
     nextSearchParams.delete("google_calendar");
     nextSearchParams.delete("google_error");
     setSearchParams(nextSearchParams, { replace: true });
-  }, [addFlash, googleCalendarError, googleCalendarStatus, searchParams, setSearchParams]);
+  }, [
+    addFlash,
+    googleCalendarError,
+    googleCalendarFeedbackKey,
+    googleCalendarStatus,
+    searchParams,
+    setSearchParams,
+  ]);
 
   return (
     <>
