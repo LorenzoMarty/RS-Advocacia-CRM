@@ -116,13 +116,21 @@ function RailList({ events, clients, processes, emptyTitle, emptyCopy }) {
 }
 
 export function AgendaListPage() {
-  const { addFlash, clients, currentUser, events, processes } = useAppState();
+  const {
+    addFlash,
+    clients,
+    currentUser,
+    events,
+    processes,
+    syncGoogleCalendarEvents,
+  } = useAppState();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [eventType, setEventType] = useState("");
   const [responsible, setResponsible] = useState("");
   const [status, setStatus] = useState("");
   const [period, setPeriod] = useState("");
+  const [isGoogleSyncing, setIsGoogleSyncing] = useState(false);
   const [viewDate, setViewDate] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
@@ -218,7 +226,7 @@ export function AgendaListPage() {
     handledGoogleCalendarFeedbackRef.current = googleCalendarFeedbackKey;
 
     if (googleCalendarStatus === "connected") {
-      addFlash("Google Calendar conectado. Novos compromissos podem ser sincronizados.", "success");
+      addFlash("Google Calendar conectado. Compromissos do sistema e do Google podem ser sincronizados.", "success");
     } else if (googleCalendarError) {
       addFlash(googleCalendarError, "error");
     }
@@ -235,6 +243,19 @@ export function AgendaListPage() {
     searchParams,
     setSearchParams,
   ]);
+
+  async function handleGoogleCalendarSync() {
+    if (isGoogleSyncing) {
+      return;
+    }
+
+    setIsGoogleSyncing(true);
+    try {
+      await syncGoogleCalendarEvents();
+    } finally {
+      setIsGoogleSyncing(false);
+    }
+  }
 
   return (
     <>
@@ -344,12 +365,24 @@ export function AgendaListPage() {
                 </span>
                 <p className="toolbar-sync-copy">
                   {currentUser?.googleCalendarConnected
-                    ? `Novos compromissos serao enviados para ${googleCalendarDestination}.`
-                    : `Conecte o Google Calendar para enviar os compromissos para ${googleCalendarDestination}.`}
+                    ? `Compromissos da agenda interna e do Google Calendar podem ser sincronizados com ${googleCalendarDestination}.`
+                    : `Conecte o Google Calendar para sincronizar os compromissos com ${googleCalendarDestination}.`}
                 </p>
               </div>
 
               <div className="toolbar-actions">
+                {currentUser?.googleCalendarConnected ? (
+                  <button
+                    className="btn btn-secondary"
+                    type="button"
+                    onClick={handleGoogleCalendarSync}
+                    disabled={isGoogleSyncing}
+                  >
+                    {isGoogleSyncing
+                      ? "Sincronizando..."
+                      : "Sincronizar agenda"}
+                  </button>
+                ) : null}
                 <a className="btn btn-secondary" href={api.urlConectarGoogleCalendar()}>
                   {currentUser?.googleCalendarConnected
                     ? "Reconectar Google Calendar"

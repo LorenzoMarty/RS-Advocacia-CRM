@@ -4,6 +4,7 @@ from agenda.forms import EventoForm
 from agenda.models import Evento
 from agenda.services.google_calendar import (
     criar_evento_google,
+    sincronizar_agenda_google,
     atualizar_evento_google,
     deletar_evento_google,
 )
@@ -98,9 +99,18 @@ def listar_eventos(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
+    sincronizacao_google = None
+    try:
+        sincronizacao_google = sincronizar_agenda_google(_usuario_google_atual(request))
+    except Exception:
+        sincronizacao_google = None
+
     eventos = Evento.objects.select_related("cliente", "processo").all()
     serialized = [serialize_evento(evento) for evento in eventos]
-    return resposta_sucesso({"eventos": serialized})
+    payload = {"eventos": serialized}
+    if sincronizacao_google is not None:
+        payload["sincronizacao_google"] = sincronizacao_google
+    return resposta_sucesso(payload)
 
 
 @app_permissions_required("agenda.add_evento")
@@ -121,7 +131,7 @@ def criar_evento(request):
 
         try:
             google_id = criar_evento_google(_usuario_google_atual(request), evento)
-            if google_id:
+            if isinstance(google_id, str) and google_id.strip():
                 evento.google_event_id = google_id
                 evento.save(update_fields=["google_event_id"])
         except Exception:
@@ -168,7 +178,14 @@ def editar_evento(request, evento_id):
         evento = form.save()
 
         try:
-            atualizar_evento_google(_usuario_google_atual(request), evento)
+            google_id = atualizar_evento_google(_usuario_google_atual(request), evento)
+            if (
+                isinstance(google_id, str)
+                and google_id.strip()
+                and not evento.google_event_id
+            ):
+                evento.google_event_id = google_id
+                evento.save(update_fields=["google_event_id"])
         except Exception:
             pass
 
@@ -215,3 +232,26 @@ def eventos_calendario(request):
         for evento in eventos
     ]
     return resposta_sucesso({"eventos": serialized})
+
+
+@app_permissions_required("agenda.view_evento")
+def sincronizar_google_calendar(request):
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    resumo = sincronizar_agenda_google(_usuario_google_atual(request))
+    if not resumo["conectado"]:
+        return resposta_erro(
+            "Conecte o Google Calendar para sincronizar os compromissos.",
+            status=400,
+        )
+
+    eventos = Evento.objects.select_related("cliente", "processo").all()
+    serialized = [serialize_evento(evento) for evento in eventos]
+    return resposta_sucesso(
+        {
+            "eventos": serialized,
+            "sincronizacao_google": resumo,
+        },
+        mensagem="Agenda sincronizada com Google Calendar.",
+    )

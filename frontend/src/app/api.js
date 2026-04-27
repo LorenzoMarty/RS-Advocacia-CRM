@@ -149,6 +149,7 @@ export const api = {
   updateProcess: (id, payload) => apiRequest(`/api/processos/${id}/editar/`, jsonOptions('PUT', payload)),
   deleteProcess: (id) => apiRequest(`/api/processos/${id}/excluir/`, { method: 'DELETE' }),
   listEvents: () => eventRequest(),
+  syncGoogleCalendar: () => apiRequest('/api/eventos/sincronizar/google/', { method: 'POST' }),
   getEvent: (id) => eventRequest(`${id}/`),
   createEvent: (payload) => eventRequest('criar/', jsonOptions('POST', payload)),
   updateEvent: (id, payload) => eventRequest(`${id}/editar/`, jsonOptions('PUT', payload)),

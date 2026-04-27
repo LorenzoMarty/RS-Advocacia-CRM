@@ -261,6 +261,36 @@ function roleToPayload(role) {
   };
 }
 
+function googleSyncMessage(summary) {
+  if (!summary) {
+    return 'Agenda sincronizada com Google Calendar.';
+  }
+
+  const parts = [];
+
+  if (summary.importados) {
+    parts.push(`${summary.importados} importado(s)`);
+  }
+  if (summary.atualizados) {
+    parts.push(`${summary.atualizados} atualizado(s)`);
+  }
+  if (summary.exportados) {
+    parts.push(`${summary.exportados} enviado(s) ao Google`);
+  }
+  if (summary.vinculados) {
+    parts.push(`${summary.vinculados} vinculado(s)`);
+  }
+  if (summary.removidos) {
+    parts.push(`${summary.removidos} removido(s)`);
+  }
+
+  if (!parts.length) {
+    return 'Agenda sincronizada. Nenhuma diferenca nova foi encontrada.';
+  }
+
+  return `Agenda sincronizada: ${parts.join(', ')}.`;
+}
+
 export function AppStateProvider({ children }) {
   const [permissionGroups, setPermissionGroups] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -567,6 +597,24 @@ export function AppStateProvider({ children }) {
     }
   }
 
+  async function syncGoogleCalendarEvents() {
+    if (!isEventsApiEnabled) {
+      addFlash('API de eventos nao configurada.', 'error');
+      return null;
+    }
+
+    try {
+      const response = await api.syncGoogleCalendar();
+      const syncedEvents = eventsFromResponse(response);
+      setEvents(syncedEvents);
+      addFlash(googleSyncMessage(response.sincronizacao_google), 'success');
+      return response.sincronizacao_google || {};
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
+  }
+
   async function saveUser(payload) {
     if (!payload.id) {
       addFlash('Usuários são criados automaticamente pelo login com Google.', 'error');
@@ -750,6 +798,7 @@ export function AppStateProvider({ children }) {
     saveClient,
     saveProcess,
     saveEvent,
+    syncGoogleCalendarEvents,
     loadEvent,
     saveUser,
     saveRole,

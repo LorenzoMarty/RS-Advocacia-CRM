@@ -12,6 +12,7 @@ from agenda.services.google_calendar import (
     criar_evento_google,
     deletar_evento_google,
     evento_para_google,
+    sincronizar_agenda_google,
 )
 from clientes.models import Cliente
 from processos.models import Processo
@@ -167,6 +168,26 @@ class AgendaGoogleTests(TestCase):
         self.assertEqual(chamada["evento_pk"], evento.pk)
         self.assertEqual(chamada["google_event_id"], "google-event-999")
 
+    @patch("agenda.views.sincronizar_agenda_google")
+    def test_listar_eventos_sincroniza_google_automaticamente(
+        self,
+        sincronizar_agenda_google_mock,
+    ):
+        sincronizar_agenda_google_mock.return_value = {
+            "conectado": True,
+            "importados": 0,
+            "atualizados": 0,
+            "exportados": 0,
+            "vinculados": 0,
+            "removidos": 0,
+        }
+
+        response = self.client.get(reverse("listar_eventos"))
+
+        self.assertEqual(response.status_code, 200, response.json())
+        sincronizar_agenda_google_mock.assert_called_once()
+        self.assertIn("sincronizacao_google", response.json()["dados"])
+
 
 class GoogleCalendarServiceTests(TestCase):
     def _evento(self, **overrides):
@@ -252,4 +273,147 @@ class GoogleCalendarServiceTests(TestCase):
         servico.events.return_value.delete.assert_called_once_with(
             calendarId="juridico@group.calendar.google.com",
             eventId="google-event-123",
+        )
+
+
+class GoogleCalendarSyncTests(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Advogada Google",
+            email="advogada@example.com",
+            cargo="Administrador",
+            google_token="access-token",
+            google_refresh_token="refresh-token",
+        )
+        self.cliente = Cliente.objects.create(
+            nome="Cliente Teste",
+            email="cliente@example.com",
+            telefone="11999999999",
+            cpf="123.456.789-00",
+            tipo_cliente="esporadico",
+        )
+        self.processo = Processo.objects.create(
+            numero_processo="0001234-56.2026.8.26.0001",
+            cliente=self.cliente,
+            descricao="Processo de teste",
+            vara="1a Vara",
+            area_juridica="Civel",
+            status="Ativo",
+            advogado_responsavel=self.usuario.nome,
+        )
+
+    def _evento_local(self, **overrides):
+        defaults = {
+            "titulo": "Reuniao com cliente",
+            "descricao": "Discutir estrategia",
+            "data_inicio": "2026-04-24T09:00:00-03:00",
+            "data_fim": "2026-04-24T10:00:00-03:00",
+            "tipo_evento": "Reuniao",
+            "status": "Agendado",
+            "prioridade": "Media",
+            "cliente": self.cliente,
+            "processo": self.processo,
+            "responsavel": self.usuario.nome,
+            "criado_por": self.usuario.nome,
+            "local": "Escritorio",
+            "observacoes": "",
+            "concluido": False,
+        }
+        defaults.update(overrides)
+        return Evento.objects.create(**defaults)
+
+    def _evento_google(self, **overrides):
+        defaults = {
+            "id": "google-event-123",
+            "status": "confirmed",
+            "summary": "Reuniao com cliente",
+            "description": "Discutir estrategia",
+            "location": "Escritorio",
+            "start": {"dateTime": "2026-04-24T09:00:00-03:00"},
+            "end": {"dateTime": "2026-04-24T10:00:00-03:00"},
+        }
+        defaults.update(overrides)
+        return defaults
+
+    def _mock_google_service(self, items=None, insert_response=None):
+        servico = MagicMock()
+        items = items if items is not None else []
+        insert_response = insert_response or {"id": "google-event-exportado"}
+        servico.events.return_value.list.return_value.execute.side_effect = [
+            {"items": items}
+        ]
+        servico.events.return_value.insert.return_value.execute.return_value = (
+            insert_response
+        )
+        return servico
+
+    @patch("agenda.services.google_calendar.obter_servico_google")
+    def test_sincronizar_agenda_google_importa_evento_novo_do_google(
+        self,
+        obter_servico_google,
+    ):
+        obter_servico_google.return_value = self._mock_google_service(
+            items=[self._evento_google()]
+        )
+
+        resumo = sincronizar_agenda_google(self.usuario)
+
+        evento = Evento.objects.get(google_event_id="google-event-123")
+        self.assertTrue(resumo["conectado"])
+        self.assertEqual(resumo["importados"], 1)
+        self.assertEqual(evento.cliente.nome, "Google Agenda")
+        self.assertEqual(evento.processo.numero_processo, "GOOGLE-CALENDAR")
+        self.assertEqual(evento.criado_por, "Google Calendar")
+
+    @patch("agenda.services.google_calendar.obter_servico_google")
+    def test_sincronizar_agenda_google_vincula_evento_local_sem_duplicar(
+        self,
+        obter_servico_google,
+    ):
+        evento = self._evento_local()
+        servico = self._mock_google_service(items=[self._evento_google()])
+        obter_servico_google.return_value = servico
+
+        resumo = sincronizar_agenda_google(self.usuario)
+
+        evento.refresh_from_db()
+        self.assertEqual(resumo["vinculados"], 1)
+        self.assertEqual(evento.google_event_id, "google-event-123")
+        servico.events.return_value.insert.assert_not_called()
+        self.assertEqual(Evento.objects.count(), 1)
+
+    @patch("agenda.services.google_calendar.obter_servico_google")
+    def test_sincronizar_agenda_google_exporta_evento_local_sem_vinculo(
+        self,
+        obter_servico_google,
+    ):
+        evento = self._evento_local()
+        obter_servico_google.return_value = self._mock_google_service(items=[])
+
+        resumo = sincronizar_agenda_google(self.usuario)
+
+        evento.refresh_from_db()
+        self.assertEqual(resumo["exportados"], 1)
+        self.assertEqual(evento.google_event_id, "google-event-exportado")
+
+    @patch("agenda.services.google_calendar.obter_servico_google")
+    def test_sincronizar_agenda_google_remove_evento_cancelado(
+        self,
+        obter_servico_google,
+    ):
+        self._evento_local(google_event_id="google-event-cancelado")
+        obter_servico_google.return_value = self._mock_google_service(
+            items=[
+                self._evento_google(
+                    id="google-event-cancelado",
+                    status="cancelled",
+                )
+            ]
+        )
+
+        resumo = sincronizar_agenda_google(self.usuario)
+
+        self.assertEqual(resumo["removidos"], 1)
+        self.assertFalse(
+            Evento.objects.filter(google_event_id="google-event-cancelado").exists()
         )

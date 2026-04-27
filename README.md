@@ -63,6 +63,8 @@ python manage.py runserver
 - O login com Google usa apenas `openid email profile`.
 - A permissao sensivel do Google Calendar fica em um fluxo separado, iniciado pela tela de Agenda.
 - Os compromissos sao enviados para a agenda definida em `GOOGLE_CALENDAR_ID`.
+- A sincronizacao funciona nos dois sentidos: eventos locais sem vinculo sao enviados ao Google, e eventos do Google entram na agenda interna.
+- Eventos importados do Google usam um cliente tecnico `Google Agenda` e um processo tecnico `GOOGLE-CALENDAR` ate serem reclassificados na aplicacao.
 - Use `GOOGLE_CALENDAR_ID=primary` para gravar na agenda principal da conta conectada ou informe o ID de uma agenda compartilhada do Google Calendar.
 - O usuario que autoriza o Google precisa ter permissao de edicao nessa agenda.
 - Callback exato do backend em producao:
