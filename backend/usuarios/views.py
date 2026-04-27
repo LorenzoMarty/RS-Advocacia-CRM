@@ -334,15 +334,29 @@ def _verify_google_credential(credential: str) -> dict[str, Any]:
     if idinfo.get("aud") != client_id:
         raise ValueError("Token Google emitido para outro ID de cliente.")
 
-    hosted_domain = getattr(settings, "GOOGLE_ALLOWED_HOSTED_DOMAIN", "").strip()
-    if hosted_domain and idinfo.get("hd") != hosted_domain:
-        raise ValueError("Conta Google fora do domínio permitido.")
+    hosted_domain = _normalize_google_hosted_domain(
+        getattr(settings, "GOOGLE_ALLOWED_HOSTED_DOMAIN", "")
+    )
+    email = str(idinfo.get("email") or "").strip().lower()
+    email_domain = email.rsplit("@", 1)[-1] if "@" in email else ""
+    credential_domain = str(idinfo.get("hd") or "").strip().lower()
+    if hosted_domain and hosted_domain not in {credential_domain, email_domain}:
+        raise ValueError(
+            f"Conta Google fora do domínio permitido ({hosted_domain})."
+        )
 
     email_verified = idinfo.get("email_verified")
     if not idinfo.get("email") or str(email_verified).lower() != "true":
         raise ValueError("Conta Google sem e-mail verificado.")
 
     return idinfo
+
+
+def _normalize_google_hosted_domain(value: str) -> str:
+    domain = str(value or "").strip().lower()
+    if "@" in domain:
+        domain = domain.rsplit("@", 1)[-1]
+    return domain.strip().removeprefix("@")
 
 
 def _google_token_expiry(token_payload: dict[str, Any]):

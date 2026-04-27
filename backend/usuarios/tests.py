@@ -384,6 +384,92 @@ class ExcluirCargoTests(TestCase):
         GOOGLE_CLIENT_ID="google-client-id",
         GOOGLE_CLIENT_SECRET="google-client-secret",
         GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
+        GOOGLE_ALLOWED_HOSTED_DOMAIN="@example.com",
+        FRONTEND_URL="http://localhost:5173",
+    )
+    @patch("usuarios.views.requests.get")
+    @patch("usuarios.views.requests.post")
+    def test_retorno_google_aceita_dominio_configurado_com_arroba(
+        self,
+        requests_post,
+        requests_get,
+    ):
+        session = self.client.session
+        session["google_oauth_state"] = {"value": "state-domain", "flow": "login"}
+        session.save()
+        requests_post.return_value = make_google_response(
+            {
+                "id_token": "id-token",
+                "access_token": "access-token-domain",
+                "expires_in": 3600,
+            }
+        )
+        requests_get.return_value = make_google_response(
+            {
+                "sub": "google-sub-domain",
+                "email": "pessoa@example.com",
+                "email_verified": "true",
+                "name": "Pessoa Dominio",
+                "aud": "google-client-id",
+            }
+        )
+
+        response = self.client.get(
+            reverse("google_callback"),
+            {"code": "auth-code", "state": "state-domain"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "http://localhost:5173/#/")
+        self.assertTrue(Usuario.objects.filter(email="pessoa@example.com").exists())
+
+    @override_settings(
+        GOOGLE_CLIENT_ID="google-client-id",
+        GOOGLE_CLIENT_SECRET="google-client-secret",
+        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
+        GOOGLE_ALLOWED_HOSTED_DOMAIN="example.com",
+        FRONTEND_URL="http://localhost:5173",
+    )
+    @patch("usuarios.views.requests.get")
+    @patch("usuarios.views.requests.post")
+    def test_retorno_google_rejeita_email_fora_do_dominio_configurado(
+        self,
+        requests_post,
+        requests_get,
+    ):
+        session = self.client.session
+        session["google_oauth_state"] = {"value": "state-wrong-domain", "flow": "login"}
+        session.save()
+        requests_post.return_value = make_google_response(
+            {
+                "id_token": "id-token",
+                "access_token": "access-token-wrong-domain",
+                "expires_in": 3600,
+            }
+        )
+        requests_get.return_value = make_google_response(
+            {
+                "sub": "google-sub-wrong-domain",
+                "email": "pessoa@outro.com",
+                "email_verified": "true",
+                "name": "Pessoa Fora",
+                "aud": "google-client-id",
+            }
+        )
+
+        response = self.client.get(
+            reverse("google_callback"),
+            {"code": "auth-code", "state": "state-wrong-domain"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("fora+do+dom%C3%ADnio+permitido", response["Location"])
+        self.assertFalse(Usuario.objects.filter(email="pessoa@outro.com").exists())
+
+    @override_settings(
+        GOOGLE_CLIENT_ID="google-client-id",
+        GOOGLE_CLIENT_SECRET="google-client-secret",
+        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
         FRONTEND_URL="http://localhost:5173",
     )
     @patch("usuarios.views.requests.get")

@@ -239,7 +239,15 @@ def sincronizar_google_calendar(request):
     if request.method != "POST":
         return metodo_nao_permitido(["POST"])
 
-    resumo = sincronizar_agenda_google(_usuario_google_atual(request))
+    try:
+        resumo = sincronizar_agenda_google(_usuario_google_atual(request))
+    except Exception:
+        return resposta_erro(
+            "Não foi possível sincronizar com o Google Calendar agora. "
+            "Verifique a conexão da conta e tente novamente.",
+            status=502,
+        )
+
     if not resumo["conectado"]:
         return resposta_erro(
             "Conecte o Google Calendar para sincronizar os compromissos.",

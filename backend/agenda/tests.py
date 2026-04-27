@@ -188,6 +188,20 @@ class AgendaGoogleTests(TestCase):
         sincronizar_agenda_google_mock.assert_called_once()
         self.assertIn("sincronizacao_google", response.json()["dados"])
 
+    @patch("agenda.views.sincronizar_agenda_google")
+    def test_sincronizar_google_calendar_retorna_erro_controlado_quando_google_falha(
+        self,
+        sincronizar_agenda_google_mock,
+    ):
+        sincronizar_agenda_google_mock.side_effect = RuntimeError("falha google")
+
+        response = self.client.post(reverse("sincronizar_google_calendar"))
+        payload = response.json()
+
+        self.assertEqual(response.status_code, 502, payload)
+        self.assertFalse(payload["sucesso"])
+        self.assertIn("Google Calendar", payload["erros"]["detalhe"][0])
+
 
 class GoogleCalendarServiceTests(TestCase):
     def _evento(self, **overrides):
