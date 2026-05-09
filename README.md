@@ -72,6 +72,7 @@ python manage.py runserver
 - Origin do frontend publicado atualmente:
   `https://agenda-juri-orcin.vercel.app`
 - O mesmo `GOOGLE_CLIENT_ID` deve ser usado no backend que inicia o OAuth e no projeto do Google Cloud onde os test users foram cadastrados.
+- `GOOGLE_ALLOWED_HOSTED_DOMAIN` e opcional e aceita somente dominio de e-mail, como `gmail.com` ou `empresa.com`. Para autorizar apenas contas especificas, use `GOOGLE_ALLOWED_EMAILS`, separado por virgula.
 
 ## Autor
 
