@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import get_object_or_404
 
 from agenda.forms import EventoForm
@@ -21,6 +23,7 @@ from core.utils import (
 from usuarios.models import Usuario
 
 EVENTO_DATETIME_FIELDS = ("data_inicio", "data_fim", "lembrete_em")
+logger = logging.getLogger(__name__)
 
 
 def _resolver_criador_evento(request):
@@ -242,6 +245,7 @@ def sincronizar_google_calendar(request):
     try:
         resumo = sincronizar_agenda_google(_usuario_google_atual(request))
     except Exception:
+        logger.exception("Erro inesperado ao sincronizar Google Calendar.")
         return resposta_erro(
             "Não foi possível sincronizar com o Google Calendar agora. "
             "Verifique a conexão da conta e tente novamente.",

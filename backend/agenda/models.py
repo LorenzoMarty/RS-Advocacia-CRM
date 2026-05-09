@@ -19,7 +19,7 @@ class Evento(models.Model):
     observacoes = models.TextField(blank=True)
     lembrete_em = models.DateTimeField(blank=True, null=True)
     concluido = models.BooleanField(default=False)
-    google_event_id = models.CharField(max_length=255, null=True, blank=True)
+    google_event_id = models.TextField(null=True, blank=True)
 
     def clean(self):
         if self.data_fim < self.data_inicio:

@@ -137,6 +137,13 @@ def obter_servico_google(usuario):
         )
         return None
 
+    except Exception:
+        logger.exception(
+            "Erro inesperado ao atualizar token Google do usuario %s",
+            usuario.pk,
+        )
+        return None
+
     try:
         return build(
             "calendar",
@@ -321,6 +328,13 @@ def criar_evento_google(usuario, evento):
         )
         return None
 
+    except Exception:
+        logger.exception(
+            "Erro inesperado ao criar evento Google: evento=%s",
+            getattr(evento, "pk", None),
+        )
+        return None
+
 
 def atualizar_evento_google(usuario, evento):
     servico = obter_servico_google(usuario)
@@ -358,6 +372,13 @@ def atualizar_evento_google(usuario, evento):
         )
         return None
 
+    except Exception:
+        logger.exception(
+            "Erro inesperado ao atualizar evento Google: evento=%s",
+            getattr(evento, "pk", None),
+        )
+        return None
+
 
 def deletar_evento_google(usuario, evento):
     if not evento.google_event_id:
@@ -384,6 +405,13 @@ def deletar_evento_google(usuario, evento):
         logger.exception(
             "Erro ao deletar evento Google: evento=%s",
             evento.pk,
+        )
+        return False
+
+    except Exception:
+        logger.exception(
+            "Erro inesperado ao deletar evento Google: evento=%s",
+            getattr(evento, "pk", None),
         )
         return False
 
@@ -600,6 +628,12 @@ def listar_eventos_google(usuario):
     except HttpError:
         logger.exception(
             "Erro ao listar eventos Google."
+        )
+        return None
+
+    except Exception:
+        logger.exception(
+            "Erro inesperado ao listar eventos Google."
         )
         return None
 

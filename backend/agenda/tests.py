@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
+from django.db import models
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -289,6 +290,11 @@ class GoogleCalendarServiceTests(TestCase):
             eventId="google-event-123",
         )
 
+    def test_google_event_id_aceita_ids_longos_do_google_calendar(self):
+        field = Evento._meta.get_field("google_event_id")
+
+        self.assertIsInstance(field, models.TextField)
+
 
 class GoogleCalendarSyncTests(TestCase):
     def setUp(self):
@@ -378,6 +384,36 @@ class GoogleCalendarSyncTests(TestCase):
         self.assertEqual(evento.cliente.nome, "Google Agenda")
         self.assertEqual(evento.processo.numero_processo, "GOOGLE-CALENDAR")
         self.assertEqual(evento.criado_por, "Google Calendar")
+
+    @patch("agenda.services.google_calendar.obter_servico_google")
+    def test_sincronizar_agenda_google_importa_evento_com_id_longo(
+        self,
+        obter_servico_google,
+    ):
+        google_id = "google-event-" + ("x" * 300)
+        obter_servico_google.return_value = self._mock_google_service(
+            items=[self._evento_google(id=google_id)]
+        )
+
+        resumo = sincronizar_agenda_google(self.usuario)
+
+        self.assertEqual(resumo["importados"], 1)
+        self.assertTrue(Evento.objects.filter(google_event_id=google_id).exists())
+
+    @patch("agenda.services.google_calendar.obter_servico_google")
+    def test_sincronizar_agenda_google_trata_erro_inesperado_ao_listar(
+        self,
+        obter_servico_google,
+    ):
+        servico = MagicMock()
+        servico.events.return_value.list.return_value.execute.side_effect = (
+            RuntimeError("falha de transporte")
+        )
+        obter_servico_google.return_value = servico
+
+        resumo = sincronizar_agenda_google(self.usuario)
+
+        self.assertFalse(resumo["conectado"])
 
     @patch("agenda.services.google_calendar.obter_servico_google")
     def test_sincronizar_agenda_google_vincula_evento_local_sem_duplicar(
