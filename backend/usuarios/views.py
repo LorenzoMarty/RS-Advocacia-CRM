@@ -334,10 +334,17 @@ def _verify_google_credential(credential: str) -> dict[str, Any]:
     if idinfo.get("aud") != client_id:
         raise ValueError("Token Google emitido para outro ID de cliente.")
 
-    hosted_domain = _normalize_google_hosted_domain(
-        getattr(settings, "GOOGLE_ALLOWED_HOSTED_DOMAIN", "")
-    )
     email = str(idinfo.get("email") or "").strip().lower()
+    allowed_emails = _google_allowed_emails()
+    if allowed_emails and email not in allowed_emails:
+        raise ValueError("Conta Google fora dos e-mails permitidos.")
+
+    hosted_domain = ""
+    if not allowed_emails:
+        hosted_domain = _normalize_google_hosted_domain(
+            getattr(settings, "GOOGLE_ALLOWED_HOSTED_DOMAIN", "")
+        )
+
     email_domain = email.rsplit("@", 1)[-1] if "@" in email else ""
     credential_domain = str(idinfo.get("hd") or "").strip().lower()
     if hosted_domain and hosted_domain not in {credential_domain, email_domain}:
@@ -352,10 +359,34 @@ def _verify_google_credential(credential: str) -> dict[str, Any]:
     return idinfo
 
 
+def _google_allowed_emails() -> set[str]:
+    raw_value = getattr(settings, "GOOGLE_ALLOWED_EMAILS", "")
+    emails = set()
+
+    for item in str(raw_value or "").replace(";", ",").split(","):
+        email = item.strip().lower()
+        if email and "@" in email:
+            emails.add(email)
+
+    return emails
+
+
 def _normalize_google_hosted_domain(value: str) -> str:
     domain = str(value or "").strip().lower()
+
+    if not domain:
+        return ""
+
+    parsed = urlsplit(domain)
+    if parsed.scheme or parsed.netloc or "/" in domain:
+        raise ValueError(
+            "GOOGLE_ALLOWED_HOSTED_DOMAIN deve ser um dominio de e-mail, "
+            "como gmail.com. Nao use URL do backend ou frontend."
+        )
+
     if "@" in domain:
         domain = domain.rsplit("@", 1)[-1]
+
     return domain.strip().removeprefix("@")
 
 
