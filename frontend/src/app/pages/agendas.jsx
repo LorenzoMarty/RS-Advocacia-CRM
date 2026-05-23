@@ -131,6 +131,10 @@ export function AgendaListPage() {
   const [status, setStatus] = useState("");
   const [period, setPeriod] = useState("");
   const [isGoogleSyncing, setIsGoogleSyncing] = useState(false);
+  const [isGoogleCalendarsOpen, setIsGoogleCalendarsOpen] = useState(false);
+  const [isGoogleCalendarsLoading, setIsGoogleCalendarsLoading] = useState(false);
+  const [isGoogleCalendarsSaving, setIsGoogleCalendarsSaving] = useState(false);
+  const [googleCalendars, setGoogleCalendars] = useState([]);
   const [viewDate, setViewDate] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
@@ -207,8 +211,13 @@ export function AgendaListPage() {
     : googleCalendarError
       ? `error:${googleCalendarError}`
       : "";
+  const selectedGoogleCalendars = googleCalendars.filter(
+    (calendar) => calendar.enabled,
+  );
   const googleCalendarDestination =
-    currentUser?.googleCalendarDestination || "agenda principal do Google";
+    selectedGoogleCalendars.map((calendar) => calendar.summary).join(", ") ||
+    currentUser?.googleCalendarDestination ||
+    "agenda principal do Google";
   const handledGoogleCalendarFeedbackRef = useRef("");
 
   useEffect(() => {
@@ -254,6 +263,57 @@ export function AgendaListPage() {
       await syncGoogleCalendarEvents();
     } finally {
       setIsGoogleSyncing(false);
+    }
+  }
+
+  async function handleGoogleCalendarsToggle() {
+    const nextOpen = !isGoogleCalendarsOpen;
+    setIsGoogleCalendarsOpen(nextOpen);
+    if (!nextOpen || googleCalendars.length) {
+      return;
+    }
+
+    setIsGoogleCalendarsLoading(true);
+    try {
+      const payload = await api.listGoogleCalendars();
+      setGoogleCalendars(payload.calendarios || []);
+    } catch (error) {
+      setIsGoogleCalendarsOpen(false);
+      addFlash(error.message || "Nao foi possivel listar os calendarios Google.", "error");
+    } finally {
+      setIsGoogleCalendarsLoading(false);
+    }
+  }
+
+  function handleGoogleCalendarSelection(calendarId) {
+    setGoogleCalendars((calendars) =>
+      calendars.map((calendar) =>
+        calendar.id === calendarId
+          ? { ...calendar, enabled: !calendar.enabled }
+          : calendar,
+      ),
+    );
+  }
+
+  async function handleSaveGoogleCalendars(event) {
+    event.preventDefault();
+    const selectedIds = googleCalendars
+      .filter((calendar) => calendar.enabled)
+      .map((calendar) => calendar.id);
+    if (!selectedIds.length) {
+      addFlash("Selecione ao menos um calendario Google.", "error");
+      return;
+    }
+
+    setIsGoogleCalendarsSaving(true);
+    try {
+      const payload = await api.selectGoogleCalendars(selectedIds);
+      setGoogleCalendars(payload.calendarios || []);
+      addFlash("Calendarios Google atualizados.", "success");
+    } catch (error) {
+      addFlash(error.message || "Nao foi possivel configurar os calendarios Google.", "error");
+    } finally {
+      setIsGoogleCalendarsSaving(false);
     }
   }
 
@@ -372,26 +432,73 @@ export function AgendaListPage() {
 
               <div className="toolbar-actions">
                 {currentUser?.googleCalendarConnected ? (
-                  <button
-                    className="btn btn-secondary"
-                    type="button"
-                    onClick={handleGoogleCalendarSync}
-                    disabled={isGoogleSyncing}
-                  >
-                    {isGoogleSyncing
-                      ? "Sincronizando..."
-                      : "Sincronizar agenda"}
-                  </button>
+                  <>
+                    <button
+                      className="btn btn-secondary"
+                      type="button"
+                      onClick={handleGoogleCalendarSync}
+                      disabled={isGoogleSyncing}
+                    >
+                      {isGoogleSyncing
+                        ? "Sincronizando..."
+                        : "Sincronizar agenda"}
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      type="button"
+                      onClick={handleGoogleCalendarsToggle}
+                    >
+                      {isGoogleCalendarsOpen
+                        ? "Fechar calendarios"
+                        : "Escolher calendarios"}
+                    </button>
+                  </>
                 ) : null}
-                <a className="btn btn-secondary" href={api.urlConectarGoogleCalendar()}>
+                <a className="btn btn-secondary" href={api.urlReauthorizeGoogle()}>
                   {currentUser?.googleCalendarConnected
-                    ? "Reconectar Google Calendar"
-                    : "Conectar Google Calendar"}
+                    ? "Renovar acesso Google"
+                    : "Autorizar Google Calendar"}
                 </a>
                 <Link className="btn" to="/agenda/novo">
                   Novo
                 </Link>
               </div>
+              {currentUser?.googleCalendarConnected && isGoogleCalendarsOpen ? (
+                <form
+                  className="google-calendar-picker"
+                  onSubmit={handleSaveGoogleCalendars}
+                >
+                  <p className="google-calendar-picker-title">
+                    Calendarios sincronizados
+                  </p>
+                  {isGoogleCalendarsLoading ? (
+                    <p className="toolbar-sync-copy">Carregando calendarios...</p>
+                  ) : (
+                    <div className="google-calendar-options">
+                      {googleCalendars.map((calendar) => (
+                        <label className="google-calendar-option" key={calendar.id}>
+                          <input
+                            type="checkbox"
+                            checked={calendar.enabled}
+                            onChange={() => handleGoogleCalendarSelection(calendar.id)}
+                          />
+                          <span>
+                            {calendar.summary || calendar.id}
+                            {calendar.primary ? " (principal)" : ""}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    className="btn btn-secondary"
+                    type="submit"
+                    disabled={isGoogleCalendarsLoading || isGoogleCalendarsSaving}
+                  >
+                    {isGoogleCalendarsSaving ? "Salvando..." : "Salvar calendarios"}
+                  </button>
+                </form>
+              ) : null}
             </div>
           </div>
         </section>

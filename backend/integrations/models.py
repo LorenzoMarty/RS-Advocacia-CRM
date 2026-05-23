@@ -1,0 +1,117 @@
+from django.db import models
+
+from integrations.google.tokens import decrypt_value, encrypt_value
+
+
+class GoogleAccount(models.Model):
+    usuario = models.OneToOneField(
+        "usuarios.Usuario",
+        on_delete=models.CASCADE,
+        related_name="google_account",
+    )
+    sub = models.CharField(max_length=255, unique=True)
+    email = models.EmailField()
+    scopes = models.TextField(blank=True, default="")
+    access_token_ciphertext = models.TextField(blank=True, default="")
+    refresh_token_ciphertext = models.TextField(blank=True, default="")
+    token_expiry = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def access_token(self) -> str:
+        return decrypt_value(self.access_token_ciphertext)
+
+    @property
+    def refresh_token(self) -> str:
+        return decrypt_value(self.refresh_token_ciphertext)
+
+    @property
+    def connected(self) -> bool:
+        return bool(self.refresh_token) and self.revoked_at is None
+
+    def store_tokens(
+        self,
+        *,
+        access_token: str,
+        refresh_token: str | None = None,
+        expiry=None,
+        scopes: str | None = None,
+    ) -> None:
+        self.access_token_ciphertext = encrypt_value(access_token)
+        if refresh_token:
+            self.refresh_token_ciphertext = encrypt_value(refresh_token)
+        self.token_expiry = expiry
+        if scopes is not None:
+            self.scopes = scopes
+        self.revoked_at = None
+
+    def __str__(self) -> str:
+        return self.email
+
+
+class GoogleCalendar(models.Model):
+    account = models.ForeignKey(
+        GoogleAccount,
+        on_delete=models.CASCADE,
+        related_name="calendars",
+    )
+    calendar_id = models.CharField(max_length=512)
+    summary = models.CharField(max_length=255, blank=True, default="")
+    timezone = models.CharField(max_length=100, blank=True, default="")
+    primary = models.BooleanField(default=False)
+    enabled = models.BooleanField(default=True)
+    sync_token_ciphertext = models.TextField(blank=True, default="")
+    last_synced_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("account", "calendar_id"),
+                name="unique_google_calendar_per_account",
+            )
+        ]
+
+    @property
+    def sync_token(self) -> str:
+        return decrypt_value(self.sync_token_ciphertext)
+
+    def set_sync_token(self, value: str | None) -> None:
+        self.sync_token_ciphertext = encrypt_value(value or "") if value else ""
+
+    def __str__(self) -> str:
+        return self.summary or self.calendar_id
+
+
+class GoogleEventLink(models.Model):
+    calendar = models.ForeignKey(
+        GoogleCalendar,
+        on_delete=models.CASCADE,
+        related_name="event_links",
+    )
+    evento = models.ForeignKey(
+        "agenda.Evento",
+        on_delete=models.CASCADE,
+        related_name="google_links",
+    )
+    google_event_id = models.TextField()
+    etag = models.CharField(max_length=255, blank=True, default="")
+    local_payload_hash = models.CharField(max_length=64, blank=True, default="")
+    remote_deleted_at = models.DateTimeField(null=True, blank=True)
+    last_synced_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("calendar", "evento"),
+                name="unique_google_link_per_event_calendar",
+            ),
+            models.UniqueConstraint(
+                fields=("calendar", "google_event_id"),
+                name="unique_google_event_per_calendar",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.calendar.calendar_id}:{self.google_event_id}"

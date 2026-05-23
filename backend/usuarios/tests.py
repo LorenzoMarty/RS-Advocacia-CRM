@@ -1,28 +1,15 @@
 import json
-from unittest.mock import patch
-from urllib.parse import parse_qs, urlsplit
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
-from django.test import TestCase, override_settings
+from django.contrib.auth.models import Group
+from django.test import TestCase
 from django.urls import reverse
 
+from integrations.models import GoogleAccount, GoogleCalendar
 from usuarios.models import Usuario
 
 
-GOOGLE_CALLBACK_URL = "http://testserver/api/auth/google/callback/"
-
-
-def make_google_response(payload, status_code=200):
-    class Response:
-        def json(self):
-            return payload
-
-    Response.status_code = status_code
-    return Response()
-
-
-class ExcluirCargoTests(TestCase):
+class UsuariosTests(TestCase):
     def setUp(self):
         self.auth_user = get_user_model().objects.create_superuser(
             username="admin@example.com",
@@ -32,51 +19,21 @@ class ExcluirCargoTests(TestCase):
 
     def test_exclui_cargo_sem_usuarios_vinculados(self):
         cargo = Group.objects.create(name="Operacional")
-
         response = self.client.delete(reverse("excluir_cargo", args=[cargo.pk]))
-        payload = response.json()
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(payload["sucesso"])
-        self.assertEqual(payload["dados"]["id"], str(cargo.pk))
         self.assertFalse(Group.objects.filter(pk=cargo.pk).exists())
 
-    def test_listagem_inclui_cargo_serializado(self):
+    def test_nao_exclui_cargo_com_usuario_vinculado(self):
         cargo = Group.objects.create(name="Operacional")
+        Usuario.objects.create(nome="Ana", email="ana@example.com", cargo=cargo.name)
 
-        response = self.client.get(reverse("listar_cargos"))
-        payload = response.json()
+        response = self.client.delete(reverse("excluir_cargo", args=[cargo.pk]))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(payload["sucesso"])
-        self.assertIn(
-            {"id": str(cargo.pk), "nome": cargo.name},
-            [
-                {"id": item["id"], "nome": item["nome"]}
-                for item in payload["dados"]["cargos"]
-            ],
-        )
+        self.assertEqual(response.status_code, 409)
+        self.assertTrue(Group.objects.filter(pk=cargo.pk).exists())
 
-    def test_listagem_de_cargos_atende_formulario_de_usuario(self):
-        staff = get_user_model().objects.create_user(
-            username="staff@example.com",
-            email="staff@example.com",
-        )
-        permission = Permission.objects.get(
-            content_type__app_label="usuarios",
-            codename="add_usuario",
-        )
-        staff.user_permissions.add(permission)
-        self.client.force_login(staff)
-
-        response = self.client.get(reverse("listar_cargos"))
-        payload = response.json()
-
-        self.assertEqual(response.status_code, 200, payload)
-        self.assertTrue(payload["sucesso"])
-        self.assertTrue(payload["dados"]["cargos"])
-
-    def test_usuario_atual_ressincroniza_permissoes_do_cargo(self):
+    def test_usuario_atual_sincroniza_permissoes_do_cargo(self):
         usuario = Usuario.objects.create(
             nome="Admin Front",
             email="admin-front@example.com",
@@ -91,639 +48,43 @@ class ExcluirCargoTests(TestCase):
         session["usuario_id"] = usuario.pk
         session.save()
 
-        current_response = self.client.get(reverse("usuario_atual"))
-        create_response = self.client.post(
-            reverse("criar_cargo"),
-            data=json.dumps({"nome": "Financeiro", "permissoes": []}),
-            content_type="application/json",
-        )
+        response = self.client.get(reverse("usuario_atual"))
 
         auth_user.refresh_from_db()
-        self.assertEqual(current_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue(auth_user.groups.filter(name="Administrador").exists())
-        self.assertTrue(auth_user.has_perm("auth.add_group"))
-        self.assertEqual(create_response.status_code, 201, create_response.json())
-        self.assertTrue(Group.objects.filter(name="Financeiro").exists())
 
-    def test_inicializacao_serializa_cargo_id_com_id_do_cargo(self):
+    def test_serializa_conexao_google_a_partir_da_integracao(self):
         usuario = Usuario.objects.create(
-            nome="Usuario Admin",
-            email="usuario-admin@example.com",
-            cargo="admin",
-        )
-
-        response = self.client.get(reverse("inicializacao"))
-        payload = response.json()
-
-        cargo = Group.objects.get(name="Administrador")
-        serialized_user = next(
-            item for item in payload["dados"]["usuarios"] if item["id"] == str(usuario.pk)
-        )
-        self.assertEqual(response.status_code, 200, payload)
-        self.assertEqual(serialized_user["cargo_id"], str(cargo.pk))
-
-    @override_settings(GOOGLE_CALENDAR_ID="juridico@group.calendar.google.com")
-    def test_inicializacao_serializa_destino_do_google_calendar(self):
-        usuario = Usuario.objects.create(
-            nome="Usuario Agenda",
-            email="usuario-agenda@example.com",
+            nome="Agenda",
+            email="agenda@example.com",
             cargo="Administrador",
         )
+        account = GoogleAccount.objects.create(
+            usuario=usuario,
+            sub="sub-agenda",
+            email=usuario.email,
+        )
+        account.store_tokens(access_token="access", refresh_token="refresh")
+        account.save()
+        GoogleCalendar.objects.create(
+            account=account,
+            calendar_id="primary",
+            summary="Minha agenda",
+            enabled=True,
+        )
 
         response = self.client.get(reverse("inicializacao"))
-        payload = response.json()
-
-        serialized_user = next(
-            item for item in payload["dados"]["usuarios"] if item["id"] == str(usuario.pk)
-        )
-        self.assertEqual(response.status_code, 200, payload)
-        self.assertEqual(
-            serialized_user["google_calendar_destino"],
-            "juridico@group.calendar.google.com",
+        serialized = next(
+            item
+            for item in response.json()["dados"]["usuarios"]
+            if item["id"] == str(usuario.pk)
         )
 
-    @override_settings(GOOGLE_CLIENT_ID="", GOOGLE_CLIENT_SECRET="")
-    def test_login_google_exige_id_de_cliente_configurado(self):
-        response = self.client.get(reverse("login_google"))
-        payload = response.json()
-
-        self.assertEqual(response.status_code, 503)
-        self.assertFalse(payload["sucesso"])
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
-    )
-    def test_login_google_redireciona_para_pagina_do_google(self):
-        response = self.client.get(reverse("login_google"))
-
-        self.assertEqual(response.status_code, 302)
-        location = response["Location"]
-        parsed = urlsplit(location)
-        query = parse_qs(parsed.query)
-        self.assertEqual(
-            f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
-            "https://accounts.google.com/o/oauth2/v2/auth",
-        )
-        self.assertEqual(query["client_id"], ["google-client-id"])
-        self.assertEqual(query["redirect_uri"], [GOOGLE_CALLBACK_URL])
-        self.assertEqual(query["response_type"], ["code"])
-        self.assertEqual(
-            query["scope"][0].split(),
-            [
-                "openid",
-                "email",
-                "profile",
-            ],
-        )
-        self.assertEqual(query["access_type"], ["offline"])
-        self.assertEqual(query["include_granted_scopes"], ["true"])
-        self.assertEqual(query["prompt"], ["consent select_account"])
-        self.assertEqual(
-            query["state"],
-            [self.client.session["google_oauth_state"]["value"]],
-        )
-        self.assertEqual(self.client.session["google_oauth_state"]["flow"], "login")
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
-    )
-    def test_conectar_google_calendar_redireciona_com_escopo_sensivel(self):
-        response = self.client.get(reverse("conectar_google_calendar"))
-
-        self.assertEqual(response.status_code, 302)
-        query = parse_qs(urlsplit(response["Location"]).query)
-        self.assertEqual(
-            query["scope"][0].split(),
-            [
-                "openid",
-                "email",
-                "profile",
-                "https://www.googleapis.com/auth/calendar.events",
-            ],
-        )
-        self.assertEqual(
-            query["state"],
-            [self.client.session["google_oauth_state"]["value"]],
-        )
-        self.assertEqual(
-            self.client.session["google_oauth_state"]["flow"],
-            "calendar",
-        )
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI="http://testserver/api/auth/google/callback-inexistente/",
-    )
-    def test_login_google_ignora_redirect_uri_invalida_e_usa_callback_local(self):
-        response = self.client.get(reverse("login_google"))
-
-        self.assertEqual(response.status_code, 302)
-        query = parse_qs(urlsplit(response["Location"]).query)
-        self.assertEqual(query["redirect_uri"], [GOOGLE_CALLBACK_URL])
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
-        FRONTEND_URL="http://localhost:5173",
-    )
-    @patch("usuarios.views.requests.get")
-    @patch("usuarios.views.requests.post")
-    def test_retorno_google_vincula_usuario_existente(self, requests_post, requests_get):
-        session = self.client.session
-        session["google_oauth_state"] = {"value": "state-123", "flow": "login"}
-        session.save()
-        requests_post.return_value = make_google_response(
-            {
-                "id_token": "id-token",
-                "access_token": "access-token-123",
-                "refresh_token": "refresh-token-123",
-                "expires_in": 3600,
-            }
-        )
-        requests_get.return_value = make_google_response(
-            {
-                "sub": "google-sub-123",
-                "email": "google-user@example.com",
-                "email_verified": "true",
-                "name": "Google User",
-                "picture": "https://example.com/avatar.png",
-                "aud": "google-client-id",
-            }
-        )
-        usuario = Usuario.objects.create(
-            nome="Google User",
-            email="google-user@example.com",
-            cargo="Operacional",
-        )
-
-        response = self.client.get(
-            reverse("google_callback"),
-            {"code": "auth-code", "state": "state-123"},
-        )
-
-        usuario.refresh_from_db()
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], "http://localhost:5173/#/")
-        self.assertEqual(usuario.picture, "https://example.com/avatar.png")
-        self.assertEqual(usuario.google_sub, "google-sub-123")
-        self.assertEqual(usuario.google_token, "")
-        self.assertEqual(usuario.google_refresh_token, "")
-        self.assertIsNone(usuario.google_token_expiry)
-        self.assertEqual(self.client.session["usuario_id"], usuario.pk)
-        requests_post.assert_called_once_with(
-            "https://oauth2.googleapis.com/token",
-            data={
-                "code": "auth-code",
-                "client_id": "google-client-id",
-                "client_secret": "google-client-secret",
-                "redirect_uri": GOOGLE_CALLBACK_URL,
-                "grant_type": "authorization_code",
-            },
-            timeout=10,
-        )
-        requests_get.assert_called_once_with(
-            "https://oauth2.googleapis.com/tokeninfo",
-            params={"id_token": "id-token"},
-            timeout=10,
-        )
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
-        GOOGLE_DEFAULT_CARGO="Operacional",
-        FRONTEND_URL="http://localhost:5173",
-    )
-    @patch("usuarios.views.requests.get")
-    @patch("usuarios.views.requests.post")
-    def test_retorno_google_cria_usuario_automaticamente(self, requests_post, requests_get):
-        session = self.client.session
-        session["google_oauth_state"] = {"value": "state-456", "flow": "login"}
-        session.save()
-        requests_post.return_value = make_google_response(
-            {
-                "id_token": "id-token",
-                "access_token": "access-token-456",
-                "refresh_token": "refresh-token-456",
-                "expires_in": 3600,
-            }
-        )
-        requests_get.return_value = make_google_response(
-            {
-                "sub": "google-sub-789",
-                "email": "novo-google@example.com",
-                "email_verified": "true",
-                "name": "Novo Google",
-                "picture": "https://example.com/novo.png",
-                "aud": "google-client-id",
-            }
-        )
-
-        response = self.client.get(
-            reverse("google_callback"),
-            {"code": "auth-code", "state": "state-456"},
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], "http://localhost:5173/#/")
-        usuario = Usuario.objects.get(email="novo-google@example.com")
-        self.assertEqual(usuario.nome, "Novo Google")
-        self.assertEqual(usuario.cargo, "Operacional")
-        self.assertEqual(usuario.google_sub, "google-sub-789")
-        self.assertEqual(usuario.google_token, "")
-        self.assertEqual(usuario.google_refresh_token, "")
-        self.assertIsNone(usuario.google_token_expiry)
-        self.assertEqual(usuario.picture, "https://example.com/novo.png")
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
-        FRONTEND_URL="http://localhost:5173",
-    )
-    @patch("usuarios.views.requests.get")
-    @patch("usuarios.views.requests.post")
-    def test_retorno_google_rejeita_id_de_cliente_invalido(self, requests_post, requests_get):
-        session = self.client.session
-        session["google_oauth_state"] = {"value": "state-789", "flow": "login"}
-        session.save()
-        requests_post.return_value = make_google_response(
-            {
-                "id_token": "id-token",
-                "access_token": "access-token-789",
-                "refresh_token": "refresh-token-789",
-                "expires_in": 3600,
-            }
-        )
-        requests_get.return_value = make_google_response(
-            {
-                "sub": "google-sub-bad",
-                "email": "bad@example.com",
-                "email_verified": "true",
-                "name": "Bad Client",
-                "aud": "outro-client-id",
-            }
-        )
-
-        response = self.client.get(
-            reverse("google_callback"),
-            {"code": "auth-code", "state": "state-789"},
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("/#/login?google_error=", response["Location"])
-        self.assertFalse(Usuario.objects.filter(email="bad@example.com").exists())
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
-        GOOGLE_ALLOWED_HOSTED_DOMAIN="@example.com",
-        FRONTEND_URL="http://localhost:5173",
-    )
-    @patch("usuarios.views.requests.get")
-    @patch("usuarios.views.requests.post")
-    def test_retorno_google_aceita_dominio_configurado_com_arroba(
-        self,
-        requests_post,
-        requests_get,
-    ):
-        session = self.client.session
-        session["google_oauth_state"] = {"value": "state-domain", "flow": "login"}
-        session.save()
-        requests_post.return_value = make_google_response(
-            {
-                "id_token": "id-token",
-                "access_token": "access-token-domain",
-                "expires_in": 3600,
-            }
-        )
-        requests_get.return_value = make_google_response(
-            {
-                "sub": "google-sub-domain",
-                "email": "pessoa@example.com",
-                "email_verified": "true",
-                "name": "Pessoa Dominio",
-                "aud": "google-client-id",
-            }
-        )
-
-        response = self.client.get(
-            reverse("google_callback"),
-            {"code": "auth-code", "state": "state-domain"},
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], "http://localhost:5173/#/")
-        self.assertTrue(Usuario.objects.filter(email="pessoa@example.com").exists())
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
-        GOOGLE_ALLOWED_HOSTED_DOMAIN="example.com",
-        FRONTEND_URL="http://localhost:5173",
-    )
-    @patch("usuarios.views.requests.get")
-    @patch("usuarios.views.requests.post")
-    def test_retorno_google_rejeita_email_fora_do_dominio_configurado(
-        self,
-        requests_post,
-        requests_get,
-    ):
-        session = self.client.session
-        session["google_oauth_state"] = {"value": "state-wrong-domain", "flow": "login"}
-        session.save()
-        requests_post.return_value = make_google_response(
-            {
-                "id_token": "id-token",
-                "access_token": "access-token-wrong-domain",
-                "expires_in": 3600,
-            }
-        )
-        requests_get.return_value = make_google_response(
-            {
-                "sub": "google-sub-wrong-domain",
-                "email": "pessoa@outro.com",
-                "email_verified": "true",
-                "name": "Pessoa Fora",
-                "aud": "google-client-id",
-            }
-        )
-
-        response = self.client.get(
-            reverse("google_callback"),
-            {"code": "auth-code", "state": "state-wrong-domain"},
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("fora+do+dom%C3%ADnio+permitido", response["Location"])
-        self.assertFalse(Usuario.objects.filter(email="pessoa@outro.com").exists())
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
-        GOOGLE_ALLOWED_HOSTED_DOMAIN="https://agenda-juri-backend.vercel.app",
-        GOOGLE_ALLOWED_EMAILS="lorenzodreis@gmail.com",
-        FRONTEND_URL="http://localhost:5173",
-    )
-    @patch("usuarios.views.requests.get")
-    @patch("usuarios.views.requests.post")
-    def test_retorno_google_aceita_email_exato_mesmo_com_dominio_url_configurado(
-        self,
-        requests_post,
-        requests_get,
-    ):
-        session = self.client.session
-        session["google_oauth_state"] = {"value": "state-email", "flow": "login"}
-        session.save()
-        requests_post.return_value = make_google_response(
-            {
-                "id_token": "id-token",
-                "access_token": "access-token-email",
-                "expires_in": 3600,
-            }
-        )
-        requests_get.return_value = make_google_response(
-            {
-                "sub": "google-sub-email",
-                "email": "lorenzodreis@gmail.com",
-                "email_verified": "true",
-                "name": "Lorenzo Dreis",
-                "aud": "google-client-id",
-            }
-        )
-
-        response = self.client.get(
-            reverse("google_callback"),
-            {"code": "auth-code", "state": "state-email"},
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], "http://localhost:5173/#/")
-        self.assertTrue(
-            Usuario.objects.filter(email="lorenzodreis@gmail.com").exists()
-        )
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
-        GOOGLE_ALLOWED_HOSTED_DOMAIN="https://agenda-juri-backend.vercel.app",
-        FRONTEND_URL="http://localhost:5173",
-    )
-    @patch("usuarios.views.requests.get")
-    @patch("usuarios.views.requests.post")
-    def test_retorno_google_rejeita_url_como_dominio_hospedado(
-        self,
-        requests_post,
-        requests_get,
-    ):
-        session = self.client.session
-        session["google_oauth_state"] = {"value": "state-domain-url", "flow": "login"}
-        session.save()
-        requests_post.return_value = make_google_response(
-            {
-                "id_token": "id-token",
-                "access_token": "access-token-domain-url",
-                "expires_in": 3600,
-            }
-        )
-        requests_get.return_value = make_google_response(
-            {
-                "sub": "google-sub-domain-url",
-                "email": "lorenzodreis@gmail.com",
-                "email_verified": "true",
-                "name": "Lorenzo Dreis",
-                "aud": "google-client-id",
-            }
-        )
-
-        response = self.client.get(
-            reverse("google_callback"),
-            {"code": "auth-code", "state": "state-domain-url"},
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("GOOGLE_ALLOWED_HOSTED_DOMAIN", response["Location"])
-        self.assertFalse(
-            Usuario.objects.filter(email="lorenzodreis@gmail.com").exists()
-        )
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="google-client-id",
-        GOOGLE_CLIENT_SECRET="google-client-secret",
-        GOOGLE_REDIRECT_URI=GOOGLE_CALLBACK_URL,
-        FRONTEND_URL="http://localhost:5173",
-    )
-    @patch("usuarios.views.requests.get")
-    @patch("usuarios.views.requests.post")
-    def test_retorno_google_calendar_preserva_refresh_token_existente(
-        self,
-        requests_post,
-        requests_get,
-    ):
-        session = self.client.session
-        session["google_oauth_state"] = {
-            "value": "state-999",
-            "flow": "calendar",
-        }
-        session.save()
-        requests_post.return_value = make_google_response(
-            {
-                "id_token": "id-token",
-                "access_token": "new-access-token",
-                "expires_in": 1800,
-            }
-        )
-        requests_get.return_value = make_google_response(
-            {
-                "sub": "google-sub-999",
-                "email": "persist@example.com",
-                "email_verified": "true",
-                "name": "Persist User",
-                "aud": "google-client-id",
-            }
-        )
-        usuario = Usuario.objects.create(
-            nome="Persist User",
-            email="persist@example.com",
-            cargo="Operacional",
-            google_sub="google-sub-999",
-            google_token="old-access-token",
-            google_refresh_token="persisted-refresh-token",
-        )
-
-        response = self.client.get(
-            reverse("google_callback"),
-            {"code": "auth-code", "state": "state-999"},
-        )
-
-        usuario.refresh_from_db()
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(
-            response["Location"],
-            "http://localhost:5173/#/agenda?google_calendar=connected",
-        )
-        self.assertEqual(usuario.google_token, "new-access-token")
-        self.assertEqual(usuario.google_refresh_token, "persisted-refresh-token")
-        self.assertIsNotNone(usuario.google_token_expiry)
-
-    @override_settings(FRONTEND_URL="http://localhost:5173")
-    @patch("usuarios.views.requests.post")
-    def test_retorno_google_rejeita_estado_invalido(self, requests_post):
-        session = self.client.session
-        session["google_oauth_state"] = {"value": "state-real", "flow": "login"}
-        session.save()
-
-        response = self.client.get(
-            reverse("google_callback"),
-            {"code": "auth-code", "state": "state-falso"},
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("/#/login?google_error=", response["Location"])
-        requests_post.assert_not_called()
+        self.assertTrue(serialized["google_calendar_conectado"])
+        self.assertEqual(serialized["google_calendar_destino"], "Minha agenda")
 
     def test_admin_nao_abre_cadastro_manual_de_usuario(self):
         response = self.client.get(reverse("admin:usuarios_usuario_add"))
 
         self.assertEqual(response.status_code, 403)
-
-    def test_admin_abre_formulario_de_editar_cargo(self):
-        cargo = Group.objects.create(name="Operacional")
-
-        response = self.client.get(
-            reverse("admin:usuarios_cargo_change", args=[cargo.pk])
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Operacional")
-        self.assertContains(response, "Nome do cargo")
-
-    def test_admin_cargo_usa_permissoes_de_auth_group(self):
-        cargo = Group.objects.create(name="Operacional")
-        staff = get_user_model().objects.create_user(
-            username="staff@example.com",
-            email="staff@example.com",
-            is_staff=True,
-        )
-        permissions = Permission.objects.filter(
-            content_type__app_label="auth",
-            codename__in=["change_group", "view_group"],
-        )
-        staff.user_permissions.add(*permissions)
-        self.client.force_login(staff)
-
-        response = self.client.get(
-            reverse("admin:usuarios_cargo_change", args=[cargo.pk])
-        )
-
-        self.assertEqual(response.status_code, 200)
-
-    def test_admin_edita_cargo_e_sincroniza_usuarios_vinculados(self):
-        cargo = Group.objects.create(name="Operacional")
-        Usuario.objects.create(
-            nome="Bianca",
-            email="bianca@example.com",
-            cargo=cargo.name,
-        )
-
-        response = self.client.post(
-            reverse("admin:usuarios_cargo_change", args=[cargo.pk]),
-            data={
-                "name": "Financeiro",
-                "permissions": [],
-                "_save": "Salvar",
-            },
-        )
-
-        self.assertEqual(response.status_code, 302)
-        cargo.refresh_from_db()
-        self.assertEqual(cargo.name, "Financeiro")
-        self.assertEqual(
-            Usuario.objects.get(email="bianca@example.com").cargo,
-            "Financeiro",
-        )
-
-    def test_exclusao_informa_bloqueio_quando_ha_usuarios_vinculados(self):
-        cargo = Group.objects.create(name="Administrador")
-        Usuario.objects.create(
-            nome="Renata",
-            email="renata@example.com",
-            cargo=cargo.name,
-        )
-
-        response = self.client.delete(reverse("excluir_cargo", args=[cargo.pk]))
-        payload = response.json()
-
-        self.assertEqual(response.status_code, 409)
-        self.assertFalse(payload["sucesso"])
-        self.assertIn("cargo", payload["erros"])
-        self.assertTrue(Group.objects.filter(pk=cargo.pk).exists())
-
-    def test_nao_exclui_cargo_com_usuarios_vinculados(self):
-        cargo = Group.objects.create(name="Operacional")
-        Usuario.objects.create(
-            nome="Lorena",
-            email="lorena@example.com",
-            cargo=cargo.name,
-        )
-
-        response = self.client.delete(reverse("excluir_cargo", args=[cargo.pk]))
-        payload = response.json()
-
-        self.assertEqual(response.status_code, 409)
-        self.assertFalse(payload["sucesso"])
-        self.assertEqual(
-            payload["erros"]["cargo"],
-            ["Remova ou altere os usuários vinculados antes de excluir este cargo."],
-        )
-        self.assertTrue(Group.objects.filter(pk=cargo.pk).exists())

@@ -4,12 +4,6 @@ from django.shortcuts import get_object_or_404
 
 from agenda.forms import EventoForm
 from agenda.models import Evento
-from agenda.services.google_calendar import (
-    criar_evento_google,
-    sincronizar_agenda_google,
-    atualizar_evento_google,
-    deletar_evento_google,
-)
 from core.permissions import app_permissions_required
 from core.utils import (
     resposta_erro,
@@ -20,7 +14,9 @@ from core.utils import (
     converter_campos_datahora,
     resposta_sucesso,
 )
-from usuarios.models import Usuario
+from integrations.google.calendar import delete_remote_event, sync_agenda, sync_local_event
+from integrations.google.exceptions import GoogleAuthorizationRequired
+from integrations.google.oauth import current_usuario
 
 EVENTO_DATETIME_FIELDS = ("data_inicio", "data_fim", "lembrete_em")
 logger = logging.getLogger(__name__)
@@ -48,22 +44,19 @@ def _resolver_criador_evento(request):
 
 
 def _usuario_google_atual(request):
-    usuario_id = request.session.get("usuario_id")
-    if usuario_id:
-        usuario = Usuario.objects.filter(pk=usuario_id).first()
-        if usuario is not None:
-            return usuario
+    return current_usuario(request)
 
-    usuario_requisicao = getattr(request, "user", None)
-    if usuario_requisicao and getattr(usuario_requisicao, "is_authenticated", False):
-        identificador = (
-            getattr(usuario_requisicao, "email", "")
-            or getattr(usuario_requisicao, "username", "")
-        )
-        if identificador:
-            return Usuario.objects.filter(email__iexact=identificador).first()
 
-    return None
+def _sincronizar_evento_se_conectado(request, evento):
+    usuario = _usuario_google_atual(request)
+    try:
+        quantidade = sync_local_event(usuario, evento)
+        return {"status": "sincronizado", "calendarios": quantidade}
+    except GoogleAuthorizationRequired:
+        return {"status": "nao_conectado"}
+    except Exception:
+        logger.exception("Erro ao sincronizar evento local com Google Calendar.")
+        return {"status": "pendente"}
 
 
 def serialize_evento(evento):
@@ -102,18 +95,9 @@ def listar_eventos(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    sincronizacao_google = None
-    try:
-        sincronizacao_google = sincronizar_agenda_google(_usuario_google_atual(request))
-    except Exception:
-        sincronizacao_google = None
-
     eventos = Evento.objects.select_related("cliente", "processo").all()
     serialized = [serialize_evento(evento) for evento in eventos]
-    payload = {"eventos": serialized}
-    if sincronizacao_google is not None:
-        payload["sincronizacao_google"] = sincronizacao_google
-    return resposta_sucesso(payload)
+    return resposta_sucesso({"eventos": serialized})
 
 
 @app_permissions_required("agenda.add_evento")
@@ -132,19 +116,13 @@ def criar_evento(request):
         evento.criado_por = _resolver_criador_evento(request)
         evento.save()
 
-        try:
-            google_id = criar_evento_google(_usuario_google_atual(request), evento)
-            if isinstance(google_id, str) and google_id.strip():
-                evento.google_event_id = google_id
-                evento.save(update_fields=["google_event_id"])
-        except Exception:
-            pass
+        google_sync = _sincronizar_evento_se_conectado(request, evento)
 
         evento = Evento.objects.select_related("cliente", "processo").get(pk=evento.pk)
         serialized = serialize_evento(evento)
 
         return resposta_sucesso(
-            {"evento": serialized},
+            {"evento": serialized, "sincronizacao_google": google_sync},
             mensagem="Evento criado com sucesso.",
             status=201,
         )
@@ -180,22 +158,12 @@ def editar_evento(request, evento_id):
     if form.is_valid():
         evento = form.save()
 
-        try:
-            google_id = atualizar_evento_google(_usuario_google_atual(request), evento)
-            if (
-                isinstance(google_id, str)
-                and google_id.strip()
-                and not evento.google_event_id
-            ):
-                evento.google_event_id = google_id
-                evento.save(update_fields=["google_event_id"])
-        except Exception:
-            pass
+        google_sync = _sincronizar_evento_se_conectado(request, evento)
 
         evento = Evento.objects.select_related("cliente", "processo").get(pk=evento.pk)
         serialized = serialize_evento(evento)
         return resposta_sucesso(
-            {"evento": serialized},
+            {"evento": serialized, "sincronizacao_google": google_sync},
             mensagem="Evento atualizado com sucesso.",
         )
 
@@ -210,9 +178,15 @@ def excluir_evento(request, evento_id):
     evento = get_object_or_404(Evento, pk=evento_id)
 
     try:
-        deletar_evento_google(_usuario_google_atual(request), evento)
+        delete_remote_event(_usuario_google_atual(request), evento)
+    except GoogleAuthorizationRequired as exc:
+        return resposta_erro(str(exc), status=409)
     except Exception:
-        pass
+        logger.exception("Erro ao excluir evento no Google Calendar.")
+        return resposta_erro(
+            "Nao foi possivel excluir o evento no Google Calendar. Tente novamente.",
+            status=502,
+        )
 
     deleted_id = str(evento.pk)
     evento.delete()
@@ -243,19 +217,15 @@ def sincronizar_google_calendar(request):
         return metodo_nao_permitido(["POST"])
 
     try:
-        resumo = sincronizar_agenda_google(_usuario_google_atual(request))
+        resumo = sync_agenda(_usuario_google_atual(request))
+    except GoogleAuthorizationRequired as exc:
+        return resposta_erro(str(exc), status=401)
     except Exception:
         logger.exception("Erro inesperado ao sincronizar Google Calendar.")
         return resposta_erro(
             "Não foi possível sincronizar com o Google Calendar agora. "
             "Verifique a conexão da conta e tente novamente.",
             status=502,
-        )
-
-    if not resumo["conectado"]:
-        return resposta_erro(
-            "Conecte o Google Calendar para sincronizar os compromissos.",
-            status=400,
         )
 
     eventos = Evento.objects.select_related("cliente", "processo").all()

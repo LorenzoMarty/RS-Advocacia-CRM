@@ -1,0 +1,132 @@
+import logging
+
+import requests
+from django.http import HttpRequest, HttpResponseRedirect
+from django.utils import timezone
+
+from core.permissions import app_permissions_required
+from core.utils import ler_corpo_json, metodo_nao_permitido, resposta_erro, resposta_sucesso
+from integrations.google.calendar import configure_calendars, list_available_calendars
+from integrations.google.exceptions import (
+    GoogleAuthorizationRequired,
+    GoogleConfigurationError,
+)
+from integrations.google.oauth import (
+    begin_authorization,
+    complete_authorization,
+    current_usuario,
+    frontend_redirect,
+)
+
+logger = logging.getLogger(__name__)
+
+
+def login_google(request: HttpRequest):
+    if request.method != "GET":
+        return metodo_nao_permitido(["GET"])
+    try:
+        return begin_authorization(
+            request,
+            force_consent=request.GET.get("force_consent") == "1",
+            next_path=request.GET.get("next", "/"),
+        )
+    except GoogleConfigurationError as exc:
+        return resposta_erro(str(exc), status=503)
+
+
+def google_callback(request: HttpRequest):
+    if request.method != "GET":
+        return metodo_nao_permitido(["GET"])
+    if request.GET.get("error"):
+        return HttpResponseRedirect(
+            frontend_redirect("/login", {"google_error": "Login com Google cancelado."})
+        )
+    try:
+        next_path = complete_authorization(
+            request,
+            str(request.GET.get("code") or "").strip(),
+            str(request.GET.get("state") or "").strip(),
+        )
+    except GoogleAuthorizationRequired as exc:
+        return HttpResponseRedirect(
+            frontend_redirect(
+                "/login",
+                {"google_error": str(exc), "google_consent": "required"},
+            )
+        )
+    except (GoogleConfigurationError, ValueError, requests.RequestException) as exc:
+        return HttpResponseRedirect(
+            frontend_redirect("/login", {"google_error": str(exc)})
+        )
+    params = {"google_calendar": "connected"} if next_path == "/agenda" else None
+    return HttpResponseRedirect(frontend_redirect(next_path, params))
+
+
+@app_permissions_required("agenda.view_evento")
+def calendars(request: HttpRequest):
+    if request.method != "GET":
+        return metodo_nao_permitido(["GET"])
+    usuario = current_usuario(request)
+    try:
+        return resposta_sucesso({"calendarios": list_available_calendars(usuario)})
+    except GoogleAuthorizationRequired as exc:
+        return resposta_erro(str(exc), status=401)
+    except Exception:
+        logger.exception("Erro ao listar calendarios Google.")
+        return resposta_erro("Nao foi possivel listar os calendarios Google.", status=502)
+
+
+@app_permissions_required("agenda.change_evento")
+def calendar_selection(request: HttpRequest):
+    if request.method != "PUT":
+        return metodo_nao_permitido(["PUT"])
+    try:
+        payload = ler_corpo_json(request)
+        configured = configure_calendars(
+            current_usuario(request),
+            payload.get("calendarios") or [],
+        )
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+    except GoogleAuthorizationRequired as exc:
+        return resposta_erro(str(exc), status=401)
+    except Exception:
+        logger.exception("Erro ao configurar calendarios Google.")
+        return resposta_erro("Nao foi possivel configurar os calendarios Google.", status=502)
+    return resposta_sucesso({"calendarios": configured})
+
+
+@app_permissions_required("agenda.view_evento")
+def disconnect(request: HttpRequest):
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+    usuario = current_usuario(request)
+    account = getattr(usuario, "google_account", None)
+    if account is None:
+        return resposta_sucesso(mensagem="Conta Google ja desconectada.")
+    token = account.refresh_token or account.access_token
+    if token:
+        try:
+            response = requests.post(
+                "https://oauth2.googleapis.com/revoke",
+                params={"token": token},
+                timeout=10,
+            )
+            if response.status_code not in {200, 400}:
+                return resposta_erro(
+                    "Nao foi possivel revogar o acesso Google agora. Tente novamente.",
+                    status=502,
+                )
+        except requests.RequestException:
+            logger.exception("Erro ao revogar acesso Google.")
+            return resposta_erro(
+                "Nao foi possivel revogar o acesso Google agora. Tente novamente.",
+                status=502,
+            )
+    account.access_token_ciphertext = ""
+    account.refresh_token_ciphertext = ""
+    account.revoked_at = timezone.now()
+    account.save(
+        update_fields=["access_token_ciphertext", "refresh_token_ciphertext", "revoked_at"]
+    )
+    return resposta_sucesso(mensagem="Conta Google desconectada.")

@@ -154,6 +154,7 @@ INSTALLED_APPS = [
     "agenda",
     "core",
     "usuarios",
+    "integrations",
     "ai",
     "meetings",
 ]
@@ -240,6 +241,9 @@ WHITENOISE_USE_FINDERS = DEBUG
 
 if not DEBUG:
     STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
         }
@@ -254,7 +258,7 @@ DEFAULT_REACT_ORIGINS = [
 ]
 FRONTEND_URL = os.getenv("FRONTEND_URL", DEFAULT_REACT_ORIGINS[0]).strip().rstrip("/")
 
-CORS_ALLOW_ALL_ORIGINS = _env_flag("CORS_ALLOW_ALL_ORIGINS", default=True)
+CORS_ALLOW_ALL_ORIGINS = _env_flag("CORS_ALLOW_ALL_ORIGINS", default=DEBUG)
 CORS_ALLOWED_ORIGINS = sorted(
     {
         *DEFAULT_REACT_ORIGINS,
@@ -301,6 +305,8 @@ GOOGLE_CALENDAR_ID = os.getenv("GOOGLE_CALENDAR_ID", "primary").strip() or "prim
 GOOGLE_CALENDAR_TIMEZONE = (
     os.getenv("GOOGLE_CALENDAR_TIMEZONE", TIME_ZONE).strip() or TIME_ZONE
 )
+GOOGLE_TOKEN_ENCRYPTION_KEY = os.getenv("GOOGLE_TOKEN_ENCRYPTION_KEY", "").strip()
+GOOGLE_SYNC_PAST_DAYS = int(os.getenv("GOOGLE_SYNC_PAST_DAYS", "").strip() or "180")
 
 AI_PROVIDER = os.getenv("AI_PROVIDER", "openai").strip() or "openai"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
@@ -312,7 +318,9 @@ OPENAI_SUMMARY_MODEL = (
     os.getenv("OPENAI_SUMMARY_MODEL", "gpt-4.1-mini").strip()
     or "gpt-4.1-mini"
 )
-MEETINGS_MAX_AUDIO_SIZE_MB = int(os.getenv("MEETINGS_MAX_AUDIO_SIZE_MB", "25"))
+MEETINGS_MAX_AUDIO_SIZE_MB = int(
+    os.getenv("MEETINGS_MAX_AUDIO_SIZE_MB", "").strip() or "25"
+)
 
 CELERY_BROKER_URL = os.getenv(
     "CELERY_BROKER_URL",

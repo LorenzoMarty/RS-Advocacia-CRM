@@ -7,7 +7,9 @@ export function LoginPage() {
   const location = useLocation();
   const [googleError, setGoogleError] = useState('');
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const redirectError = new URLSearchParams(location.search).get('google_error') || '';
+  const redirectParams = new URLSearchParams(location.search);
+  const redirectError = redirectParams.get('google_error') || '';
+  const requiresConsent = redirectParams.get('google_consent') === 'required';
   const visibleError = googleError || redirectError;
 
   function handleGoogleRedirect() {
@@ -18,7 +20,9 @@ export function LoginPage() {
 
     setGoogleError('');
     setIsRedirecting(true);
-    window.location.assign(api.urlLoginGoogle());
+    window.location.assign(
+      requiresConsent ? api.urlReauthorizeGoogle() : api.urlLoginGoogle(),
+    );
   }
 
   return (
@@ -52,7 +56,11 @@ export function LoginPage() {
             disabled={isRedirecting}
             onClick={handleGoogleRedirect}
           >
-            {isRedirecting ? 'Redirecionando...' : 'Entrar com Google'}
+            {isRedirecting
+              ? 'Redirecionando...'
+              : requiresConsent
+                ? 'Autorizar Google Calendar'
+                : 'Entrar com Google'}
           </button>
         </div>
 
