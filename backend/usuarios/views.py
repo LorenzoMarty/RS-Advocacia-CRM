@@ -46,6 +46,11 @@ DEFAULT_CARGO_PERMISSIONS = {
         "agenda.view_evento",
         "agenda.add_evento",
         "agenda.change_evento",
+        "meetings.view_reuniao",
+        "meetings.add_reuniao",
+        "meetings.change_reuniao",
+        "meetings.view_gravacao",
+        "meetings.add_gravacao",
         "usuarios.view_usuario",
     },
     ESTAGIARIO_CARGO_NAME: {
@@ -54,6 +59,10 @@ DEFAULT_CARGO_PERMISSIONS = {
         "agenda.view_evento",
         "agenda.add_evento",
         "agenda.change_evento",
+        "meetings.view_reuniao",
+        "meetings.add_reuniao",
+        "meetings.view_gravacao",
+        "meetings.add_gravacao",
     },
 }
 

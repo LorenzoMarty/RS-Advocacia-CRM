@@ -154,6 +154,8 @@ INSTALLED_APPS = [
     "agenda",
     "core",
     "usuarios",
+    "ai",
+    "meetings",
 ]
 
 MIDDLEWARE = [
@@ -231,6 +233,8 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 WHITENOISE_USE_FINDERS = DEBUG
 
@@ -297,6 +301,31 @@ GOOGLE_CALENDAR_ID = os.getenv("GOOGLE_CALENDAR_ID", "primary").strip() or "prim
 GOOGLE_CALENDAR_TIMEZONE = (
     os.getenv("GOOGLE_CALENDAR_TIMEZONE", TIME_ZONE).strip() or TIME_ZONE
 )
+
+AI_PROVIDER = os.getenv("AI_PROVIDER", "openai").strip() or "openai"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_TRANSCRIPTION_MODEL = (
+    os.getenv("OPENAI_TRANSCRIPTION_MODEL", "gpt-4o-transcribe").strip()
+    or "gpt-4o-transcribe"
+)
+OPENAI_SUMMARY_MODEL = (
+    os.getenv("OPENAI_SUMMARY_MODEL", "gpt-4.1-mini").strip()
+    or "gpt-4.1-mini"
+)
+MEETINGS_MAX_AUDIO_SIZE_MB = int(os.getenv("MEETINGS_MAX_AUDIO_SIZE_MB", "25"))
+
+CELERY_BROKER_URL = os.getenv(
+    "CELERY_BROKER_URL",
+    os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+)
+CELERY_RESULT_BACKEND = os.getenv(
+    "CELERY_RESULT_BACKEND",
+    os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+)
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 

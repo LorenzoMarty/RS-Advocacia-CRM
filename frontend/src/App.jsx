@@ -42,6 +42,7 @@ import {
   RoleDeletePage,
 } from "./app/pages/roles";
 import { ApiTestPage } from "./app/pages/api-test";
+import { MeetingsPage } from "./app/pages/meetings";
 
 function ClientFormRoute() {
   const { clientId } = useParams();
@@ -123,6 +124,8 @@ export default function App() {
               path="/agenda/:eventId/excluir"
               element={<EventDeletePage />}
             />
+
+            <Route path="/reunioes" element={<MeetingsPage />} />
 
             <Route path="/usuarios" element={<UsersListPage />} />
             <Route path="/usuarios/:userId" element={<UserDetailPage />} />
