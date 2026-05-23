@@ -1,19 +1,11 @@
-from datetime import timedelta
-from secrets import token_urlsafe
 from typing import Any, cast
-from urllib.parse import urlencode, urlsplit
 
-from django.contrib.auth import login as autenticar_django, logout as encerrar_sessao_django
+from django.contrib.auth import logout as encerrar_sessao_django
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
-from django.conf import settings
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponseRedirect
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
-from django.urls import Resolver404, resolve, reverse
-from django.utils import timezone
-import requests
 
-from agenda.services.google_calendar import google_calendar_label
 from core.permissions import app_any_permissions_required, app_permissions_required
 from core.utils import (
     resposta_erro,
@@ -30,6 +22,8 @@ from usuarios.forms import (
     normalize_cargo_name,
 )
 from usuarios.models import Cargo, Usuario, cargo_lookup_values
+from integrations.google.calendar import calendar_label
+from integrations.models import GoogleAccount
 
 
 ESTAGIARIO_CARGO_NAME = dict(Usuario.TIPOS).get("estagiario", "Estagiario")
@@ -81,22 +75,6 @@ CARGO_LIST_PERMISSIONS = (
     "usuarios.add_usuario",
     "usuarios.change_usuario",
 )
-
-
-class GoogleLoginConfigurationError(Exception):
-    pass
-
-
-GOOGLE_AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth"
-GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events"
-GOOGLE_LOGIN_SCOPES = (
-    "openid",
-    "email",
-    "profile",
-)
-GOOGLE_CALENDAR_OAUTH_SCOPES = (*GOOGLE_LOGIN_SCOPES, GOOGLE_CALENDAR_SCOPE)
-GOOGLE_OAUTH_STATE_SESSION_KEY = "google_oauth_state"
 
 
 def _clear_usuario_session(request: HttpRequest) -> None:
@@ -241,297 +219,6 @@ def _sync_usuario_auth(
     return auth_user
 
 
-def _google_default_cargo_name() -> str:
-    configured_cargo = getattr(settings, "GOOGLE_DEFAULT_CARGO", "").strip()
-    return configured_cargo or ESTAGIARIO_CARGO_NAME
-
-
-def _google_client_id() -> str:
-    client_id = getattr(settings, "GOOGLE_CLIENT_ID", "").strip()
-    if not client_id:
-        raise GoogleLoginConfigurationError("Login com Google não configurado.")
-    return client_id
-
-
-def _google_client_secret() -> str:
-    client_secret = getattr(settings, "GOOGLE_CLIENT_SECRET", "").strip()
-    if not client_secret:
-        raise GoogleLoginConfigurationError("Login com Google não configurado.")
-    return client_secret
-
-
-def _default_google_redirect_uri(request: HttpRequest) -> str:
-    return request.build_absolute_uri(reverse("google_callback"))
-
-
-def _google_redirect_uri(request: HttpRequest) -> str:
-    configured_uri = getattr(settings, "GOOGLE_REDIRECT_URI", "").strip()
-    if not configured_uri:
-        return _default_google_redirect_uri(request)
-
-    if configured_uri.startswith("/"):
-        candidate_path = configured_uri
-        resolved_uri = request.build_absolute_uri(configured_uri)
-    else:
-        candidate_path = urlsplit(configured_uri).path or ""
-        resolved_uri = configured_uri
-
-    try:
-        resolve(candidate_path)
-    except Resolver404:
-        return _default_google_redirect_uri(request)
-
-    return resolved_uri
-
-
-def _frontend_redirect_url(path: str = "/", params: dict[str, str] | None = None) -> str:
-    frontend_url = getattr(settings, "FRONTEND_URL", "").strip()
-    if not frontend_url:
-        frontend_url = settings.DEFAULT_REACT_ORIGINS[0]
-
-    frontend_url = frontend_url.rstrip("/")
-    hash_path = path if path.startswith("/") else f"/{path}"
-    query = f"?{urlencode(params)}" if params else ""
-    return f"{frontend_url}/#{hash_path}{query}"
-
-
-def _google_error_redirect(message: str) -> HttpResponseRedirect:
-    return HttpResponseRedirect(
-        _frontend_redirect_url("/login", {"google_error": message})
-    )
-
-
-def _google_flow_error_redirect(
-    flow: str,
-    message: str,
-) -> HttpResponseRedirect:
-    if flow == "calendar":
-        return HttpResponseRedirect(
-            _frontend_redirect_url(
-                "/agenda",
-                {
-                    "google_calendar": "error",
-                    "google_error": message,
-                },
-            )
-        )
-
-    return _google_error_redirect(message)
-
-
-def _google_flow_success_redirect(flow: str) -> HttpResponseRedirect:
-    if flow == "calendar":
-        return HttpResponseRedirect(
-            _frontend_redirect_url("/agenda", {"google_calendar": "connected"})
-        )
-
-    return HttpResponseRedirect(_frontend_redirect_url("/"))
-
-
-def _verify_google_credential(credential: str) -> dict[str, Any]:
-    client_id = _google_client_id()
-
-    response = requests.get(
-        "https://oauth2.googleapis.com/tokeninfo",
-        params={"id_token": credential},
-        timeout=10,
-    )
-    if response.status_code != 200:
-        raise ValueError("Token Google inválido.")
-    idinfo = response.json()
-
-    if idinfo.get("aud") != client_id:
-        raise ValueError("Token Google emitido para outro ID de cliente.")
-
-    email = str(idinfo.get("email") or "").strip().lower()
-    allowed_emails = _google_allowed_emails()
-    if allowed_emails and email not in allowed_emails:
-        raise ValueError("Conta Google fora dos e-mails permitidos.")
-
-    hosted_domain = ""
-    if not allowed_emails:
-        hosted_domain = _normalize_google_hosted_domain(
-            getattr(settings, "GOOGLE_ALLOWED_HOSTED_DOMAIN", "")
-        )
-
-    email_domain = email.rsplit("@", 1)[-1] if "@" in email else ""
-    credential_domain = str(idinfo.get("hd") or "").strip().lower()
-    if hosted_domain and hosted_domain not in {credential_domain, email_domain}:
-        raise ValueError(
-            f"Conta Google fora do domínio permitido ({hosted_domain})."
-        )
-
-    email_verified = idinfo.get("email_verified")
-    if not idinfo.get("email") or str(email_verified).lower() != "true":
-        raise ValueError("Conta Google sem e-mail verificado.")
-
-    return idinfo
-
-
-def _google_allowed_emails() -> set[str]:
-    raw_value = getattr(settings, "GOOGLE_ALLOWED_EMAILS", "")
-    emails = set()
-
-    for item in str(raw_value or "").replace(";", ",").split(","):
-        email = item.strip().lower()
-        if email and "@" in email:
-            emails.add(email)
-
-    return emails
-
-
-def _normalize_google_hosted_domain(value: str) -> str:
-    domain = str(value or "").strip().lower()
-
-    if not domain:
-        return ""
-
-    parsed = urlsplit(domain)
-    if parsed.scheme or parsed.netloc or "/" in domain:
-        raise ValueError(
-            "GOOGLE_ALLOWED_HOSTED_DOMAIN deve ser um dominio de e-mail, "
-            "como gmail.com. Nao use URL do backend ou frontend."
-        )
-
-    if "@" in domain:
-        domain = domain.rsplit("@", 1)[-1]
-
-    return domain.strip().removeprefix("@")
-
-
-def _google_token_expiry(token_payload: dict[str, Any]):
-    expires_in = token_payload.get("expires_in")
-    if expires_in in (None, ""):
-        return None
-
-    try:
-        expires_in_seconds = max(int(expires_in), 0)
-    except (TypeError, ValueError):
-        return None
-
-    return timezone.now() + timedelta(seconds=expires_in_seconds)
-
-
-def _save_google_tokens(usuario: Usuario, token_payload: dict[str, Any]) -> None:
-    access_token = str(token_payload.get("access_token") or "").strip()
-    refresh_token = str(token_payload.get("refresh_token") or "").strip()
-    token_expiry = _google_token_expiry(token_payload)
-
-    if not access_token:
-        raise ValueError("Google nÃ£o retornou um token de acesso.")
-
-    update_fields = []
-
-    if usuario.google_token != access_token:
-        usuario.google_token = access_token
-        update_fields.append("google_token")
-
-    if refresh_token and usuario.google_refresh_token != refresh_token:
-        usuario.google_refresh_token = refresh_token
-        update_fields.append("google_refresh_token")
-
-    if usuario.google_token_expiry != token_expiry:
-        usuario.google_token_expiry = token_expiry
-        update_fields.append("google_token_expiry")
-
-    if update_fields:
-        usuario.save(update_fields=update_fields)
-
-
-def _store_google_oauth_state(request: HttpRequest, state: str, flow: str) -> None:
-    request.session[GOOGLE_OAUTH_STATE_SESSION_KEY] = {
-        "value": state,
-        "flow": flow,
-    }
-
-
-def _consume_google_oauth_state(request: HttpRequest) -> tuple[str, str]:
-    session_payload = request.session.pop(GOOGLE_OAUTH_STATE_SESSION_KEY, None)
-    if isinstance(session_payload, dict):
-        return (
-            str(session_payload.get("value") or ""),
-            str(session_payload.get("flow") or "login"),
-        )
-
-    if session_payload:
-        return str(session_payload), "legacy"
-
-    return "", "login"
-
-
-def _exchange_google_code(code: str, redirect_uri: str) -> dict[str, Any]:
-    response = requests.post(
-        GOOGLE_TOKEN_URL,
-        data={
-            "code": code,
-            "client_id": _google_client_id(),
-            "client_secret": _google_client_secret(),
-            "redirect_uri": redirect_uri,
-            "grant_type": "authorization_code",
-        },
-        timeout=10,
-    )
-    if response.status_code != 200:
-        raise ValueError("Não foi possível concluir o login com Google.")
-
-    token_payload = response.json()
-    id_token = str(token_payload.get("id_token") or "").strip()
-    if not id_token:
-        raise ValueError("Google não retornou um token de identidade.")
-    access_token = str(token_payload.get("access_token") or "").strip()
-    if not access_token:
-        raise ValueError("Google nÃ£o retornou um token de acesso.")
-
-    return token_payload
-
-
-def _get_or_create_google_usuario(idinfo: dict[str, Any]) -> Usuario:
-    google_sub = str(idinfo.get("sub") or "").strip()
-    email = str(idinfo.get("email") or "").strip().lower()
-    nome = str(idinfo.get("name") or "").strip() or email.split("@")[0]
-    picture = str(idinfo.get("picture") or "").strip()
-
-    if not google_sub or not email:
-        raise ValueError("Resposta inválida do Google.")
-
-    usuario = Usuario.objects.filter(google_sub=google_sub).first()
-    if usuario is not None:
-        update_fields = []
-        if picture and usuario.picture != picture:
-            usuario.picture = picture
-            update_fields.append("picture")
-        if nome and usuario.nome != nome:
-            usuario.nome = nome
-            update_fields.append("nome")
-        if update_fields:
-            usuario.save(update_fields=update_fields)
-        return usuario
-
-    usuario = Usuario.objects.filter(email__iexact=email).first()
-    if usuario is not None:
-        if usuario.google_sub and usuario.google_sub != google_sub:
-            raise ValueError("Esta conta já está vinculada a outro login Google.")
-        usuario.google_sub = google_sub
-        update_fields = ["google_sub"]
-        if picture and usuario.picture != picture:
-            usuario.picture = picture
-            update_fields.append("picture")
-        if nome and usuario.nome != nome:
-            usuario.nome = nome
-            update_fields.append("nome")
-        usuario.save(update_fields=update_fields)
-        return usuario
-
-    _ensure_default_cargos()
-    return Usuario.objects.create(
-        nome=nome,
-        email=email,
-        cargo=_google_default_cargo_name(),
-        google_sub=google_sub,
-        picture=picture,
-    )
-
-
 def _get_cargos() -> list[Group]:
     _ensure_default_cargos()
     return list(Cargo.objects.order_by("name"))
@@ -609,6 +296,7 @@ def serialize_usuario(
         if cargos_by_name is not None
         else Cargo.objects.filter(name=cargo_nome).first()
     )
+    account = GoogleAccount.objects.filter(usuario=usuario).first()
     return {
         "id": str(usuario.pk),
         "pk": usuario.pk,
@@ -617,11 +305,8 @@ def serialize_usuario(
         "foto": usuario.picture,
         "cargo": cargo_nome,
         "cargo_id": str(cargo.pk) if cargo else cargo_nome,
-        "google_calendar_conectado": bool(
-            (usuario.google_refresh_token or "").strip()
-            or (usuario.google_token or "").strip()
-        ),
-        "google_calendar_destino": google_calendar_label(),
+        "google_calendar_conectado": bool(account and account.connected),
+        "google_calendar_destino": calendar_label(usuario),
     }
 
 
@@ -874,137 +559,6 @@ def excluir_cargo(request, cargo_id):
     deleted_id = str(cargo.pk)
     cargo.delete()
     return resposta_sucesso({"id": deleted_id}, mensagem="Cargo excluído com sucesso.")
-
-
-def _sign_in_google_usuario(
-    request: HttpRequest,
-    idinfo: dict[str, Any],
-    token_payload: dict[str, Any],
-    *,
-    persist_google_tokens: bool,
-) -> Usuario:
-    usuario = _get_or_create_google_usuario(idinfo)
-    if persist_google_tokens:
-        _save_google_tokens(usuario, token_payload)
-
-    if _authenticated_user(request) is not None:
-        encerrar_sessao_django(request)
-    _clear_usuario_session(request)
-
-    auth_user = _sync_usuario_auth(usuario)
-    autenticar_django(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
-    _remember_usuario_session(request, usuario)
-    return usuario
-
-
-def _google_oauth_redirect(
-    request: HttpRequest,
-    *,
-    scopes: tuple[str, ...],
-    flow: str,
-    clear_existing_session: bool,
-):
-    _google_client_id()
-    _google_client_secret()
-    redirect_uri = _google_redirect_uri(request)
-
-    if clear_existing_session and _authenticated_user(request) is not None:
-        encerrar_sessao_django(request)
-    if clear_existing_session:
-        _clear_usuario_session(request)
-
-    state = token_urlsafe(32)
-    _store_google_oauth_state(request, state, flow)
-
-    query = urlencode(
-        {
-            "client_id": _google_client_id(),
-            "redirect_uri": redirect_uri,
-            "response_type": "code",
-            "scope": " ".join(scopes),
-            "state": state,
-            "access_type": "offline",
-            "include_granted_scopes": "true",
-            "prompt": "consent select_account",
-        }
-    )
-    return HttpResponseRedirect(f"{GOOGLE_AUTHORIZATION_URL}?{query}")
-
-
-def login_google(request: HttpRequest):
-    if request.method != "GET":
-        return metodo_nao_permitido(["GET"])
-
-    try:
-        return _google_oauth_redirect(
-            request,
-            scopes=GOOGLE_LOGIN_SCOPES,
-            flow="login",
-            clear_existing_session=True,
-        )
-    except GoogleLoginConfigurationError as exc:
-        return resposta_erro(str(exc), status=503)
-
-
-def conectar_google_calendar(request: HttpRequest):
-    if request.method != "GET":
-        return metodo_nao_permitido(["GET"])
-
-    try:
-        return _google_oauth_redirect(
-            request,
-            scopes=GOOGLE_CALENDAR_OAUTH_SCOPES,
-            flow="calendar",
-            clear_existing_session=False,
-        )
-    except GoogleLoginConfigurationError as exc:
-        return resposta_erro(str(exc), status=503)
-
-
-def retorno_google(request: HttpRequest):
-    if request.method != "GET":
-        return metodo_nao_permitido(["GET"])
-
-    expected_state, flow = _consume_google_oauth_state(request)
-
-    if request.GET.get("error"):
-        return _google_flow_error_redirect(flow, "Login com Google cancelado.")
-
-    received_state = str(request.GET.get("state") or "")
-    if not received_state or not expected_state or received_state != expected_state:
-        return _google_flow_error_redirect(
-            flow,
-            "Sessao de login expirada. Tente novamente.",
-        )
-
-    code = str(request.GET.get("code") or "").strip()
-    if not code:
-        return _google_flow_error_redirect(
-            flow,
-            "Google nao retornou o codigo de autorizacao.",
-        )
-
-    try:
-        token_payload = _exchange_google_code(code, _google_redirect_uri(request))
-        id_token = str(token_payload.get("id_token") or "").strip()
-        idinfo = _verify_google_credential(id_token)
-        _sign_in_google_usuario(
-            request,
-            idinfo,
-            token_payload,
-            persist_google_tokens=flow in {"calendar", "legacy"},
-        )
-    except GoogleLoginConfigurationError:
-        return _google_flow_error_redirect(flow, "Login com Google nao configurado.")
-    except ValueError as exc:
-        return _google_flow_error_redirect(flow, str(exc))
-    except requests.RequestException:
-        return _google_flow_error_redirect(
-            flow,
-            "Nao foi possivel validar o login com Google.",
-        )
-
-    return _google_flow_success_redirect(flow)
 
 
 def sair(request: HttpRequest):

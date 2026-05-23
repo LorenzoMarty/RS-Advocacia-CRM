@@ -13,10 +13,6 @@ class Usuario(models.Model):
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     cargo = models.CharField(max_length=150)
-    google_sub = models.CharField(max_length=255, unique=True, null=True, blank=True)
-    google_token = models.TextField(blank=True, default="")
-    google_refresh_token = models.TextField(blank=True, default="")
-    google_token_expiry = models.DateTimeField(null=True, blank=True)
     picture = models.URLField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
