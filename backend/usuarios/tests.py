@@ -62,7 +62,7 @@ class UsuariosTests(TestCase):
         )
         account = GoogleAccount.objects.create(
             usuario=usuario,
-            sub="sub-agenda",
+            google_user_id="sub-agenda",
             email=usuario.email,
         )
         account.store_tokens(access_token="access", refresh_token="refresh")

@@ -1,9 +1,12 @@
 import hashlib
 import json
+import logging
+import time as time_module
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from googleapiclient.errors import HttpError
@@ -15,8 +18,22 @@ from integrations.google.exceptions import GoogleApiError
 from integrations.models import GoogleCalendar, GoogleEventLink
 from processos.models import Processo
 
+logger = logging.getLogger(__name__)
+
 SYNC_CLIENT_NAME = "Google Agenda"
 SYNC_PROCESS_NUMBER = "GOOGLE-CALENDAR"
+RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
+
+
+def _execute(factory, error_message: str):
+    for attempt in range(3):
+        try:
+            return factory().execute()
+        except HttpError as exc:
+            status = getattr(exc.resp, "status", None)
+            if status not in RETRYABLE_STATUSES or attempt == 2:
+                raise GoogleApiError(error_message) from exc
+            time_module.sleep(0.35 * (attempt + 1))
 
 
 def calendar_label(usuario=None) -> str:
@@ -56,13 +73,17 @@ def enabled_calendars(usuario):
 
 def list_available_calendars(usuario) -> list[dict]:
     service = calendar_service(usuario)
+    account = account_for_usuario(usuario)
     page_token = None
     calendars = []
     while True:
-        response = service.calendarList().list(pageToken=page_token).execute()
+        response = _execute(
+            lambda: service.calendarList().list(pageToken=page_token),
+            "Nao foi possivel listar os calendarios Google.",
+        )
         for item in response.get("items", []):
             calendar, created = GoogleCalendar.objects.get_or_create(
-                account=account_for_usuario(usuario),
+                account=account,
                 calendar_id=item["id"],
                 defaults={
                     "summary": item.get("summary", ""),
@@ -91,6 +112,8 @@ def list_available_calendars(usuario) -> list[dict]:
 
 
 def configure_calendars(usuario, calendar_ids: list[str]) -> list[dict]:
+    from integrations.google.webhooks import stop_watch
+
     requested = {str(item).strip() for item in calendar_ids if str(item).strip()}
     if not requested:
         raise ValueError("Selecione ao menos um calendario Google.")
@@ -100,12 +123,21 @@ def configure_calendars(usuario, calendar_ids: list[str]) -> list[dict]:
         raise ValueError("Calendario Google invalido ou sem acesso.")
 
     account = account_for_usuario(usuario)
-    account.calendars.update(enabled=False)
+    service = calendar_service(usuario)
+    for calendar in account.calendars.exclude(watch_channel_id=""):
+        stop_watch(service, calendar)
+    account.calendars.update(
+        enabled=False,
+        sync_token_ciphertext="",
+        watch_channel_id="",
+        watch_resource_id="",
+        watch_token="",
+        watch_expiration=None,
+    )
     for calendar_id in requested:
         calendar = account.calendars.get(calendar_id=calendar_id)
         calendar.enabled = True
-        calendar.set_sync_token(None)
-        calendar.save(update_fields=["enabled", "sync_token_ciphertext"])
+        calendar.save(update_fields=["enabled"])
     return list_available_calendars(usuario)
 
 
@@ -115,6 +147,27 @@ def _aware(value):
     if timezone.is_naive(value):
         return timezone.make_aware(value, timezone.get_current_timezone())
     return value
+
+
+def _item_updated_at(item: dict):
+    value = item.get("updated")
+    parsed = parse_datetime(value) if value else None
+    return _aware(parsed) if parsed else None
+
+
+def _item_sequence(item: dict):
+    try:
+        return int(item.get("sequence"))
+    except (TypeError, ValueError):
+        return None
+
+
+def _item_timezone(item: dict) -> str:
+    return (
+        item.get("start", {}).get("timeZone")
+        or item.get("end", {}).get("timeZone")
+        or getattr(settings, "GOOGLE_CALENDAR_TIMEZONE", settings.TIME_ZONE)
+    )
 
 
 def event_payload(evento) -> dict:
@@ -211,20 +264,37 @@ def _create_imported_event(usuario, item: dict) -> Evento | None:
     )
 
 
-def _update_from_remote(evento: Evento, item: dict) -> None:
+def _update_from_remote(evento: Evento, item: dict) -> bool:
     fields = _remote_fields(item)
     if fields is None:
-        return
+        return False
     changed = []
     for name, value in fields.items():
         if getattr(evento, name) != value:
             setattr(evento, name, value)
             changed.append(name)
     if changed:
-        evento.save(update_fields=changed)
+        evento.save(update_fields=[*changed, "updated_at"])
+        return True
+    return False
 
 
-def _save_link(calendar: GoogleCalendar, evento: Evento, item: dict) -> GoogleEventLink:
+def _save_link(
+    calendar: GoogleCalendar,
+    evento: Evento,
+    item: dict,
+    *,
+    source_of_truth: str,
+) -> GoogleEventLink:
+    current_version = (
+        GoogleEventLink.objects.filter(
+            calendar=calendar,
+            google_event_id=str(item["id"]),
+        )
+        .values_list("sync_version", flat=True)
+        .first()
+        or 0
+    )
     link, _ = GoogleEventLink.objects.update_or_create(
         calendar=calendar,
         google_event_id=str(item["id"]),
@@ -232,11 +302,20 @@ def _save_link(calendar: GoogleCalendar, evento: Evento, item: dict) -> GoogleEv
             "evento": evento,
             "etag": str(item.get("etag") or ""),
             "local_payload_hash": _payload_hash(evento),
+            "timezone": _item_timezone(item),
+            "source_of_truth": source_of_truth,
+            "sync_version": current_version + 1,
+            "remote_updated_at": _item_updated_at(item),
+            "remote_sequence": _item_sequence(item),
             "remote_deleted_at": None,
             "last_synced_at": timezone.now(),
         },
     )
     return link
+
+
+def _google_error_status(exc: GoogleApiError):
+    return getattr(getattr(getattr(exc, "__cause__", None), "resp", None), "status", None)
 
 
 def _matching_local_event(calendar: GoogleCalendar, item: dict) -> Evento | None:
@@ -256,29 +335,52 @@ def _matching_local_event(calendar: GoogleCalendar, item: dict) -> Evento | None
     )
 
 
+def _remote_should_win(evento: Evento, link: GoogleEventLink, item: dict) -> bool:
+    if not link.last_synced_at:
+        return True
+    remote_updated_at = _item_updated_at(item)
+    if _payload_hash(evento) == link.local_payload_hash:
+        return True
+    if remote_updated_at and evento.updated_at:
+        return remote_updated_at >= evento.updated_at
+    return False
+
+
 def sync_local_event(usuario, evento: Evento) -> int:
     service = calendar_service(usuario)
     synchronized = 0
     for calendar in enabled_calendars(usuario):
         link = GoogleEventLink.objects.filter(calendar=calendar, evento=evento).first()
         payload = event_payload(evento)
-        if link:
-            item = (
-                service.events()
-                .update(
-                    calendarId=calendar.calendar_id,
-                    eventId=link.google_event_id,
-                    body=payload,
+        try:
+            if link:
+                item = _execute(
+                    lambda link=link: service.events().update(
+                        calendarId=calendar.calendar_id,
+                        eventId=link.google_event_id,
+                        body=payload,
+                    ),
+                    "Nao foi possivel atualizar o evento no Google.",
                 )
-                .execute()
+            else:
+                item = _execute(
+                    lambda: service.events().insert(calendarId=calendar.calendar_id, body=payload),
+                    "Nao foi possivel criar o evento no Google.",
+                )
+        except GoogleApiError as exc:
+            if not link or _google_error_status(exc) not in {404, 410}:
+                raise
+            link.delete()
+            item = _execute(
+                lambda: service.events().insert(calendarId=calendar.calendar_id, body=payload),
+                "Nao foi possivel recriar o evento no Google.",
             )
-        else:
-            item = (
-                service.events()
-                .insert(calendarId=calendar.calendar_id, body=payload)
-                .execute()
-            )
-        _save_link(calendar, evento, item)
+        _save_link(
+            calendar,
+            evento,
+            item,
+            source_of_truth=GoogleEventLink.SOURCE_LOCAL,
+        )
         synchronized += 1
     return synchronized
 
@@ -295,16 +397,22 @@ def delete_remote_event(usuario, evento: Evento) -> int:
     if not links:
         return 0
     service = calendar_service(usuario)
+    deleted = 0
     for link in links:
         try:
-            service.events().delete(
-                calendarId=link.calendar.calendar_id,
-                eventId=link.google_event_id,
-            ).execute()
-        except HttpError as exc:
-            if getattr(exc.resp, "status", None) != 410:
-                raise GoogleApiError("Nao foi possivel excluir o evento no Google.") from exc
-    return len(links)
+            _execute(
+                lambda link=link: service.events().delete(
+                    calendarId=link.calendar.calendar_id,
+                    eventId=link.google_event_id,
+                ),
+                "Nao foi possivel excluir o evento no Google.",
+            )
+        except GoogleApiError as exc:
+            status = getattr(getattr(exc, "__cause__", None), "resp", None)
+            if getattr(status, "status", None) not in {404, 410}:
+                raise
+        deleted += 1
+    return deleted
 
 
 def _pull_page(service, calendar: GoogleCalendar) -> tuple[list[dict], str]:
@@ -323,7 +431,10 @@ def _pull_page(service, calendar: GoogleCalendar) -> tuple[list[dict], str]:
         else:
             past_days = getattr(settings, "GOOGLE_SYNC_PAST_DAYS", 180)
             kwargs["timeMin"] = (timezone.now() - timedelta(days=past_days)).isoformat()
-        response = service.events().list(**kwargs).execute()
+        response = _execute(
+            lambda kwargs=kwargs: service.events().list(**kwargs),
+            "Nao foi possivel listar eventos do Google Calendar.",
+        )
         items.extend(response.get("items", []))
         page_token = response.get("nextPageToken")
         if not page_token:
@@ -333,12 +444,32 @@ def _pull_page(service, calendar: GoogleCalendar) -> tuple[list[dict], str]:
 def _pull_remote_events(service, calendar: GoogleCalendar) -> tuple[list[dict], str]:
     try:
         return _pull_page(service, calendar)
-    except HttpError as exc:
-        if getattr(exc.resp, "status", None) != 410 or not calendar.sync_token:
+    except GoogleApiError as exc:
+        cause = getattr(exc, "__cause__", None)
+        if getattr(getattr(cause, "resp", None), "status", None) != 410 or not calendar.sync_token:
             raise
         calendar.set_sync_token(None)
         calendar.save(update_fields=["sync_token_ciphertext"])
         return _pull_page(service, calendar)
+
+
+def _delete_remote_copies_for_remote_deletion(service, deleted_link: GoogleEventLink) -> None:
+    other_links = (
+        GoogleEventLink.objects.filter(evento=deleted_link.evento)
+        .exclude(pk=deleted_link.pk)
+        .select_related("calendar")
+    )
+    for link in other_links:
+        try:
+            _execute(
+                lambda link=link: service.events().delete(
+                    calendarId=link.calendar.calendar_id,
+                    eventId=link.google_event_id,
+                ),
+                "Nao foi possivel remover copia remota do evento.",
+            )
+        except GoogleApiError:
+            logger.exception("Falha ao remover copia remota apos delete externo.")
 
 
 def sync_calendar(usuario, calendar: GoogleCalendar, service) -> dict:
@@ -346,8 +477,9 @@ def sync_calendar(usuario, calendar: GoogleCalendar, service) -> dict:
         "importados": 0,
         "atualizados": 0,
         "exportados": 0,
-        "cancelados": 0,
+        "removidos": 0,
         "vinculados": 0,
+        "conflitos": 0,
     }
     remote_items, next_sync_token = _pull_remote_events(service, calendar)
     for item in remote_items:
@@ -358,28 +490,48 @@ def sync_calendar(usuario, calendar: GoogleCalendar, service) -> dict:
             calendar=calendar, google_event_id=google_id
         ).select_related("evento").first()
         if item.get("status") == "cancelled":
-            if link and link.evento.status.casefold() != "cancelado":
-                link.evento.status = "Cancelado"
-                link.evento.save(update_fields=["status"])
-                link.remote_deleted_at = timezone.now()
-                link.last_synced_at = timezone.now()
-                link.save(update_fields=["remote_deleted_at", "last_synced_at"])
-                summary["cancelados"] += 1
+            if link:
+                with transaction.atomic():
+                    evento = link.evento
+                    _delete_remote_copies_for_remote_deletion(service, link)
+                    evento.delete()
+                summary["removidos"] += 1
             continue
         if link:
-            _update_from_remote(link.evento, item)
-            _save_link(calendar, link.evento, item)
-            summary["atualizados"] += 1
-        else:
-            evento = _matching_local_event(calendar, item)
-            if evento:
-                _save_link(calendar, evento, item)
-                summary["vinculados"] += 1
-                continue
-            evento = _create_imported_event(usuario, item)
-            if evento:
-                _save_link(calendar, evento, item)
-                summary["importados"] += 1
+            if _remote_should_win(link.evento, link, item):
+                changed = _update_from_remote(link.evento, item)
+                link.evento.refresh_from_db()
+                _save_link(
+                    calendar,
+                    link.evento,
+                    item,
+                    source_of_truth=GoogleEventLink.SOURCE_GOOGLE,
+                )
+                if changed:
+                    summary["atualizados"] += 1
+            else:
+                summary["conflitos"] += 1
+            continue
+
+        evento = _matching_local_event(calendar, item)
+        if evento:
+            _save_link(
+                calendar,
+                evento,
+                item,
+                source_of_truth=GoogleEventLink.SOURCE_GOOGLE,
+            )
+            summary["vinculados"] += 1
+            continue
+        evento = _create_imported_event(usuario, item)
+        if evento:
+            _save_link(
+                calendar,
+                evento,
+                item,
+                source_of_truth=GoogleEventLink.SOURCE_GOOGLE,
+            )
+            summary["importados"] += 1
 
     threshold = timezone.now() - timedelta(days=getattr(settings, "GOOGLE_SYNC_PAST_DAYS", 180))
     local_events = Evento.objects.filter(data_inicio__gte=threshold).exclude(
@@ -392,22 +544,34 @@ def sync_calendar(usuario, calendar: GoogleCalendar, service) -> dict:
             continue
         payload = event_payload(evento)
         if link:
-            item = (
-                service.events()
-                .update(
-                    calendarId=calendar.calendar_id,
-                    eventId=link.google_event_id,
-                    body=payload,
+            try:
+                item = _execute(
+                    lambda link=link: service.events().update(
+                        calendarId=calendar.calendar_id,
+                        eventId=link.google_event_id,
+                        body=payload,
+                    ),
+                    "Nao foi possivel atualizar evento local no Google.",
                 )
-                .execute()
-            )
+            except GoogleApiError as exc:
+                if _google_error_status(exc) not in {404, 410}:
+                    raise
+                link.delete()
+                item = _execute(
+                    lambda: service.events().insert(calendarId=calendar.calendar_id, body=payload),
+                    "Nao foi possivel recriar evento local no Google.",
+                )
         else:
-            item = (
-                service.events()
-                .insert(calendarId=calendar.calendar_id, body=payload)
-                .execute()
+            item = _execute(
+                lambda: service.events().insert(calendarId=calendar.calendar_id, body=payload),
+                "Nao foi possivel exportar evento local para o Google.",
             )
-        _save_link(calendar, evento, item)
+        _save_link(
+            calendar,
+            evento,
+            item,
+            source_of_truth=GoogleEventLink.SOURCE_LOCAL,
+        )
         summary["exportados"] += 1
 
     calendar.set_sync_token(next_sync_token)
@@ -423,11 +587,17 @@ def sync_agenda(usuario) -> dict:
         "importados": 0,
         "atualizados": 0,
         "exportados": 0,
-        "cancelados": 0,
+        "removidos": 0,
         "vinculados": 0,
+        "conflitos": 0,
     }
     for calendar in enabled_calendars(usuario):
         result = sync_calendar(usuario, calendar, service)
-        for key in ("importados", "atualizados", "exportados", "cancelados", "vinculados"):
+        for key in ("importados", "atualizados", "exportados", "removidos", "vinculados", "conflitos"):
             total[key] += result.get(key, 0)
     return total
+
+
+def sync_single_calendar(calendar: GoogleCalendar) -> dict:
+    service = calendar_service(calendar.account.usuario)
+    return sync_calendar(calendar.account.usuario, calendar, service)

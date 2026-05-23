@@ -21,7 +21,7 @@ from usuarios.models import Usuario
 AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 STATE_SESSION_KEY = "google_oauth_state"
-CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar"
+CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events"
 SCOPES = ("openid", "email", "profile", CALENDAR_SCOPE)
 
 
@@ -108,8 +108,7 @@ def begin_authorization(
         "access_type": "offline",
         "include_granted_scopes": "true",
     }
-    if force_consent:
-        query["prompt"] = "consent select_account"
+    query["prompt"] = "consent select_account"
     return HttpResponseRedirect(f"{AUTHORIZATION_URL}?{urlencode(query)}")
 
 
@@ -207,7 +206,9 @@ def _resolve_usuario(claims: dict, initiating_user_id: int | None) -> Usuario:
     if not sub or not email:
         raise ValueError("Resposta invalida do Google.")
 
-    existing_account = GoogleAccount.objects.select_related("usuario").filter(sub=sub).first()
+    existing_account = GoogleAccount.objects.select_related("usuario").filter(
+        google_user_id=sub
+    ).first()
     if initiating_user_id:
         initiating_user = Usuario.objects.filter(pk=initiating_user_id).first()
         if initiating_user is None:
@@ -238,7 +239,7 @@ def _resolve_usuario(claims: dict, initiating_user_id: int | None) -> Usuario:
     return usuario
 
 
-def complete_authorization(request: HttpRequest, code: str, received_state: str) -> str:
+def complete_authorization(request: HttpRequest, code: str, received_state: str) -> tuple[Usuario, str]:
     from usuarios.views import _remember_usuario_session, _sync_usuario_auth
 
     state_data = consume_state(request, received_state)
@@ -251,11 +252,11 @@ def complete_authorization(request: HttpRequest, code: str, received_state: str)
     account, _ = GoogleAccount.objects.get_or_create(
         usuario=usuario,
         defaults={
-            "sub": str(claims["sub"]),
+            "google_user_id": str(claims["sub"]),
             "email": str(claims["email"]).lower(),
         },
     )
-    if account.sub != str(claims["sub"]):
+    if account.google_user_id != str(claims["sub"]):
         raise ValueError("Usuario vinculado a outra conta Google.")
     refresh_token = str(token_payload.get("refresh_token") or "").strip()
     if not refresh_token and not account.refresh_token:
@@ -285,4 +286,4 @@ def complete_authorization(request: HttpRequest, code: str, received_state: str)
     auth_user = _sync_usuario_auth(usuario)
     django_login(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
     _remember_usuario_session(request, usuario)
-    return str(state_data.get("next") or "/")
+    return usuario, str(state_data.get("next") or "/")
