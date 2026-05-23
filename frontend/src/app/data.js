@@ -3,6 +3,7 @@ export const NAV_ITEMS = [
   { key: 'clientes', label: 'Clientes', mobileLabel: 'Clientes', to: '/clientes' },
   { key: 'processos', label: 'Processos', mobileLabel: 'Processos', to: '/processos' },
   { key: 'agenda', label: 'Agenda', mobileLabel: 'Agenda', to: '/agenda' },
+  { key: 'reunioes', label: 'Reuniões', mobileLabel: 'Reuniões', to: '/reunioes' },
   { key: 'usuarios', label: 'Usuários', mobileLabel: 'Usuários', to: '/usuarios' },
 ];
 

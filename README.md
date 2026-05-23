@@ -10,6 +10,7 @@ Sistema desenvolvido para facilitar a rotina de um escritorio de advocacia, com 
 - Agenda de compromissos
 - Sistema de autenticacao
 - Dashboard enxuto e personalizavel
+- Reunioes com gravacao, transcricao e resumo por IA
 
 ## Diferencial
 
@@ -28,6 +29,8 @@ Fluxo principal:
 3. Um processo e criado para esse cliente.
 4. Um evento do processo e salvo na agenda.
 5. As informacoes ficam centralizadas no dashboard e nas paginas por categoria.
+
+Para a arquitetura de reunioes e IA, consulte [`docs/architecture-ai-meetings.md`](docs/architecture-ai-meetings.md).
 
 ## Instalacao
 
@@ -48,8 +51,23 @@ pip install -r requirements.txt
 ## Executando o projeto
 
 ```bash
+cd backend
 python manage.py runserver
 ```
+
+## Processamento de IA
+
+O audio de reunioes e processado fora da requisicao HTTP com Celery e Redis.
+Configure `OPENAI_API_KEY` e `REDIS_URL` conforme `backend/.env.example`, aplique
+as migracoes e inicie um worker separado:
+
+```bash
+cd backend
+python manage.py migrate
+celery -A jurisagenda worker -l INFO
+```
+
+No Windows, use `celery -A jurisagenda worker -l INFO --pool=solo`.
 
 ## Tecnologias
 

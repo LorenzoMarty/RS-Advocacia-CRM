@@ -86,9 +86,10 @@ export async function apiRequest(path, options = {}, { baseUrl = apiBaseUrl, req
 
   const method = (options.method || 'GET').toUpperCase();
   const csrfToken = SAFE_METHODS.has(method) ? '' : await ensureCsrfToken(baseUrl);
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers = {
     Accept: 'application/json',
-    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
     ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
     ...options.headers,
   };
