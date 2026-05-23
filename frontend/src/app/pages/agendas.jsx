@@ -253,6 +253,20 @@ export function AgendaListPage() {
     setSearchParams,
   ]);
 
+  useEffect(() => {
+    if (!currentUser?.googleCalendarConnected) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (!document.hidden) {
+        syncGoogleCalendarEvents({ silent: true });
+      }
+    }, 60000);
+
+    return () => window.clearInterval(intervalId);
+  }, [currentUser?.googleCalendarConnected, syncGoogleCalendarEvents]);
+
   async function handleGoogleCalendarSync() {
     if (isGoogleSyncing) {
       return;

@@ -9,7 +9,7 @@ class GoogleAccount(models.Model):
         on_delete=models.CASCADE,
         related_name="google_account",
     )
-    sub = models.CharField(max_length=255, unique=True)
+    google_user_id = models.CharField(max_length=255, unique=True)
     email = models.EmailField()
     scopes = models.TextField(blank=True, default="")
     access_token_ciphertext = models.TextField(blank=True, default="")
@@ -64,6 +64,11 @@ class GoogleCalendar(models.Model):
     enabled = models.BooleanField(default=True)
     sync_token_ciphertext = models.TextField(blank=True, default="")
     last_synced_at = models.DateTimeField(null=True, blank=True)
+    watch_channel_id = models.CharField(max_length=255, blank=True, default="")
+    watch_resource_id = models.CharField(max_length=255, blank=True, default="")
+    watch_token = models.CharField(max_length=255, blank=True, default="")
+    watch_expiration = models.DateTimeField(null=True, blank=True)
+    last_notification_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -85,6 +90,13 @@ class GoogleCalendar(models.Model):
 
 
 class GoogleEventLink(models.Model):
+    SOURCE_LOCAL = "local"
+    SOURCE_GOOGLE = "google"
+    SOURCE_CHOICES = (
+        (SOURCE_LOCAL, "Local"),
+        (SOURCE_GOOGLE, "Google"),
+    )
+
     calendar = models.ForeignKey(
         GoogleCalendar,
         on_delete=models.CASCADE,
@@ -98,8 +110,18 @@ class GoogleEventLink(models.Model):
     google_event_id = models.TextField()
     etag = models.CharField(max_length=255, blank=True, default="")
     local_payload_hash = models.CharField(max_length=64, blank=True, default="")
+    timezone = models.CharField(max_length=100, blank=True, default="")
+    source_of_truth = models.CharField(
+        max_length=20,
+        choices=SOURCE_CHOICES,
+        default=SOURCE_LOCAL,
+    )
+    sync_version = models.PositiveIntegerField(default=0)
+    remote_updated_at = models.DateTimeField(null=True, blank=True)
+    remote_sequence = models.IntegerField(null=True, blank=True)
     remote_deleted_at = models.DateTimeField(null=True, blank=True)
     last_synced_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [

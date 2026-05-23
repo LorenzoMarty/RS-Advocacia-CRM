@@ -13,11 +13,12 @@ from integrations.google.calendar import delete_remote_event, list_available_cal
 from integrations.google.client import credentials_for_usuario
 from integrations.google.exceptions import GoogleAuthorizationRequired
 from integrations.google.oauth import verify_identity_token
+from integrations.google.webhooks import ensure_watch
 from integrations.models import GoogleAccount, GoogleCalendar, GoogleEventLink
 from processos.models import Processo
 from usuarios.models import Usuario
 
-CALLBACK = "http://testserver/api/auth/google/callback/"
+CALLBACK = "http://testserver/api/auth/google/callback"
 
 
 class GoogleOAuthTests(TestCase):
@@ -32,15 +33,15 @@ class GoogleOAuthTests(TestCase):
         GOOGLE_CLIENT_SECRET="secret",
         GOOGLE_REDIRECT_URI=CALLBACK,
     )
-    def test_login_unico_solicita_calendar_e_offline_sem_forcar_consentimento(self):
+    def test_login_unico_solicita_calendar_events_e_offline_com_consentimento(self):
         response = self.client.get(reverse("login_google"))
         query = parse_qs(urlsplit(response["Location"]).query)
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn("https://www.googleapis.com/auth/calendar", query["scope"][0])
+        self.assertIn("https://www.googleapis.com/auth/calendar.events", query["scope"][0])
         self.assertEqual(query["access_type"], ["offline"])
         self.assertEqual(query["include_granted_scopes"], ["true"])
-        self.assertNotIn("prompt", query)
+        self.assertEqual(query["prompt"], ["consent select_account"])
 
     @override_settings(
         GOOGLE_CLIENT_ID="client-id",
@@ -61,8 +62,12 @@ class GoogleOAuthTests(TestCase):
     )
     @patch("integrations.google.oauth.verify_identity_token")
     @patch("integrations.google.oauth.requests.post")
+    @patch("integrations.google.views.ensure_watches", return_value=0)
+    @patch("integrations.google.views.sync_agenda", return_value={"conectado": True})
     def test_callback_persiste_refresh_token_criptografado_e_cria_sessao(
         self,
+        sync_agenda,
+        ensure_watches,
         post,
         verify_token,
     ):
@@ -88,7 +93,7 @@ class GoogleOAuthTests(TestCase):
             {"code": "code", "state": "state"},
         )
 
-        account = GoogleAccount.objects.get(sub="google-sub")
+        account = GoogleAccount.objects.get(google_user_id="google-sub")
         self.assertEqual(response.status_code, 302)
         self.assertNotEqual(account.refresh_token_ciphertext, "refresh-token")
         self.assertEqual(account.refresh_token, "refresh-token")
@@ -120,7 +125,7 @@ class GoogleCalendarSyncTests(TestCase):
         )
         self.account = GoogleAccount.objects.create(
             usuario=self.usuario,
-            sub="sub",
+            google_user_id="sub",
             email=self.usuario.email,
         )
         self.account.store_tokens(access_token="access", refresh_token="refresh")
@@ -230,6 +235,25 @@ class GoogleCalendarSyncTests(TestCase):
         self.assertEqual(Evento.objects.count(), 1)
         service.events.return_value.insert.assert_not_called()
 
+    @patch("integrations.google.calendar.calendar_service")
+    def test_delete_no_google_remove_evento_interno(self, calendar_service):
+        GoogleEventLink.objects.create(
+            calendar=self.calendar,
+            evento=self.evento,
+            google_event_id="remote-existing",
+        )
+        service = MagicMock()
+        calendar_service.return_value = service
+        service.events.return_value.list.return_value.execute.return_value = {
+            "items": [{"id": "remote-existing", "status": "cancelled"}],
+            "nextSyncToken": "token",
+        }
+
+        result = sync_agenda(self.usuario)
+
+        self.assertEqual(result["removidos"], 1)
+        self.assertFalse(Evento.objects.filter(pk=self.evento.pk).exists())
+
     @patch("integrations.google.client.Credentials")
     def test_access_token_expirado_e_renovado_com_refresh_token(self, credentials_class):
         self.account.token_expiry = timezone.now()
@@ -275,7 +299,7 @@ class GoogleDisconnectTests(TestCase):
         )
         self.account = GoogleAccount.objects.create(
             usuario=self.usuario,
-            sub="disconnect-sub",
+            google_user_id="disconnect-sub",
             email=self.usuario.email,
         )
         self.account.store_tokens(access_token="access", refresh_token="refresh")
@@ -307,3 +331,75 @@ class GoogleDisconnectTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.account.refresh_token, "")
         self.assertIsNotNone(self.account.revoked_at)
+
+
+class GoogleWebhookTests(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Advogada",
+            email="advogada@example.com",
+            cargo="Administrador",
+        )
+        self.account = GoogleAccount.objects.create(
+            usuario=self.usuario,
+            google_user_id="webhook-sub",
+            email=self.usuario.email,
+        )
+        self.account.store_tokens(access_token="access", refresh_token="refresh")
+        self.account.save()
+        self.calendar = GoogleCalendar.objects.create(
+            account=self.account,
+            calendar_id="primary",
+            summary="Principal",
+            watch_channel_id="channel",
+            watch_resource_id="resource",
+            watch_token="token",
+        )
+
+    @patch(
+        "integrations.google.webhooks.sync_single_calendar",
+        return_value={"importados": 1},
+    )
+    def test_webhook_sincroniza_calendario_pelo_canal(self, sync_single_calendar):
+        response = self.client.post(
+            reverse("google_calendar_webhook"),
+            HTTP_X_GOOG_CHANNEL_ID="channel",
+            HTTP_X_GOOG_CHANNEL_TOKEN="token",
+            HTTP_X_GOOG_RESOURCE_ID="resource",
+            HTTP_X_GOOG_RESOURCE_STATE="exists",
+        )
+
+        self.assertEqual(response.status_code, 200, response.json())
+        sync_single_calendar.assert_called_once_with(self.calendar)
+
+    @patch("integrations.google.webhooks.sync_single_calendar")
+    def test_webhook_sync_inicial_apenas_confirma_canal(self, sync_single_calendar):
+        response = self.client.post(
+            reverse("google_calendar_webhook"),
+            HTTP_X_GOOG_CHANNEL_ID="channel",
+            HTTP_X_GOOG_CHANNEL_TOKEN="token",
+            HTTP_X_GOOG_RESOURCE_ID="resource",
+            HTTP_X_GOOG_RESOURCE_STATE="sync",
+        )
+
+        self.assertEqual(response.status_code, 200, response.json())
+        sync_single_calendar.assert_not_called()
+
+    @override_settings(
+        GOOGLE_CALENDAR_WEBHOOK_URL="https://backend.example.com/api/integracoes/google/calendar/webhook"
+    )
+    @patch("integrations.google.webhooks.calendar_service")
+    def test_ensure_watch_registra_canal_google(self, calendar_service):
+        service = MagicMock()
+        calendar_service.return_value = service
+        service.events.return_value.watch.return_value.execute.return_value = {
+            "resourceId": "resource-new",
+            "expiration": str(int((timezone.now().timestamp() + 3600) * 1000)),
+        }
+
+        created = ensure_watch(self.usuario, self.calendar)
+        self.calendar.refresh_from_db()
+
+        self.assertTrue(created)
+        self.assertEqual(self.calendar.watch_resource_id, "resource-new")
+        service.events.return_value.watch.assert_called_once()

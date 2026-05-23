@@ -3,10 +3,11 @@ import logging
 import requests
 from django.http import HttpRequest, HttpResponseRedirect
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 from core.permissions import app_permissions_required
 from core.utils import ler_corpo_json, metodo_nao_permitido, resposta_erro, resposta_sucesso
-from integrations.google.calendar import configure_calendars, list_available_calendars
+from integrations.google.calendar import configure_calendars, list_available_calendars, sync_agenda
 from integrations.google.exceptions import (
     GoogleAuthorizationRequired,
     GoogleConfigurationError,
@@ -17,6 +18,7 @@ from integrations.google.oauth import (
     current_usuario,
     frontend_redirect,
 )
+from integrations.google.webhooks import ensure_watches, handle_notification
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,7 @@ def google_callback(request: HttpRequest):
             frontend_redirect("/login", {"google_error": "Login com Google cancelado."})
         )
     try:
-        next_path = complete_authorization(
+        usuario, next_path = complete_authorization(
             request,
             str(request.GET.get("code") or "").strip(),
             str(request.GET.get("state") or "").strip(),
@@ -58,6 +60,11 @@ def google_callback(request: HttpRequest):
         return HttpResponseRedirect(
             frontend_redirect("/login", {"google_error": str(exc)})
         )
+    try:
+        sync_agenda(usuario)
+        ensure_watches(usuario, request=request)
+    except Exception:
+        logger.exception("Falha ao sincronizar Google Calendar apos login.")
     params = {"google_calendar": "connected"} if next_path == "/agenda" else None
     return HttpResponseRedirect(frontend_redirect(next_path, params))
 
@@ -86,6 +93,9 @@ def calendar_selection(request: HttpRequest):
             current_usuario(request),
             payload.get("calendarios") or [],
         )
+        usuario = current_usuario(request)
+        sync_agenda(usuario)
+        ensure_watches(usuario, request=request)
     except ValueError as exc:
         return resposta_erro(str(exc), status=400)
     except GoogleAuthorizationRequired as exc:
@@ -94,6 +104,18 @@ def calendar_selection(request: HttpRequest):
         logger.exception("Erro ao configurar calendarios Google.")
         return resposta_erro("Nao foi possivel configurar os calendarios Google.", status=502)
     return resposta_sucesso({"calendarios": configured})
+
+
+@csrf_exempt
+def google_calendar_webhook(request: HttpRequest):
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+    try:
+        result = handle_notification(request.headers)
+    except Exception:
+        logger.exception("Erro ao processar webhook Google Calendar.")
+        return resposta_erro("Nao foi possivel processar notificacao Google.", status=202)
+    return resposta_sucesso(result)
 
 
 @app_permissions_required("agenda.view_evento")

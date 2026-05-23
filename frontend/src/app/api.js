@@ -138,8 +138,8 @@ function eventRequest(path = '', options = {}) {
 export const api = {
   carregarInicializacao: () => apiRequest('/api/inicializacao/'),
   obterUsuarioAtual: () => apiRequest('/api/usuarios/atual/'),
-  urlLoginGoogle: () => apiUrl('/api/autenticacao/google/'),
-  urlReauthorizeGoogle: () => `${apiUrl('/api/autenticacao/google/')}?force_consent=1&next=/agenda`,
+  urlLoginGoogle: () => apiUrl('/api/autenticacao/google'),
+  urlReauthorizeGoogle: () => `${apiUrl('/api/autenticacao/google')}?force_consent=1&next=/agenda`,
   sair: () => apiRequest('/api/autenticacao/sair/', { method: 'POST' }),
   listClients: () => apiRequest('/api/clientes/'),
   createClient: (payload) => apiRequest('/api/clientes/criar/', jsonOptions('POST', payload)),

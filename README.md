@@ -78,17 +78,17 @@ No Windows, use `celery -A jurisagenda worker -l INFO --pool=solo`.
 
 ## OAuth Google
 
-- O login Google e a autorizacao Calendar usam um unico fluxo backend com `openid email profile` e `https://www.googleapis.com/auth/calendar`.
+- O login Google e a autorizacao Calendar usam um unico fluxo backend com `openid email profile` e `https://www.googleapis.com/auth/calendar.events`.
 - O backend armazena access/refresh tokens criptografados em `integrations.GoogleAccount`; o React nunca recebe tokens Google.
-- `access_type=offline` solicita acesso continuo; o botao de renovar acesso usa `prompt=consent` somente quando o usuario precisa recuperar/revogar a autorizacao.
+- `access_type=offline` e `prompt=consent` sao enviados no fluxo backend para obter e manter refresh token de forma previsivel.
 - Os compromissos sao enviados para os calendarios habilitados na integracao, iniciando por `GOOGLE_CALENDAR_ID`.
-- A sincronizacao usa `syncToken` por calendario para importar alteracoes incrementais; a listagem da agenda nao aciona escrita remota.
+- A sincronizacao usa `syncToken` por calendario para importar alteracoes incrementais; webhooks do Google Calendar acionam nova sincronizacao pelo backend.
 - Eventos importados do Google usam um cliente tecnico `Google Agenda` e um processo tecnico `GOOGLE-CALENDAR` ate serem reclassificados na aplicacao.
 - Use `GOOGLE_CALENDAR_ID=primary` para gravar na agenda principal da conta conectada ou informe o ID de uma agenda compartilhada do Google Calendar.
 - O usuario que autoriza o Google precisa ter permissao de edicao nessa agenda.
 - Configure `GOOGLE_TOKEN_ENCRYPTION_KEY` com uma chave Fernet estavel em producao antes de aplicar as migracoes.
 - Callback exato do backend em producao:
-  `https://agenda-juri-backend.vercel.app/api/auth/google/callback/`
+  `https://agenda-juri-backend.vercel.app/api/auth/google/callback`
 - Origin do frontend publicado atualmente:
   `https://agenda-juri-orcin.vercel.app`
 - O mesmo `GOOGLE_CLIENT_ID` deve ser usado no backend que inicia o OAuth e no projeto do Google Cloud onde os test users foram cadastrados.
@@ -101,6 +101,7 @@ No Windows, use `celery -A jurisagenda worker -l INFO --pool=solo`.
 - Em producao mantenha `CORS_ALLOW_ALL_ORIGINS=false` e configure `CORS_ALLOWED_ORIGINS` e `CSRF_TRUSTED_ORIGINS` com a URL HTTPS exata do React.
 - Se React e Django usarem origens HTTPS distintas, mantenha `SESSION_COOKIE_SAMESITE=None`, `SESSION_COOKIE_SECURE=true`, `CSRF_COOKIE_SAMESITE=None` e `CSRF_COOKIE_SECURE=true`.
 - Para maior previsibilidade de sessao em navegadores que bloqueiam cookies entre sites, publique frontend e API sob o mesmo site ou use um proxy `/api` no dominio do frontend.
+- Configure `GOOGLE_CALENDAR_WEBHOOK_URL=https://agenda-juri-backend.vercel.app/api/integracoes/google/calendar/webhook` para ativar push notifications do Google Calendar.
 
 ## Autor
 

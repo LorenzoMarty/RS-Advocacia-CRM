@@ -307,6 +307,10 @@ GOOGLE_CALENDAR_TIMEZONE = (
 )
 GOOGLE_TOKEN_ENCRYPTION_KEY = os.getenv("GOOGLE_TOKEN_ENCRYPTION_KEY", "").strip()
 GOOGLE_SYNC_PAST_DAYS = int(os.getenv("GOOGLE_SYNC_PAST_DAYS", "").strip() or "180")
+GOOGLE_CALENDAR_WEBHOOK_URL = os.getenv("GOOGLE_CALENDAR_WEBHOOK_URL", "").strip()
+GOOGLE_WATCH_RENEWAL_HOURS = int(
+    os.getenv("GOOGLE_WATCH_RENEWAL_HOURS", "").strip() or "24"
+)
 
 AI_PROVIDER = os.getenv("AI_PROVIDER", "openai").strip() or "openai"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()

@@ -283,6 +283,9 @@ function googleSyncMessage(summary) {
   if (summary.removidos) {
     parts.push(`${summary.removidos} removido(s)`);
   }
+  if (summary.conflitos) {
+    parts.push(`${summary.conflitos} conflito(s) resolvido(s) pelo registro mais recente`);
+  }
 
   if (!parts.length) {
     return 'Agenda sincronizada. Nenhuma diferenca nova foi encontrada.';
@@ -597,7 +600,7 @@ export function AppStateProvider({ children }) {
     }
   }
 
-  async function syncGoogleCalendarEvents() {
+  async function syncGoogleCalendarEvents({ silent = false } = {}) {
     if (!isEventsApiEnabled) {
       addFlash('API de eventos nao configurada.', 'error');
       return null;
@@ -607,10 +610,14 @@ export function AppStateProvider({ children }) {
       const response = await api.syncGoogleCalendar();
       const syncedEvents = eventsFromResponse(response);
       setEvents(syncedEvents);
-      addFlash(googleSyncMessage(response.sincronizacao_google), 'success');
+      if (!silent) {
+        addFlash(googleSyncMessage(response.sincronizacao_google), 'success');
+      }
       return response.sincronizacao_google || {};
     } catch (error) {
-      addFlash(errorMessage(error), 'error');
+      if (!silent) {
+        addFlash(errorMessage(error), 'error');
+      }
       return null;
     }
   }
