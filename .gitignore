@@ -32,3 +32,5 @@ coverage/
 .ruff_cache/
 .mypy_cache/
 .cache/
+.vercel
+.env*
