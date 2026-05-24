@@ -235,7 +235,12 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = Path(
+    os.getenv(
+        "MEDIA_ROOT",
+        "/tmp/media" if os.getenv("VERCEL") else str(BASE_DIR / "media"),
+    )
+)
 
 WHITENOISE_USE_FINDERS = DEBUG
 
@@ -326,14 +331,20 @@ MEETINGS_MAX_AUDIO_SIZE_MB = int(
     os.getenv("MEETINGS_MAX_AUDIO_SIZE_MB", "").strip() or "25"
 )
 
-CELERY_BROKER_URL = os.getenv(
-    "CELERY_BROKER_URL",
-    os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+_REDIS_URL = os.getenv("REDIS_URL", "").strip()
+CELERY_BROKER_URL = (
+    os.getenv("CELERY_BROKER_URL", "").strip()
+    or _REDIS_URL
+    or ("redis://localhost:6379/0" if DEBUG else "")
 )
-CELERY_RESULT_BACKEND = os.getenv(
-    "CELERY_RESULT_BACKEND",
-    os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+CELERY_RESULT_BACKEND = (
+    os.getenv("CELERY_RESULT_BACKEND", "").strip()
+    or _REDIS_URL
+    or ("redis://localhost:6379/0" if DEBUG else "")
 )
+MEETINGS_PROCESSING_MODE = os.getenv("MEETINGS_PROCESSING_MODE", "").strip().lower()
+if not MEETINGS_PROCESSING_MODE:
+    MEETINGS_PROCESSING_MODE = "celery" if CELERY_BROKER_URL else "inline"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"

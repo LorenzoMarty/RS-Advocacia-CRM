@@ -1,3 +1,5 @@
+from datetime import timezone as datetime_timezone
+
 from django.conf import settings
 from django.utils import timezone
 from google.auth.exceptions import RefreshError
@@ -22,13 +24,16 @@ def account_for_usuario(usuario) -> GoogleAccount:
 
 def credentials_for_usuario(usuario) -> Credentials:
     account = account_for_usuario(usuario)
+    expiry = account.token_expiry
+    if expiry is not None and timezone.is_aware(expiry):
+        expiry = expiry.astimezone(datetime_timezone.utc).replace(tzinfo=None)
     credentials = Credentials(
         token=account.access_token or None,
         refresh_token=account.refresh_token or None,
         token_uri="https://oauth2.googleapis.com/token",
         client_id=settings.GOOGLE_CLIENT_ID,
         client_secret=settings.GOOGLE_CLIENT_SECRET,
-        expiry=account.token_expiry,
+        expiry=expiry,
         scopes=[CALENDAR_SCOPE],
     )
     try:

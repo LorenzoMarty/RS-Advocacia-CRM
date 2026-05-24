@@ -69,6 +69,14 @@ celery -A jurisagenda worker -l INFO
 
 No Windows, use `celery -A jurisagenda worker -l INFO --pool=solo`.
 
+Em producao na Vercel, o backend HTTP nao executa worker Celery persistente.
+Use Redis externo e rode o worker em um servico separado, como Render, Railway,
+Fly.io ou uma VM. Sem worker ativo, a gravacao fica sem transcricao/resumo.
+
+Se nao houver Redis, configure `MEETINGS_PROCESSING_MODE=inline`. Nesse modo a
+transcricao e o resumo rodam na propria requisicao de upload; funciona para
+audios curtos, mas pode estourar o limite de tempo da Vercel em gravacoes longas.
+
 ## Tecnologias
 
 - Python
