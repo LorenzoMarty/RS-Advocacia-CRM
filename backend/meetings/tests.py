@@ -51,21 +51,111 @@ class MeetingAPITests(TemporaryMediaTestCase):
             processo=self.processo,
         )
 
+    @override_settings(
+        OPENAI_API_KEY="test-key",
+        CELERY_BROKER_URL="memory://",
+        MEETINGS_PROCESSING_MODE="celery",
+    )
     @patch("meetings.views.processar_gravacao.delay")
     def test_upload_enfileira_gravacao_sem_processar_na_request(self, delay):
         audio = SimpleUploadedFile("reuniao.webm", b"audio", content_type="audio/webm")
 
-        with self.captureOnCommitCallbacks(execute=True):
-            response = self.client.post(
-                reverse("enviar_gravacao", args=[self.reuniao.pk]),
-                {"audio": audio},
-            )
+        response = self.client.post(
+            reverse("enviar_gravacao", args=[self.reuniao.pk]),
+            {"audio": audio},
+        )
 
         self.assertEqual(response.status_code, 202, response.json())
         gravacao = Gravacao.objects.get()
         self.assertEqual(gravacao.status, Gravacao.Status.ENVIADA)
         delay.assert_called_once_with(gravacao.pk)
 
+    @override_settings(
+        OPENAI_API_KEY="test-key",
+        CELERY_BROKER_URL="",
+        MEETINGS_PROCESSING_MODE="inline",
+    )
+    @patch("meetings.views.processar_gravacao")
+    def test_upload_processa_inline_sem_redis(self, processar):
+        def concluir(gravacao_id):
+            Gravacao.objects.filter(pk=gravacao_id).update(
+                status=Gravacao.Status.CONCLUIDA,
+                transcricao="Transcricao",
+                resumo="Resumo",
+            )
+
+        processar.side_effect = concluir
+        audio = SimpleUploadedFile("reuniao.webm", b"audio", content_type="audio/webm")
+
+        response = self.client.post(
+            reverse("enviar_gravacao", args=[self.reuniao.pk]),
+            {"audio": audio},
+        )
+
+        gravacao = Gravacao.objects.get()
+        self.assertEqual(response.status_code, 201, response.json())
+        self.assertEqual(gravacao.status, Gravacao.Status.CONCLUIDA)
+        self.assertEqual(response.json()["dados"]["gravacao"]["resumo"], "Resumo")
+        processar.assert_called_once_with(gravacao.pk)
+
+    @override_settings(
+        OPENAI_API_KEY="",
+        CELERY_BROKER_URL="memory://",
+        MEETINGS_PROCESSING_MODE="celery",
+    )
+    def test_upload_exige_openai_api_key(self):
+        audio = SimpleUploadedFile("reuniao.webm", b"audio", content_type="audio/webm")
+
+        response = self.client.post(
+            reverse("enviar_gravacao", args=[self.reuniao.pk]),
+            {"audio": audio},
+        )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("openai", response.json()["erros"])
+        self.assertFalse(Gravacao.objects.exists())
+
+    @override_settings(
+        OPENAI_API_KEY="test-key",
+        CELERY_BROKER_URL="",
+        MEETINGS_PROCESSING_MODE="celery",
+    )
+    def test_upload_exige_fila_configurada(self):
+        audio = SimpleUploadedFile("reuniao.webm", b"audio", content_type="audio/webm")
+
+        response = self.client.post(
+            reverse("enviar_gravacao", args=[self.reuniao.pk]),
+            {"audio": audio},
+        )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("fila", response.json()["erros"])
+        self.assertFalse(Gravacao.objects.exists())
+
+    @override_settings(
+        OPENAI_API_KEY="test-key",
+        CELERY_BROKER_URL="redis://localhost:6379/0",
+        MEETINGS_PROCESSING_MODE="celery",
+    )
+    @patch("meetings.views.processar_gravacao.delay", side_effect=RuntimeError("redis down"))
+    def test_upload_falha_clara_quando_nao_consegue_enfileirar(self, _delay):
+        audio = SimpleUploadedFile("reuniao.webm", b"audio", content_type="audio/webm")
+
+        response = self.client.post(
+            reverse("enviar_gravacao", args=[self.reuniao.pk]),
+            {"audio": audio},
+        )
+
+        gravacao = Gravacao.objects.get()
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(gravacao.status, Gravacao.Status.FALHOU)
+        self.assertIn("fila", response.json()["erros"])
+
+    @override_settings(
+        OPENAI_API_KEY="test-key",
+        CELERY_BROKER_URL="memory://",
+        MEETINGS_PROCESSING_MODE="celery",
+    )
     def test_rejeita_extensao_nao_suportada(self):
         audio = SimpleUploadedFile("reuniao.txt", b"audio", content_type="text/plain")
 

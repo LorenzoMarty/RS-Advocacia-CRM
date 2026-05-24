@@ -1,3 +1,4 @@
+from datetime import timedelta
 import requests
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlsplit
@@ -276,6 +277,19 @@ class GoogleCalendarSyncTests(TestCase):
 
         self.assertEqual(self.account.access_token, "new-access")
         credentials.refresh.assert_called_once()
+
+    @patch("integrations.google.client.Credentials")
+    def test_expiry_aware_e_convertido_para_naive_utc(self, credentials_class):
+        self.account.token_expiry = timezone.now() + timedelta(hours=1)
+        self.account.save(update_fields=["token_expiry"])
+        credentials = MagicMock(valid=True)
+        credentials_class.return_value = credentials
+
+        credentials_for_usuario(self.usuario)
+
+        expiry = credentials_class.call_args.kwargs["expiry"]
+        self.assertIsNotNone(expiry)
+        self.assertIsNone(expiry.tzinfo)
 
     def test_exclusao_de_evento_vinculado_exige_reautorizacao_se_conta_revogada(self):
         GoogleEventLink.objects.create(

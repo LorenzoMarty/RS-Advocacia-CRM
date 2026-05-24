@@ -1,8 +1,9 @@
+import logging
 from pathlib import Path
 
 from django.conf import settings
-from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from core.permissions import app_permissions_required
 from core.utils import (
@@ -17,7 +18,74 @@ from meetings.forms import ReuniaoForm
 from meetings.models import Gravacao, Reuniao
 from meetings.tasks import processar_gravacao
 
-SUPPORTED_AUDIO_EXTENSIONS = {".mp3", ".mp4", ".mpeg", ".mpga", ".m4a", ".wav", ".webm"}
+logger = logging.getLogger(__name__)
+
+SUPPORTED_AUDIO_EXTENSIONS = {
+    ".flac",
+    ".mp3",
+    ".mp4",
+    ".mpeg",
+    ".mpga",
+    ".m4a",
+    ".ogg",
+    ".wav",
+    ".webm",
+}
+PROCESSING_MODES = {"celery", "inline"}
+
+
+def _modo_processamento():
+    return str(getattr(settings, "MEETINGS_PROCESSING_MODE", "celery")).strip().lower()
+
+
+def _erros_configuracao_processamento():
+    erros = {}
+    modo = _modo_processamento()
+    if not settings.OPENAI_API_KEY:
+        erros["openai"] = [
+            "OPENAI_API_KEY nao configurada no backend. "
+            "Defina a variavel na Vercel e faca novo deploy."
+        ]
+    if modo not in PROCESSING_MODES:
+        erros["processamento"] = [
+            "MEETINGS_PROCESSING_MODE invalido. Use 'inline' sem Redis ou 'celery' com Redis."
+        ]
+    if modo == "celery" and not settings.CELERY_BROKER_URL:
+        erros["fila"] = [
+            "Redis/Celery nao configurado. Defina REDIS_URL ou CELERY_BROKER_URL "
+            "e mantenha um worker Celery rodando fora da Vercel, ou use "
+            "MEETINGS_PROCESSING_MODE=inline."
+        ]
+    return erros
+
+
+def _falhar_gravacao_por_fila(gravacao, exc):
+    mensagem = (
+        "Nao foi possivel enfileirar o processamento da gravacao. "
+        "Verifique Redis/Celery worker."
+    )
+    gravacao.status = Gravacao.Status.FALHOU
+    gravacao.erro_processamento = f"{mensagem} {exc}"[:1000]
+    gravacao.processada_em = timezone.now()
+    gravacao.save(update_fields=["status", "erro_processamento", "processada_em"])
+    return mensagem
+
+
+def _resposta_falha_processamento_inline(gravacao, exc):
+    gravacao.refresh_from_db()
+    mensagem = (
+        "Nao foi possivel transcrever/resumir a gravacao nesta requisicao. "
+        "Verifique OPENAI_API_KEY, tamanho do audio e limite de execucao da Vercel."
+    )
+    logger.exception("Falha ao processar gravacao %s em modo inline.", gravacao.pk)
+    return resposta_erro(
+        {
+            "processamento": [mensagem],
+            "gravacao": [str(gravacao.pk)],
+            "erro": [str(exc)[:300]],
+        },
+        status=502,
+    )
 
 
 def _resolver_criador(request):
@@ -132,6 +200,10 @@ def enviar_gravacao(request, reuniao_id):
     if request.method != "POST":
         return metodo_nao_permitido(["POST"])
 
+    erros_configuracao = _erros_configuracao_processamento()
+    if erros_configuracao:
+        return resposta_erro(erros_configuracao, status=503)
+
     reuniao = get_object_or_404(Reuniao, pk=reuniao_id)
     arquivo = request.FILES.get("audio")
     if arquivo is None:
@@ -149,15 +221,39 @@ def enviar_gravacao(request, reuniao_id):
             status=400,
         )
 
-    with transaction.atomic():
-        gravacao = Gravacao.objects.create(
-            reuniao=reuniao,
-            arquivo_audio=arquivo,
-            nome_original=arquivo.name[:255],
-            mime_type=arquivo.content_type or "",
-            tamanho_bytes=arquivo.size,
+    gravacao = Gravacao.objects.create(
+        reuniao=reuniao,
+        arquivo_audio=arquivo,
+        nome_original=arquivo.name[:255],
+        mime_type=arquivo.content_type or "",
+        tamanho_bytes=arquivo.size,
+    )
+
+    modo = _modo_processamento()
+    try:
+        if modo == "inline":
+            processar_gravacao(gravacao.pk)
+            gravacao.refresh_from_db()
+            return resposta_sucesso(
+                {"gravacao": serialize_gravacao(gravacao)},
+                mensagem="Gravacao processada com transcricao e resumo.",
+                status=201,
+            )
+
+        processar_gravacao.delay(gravacao.pk)
+    except Exception as exc:
+        if modo == "inline":
+            return _resposta_falha_processamento_inline(gravacao, exc)
+
+        logger.exception("Falha ao enfileirar gravacao %s.", gravacao.pk)
+        mensagem = _falhar_gravacao_por_fila(gravacao, exc)
+        return resposta_erro(
+            {
+                "fila": [mensagem],
+                "gravacao": [str(gravacao.pk)],
+            },
+            status=503,
         )
-        transaction.on_commit(lambda: processar_gravacao.delay(gravacao.pk))
 
     return resposta_sucesso(
         {"gravacao": serialize_gravacao(gravacao)},
