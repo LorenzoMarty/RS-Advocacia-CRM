@@ -99,6 +99,49 @@ class MeetingAPITests(TemporaryMediaTestCase):
         processar.assert_called_once_with(gravacao.pk)
 
     @override_settings(
+        OPENAI_API_KEY="test-key",
+        CELERY_BROKER_URL="",
+        MEETINGS_PROCESSING_MODE="inline",
+    )
+    @patch("meetings.views.processar_gravacao")
+    def test_upload_aceita_primeiro_arquivo_mesmo_sem_campo_audio(self, processar):
+        def concluir(gravacao_id):
+            Gravacao.objects.filter(pk=gravacao_id).update(status=Gravacao.Status.CONCLUIDA)
+
+        processar.side_effect = concluir
+        audio = SimpleUploadedFile("reuniao.webm", b"audio", content_type="audio/webm")
+
+        response = self.client.post(
+            reverse("enviar_gravacao", args=[self.reuniao.pk]),
+            {"file": audio},
+        )
+
+        self.assertEqual(response.status_code, 201, response.json())
+        self.assertEqual(Gravacao.objects.get().nome_original, "reuniao.webm")
+
+    @override_settings(
+        OPENAI_API_KEY="test-key",
+        CELERY_BROKER_URL="",
+        MEETINGS_PROCESSING_MODE="inline",
+    )
+    @patch("meetings.views.processar_gravacao")
+    def test_upload_aceita_blob_sem_extensao_com_mime_audio(self, processar):
+        def concluir(gravacao_id):
+            Gravacao.objects.filter(pk=gravacao_id).update(status=Gravacao.Status.CONCLUIDA)
+
+        processar.side_effect = concluir
+        audio = SimpleUploadedFile("blob", b"audio", content_type="audio/webm")
+
+        response = self.client.post(
+            reverse("enviar_gravacao", args=[self.reuniao.pk]),
+            {"audio": audio},
+        )
+
+        gravacao = Gravacao.objects.get()
+        self.assertEqual(response.status_code, 201, response.json())
+        self.assertEqual(gravacao.nome_original, "reuniao.webm")
+
+    @override_settings(
         OPENAI_API_KEY="",
         CELERY_BROKER_URL="memory://",
         MEETINGS_PROCESSING_MODE="celery",

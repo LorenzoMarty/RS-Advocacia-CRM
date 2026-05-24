@@ -1,4 +1,5 @@
 import logging
+import mimetypes
 from pathlib import Path
 
 from django.conf import settings
@@ -30,6 +31,22 @@ SUPPORTED_AUDIO_EXTENSIONS = {
     ".ogg",
     ".wav",
     ".webm",
+}
+SUPPORTED_AUDIO_MIME_PREFIXES = ("audio/",)
+SUPPORTED_AUDIO_MIME_TYPES = {
+    "application/ogg",
+    "video/mp4",
+    "video/webm",
+}
+MIME_EXTENSION_FALLBACKS = {
+    "audio/mp4": ".mp4",
+    "audio/mpeg": ".mp3",
+    "audio/ogg": ".ogg",
+    "audio/wav": ".wav",
+    "audio/webm": ".webm",
+    "application/ogg": ".ogg",
+    "video/mp4": ".mp4",
+    "video/webm": ".webm",
 }
 PROCESSING_MODES = {"celery", "inline"}
 
@@ -95,6 +112,30 @@ def _resolver_criador(request):
     user = getattr(request, "user", None)
     full_name = getattr(user, "get_full_name", lambda: "")()
     return (full_name or getattr(user, "username", "")).strip()
+
+
+def _primeiro_arquivo_audio(request):
+    arquivo = request.FILES.get("audio")
+    if arquivo is not None:
+        return arquivo
+    if request.FILES:
+        return next(iter(request.FILES.values()))
+    return None
+
+
+def _extensao_arquivo_audio(arquivo):
+    extension = Path(arquivo.name or "").suffix.lower()
+    if extension:
+        return extension
+
+    content_type = (getattr(arquivo, "content_type", "") or "").split(";")[0].lower()
+    guessed = MIME_EXTENSION_FALLBACKS.get(content_type) or mimetypes.guess_extension(content_type)
+    return (guessed or "").lower()
+
+
+def _mime_audio_suportado(arquivo):
+    content_type = (getattr(arquivo, "content_type", "") or "").split(";")[0].lower()
+    return content_type.startswith(SUPPORTED_AUDIO_MIME_PREFIXES) or content_type in SUPPORTED_AUDIO_MIME_TYPES
 
 
 def serialize_gravacao(gravacao):
@@ -205,21 +246,44 @@ def enviar_gravacao(request, reuniao_id):
         return resposta_erro(erros_configuracao, status=503)
 
     reuniao = get_object_or_404(Reuniao, pk=reuniao_id)
-    arquivo = request.FILES.get("audio")
+    arquivo = _primeiro_arquivo_audio(request)
     if arquivo is None:
+        logger.warning(
+            "Upload de gravacao sem arquivo. content_type=%s content_length=%s files=%s post=%s",
+            request.META.get("CONTENT_TYPE", ""),
+            request.META.get("CONTENT_LENGTH", ""),
+            list(request.FILES.keys()),
+            list(request.POST.keys()),
+        )
         return resposta_erro({"audio": ["Envie um arquivo de áudio."]}, status=400)
 
-    extension = Path(arquivo.name).suffix.lower()
-    if extension not in SUPPORTED_AUDIO_EXTENSIONS:
+    extension = _extensao_arquivo_audio(arquivo)
+    if extension not in SUPPORTED_AUDIO_EXTENSIONS and not _mime_audio_suportado(arquivo):
+        logger.warning(
+            "Formato de gravacao rejeitado. name=%s content_type=%s size=%s extension=%s",
+            arquivo.name,
+            arquivo.content_type,
+            arquivo.size,
+            extension,
+        )
         formatos = ", ".join(sorted(ext.removeprefix(".") for ext in SUPPORTED_AUDIO_EXTENSIONS))
         return resposta_erro({"audio": [f"Formato inválido. Use: {formatos}."]}, status=400)
 
     max_bytes = settings.MEETINGS_MAX_AUDIO_SIZE_MB * 1024 * 1024
     if arquivo.size > max_bytes:
+        logger.warning(
+            "Gravacao rejeitada por tamanho. name=%s size=%s max_bytes=%s",
+            arquivo.name,
+            arquivo.size,
+            max_bytes,
+        )
         return resposta_erro(
             {"audio": [f"O arquivo deve ter no máximo {settings.MEETINGS_MAX_AUDIO_SIZE_MB} MB."]},
             status=400,
         )
+
+    if not Path(arquivo.name or "").suffix and extension:
+        arquivo.name = f"reuniao{extension}"
 
     gravacao = Gravacao.objects.create(
         reuniao=reuniao,
