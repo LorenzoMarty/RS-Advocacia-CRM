@@ -8,9 +8,12 @@ from .models import Evento
 
 STATUS_CHOICES = (
     "Agendado",
+    "A fazer",
     "Confirmado",
     "Aguardando",
     "Em andamento",
+    "Protocolar",
+    "Protocolado",
     "Concluído",
     "Adiado",
     "Cancelado",

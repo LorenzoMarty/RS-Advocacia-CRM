@@ -752,6 +752,22 @@ function validateEventForm(form) {
   return nextErrors;
 }
 
+function dateQueryToDateTimeInput(value, time = "18:00") {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) {
+    return "";
+  }
+
+  return `${value}T${time}`;
+}
+
+function safeReturnPath(value) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "";
+  }
+
+  return value;
+}
+
 export function EventFormPage() {
   const navigate = useNavigate();
   const params = useParams();
@@ -761,18 +777,22 @@ export function EventFormPage() {
   const eventItem = events.find((item) => item.id === params.eventId) || null;
   const initialClientId = searchParams.get("cliente") || "";
   const initialProcessId = searchParams.get("processo") || "";
+  const initialType = searchParams.get("tipo") || "";
+  const initialStatus = searchParams.get("status") || "";
+  const initialDate = searchParams.get("data") || "";
+  const returnTo = safeReturnPath(searchParams.get("voltar") || "");
   const [form, setForm] = useState(() => ({
     id: eventItem?.id || "",
     title: eventItem?.title || "",
-    type: eventItem?.type || EVENT_TYPE_OPTIONS[0],
+    type: eventItem?.type || initialType || EVENT_TYPE_OPTIONS[0],
     priority: eventItem?.priority || EVENT_PRIORITY_OPTIONS[0],
-    start: eventItem ? formatDateTimeInput(eventItem.start) : "",
-    end: eventItem ? formatDateTimeInput(eventItem.end) : "",
+    start: eventItem ? formatDateTimeInput(eventItem.start) : dateQueryToDateTimeInput(initialDate),
+    end: eventItem ? formatDateTimeInput(eventItem.end) : dateQueryToDateTimeInput(initialDate),
     reminderAt: eventItem ? formatDateTimeInput(eventItem.reminderAt) : "",
     clientId: eventItem?.clientId || initialClientId,
     processId: eventItem?.processId || initialProcessId,
     responsible: eventItem?.responsible || "",
-    status: eventItem?.status || "",
+    status: eventItem?.status || initialStatus || "",
     location: eventItem?.location || "",
     description: eventItem?.description || "",
     notes: eventItem?.notes || "",
@@ -857,21 +877,36 @@ export function EventFormPage() {
       return;
     }
 
-    navigate(`/agenda/${savedEvent.id || form.id}`, { replace: true });
+    navigate(returnTo || `/agenda/${savedEvent.id || form.id}`, { replace: true });
   }
+
+  const isDeadlineForm = normalizeText(form.type).includes("prazo");
+  const formTitle = isDeadlineForm
+    ? isEditing
+      ? "Editar prazo"
+      : "Novo prazo"
+    : isEditing
+      ? "Editar compromisso"
+      : "Novo compromisso";
+  const backTarget = isEditing ? `/agenda/${eventItem.id}` : returnTo || "/agenda";
+  const backLabel = isEditing
+    ? isDeadlineForm
+      ? "Voltar para o prazo"
+      : "Voltar para o compromisso"
+    : returnTo === "/prazos"
+      ? "Voltar para prazos"
+      : "Voltar para agenda";
 
   return (
     <>
-      <PageChrome
-        label={isEditing ? "Editar compromisso" : "Novo compromisso"}
-      />
+      <PageChrome label={formTitle} />
 
       <div className="event-create-page">
         <section className="surface event-intro">
           <div className="intro-grid">
             <Link
               className="intro-link"
-              to={isEditing ? `/agenda/${eventItem.id}` : "/agenda"}
+              to={backTarget}
             >
               <svg
                 width="15"
@@ -885,12 +920,12 @@ export function EventFormPage() {
               >
                 <path d="m15 18-6-6 6-6" />
               </svg>
-              {isEditing ? "Voltar para o compromisso" : "Voltar para agenda"}
+              {backLabel}
             </Link>
 
             <div>
               <h1 className="intro-title">
-                {isEditing ? "Editar compromisso" : "Novo compromisso"}
+                {formTitle}
               </h1>
               <p className="intro-note">
                 {isEditing

@@ -29,6 +29,7 @@ import {
   EventDetailPage,
   EventDeletePage,
 } from "./app/pages/agendas";
+import { DeadlinesPage } from "./app/pages/deadlines";
 import {
   UsersListPage,
   UserFormPage,
@@ -124,6 +125,8 @@ export default function App() {
               path="/agenda/:eventId/excluir"
               element={<EventDeletePage />}
             />
+
+            <Route path="/prazos" element={<DeadlinesPage />} />
 
             <Route path="/reunioes" element={<MeetingsPage />} />
 

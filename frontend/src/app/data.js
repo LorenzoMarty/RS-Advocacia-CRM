@@ -3,13 +3,26 @@ export const NAV_ITEMS = [
   { key: 'clientes', label: 'Clientes', mobileLabel: 'Clientes', to: '/clientes' },
   { key: 'processos', label: 'Processos', mobileLabel: 'Processos', to: '/processos' },
   { key: 'agenda', label: 'Agenda', mobileLabel: 'Agenda', to: '/agenda' },
+  { key: 'prazos', label: 'Prazos', mobileLabel: 'Prazos', to: '/prazos' },
   { key: 'reunioes', label: 'Reuniões', mobileLabel: 'Reuniões', to: '/reunioes' },
   { key: 'usuarios', label: 'Usuários', mobileLabel: 'Usuários', to: '/usuarios' },
 ];
 
 export const EVENT_TYPE_OPTIONS = ['Audiência', 'Reunião', 'Prazo', 'Tarefa interna'];
 export const EVENT_PRIORITY_OPTIONS = ['Alta', 'Média', 'Baixa'];
-export const EVENT_STATUS_OPTIONS = ['Agendado', 'Pendente', 'Concluído', 'Cancelado'];
+export const DEADLINE_STATUS_COLUMNS = [
+  { key: 'a_fazer', label: 'A fazer' },
+  { key: 'em_andamento', label: 'Em andamento' },
+  { key: 'protocolar', label: 'Protocolar' },
+  { key: 'protocolado', label: 'Protocolado' },
+];
+export const EVENT_STATUS_OPTIONS = [
+  'Agendado',
+  'Pendente',
+  ...DEADLINE_STATUS_COLUMNS.map((column) => column.label),
+  'Concluído',
+  'Cancelado',
+];
 export const CLIENT_TYPE_OPTIONS = [
   { value: 'esporadico', label: 'Esporádico' },
   { value: 'mensalista', label: 'Mensalista' },
