@@ -170,19 +170,32 @@ Listar:
 
 </proximas_acoes>
 
-<prazos_compromissos>
+<prazos>
 Listar apenas:
 - prazos mencionados;
-- datas definidas;
+- datas fatais definidas.
+
+Nao incluir audiencias, reunioes ou outros compromissos aqui.
+
+Nunca inventar datas.
+
+Se inexistente:
+"Nao identificado."
+</prazos>
+
+<compromissos>
+Listar apenas:
 - audiências;
 - reuniões futuras;
 - entregas combinadas.
+
+Nao incluir prazos processuais aqui.
 
 Nunca inventar datas.
 
 Se inexistente:
 "Não identificado."
-</prazos_compromissos>
+</compromissos>
 
 <provas_documentos>
 

@@ -6,18 +6,21 @@ import { formatDate, formatTime, getStatusTone, isSameDay } from "../utils";
 import { EmptyState } from "./common";
 
 export function DashboardPage() {
-  const { clients, events, processes, users } = useAppState();
+  const { clients, deadlines, events, processes, users } = useAppState();
   const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const eventsToday = events.filter((event) => isSameDay(event.start, today));
-  const upcomingEvents = [...events]
-    .filter(
-      (event) =>
-        new Date(event.start) >=
-        new Date(today.getFullYear(), today.getMonth(), today.getDate()),
-    )
-    .sort((left, right) => new Date(left.start) - new Date(right.start))
+  const deadlinesToday = deadlines.filter((deadline) => (
+    deadline.date ? isSameDay(new Date(`${deadline.date}T12:00:00`), today) : false
+  ));
+  const upcomingDeadlines = [...deadlines]
+    .filter((deadline) => {
+      const deadlineDate = deadline.date ? new Date(`${deadline.date}T12:00:00`) : null;
+      return deadlineDate && deadlineDate >= todayStart && !deadline.completed;
+    })
+    .sort((left, right) => new Date(`${left.date}T12:00:00`) - new Date(`${right.date}T12:00:00`))
     .slice(0, 5);
-  const nextEvent = upcomingEvents[0] || null;
+  const nextDeadline = upcomingDeadlines[0] || null;
 
   return (
     <>
@@ -28,7 +31,7 @@ export function DashboardPage() {
           <div className="hero-copy">
             <h1 className="hero-title">Controle jurídico.</h1>
             <p className="hero-subtitle">
-              Gerencie seus compromissos e processos com eficiência.
+              Gerencie compromissos, prazos e processos com eficiencia.
             </p>
 
             <div className="hero-actions">
@@ -42,12 +45,12 @@ export function DashboardPage() {
 
             <div className="metric-row">
               <article className="metric">
-                <span>Hoje</span>
-                <strong>{eventsToday.length}</strong>
+                <span>Prazos</span>
+                <strong>{deadlinesToday.length}</strong>
               </article>
               <article className="metric">
                 <span>Compromissos</span>
-                <strong>{upcomingEvents.length}</strong>
+                <strong>{eventsToday.length}</strong>
               </article>
               <article className="metric">
                 <span>Clientes</span>
@@ -62,44 +65,41 @@ export function DashboardPage() {
 
           <aside className="focus-card">
             <span className="focus-label">Próximo prazo</span>
-            {nextEvent ? (
+            {nextDeadline ? (
               <>
-                <h2>{nextEvent.title}</h2>
+                <h2>{nextDeadline.title}</h2>
                 <p className="focus-time">
-                  {formatDate(nextEvent.start)} às {formatTime(nextEvent.start)}
+                  {formatDate(new Date(`${nextDeadline.date}T12:00:00`))}
                 </p>
                 <div className="focus-meta">
-                  {nextEvent.clientId ? (
+                  {nextDeadline.clientId ? (
                     <span>
                       {
                         clients.find(
-                          (client) => client.id === nextEvent.clientId,
+                          (client) => client.id === nextDeadline.clientId,
                         )?.name
                       }
                     </span>
                   ) : null}
-                  {nextEvent.processId ? (
+                  {nextDeadline.processId ? (
                     <span>
                       {
                         processes.find(
-                          (process) => process.id === nextEvent.processId,
+                          (process) => process.id === nextDeadline.processId,
                         )?.number
                       }
                     </span>
                   ) : null}
-                  {nextEvent.location ? (
-                    <span>{nextEvent.location}</span>
-                  ) : null}
                 </div>
-                <StatusBadge tone={getStatusTone(nextEvent.priority)}>
-                  {nextEvent.priority || "Monitorado"}
+                <StatusBadge tone={getStatusTone(nextDeadline.status, nextDeadline.completed)}>
+                  {nextDeadline.status || "Monitorado"}
                 </StatusBadge>
               </>
             ) : (
               <>
-                <h2>Sem compromissos no momento.</h2>
+                <h2>Sem prazos futuros.</h2>
                 <p className="focus-time">
-                  O próximo compromisso aparece aqui.
+                  O proximo prazo aparece aqui.
                 </p>
               </>
             )}
@@ -175,42 +175,41 @@ export function DashboardPage() {
           <article className="surface panel">
             <div className="section-head">
               <div>
-                <h2 className="section-title">Compromissos</h2>
+                <h2 className="section-title">Prazos</h2>
                 <p className="section-note">Próximos</p>
               </div>
-              <span className="badge warn">{upcomingEvents.length}</span>
+              <span className="badge warn">{upcomingDeadlines.length}</span>
             </div>
 
             <div className="list">
-              {upcomingEvents.length ? (
-                upcomingEvents.map((event) => (
+              {upcomingDeadlines.length ? (
+                upcomingDeadlines.map((deadline) => (
                   <Link
-                    key={event.id}
+                    key={deadline.id}
                     className="item item-link"
-                    to={`/agenda/${event.id}`}
+                    to={`/prazos/${deadline.id}`}
                   >
                     <div className="item-time">
-                      {formatDate(event.start).slice(0, 5)}
+                      {formatDate(new Date(`${deadline.date}T12:00:00`)).slice(0, 5)}
                     </div>
 
                     <div>
-                      <h3 className="item-title">{event.title}</h3>
+                      <h3 className="item-title">{deadline.title}</h3>
                       <div className="item-meta">
-                        <span>{formatTime(event.start)}</span>
-                        {event.clientId ? (
+                        {deadline.clientId ? (
                           <span>
                             {
                               clients.find(
-                                (client) => client.id === event.clientId,
+                                (client) => client.id === deadline.clientId,
                               )?.name
                             }
                           </span>
                         ) : null}
-                        {event.processId ? (
+                        {deadline.processId ? (
                           <span>
                             {
                               processes.find(
-                                (process) => process.id === event.processId,
+                                (process) => process.id === deadline.processId,
                               )?.number
                             }
                           </span>
@@ -219,17 +218,17 @@ export function DashboardPage() {
                     </div>
 
                     <div className="item-side">
-                      <StatusBadge tone={getStatusTone(event.priority)}>
-                        {event.priority || "Monitorado"}
+                      <StatusBadge tone={getStatusTone(deadline.status, deadline.completed)}>
+                        {deadline.status || "Monitorado"}
                       </StatusBadge>
-                      <span>{event.type || "Prazo"}</span>
+                      <span>Prazo</span>
                     </div>
                   </Link>
                 ))
               ) : (
                 <EmptyState
-                  title="Sem compromissos."
-                  copy="Sem pendências futuras."
+                  title="Sem prazos."
+                  copy="Sem prazos futuros."
                   className="empty-inline"
                 />
               )}
@@ -348,10 +347,10 @@ export function DashboardPage() {
               <div className="rail-stats">
                 <article className="rail-stat">
                   <div className="rail-copy">
-                    <strong>Hoje</strong>
-                    <span>Compromissos</span>
+                    <strong>Prazos</strong>
+                    <span>Hoje</span>
                   </div>
-                  <div className="rail-number">{eventsToday.length}</div>
+                  <div className="rail-number">{deadlinesToday.length}</div>
                 </article>
 
                 <article className="rail-stat">

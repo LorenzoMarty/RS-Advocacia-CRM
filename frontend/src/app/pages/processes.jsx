@@ -291,7 +291,7 @@ export function ProcessFormPage() {
 
 export function ProcessDetailPage() {
   const params = useParams();
-  const { clients, events, processes } = useAppState();
+  const { clients, deadlines, events, processes } = useAppState();
   const process = processes.find((item) => item.id === params.processId) || null;
 
   if (!process) {
@@ -300,6 +300,7 @@ export function ProcessDetailPage() {
 
   const client = clients.find((item) => item.id === process.clientId) || null;
   const relatedEvents = events.filter((event) => event.processId === process.id);
+  const relatedDeadlines = deadlines.filter((deadline) => deadline.processId === process.id);
 
   return (
     <>
@@ -329,6 +330,10 @@ export function ProcessDetailPage() {
                 <article className="summary-card">
                   <span>Compromissos</span>
                   <strong>{relatedEvents.length}</strong>
+                </article>
+                <article className="summary-card">
+                  <span>Prazos</span>
+                  <strong>{relatedDeadlines.length}</strong>
                 </article>
                 <article className="summary-card">
                   <span>Responsável</span>
@@ -382,7 +387,7 @@ export function ProcessDetailPage() {
             <section className="surface section-card">
               <div className="section-head">
                 <div>
-                  <h2 className="section-title">Agenda</h2>
+                  <h2 className="section-title">Compromissos</h2>
                   <p className="section-note">{formatCount(relatedEvents.length)}</p>
                 </div>
               </div>
@@ -409,6 +414,39 @@ export function ProcessDetailPage() {
                     title="Sem compromissos."
                     copy="Adicione um novo compromisso para este processo."
                     actions={<Link className="btn" to={`/agenda/novo?processo=${process.id}&cliente=${client?.id || ''}`}>Novo compromisso</Link>}
+                  />
+                )}
+              </div>
+            </section>
+
+            <section className="surface section-card">
+              <div className="section-head">
+                <div>
+                  <h2 className="section-title">Prazos</h2>
+                  <p className="section-note">{formatCount(relatedDeadlines.length, 'prazo', 'prazos')}</p>
+                </div>
+              </div>
+
+              <div className="list">
+                {relatedDeadlines.length ? relatedDeadlines.map((deadline) => (
+                  <article key={deadline.id} className="event-item">
+                    <div className="list-top">
+                      <div>
+                        <h3 className="list-title">{deadline.title}</h3>
+                        <p className="list-subtitle">{new Date(`${deadline.date}T12:00:00`).toLocaleDateString('pt-BR')}</p>
+                      </div>
+                      <StatusBadge tone={getStatusTone(deadline.status, deadline.completed)}>{deadline.status}</StatusBadge>
+                    </div>
+
+                    <div className="list-meta">
+                      {deadline.responsible ? <span className="meta-chip">{deadline.responsible}</span> : null}
+                    </div>
+                  </article>
+                )) : (
+                  <EmptyState
+                    title="Sem prazos."
+                    copy="Cadastre prazos na area de prazos, separados dos compromissos."
+                    actions={<Link className="btn" to="/prazos/novo">Novo prazo</Link>}
                   />
                 )}
               </div>

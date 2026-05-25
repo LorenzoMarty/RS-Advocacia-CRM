@@ -14,9 +14,7 @@ import {
 } from '../utils';
 import { EmptyState, Field, NotFoundState } from './common';
 
-const DEADLINE_TYPE = 'Prazo';
 const DEADLINE_DEFAULT_STATUS = DEADLINE_STATUS_COLUMNS[0].label;
-const DEADLINE_DEFAULT_TIME = '18:00';
 
 function dateInputValue(value = new Date()) {
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -44,7 +42,7 @@ function shiftDate(value, days) {
 }
 
 function deadlineMoment(deadline) {
-  return deadline.end || deadline.start;
+  return dateFromInput(deadline.date) || new Date();
 }
 
 function elapsedSecondsForDeadline(deadline, currentTime = Date.now()) {
@@ -72,15 +70,6 @@ function formatDuration(totalSeconds) {
   return [hours, minutes, seconds]
     .map((value) => String(value).padStart(2, '0'))
     .join(':');
-}
-
-function deadlineDateToIso(value) {
-  const dateValue = /^\d{4}-\d{2}-\d{2}$/.test(value || '') ? value : dateInputValue();
-  return new Date(`${dateValue}T${DEADLINE_DEFAULT_TIME}:00`).toISOString();
-}
-
-function isDeadlineEvent(event) {
-  return normalizeText(event.type).includes('prazo');
 }
 
 function buildDeadlineTitle(process, responsible) {
@@ -161,7 +150,7 @@ function DeadlineCard({
 }
 
 export function DeadlinesPage() {
-  const { clients, events, processes, saveEvent } = useAppState();
+  const { clients, deadlines, processes, saveDeadline } = useAppState();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState(() => dateInputValue(searchParams.get('data') || new Date()));
   const [search, setSearch] = useState('');
@@ -171,8 +160,7 @@ export function DeadlinesPage() {
   const [dragOverColumnKey, setDragOverColumnKey] = useState('');
   const [movingDeadlineId, setMovingDeadlineId] = useState('');
 
-  const allDeadlines = events
-    .filter(isDeadlineEvent)
+  const allDeadlines = [...deadlines]
     .sort((left, right) => new Date(deadlineMoment(left)) - new Date(deadlineMoment(right)));
   const selectedDateObject = dateFromInput(selectedDate);
   const processOptions = processes
@@ -233,7 +221,7 @@ export function DeadlinesPage() {
 
     try {
       const deadlineProcess = processes.find((process) => process.id === deadline.processId) || null;
-      await saveEvent({
+      await saveDeadline({
         ...deadline,
         title: buildDeadlineTitle(deadlineProcess, deadline.responsible) || deadline.title,
         status: nextColumn.label,
@@ -479,14 +467,35 @@ export function DeadlineDetailPage() {
   const params = useParams();
   const {
     clients,
-    events,
-    isEventsLoading,
+    deadlines,
+    isDeadlinesLoading,
+    loadDeadline,
     processes,
-    saveEventTimer,
+    saveDeadlineTimer,
   } = useAppState();
-  const deadline = events.find((event) => event.id === params.deadlineId) || null;
+  const [remoteDeadline, setRemoteDeadline] = useState(null);
+  const deadline = remoteDeadline || deadlines.find((item) => item.id === params.deadlineId) || null;
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [isTimerSaving, setIsTimerSaving] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchDeadline() {
+      const deadlineData = await loadDeadline(params.deadlineId);
+
+      if (isMounted) {
+        setRemoteDeadline(deadlineData);
+      }
+    }
+
+    fetchDeadline();
+
+    return () => {
+      isMounted = false;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.deadlineId]);
 
   useEffect(() => {
     if (!deadline?.timerStartedAt) {
@@ -501,15 +510,11 @@ export function DeadlineDetailPage() {
   }, [deadline?.timerStartedAt]);
 
   if (!deadline) {
-    if (isEventsLoading) {
+    if (isDeadlinesLoading) {
       return null;
     }
 
     return <NotFoundState title="Prazo nao encontrado." />;
-  }
-
-  if (!isDeadlineEvent(deadline)) {
-    return <NotFoundState title="Este registro nao e um prazo." />;
   }
 
   const process = processes.find((item) => item.id === deadline.processId) || null;
@@ -526,7 +531,7 @@ export function DeadlineDetailPage() {
 
     setIsTimerSaving(true);
     try {
-      await saveEventTimer(deadline.id, {
+      await saveDeadlineTimer(deadline.id, {
         elapsedSeconds,
         timerStartedAt: new Date().toISOString(),
       });
@@ -543,7 +548,7 @@ export function DeadlineDetailPage() {
 
     setIsTimerSaving(true);
     try {
-      await saveEventTimer(deadline.id, {
+      await saveDeadlineTimer(deadline.id, {
         elapsedSeconds,
         timerStartedAt: '',
       });
@@ -669,13 +674,13 @@ export function DeadlineFormPage() {
   const [searchParams] = useSearchParams();
   const isEditing = Boolean(params.deadlineId);
   const {
-    events,
-    isEventsLoading,
+    deadlines,
+    isDeadlinesLoading,
     processes,
-    saveEvent,
+    saveDeadline,
     users,
   } = useAppState();
-  const deadline = events.find((event) => event.id === params.deadlineId) || null;
+  const deadline = deadlines.find((item) => item.id === params.deadlineId) || null;
   const initialDate = dateInputValue(searchParams.get('data') || new Date());
   const [form, setForm] = useState(() => ({
     processId: deadline?.processId || '',
@@ -685,16 +690,26 @@ export function DeadlineFormPage() {
   }));
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    if (!deadline) {
+      return;
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm({
+      processId: deadline.processId || '',
+      description: deadline.description || '',
+      responsible: deadline.responsible || '',
+      date: dateInputValue(deadlineMoment(deadline)),
+    });
+  }, [deadline]);
+
   if (isEditing && !deadline) {
-    if (isEventsLoading) {
+    if (isDeadlinesLoading) {
       return null;
     }
 
     return <NotFoundState title="Prazo nao encontrado." />;
-  }
-
-  if (deadline && !isDeadlineEvent(deadline)) {
-    return <NotFoundState title="Este registro nao e um prazo." />;
   }
 
   const selectedProcess = processes.find((process) => process.id === form.processId) || null;
@@ -710,19 +725,15 @@ export function DeadlineFormPage() {
     }
 
     const process = processes.find((item) => item.id === form.processId) || null;
-    const savedDeadline = await saveEvent({
+    const savedDeadline = await saveDeadline({
       id: deadline?.id,
       title: buildDeadlineTitle(process, form.responsible),
-      type: DEADLINE_TYPE,
       priority: deadline?.priority || 'Alta',
-      start: deadlineDateToIso(form.date),
-      end: deadlineDateToIso(form.date),
-      reminderAt: deadline?.reminderAt || '',
+      date: form.date,
       clientId: process?.clientId || '',
       processId: form.processId,
       responsible: form.responsible.trim(),
       status: deadline?.status || DEADLINE_DEFAULT_STATUS,
-      location: process?.court || 'Tarefa de prazo',
       description: form.description.trim(),
       notes: deadline?.notes || '',
       completed: deadline?.completed || false,

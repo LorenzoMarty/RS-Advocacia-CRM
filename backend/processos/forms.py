@@ -8,6 +8,7 @@ AREA_JURIDICA_CHOICES = (
     "Cível",
     "Trabalhista",
     "Empresarial",
+    "Tributário",
     "Consumidor",
 )
 

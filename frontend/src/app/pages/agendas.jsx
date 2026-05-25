@@ -591,7 +591,6 @@ export function AgendaListPage() {
                 Audiência
               </span>
               <span className="legend-chip legend-chip-reuniao">Reunião</span>
-              <span className="legend-chip legend-chip-prazo">Prazo</span>
               <span className="legend-chip legend-chip-tarefa">Tarefa</span>
             </div>
 
@@ -777,8 +776,10 @@ export function EventFormPage() {
   const eventItem = events.find((item) => item.id === params.eventId) || null;
   const initialClientId = searchParams.get("cliente") || "";
   const initialProcessId = searchParams.get("processo") || "";
-  const initialType = searchParams.get("tipo") || "";
-  const initialStatus = searchParams.get("status") || "";
+  const requestedType = searchParams.get("tipo") || "";
+  const requestedStatus = searchParams.get("status") || "";
+  const initialType = EVENT_TYPE_OPTIONS.includes(requestedType) ? requestedType : "";
+  const initialStatus = EVENT_STATUS_OPTIONS.includes(requestedStatus) ? requestedStatus : "";
   const initialDate = searchParams.get("data") || "";
   const returnTo = safeReturnPath(searchParams.get("voltar") || "");
   const [form, setForm] = useState(() => ({
@@ -880,22 +881,11 @@ export function EventFormPage() {
     navigate(returnTo || `/agenda/${savedEvent.id || form.id}`, { replace: true });
   }
 
-  const isDeadlineForm = normalizeText(form.type).includes("prazo");
-  const formTitle = isDeadlineForm
-    ? isEditing
-      ? "Editar prazo"
-      : "Novo prazo"
-    : isEditing
-      ? "Editar compromisso"
-      : "Novo compromisso";
+  const formTitle = isEditing ? "Editar compromisso" : "Novo compromisso";
   const backTarget = isEditing ? `/agenda/${eventItem.id}` : returnTo || "/agenda";
   const backLabel = isEditing
-    ? isDeadlineForm
-      ? "Voltar para o prazo"
-      : "Voltar para o compromisso"
-    : returnTo === "/prazos"
-      ? "Voltar para prazos"
-      : "Voltar para agenda";
+    ? "Voltar para o compromisso"
+    : "Voltar para agenda";
 
   return (
     <>

@@ -4,11 +4,12 @@ export const NAV_ITEMS = [
   { key: 'processos', label: 'Processos', mobileLabel: 'Processos', to: '/processos' },
   { key: 'agenda', label: 'Agenda', mobileLabel: 'Agenda', to: '/agenda' },
   { key: 'prazos', label: 'Prazos', mobileLabel: 'Prazos', to: '/prazos' },
+  { key: 'peticoes', label: 'Petições e contestações', mobileLabel: 'Petições', to: '/peticoes-contestacoes' },
   { key: 'reunioes', label: 'Reuniões', mobileLabel: 'Reuniões', to: '/reunioes' },
   { key: 'usuarios', label: 'Usuários', mobileLabel: 'Usuários', to: '/usuarios' },
 ];
 
-export const EVENT_TYPE_OPTIONS = ['Audiência', 'Reunião', 'Prazo', 'Tarefa interna'];
+export const EVENT_TYPE_OPTIONS = ['Audiência', 'Reunião', 'Tarefa interna'];
 export const EVENT_PRIORITY_OPTIONS = ['Alta', 'Média', 'Baixa'];
 export const DEADLINE_STATUS_COLUMNS = [
   { key: 'a_fazer', label: 'A fazer' },
@@ -16,10 +17,15 @@ export const DEADLINE_STATUS_COLUMNS = [
   { key: 'protocolar', label: 'Protocolar' },
   { key: 'protocolado', label: 'Protocolado' },
 ];
+export const PETITION_STATUS_COLUMNS = [
+  { key: 'pendente', label: 'Pendente' },
+  { key: 'em_andamento', label: 'Em andamento' },
+  { key: 'protocolar', label: 'Protocolar' },
+  { key: 'protocolado', label: 'Protocolado' },
+];
 export const EVENT_STATUS_OPTIONS = [
   'Agendado',
   'Pendente',
-  ...DEADLINE_STATUS_COLUMNS.map((column) => column.label),
   'Concluído',
   'Cancelado',
 ];

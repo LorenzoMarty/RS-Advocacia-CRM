@@ -116,7 +116,6 @@ export function getEventTypeKey(value) {
   const normalized = normalizeText(value);
   if (normalized.includes('audien')) return 'audiencia';
   if (normalized.includes('reun')) return 'reuniao';
-  if (normalized.includes('prazo')) return 'prazo';
   return 'tarefa';
 }
 

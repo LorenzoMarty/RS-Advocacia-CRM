@@ -34,6 +34,7 @@ import {
   DeadlineFormPage,
   DeadlinesPage,
 } from "./app/pages/deadlines";
+import { PetitionsPage } from "./app/pages/petitions";
 import {
   UsersListPage,
   UserFormPage,
@@ -140,6 +141,8 @@ export default function App() {
             <Route path="/prazos/novo" element={<DeadlineFormRoute />} />
             <Route path="/prazos/:deadlineId" element={<DeadlineDetailPage />} />
             <Route path="/prazos/:deadlineId/editar" element={<DeadlineFormRoute />} />
+
+            <Route path="/peticoes-contestacoes" element={<PetitionsPage />} />
 
             <Route path="/reunioes" element={<MeetingsPage />} />
 

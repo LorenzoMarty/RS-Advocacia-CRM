@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
 
 
 # Modelos da agenda.
@@ -19,11 +20,11 @@ class Evento(models.Model):
     observacoes = models.TextField(blank=True)
     lembrete_em = models.DateTimeField(blank=True, null=True)
     concluido = models.BooleanField(default=False)
-    tempo_decorrido_segundos = models.PositiveIntegerField(default=0)
-    timer_iniciado_em = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
+        if "prazo" in slugify(self.tipo_evento or ""):
+            raise ValidationError("Prazos devem ser cadastrados no modulo de prazos.")
         if self.data_fim < self.data_inicio:
             raise ValidationError("A data de fim deve ser posterior à data de início.")
         if self.lembrete_em and self.lembrete_em > self.data_inicio:

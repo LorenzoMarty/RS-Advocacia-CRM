@@ -28,14 +28,18 @@ const AREA_LABELS = {
   agenda: 'Agenda',
   auth: 'Cargos e acessos',
   clientes: 'Clientes',
+  prazos: 'Prazos',
+  peticoes: 'Petições e contestações',
   processos: 'Processos',
   usuarios: 'Usuários',
 };
 
 const AREA_NOTES = {
-  agenda: 'Compromissos, prazos, audiências e tarefas.',
+  agenda: 'Compromissos, audiências e tarefas.',
   auth: 'Cargos, regras de acesso e contas internas.',
   clientes: 'Cadastro, dados e histórico dos clientes.',
+  prazos: 'Prazos processuais e tarefas de protocolo.',
+  peticoes: 'Petição, contestação, protocolo e acompanhamento.',
   processos: 'Processos jurídicos e seus dados principais.',
   usuarios: 'Cadastro da equipe que usa o sistema.',
 };
@@ -45,6 +49,8 @@ const RESOURCE_LABELS = {
   evento: 'Compromissos',
   group: 'Cargos',
   permission: 'Regras de acesso',
+  prazo: 'Prazos',
+  peticao: 'Petições e contestações',
   processo: 'Processos',
   user: 'Contas internas',
   usuario: 'Usuários',
@@ -52,9 +58,11 @@ const RESOURCE_LABELS = {
 
 const RESOURCE_NOTES = {
   cliente: 'Dados dos clientes atendidos pelo escritório.',
-  evento: 'Itens da agenda, como prazos e audiências.',
+  evento: 'Compromissos, audiências e tarefas da agenda.',
   group: 'Cargos usados para liberar acessos por perfil.',
   permission: 'Regras avançadas usadas pelo sistema.',
+  prazo: 'Prazos processuais separados da agenda de compromissos.',
+  peticao: 'Peças jurídicas separadas de prazos e compromissos.',
   processo: 'Informações dos processos cadastrados.',
   user: 'Contas técnicas de autenticação.',
   usuario: 'Pessoas da equipe cadastradas no sistema.',

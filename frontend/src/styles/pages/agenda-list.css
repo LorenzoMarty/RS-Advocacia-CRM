@@ -66,7 +66,6 @@
     .legend-chip::before{content:"";width:8px;height:8px;border-radius:999px;background:var(--chip-color,var(--gold))}
     .legend-chip-audiencia{--chip-color:#c29a63}
     .legend-chip-reuniao{--chip-color:#7893d1}
-    .legend-chip-prazo{--chip-color:#e8b25c}
     .legend-chip-tarefa{--chip-color:#b6bcc8}
     .calendar-frame{overflow:auto;padding:4px 2px 2px}
     .calendar-weekdays,.calendar-days{min-width:720px}
@@ -136,7 +135,6 @@
     }
     .calendar-event.type-audiencia{--event-accent:#c29a63}
     .calendar-event.type-reuniao{--event-accent:#7893d1}
-    .calendar-event.type-prazo{--event-accent:#e8b25c}
     .calendar-event.type-tarefa{--event-accent:#b6bcc8}
     .calendar-event.is-overdue{
         --event-accent:#ef7a7a;
