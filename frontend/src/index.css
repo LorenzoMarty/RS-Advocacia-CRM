@@ -77,6 +77,83 @@ button:disabled {
 }
 
 .main :where(
+  .surface,
+  .hero,
+  .panel,
+  .rail,
+  .section-card,
+  .agenda-intro,
+  .calendar-panel,
+  .rail-panel,
+  .deadlines-intro,
+  .deadline-form-intro,
+  .deadline-form-panel,
+  .deadline-detail-hero,
+  .deadline-timer-panel,
+  .deadline-detail-panel,
+  .petitions-intro,
+  .petition-form-panel,
+  .petition-editing-summary,
+  .meetings-intro,
+  .meetings-form-panel,
+  .meetings-workspace,
+  .clients-intro,
+  .clients-panel,
+  .client-hero,
+  .process-hero,
+  .event-hero,
+  .user-hero,
+  .cargo-hero,
+  .cargos-intro,
+  .cargos-panel,
+  .create-intro,
+  .event-intro,
+  .form-panel,
+  .confirm-intro,
+  .confirm-panel,
+  .api-test-hero,
+  .api-test-list
+) {
+  border-radius: 0;
+}
+
+#root :where(
+  .main,
+  .agenda-page,
+  .event-create-page,
+  .event-page,
+  .api-test-page,
+  .clients-page,
+  .client-page,
+  .create-page,
+  .confirm-page,
+  .deadlines-page,
+  .deadline-form-page,
+  .deadline-detail-page,
+  .petitions-page,
+  .process-page,
+  .meetings-page,
+  .cargos-page,
+  .cargo-form-page,
+  .cargo-detail-page,
+  .user-page,
+  .users-page,
+  .dashboard-grid,
+  .agenda-layout,
+  .client-layout,
+  .event-layout,
+  .process-layout,
+  .user-layout,
+  .cargo-layout,
+  .deadline-detail-layout,
+  .petitions-workspace,
+  .meetings-layout,
+  .stack
+) {
+  gap: 0;
+}
+
+.main :where(
   .metric,
   .focus-card,
   .item,

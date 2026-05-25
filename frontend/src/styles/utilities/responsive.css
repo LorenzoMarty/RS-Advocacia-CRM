@@ -14,12 +14,12 @@
     }
 
     .page{
-        margin-left:calc(var(--sidebar) + 36px);
-        padding:18px 18px 28px;
+        margin-left:var(--sidebar);
+        padding:0;
     }
 
     .topbar{
-        top:18px;
+        top:0;
         gap:8px;
         padding:8px 12px;
     }
@@ -59,16 +59,16 @@
 
     html[data-sidebar-collapsed="true"] .sidebar{
         width:var(--sidebar-collapsed);
-        padding:18px 14px;
+        padding:0;
     }
 
     html[data-sidebar-collapsed="true"] .sidebar-scroll{
-        padding-right:0;
+        padding:18px 14px;
         scrollbar-gutter:auto;
     }
 
     html[data-sidebar-collapsed="true"] .page{
-        margin-left:calc(var(--sidebar-collapsed) + 36px);
+        margin-left:var(--sidebar-collapsed);
     }
 
     html[data-sidebar-collapsed="true"] .brand,
@@ -123,8 +123,8 @@
         left:auto;
         width:auto;
         padding:10px 12px;
-        border-radius:18px;
-        margin-bottom:22px;
+        border-radius:0;
+        margin-bottom:0;
         transform:none;
     }
 
@@ -173,15 +173,15 @@
     }
 
     .page{
-        padding:12px 12px var(--bottom-nav-offset);
+        padding:0 0 var(--bottom-nav-offset);
     }
-    .main{gap:16px}
-    .surface{border-radius:24px}
+    .main{gap:0}
+    .surface{border-radius:0}
     .topbar{
         padding:8px 9px;
         gap:7px;
-        margin-bottom:16px;
-        border-radius:16px;
+        margin-bottom:0;
+        border-radius:0;
     }
 
     .topbar-main{
@@ -303,15 +303,15 @@
     }
 
     .page{
-        padding:10px 10px var(--bottom-nav-offset);
+        padding:0 0 var(--bottom-nav-offset);
     }
 
-    .main{gap:14px}
-    .surface{border-radius:22px}
+    .main{gap:0}
+    .surface{border-radius:0}
 
     .topbar{
         padding:7px 8px;
-        margin-bottom:14px;
+        margin-bottom:0;
     }
 
     .topbar-main{
