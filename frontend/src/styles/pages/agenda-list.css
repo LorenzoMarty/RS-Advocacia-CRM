@@ -16,7 +16,7 @@
     .toolbar-search svg{position:absolute;top:50%;left:14px;transform:translateY(-50%);color:var(--muted)}
     .toolbar-search input,.filter-select{width:100%;min-height:46px;padding:0 14px;border-radius:15px;border:1px solid var(--line);background:var(--ghost);color:var(--text);outline:0;transition:border-color .2s ease,background .2s ease,box-shadow .2s ease,transform .2s ease}
     .toolbar-search input{padding-left:42px}
-    .toolbar-search input:focus,.filter-select:focus{border-color:rgba(194,154,99,.24);background:var(--ghost-strong);box-shadow:0 0 0 4px rgba(194,154,99,.08)}
+    .toolbar-search input:focus,.filter-select:focus{border-color:rgba(212,175,55,.24);background:var(--ghost-strong);box-shadow:0 0 0 4px rgba(212,175,55,.08)}
     .toolbar-search input::placeholder{color:var(--muted)}
     .toolbar-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
     .filter-select{
@@ -38,7 +38,7 @@
     }
     .filter-select:hover{
         transform:translateY(-1px);
-        border-color:rgba(194,154,99,.18);
+        border-color:rgba(212,175,55,.18);
         background-color:var(--ghost-strong);
     }
     .filter-select option,
@@ -60,11 +60,11 @@
     .calendar-controls{display:flex;align-items:center;gap:10px}
     .calendar-month{min-width:170px;text-align:center;font-size:.88rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
     .icon-control{width:38px;height:38px;flex:0 0 auto;display:grid;place-items:center;border-radius:12px;border:1px solid var(--line);background:var(--ghost);transition:border-color .2s ease,background .2s ease,transform .2s ease}
-    .icon-control:hover{transform:translateY(-1px);border-color:rgba(194,154,99,.2);background:rgba(194,154,99,.08)}
+    .icon-control:hover{transform:translateY(-1px);border-color:rgba(212,175,55,.2);background:rgba(212,175,55,.08)}
     .calendar-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
     .legend-chip{display:inline-flex;align-items:center;gap:8px;min-height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:var(--ghost);color:var(--soft);font-size:.75rem}
     .legend-chip::before{content:"";width:8px;height:8px;border-radius:999px;background:var(--chip-color,var(--gold))}
-    .legend-chip-audiencia{--chip-color:#c29a63}
+    .legend-chip-audiencia{--chip-color:#D4AF37}
     .legend-chip-reuniao{--chip-color:#7893d1}
     .legend-chip-tarefa{--chip-color:#b6bcc8}
     .calendar-frame{overflow:auto;padding:4px 2px 2px}
@@ -76,8 +76,8 @@
         min-height:164px;
         padding:14px 12px 12px;
         border-radius:22px;
-        border:1px solid rgba(255,255,255,.08);
-        background:linear-gradient(180deg, rgba(31,35,44,.96), rgba(18,21,29,.94));
+        border:1px solid var(--line);
+        background:linear-gradient(180deg, rgba(15,23,42,.96), rgba(2,6,23,.94));
         box-shadow:inset 0 1px 0 rgba(255,255,255,.02), 0 14px 28px rgba(0,0,0,.12);
         display:grid;
         align-content:start;
@@ -86,14 +86,14 @@
     }
     .day-card:hover{
         transform:translateY(-2px);
-        border-color:rgba(194,154,99,.16);
+        border-color:rgba(212,175,55,.16);
         box-shadow:inset 0 1px 0 rgba(255,255,255,.03), 0 18px 30px rgba(0,0,0,.16);
     }
     .day-card.is-muted{opacity:.62}
     .day-card.is-today{
-        border-color:rgba(194,154,99,.3);
-        background:linear-gradient(180deg, rgba(42,38,30,.98), rgba(26,23,18,.96));
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.03), 0 16px 30px rgba(194,154,99,.12);
+        border-color:rgba(212,175,55,.3);
+        background:linear-gradient(180deg, rgba(30,41,59,.98), rgba(11,12,16,.96));
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.03), 0 16px 30px rgba(212,175,55,.12);
     }
     .day-card.is-overdue{border-color:rgba(239,122,122,.2)}
     .day-head{display:flex;align-items:center;justify-content:flex-start;gap:8px}
@@ -111,8 +111,8 @@
         gap:5px;
         padding:10px 10px 10px 14px;
         border-radius:14px;
-        border:1px solid rgba(255,255,255,.08);
-        background:linear-gradient(180deg, rgba(27,31,39,.98), rgba(21,24,31,.98));
+        border:1px solid var(--line);
+        background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(11,12,16,.98));
         box-shadow:0 10px 20px rgba(0,0,0,.18);
         color:var(--text);
         transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
@@ -133,7 +133,7 @@
         border-color:rgba(255,255,255,.12);
         box-shadow:0 14px 24px rgba(0,0,0,.22);
     }
-    .calendar-event.type-audiencia{--event-accent:#c29a63}
+    .calendar-event.type-audiencia{--event-accent:#D4AF37}
     .calendar-event.type-reuniao{--event-accent:#7893d1}
     .calendar-event.type-tarefa{--event-accent:#b6bcc8}
     .calendar-event.is-overdue{
@@ -194,7 +194,7 @@
     .rail-block + .rail-block{padding-top:18px;border-top:1px solid var(--line)}
     .side-list{display:grid;gap:10px}
     .side-item{display:grid;gap:10px;padding:14px;border-radius:18px;border:1px solid var(--line);background:var(--ghost);transition:border-color .2s ease,background .2s ease,transform .2s ease}
-    .side-item:hover{transform:translateY(-1px);border-color:rgba(194,154,99,.18);background:rgba(194,154,99,.06)}
+    .side-item:hover{transform:translateY(-1px);border-color:rgba(212,175,55,.18);background:rgba(212,175,55,.06)}
     .side-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
     .side-title{margin:0;font-size:.96rem;line-height:1.4;font-weight:600}
     .side-time{margin:6px 0 0;color:var(--soft);font-size:.82rem;line-height:1.45}
@@ -205,7 +205,7 @@
     .status-badge.success{color:var(--success)}
     .status-badge.warn{color:var(--warn)}
     .status-badge.danger{color:var(--danger)}
-    .status-badge.gold{color:var(--gold-soft);background:rgba(194,154,99,.08);border-color:rgba(194,154,99,.2)}
+    .status-badge.gold{color:var(--gold-soft);background:rgba(212,175,55,.08);border-color:rgba(212,175,55,.2)}
     html[data-theme="light"] .toolbar-search input,html[data-theme="light"] .filter-select,html[data-theme="light"] .side-item,html[data-theme="light"] .meta-chip,html[data-theme="light"] .status-badge,html[data-theme="light"] .legend-chip{background:rgba(24,30,42,.04);border-color:rgba(30,34,45,.1)}
     html[data-theme="light"] .day-card{
         background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(244,238,230,.94));

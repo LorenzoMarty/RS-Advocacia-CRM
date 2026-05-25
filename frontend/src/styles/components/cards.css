@@ -45,7 +45,7 @@
 }
 
 .badge::before{content:"";width:6px;height:6px;border-radius:999px;background:currentColor}
-.badge.gold{color:var(--gold-soft);background:rgba(194,154,99,.08);border-color:rgba(194,154,99,.2)}
+.badge.gold{color:var(--gold-soft);background:rgba(212,175,55,.08);border-color:rgba(212,175,55,.2)}
 .badge.success{color:var(--success)}
 .badge.warn{color:var(--warn)}
 .badge.danger{color:var(--danger)}

@@ -12,7 +12,7 @@ export const NAV_ITEMS = [
 export const EVENT_TYPE_OPTIONS = ['Audiência', 'Reunião', 'Tarefa interna'];
 export const EVENT_PRIORITY_OPTIONS = ['Alta', 'Média', 'Baixa'];
 export const DEADLINE_STATUS_COLUMNS = [
-  { key: 'a_fazer', label: 'A fazer' },
+  { key: 'a_fazer', label: 'Pendente' },
   { key: 'em_andamento', label: 'Em andamento' },
   { key: 'protocolar', label: 'Protocolar' },
   { key: 'protocolado', label: 'Protocolado' },

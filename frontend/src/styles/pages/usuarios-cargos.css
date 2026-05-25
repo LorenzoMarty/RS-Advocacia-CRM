@@ -56,8 +56,8 @@
 
 .cargo-row:hover{
     transform:translateY(-1px);
-    border-color:rgba(194,154,99,.18);
-    background:rgba(194,154,99,.06);
+    border-color:rgba(212,175,55,.18);
+    background:rgba(212,175,55,.06);
 }
 
 .cargo-main{
@@ -72,8 +72,8 @@
     height:46px;
     flex:0 0 auto;
     border-radius:16px;
-    border:1px solid rgba(194,154,99,.18);
-    background:rgba(194,154,99,.08);
+    border:1px solid rgba(212,175,55,.18);
+    background:rgba(212,175,55,.08);
     color:var(--gold-soft);
     display:grid;
     place-items:center;
@@ -165,8 +165,8 @@
 
 .action-link:hover{
     transform:translateY(-1px);
-    border-color:rgba(194,154,99,.2);
-    background:rgba(194,154,99,.08);
+    border-color:rgba(212,175,55,.2);
+    background:rgba(212,175,55,.08);
 }
 
 .action-link-danger{
