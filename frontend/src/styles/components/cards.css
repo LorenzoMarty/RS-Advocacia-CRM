@@ -73,6 +73,42 @@
     color:var(--soft);
 }
 
+.main :where(
+    .badge,
+    .status-badge,
+    .meta-chip,
+    .meta-pill,
+    .legend-chip,
+    .client-tier,
+    .action-link,
+    .contact-link,
+    .link-card,
+    .note-box,
+    .detail-item,
+    .summary-card,
+    .empty,
+    .empty-state .empty,
+    .calendar-event,
+    .calendar-more,
+    .side-item,
+    .day-card,
+    .deadline-column,
+    .deadline-card,
+    .deadline-column-empty,
+    .petition-column,
+    .petition-card,
+    .petition-column-empty,
+    .recording-result,
+    .meeting-option,
+    .audio-recorder
+){
+    border-radius:18px;
+}
+
+.main :where(.badge,.status-badge,.meta-chip,.meta-pill,.legend-chip,.client-tier,.focus-label){
+    border-radius:999px;
+}
+
 .empty strong{display:block;font-size:.96rem}
 .empty p{margin:6px 0 0;color:var(--muted);font-size:.9rem;line-height:1.55}
 
