@@ -2,7 +2,7 @@
         padding:30px;
         background:
             radial-gradient(circle at top right, rgba(var(--gold-rgb),.12), transparent 28%),
-            linear-gradient(135deg, rgba(14,17,23,.96), rgba(11,13,18,.88));
+            linear-gradient(135deg, rgba(13,43,78,.96), rgba(7,22,45,.9));
     }
 
     .hero-grid{
@@ -52,7 +52,7 @@
         padding:16px;
         border-radius:18px;
         border:1px solid rgba(255,255,255,.07);
-        background:rgba(255,255,255,.035);
+        background:var(--ghost);
     }
 
     .metric span{
@@ -79,7 +79,7 @@
         padding:22px;
         border-radius:22px;
         border:1px solid rgba(255,255,255,.07);
-        background:rgba(255,255,255,.04);
+        background:var(--ghost);
         box-shadow:0 16px 36px rgba(0,0,0,.16);
     }
 
