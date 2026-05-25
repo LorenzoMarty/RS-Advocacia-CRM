@@ -75,3 +75,65 @@ button:disabled {
   display: grid;
   gap: 16px;
 }
+
+.main :where(
+  .metric,
+  .focus-card,
+  .item,
+  .shortcut,
+  .rail-stat,
+  .empty,
+  .detail-item,
+  .summary-card,
+  .link-card,
+  .note-box,
+  .side-item,
+  .day-card,
+  .calendar-event,
+  .client-row,
+  .process-row,
+  .user-row,
+  .cargo-row,
+  .event-item,
+  .related-item,
+  .permission-item,
+  .api-test-item,
+  .deadline-column,
+  .deadline-card,
+  .deadline-column-empty,
+  .petition-column,
+  .petition-card,
+  .petition-column-empty,
+  .meeting-option,
+  .audio-recorder,
+  .recording-result
+) {
+  border-radius: 18px;
+}
+
+.main :where(
+  .badge,
+  .status-badge,
+  .meta-chip,
+  .meta-pill,
+  .legend-chip,
+  .client-tier,
+  .focus-label,
+  .item-time,
+  .calendar-event-time
+) {
+  border-radius: 999px;
+}
+
+.main :where(
+  .shortcut-icon,
+  .icon-control,
+  .event-mark,
+  .process-mark,
+  .client-avatar,
+  .user-avatar,
+  .cargo-mark,
+  .deadline-mark
+) {
+  border-radius: 12px;
+}
