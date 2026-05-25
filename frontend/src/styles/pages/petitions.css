@@ -22,7 +22,7 @@
     padding:14px;
     border-radius:20px;
     border:1px solid var(--petition-accent-border);
-    background:linear-gradient(180deg, rgba(255,255,255,.052), rgba(255,255,255,.018));
+    background:linear-gradient(180deg, rgba(120,147,209,.16), rgba(7,22,45,.34));
     transition:transform .22s ease,border-color .22s ease,background .22s ease,box-shadow .22s ease;
 }
 .petition-column:nth-child(1){--petition-accent:#e8b25c;--petition-accent-soft:rgba(232,178,92,.15);--petition-accent-border:rgba(232,178,92,.28)}

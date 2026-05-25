@@ -40,3 +40,7 @@ html[data-theme="light"] .btn-danger{
     background:rgba(239,122,122,.1);
     border-color:rgba(143,41,41,.18);
 }
+
+html[data-theme="light"] .btn:not(.btn-secondary):not(.btn-danger):hover{
+    border-color:rgba(243,229,171,.34);
+}

@@ -88,6 +88,10 @@ html[data-theme="light"] .btn-danger{
     border-color:rgba(143,41,41,.18);
 }
 
+html[data-theme="light"] .btn:not(.btn-secondary):not(.btn-danger):hover{
+    border-color:rgba(243,229,171,.34);
+}
+
 .action-link-danger{
     color:var(--danger);
     border-color:rgba(239,122,122,.22);
@@ -219,7 +223,7 @@ html[data-theme="light"] .action-link-danger:hover{
 
 .topbar-pill{
     border-color:var(--line);
-    background:rgba(255,255,255,.035);
+    background:var(--ghost);
     color:var(--soft);
 }
 
