@@ -55,6 +55,20 @@
 
     html[data-sidebar-collapsed="true"] .sidebar-toggle-clean{
         right:-21px;
+        opacity:0;
+        pointer-events:none;
+        transform:translateY(-50%) scale(.92);
+    }
+
+    html[data-sidebar-collapsed="true"] .sidebar:hover .sidebar-toggle-clean,
+    html[data-sidebar-collapsed="true"] .sidebar:focus-within .sidebar-toggle-clean{
+        opacity:1;
+        pointer-events:auto;
+        transform:translateY(-50%) scale(1);
+    }
+
+    html[data-sidebar-collapsed="true"] .sidebar:hover .sidebar-toggle-clean:hover{
+        transform:translateY(-50%) scale(1.05);
     }
 
     html[data-sidebar-collapsed="true"] .sidebar{
