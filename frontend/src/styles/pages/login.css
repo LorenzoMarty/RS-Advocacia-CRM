@@ -33,7 +33,7 @@
     width:13rem;
     height:13rem;
     border-radius:999px;
-    background:radial-gradient(circle, rgba(var(--gold-rgb),.16), transparent 70%);
+    background:radial-gradient(circle, rgba(194,154,99,.16), transparent 70%);
     pointer-events:none;
 }
 
@@ -63,8 +63,8 @@
     font-size:.94rem;
     font-weight:800;
     letter-spacing:.12em;
-    background:linear-gradient(145deg, rgba(var(--gold-rgb),.18), rgba(var(--gold-rgb),.05));
-    border:1px solid rgba(var(--gold-rgb),.18);
+    background:linear-gradient(145deg, rgba(194,154,99,.18), rgba(194,154,99,.05));
+    border:1px solid rgba(194,154,99,.18);
 }
 
 .login-brand-copy{
@@ -174,13 +174,13 @@
 }
 
 .login-input-wrap input:hover{
-    border-color:rgba(var(--gold-rgb),.18);
+    border-color:rgba(194,154,99,.18);
 }
 
 .login-input-wrap input:focus{
-    border-color:rgba(var(--gold-rgb),.26);
+    border-color:rgba(194,154,99,.26);
     background:var(--ghost-strong);
-    box-shadow:0 0 0 4px rgba(var(--gold-rgb),.08);
+    box-shadow:0 0 0 4px rgba(194,154,99,.08);
 }
 
 .login-input-wrap input:-webkit-autofill,
@@ -273,8 +273,8 @@ html[data-theme="light"] .login-card{
 }
 
 html[data-theme="light"] .login-brand-mark{
-    background:linear-gradient(145deg, rgba(var(--gold-rgb),.16), rgba(var(--gold-rgb),.05));
-    border-color:rgba(var(--gold-rgb),.2);
+    background:linear-gradient(145deg, rgba(181,138,79,.16), rgba(181,138,79,.05));
+    border-color:rgba(181,138,79,.2);
 }
 
 html[data-theme="light"] .login-alert{

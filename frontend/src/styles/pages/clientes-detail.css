@@ -55,8 +55,8 @@
         font-size:1.05rem;
         font-weight:700;
         letter-spacing:.02em;
-        background:rgba(var(--gold-rgb),.08);
-        border:1px solid rgba(var(--gold-rgb),.18);
+        background:rgba(194,154,99,.08);
+        border:1px solid rgba(194,154,99,.18);
     }
 
     .client-page .client-name{
@@ -109,8 +109,8 @@
 
     .client-tier-mensalista{
         color:var(--gold-soft);
-        background:rgba(var(--gold-rgb),.1);
-        border-color:rgba(var(--gold-rgb),.2);
+        background:rgba(194,154,99,.1);
+        border-color:rgba(194,154,99,.2);
     }
 
     .hero-summary{
@@ -205,8 +205,8 @@
     .process-item:hover,
     .event-item:hover{
         transform:translateY(-1px);
-        border-color:rgba(var(--gold-rgb),.18);
-        background:rgba(var(--gold-rgb),.06);
+        border-color:rgba(194,154,99,.18);
+        background:rgba(194,154,99,.06);
     }
 
     .process-link{
@@ -280,8 +280,8 @@
 
     .status-badge.gold{
         color:var(--gold-soft);
-        background:rgba(var(--gold-rgb),.08);
-        border-color:rgba(var(--gold-rgb),.2);
+        background:rgba(194,154,99,.08);
+        border-color:rgba(194,154,99,.2);
     }
 
     .status-badge.success{
@@ -326,8 +326,8 @@
     }
 
     html[data-theme="light"] .status-badge.gold{
-        background:rgba(var(--gold-rgb),.1);
-        border-color:rgba(var(--gold-rgb),.2);
+        background:rgba(181,138,79,.1);
+        border-color:rgba(181,138,79,.2);
     }
 
     html[data-theme="light"] .client-tier-esporadico{
@@ -337,9 +337,9 @@
     }
 
     html[data-theme="light"] .client-tier-mensalista{
-        background:rgba(var(--gold-rgb),.12);
-        border-color:rgba(var(--gold-rgb),.22);
-        color:var(--gold-soft);
+        background:rgba(181,138,79,.12);
+        border-color:rgba(181,138,79,.22);
+        color:#8b6836;
     }
 
     @media (max-width:1180px){

@@ -27,8 +27,8 @@
     display:grid;
     place-items:center;
     border-radius:24px;
-    border:1px solid rgba(var(--gold-rgb),.2);
-    background:linear-gradient(145deg, rgba(var(--gold-rgb),.18), rgba(var(--gold-rgb),.045));
+    border:1px solid rgba(194,154,99,.2);
+    background:linear-gradient(145deg, rgba(194,154,99,.18), rgba(194,154,99,.045));
     color:var(--gold-soft);
     box-shadow:0 18px 34px rgba(0,0,0,.16);
     animation:loading-mark-pulse 1.8s ease-in-out infinite;
@@ -85,7 +85,7 @@
 
 @keyframes loading-mark-pulse{
     0%,100%{transform:translateY(0);box-shadow:0 18px 34px rgba(0,0,0,.16)}
-    50%{transform:translateY(-3px);box-shadow:0 22px 38px rgba(var(--gold-rgb),.13)}
+    50%{transform:translateY(-3px);box-shadow:0 22px 38px rgba(194,154,99,.13)}
 }
 
 @media (prefers-reduced-motion:reduce){

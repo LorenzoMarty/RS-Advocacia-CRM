@@ -5,22 +5,11 @@ body{
     margin:0;
     min-height:100vh;
     font-family:var(--sans);
-    zoom:var(--app-zoom);
     color:var(--text);
     background:var(--body-bg);
-    font-feature-settings:"cv02","cv03","cv04","cv11";
     -webkit-font-smoothing:antialiased;
     overflow-x:hidden;
     transition:background .22s ease,color .22s ease;
-}
-
-@supports not (zoom:1){
-    #root{
-        width:calc(100% / var(--app-zoom));
-        min-height:calc(100vh / var(--app-zoom));
-        transform:scale(var(--app-zoom));
-        transform-origin:top left;
-    }
 }
 
 a{color:inherit;text-decoration:none}
@@ -31,4 +20,4 @@ svg,img{display:block}
 ::selection{background:var(--selection)}
 ::-webkit-scrollbar{width:8px}
 ::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:999px}
-:focus-visible{outline:2px solid rgba(var(--gold-rgb),.62);outline-offset:3px}
+:focus-visible{outline:none}

@@ -46,9 +46,9 @@
 
 .page-search input::placeholder{color:var(--muted)}
 .page-search input:focus{
-    border-color:rgba(var(--gold-rgb),.24);
+    border-color:rgba(194,154,99,.24);
     background:var(--ghost-strong);
-    box-shadow:0 0 0 4px rgba(var(--gold-rgb),.08);
+    box-shadow:0 0 0 4px rgba(194,154,99,.08);
 }
 
 .rs-select{
@@ -84,7 +84,7 @@
 }
 
 .rs-select-trigger:hover{
-    border-color:rgba(var(--gold-rgb),.18);
+    border-color:rgba(194,154,99,.18);
     background:
         linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.022)),
         var(--select-field-hover);
@@ -100,7 +100,7 @@
         var(--select-field-hover);
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,.05),
-        0 0 0 4px rgba(var(--gold-rgb),.08),
+        0 0 0 4px rgba(194,154,99,.08),
         0 14px 28px rgba(0,0,0,.12);
 }
 
@@ -236,7 +236,7 @@
 }
 
 .rs-select-option:focus-visible{
-    box-shadow:0 0 0 3px rgba(var(--gold-rgb),.08);
+    box-shadow:0 0 0 3px rgba(194,154,99,.08);
 }
 
 .rs-select-option-copy{

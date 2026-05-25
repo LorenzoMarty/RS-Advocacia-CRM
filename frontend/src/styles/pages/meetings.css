@@ -8,12 +8,12 @@
 .meeting-form input,.meeting-form select,.meeting-form textarea{width:100%;border:1px solid var(--line);border-radius:13px;background:var(--ghost);color:var(--text);padding:12px 13px;font:inherit;outline:0}
 .meeting-form input,.meeting-form select{min-height:46px}
 .meeting-form textarea{resize:vertical;line-height:1.55}
-.meeting-form input:focus,.meeting-form select:focus,.meeting-form textarea:focus{border-color:rgba(var(--gold-rgb),.28);box-shadow:0 0 0 4px rgba(var(--gold-rgb),.08)}
+.meeting-form input:focus,.meeting-form select:focus,.meeting-form textarea:focus{border-color:rgba(194,154,99,.28);box-shadow:0 0 0 4px rgba(194,154,99,.08)}
 .meeting-picker{padding-bottom:20px;border-bottom:1px solid var(--line)}
 .meeting-options{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
 .meeting-option{display:grid;gap:6px;min-width:220px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--ghost);color:var(--text);text-align:left}
 .meeting-option span{color:var(--muted);font-size:.78rem}
-.meeting-option.active{border-color:rgba(var(--gold-rgb),.3);background:rgba(var(--gold-rgb),.1)}
+.meeting-option.active{border-color:rgba(194,154,99,.3);background:rgba(194,154,99,.1)}
 .meeting-detail{display:grid;gap:18px;padding-top:20px}
 .meeting-context h2{margin:0 0 6px;font-size:1.25rem}
 .meeting-context p{margin:0;color:var(--muted);font-size:.88rem}
