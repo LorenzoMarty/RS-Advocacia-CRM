@@ -79,6 +79,8 @@ function deadlineCreatePath(selectedDate) {
 function DeadlineCard({
   clients,
   deadline,
+  isDragging,
+  isMoving,
   onMove,
   onDragStart,
   onDragEnd,
@@ -94,7 +96,7 @@ function DeadlineCard({
 
   return (
     <article
-      className={`deadline-card${isOverdue ? ' is-overdue' : ''}`}
+      className={`deadline-card${isOverdue ? ' is-overdue' : ''}${isDragging ? ' is-dragging' : ''}${isMoving ? ' is-moving' : ''}`}
       draggable
       onDragStart={(event) => onDragStart(event, deadline.id)}
       onDragEnd={onDragEnd}
@@ -164,6 +166,8 @@ export function DeadlinesPage() {
   const [responsible, setResponsible] = useState('');
   const [processId, setProcessId] = useState('');
   const [draggingDeadlineId, setDraggingDeadlineId] = useState('');
+  const [dragOverColumnKey, setDragOverColumnKey] = useState('');
+  const [movingDeadlineId, setMovingDeadlineId] = useState('');
 
   const allDeadlines = events
     .filter(isDeadlineEvent)
@@ -223,17 +227,59 @@ export function DeadlinesPage() {
       return;
     }
 
-    await saveEvent({
-      ...deadline,
-      status: nextColumn.label,
-      completed: nextColumn.key === 'protocolado',
-    });
+    setMovingDeadlineId(deadline.id);
+
+    try {
+      await saveEvent({
+        ...deadline,
+        status: nextColumn.label,
+        completed: nextColumn.key === 'protocolado',
+      });
+    } finally {
+      window.setTimeout(() => {
+        setMovingDeadlineId('');
+      }, 220);
+    }
   }
 
   function handleDragStart(event, deadlineId) {
     setDraggingDeadlineId(deadlineId);
+    setDragOverColumnKey('');
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', deadlineId);
+
+    const dragImage = event.currentTarget.cloneNode(true);
+    dragImage.classList.add('deadline-card-drag-preview');
+    dragImage.style.width = `${event.currentTarget.offsetWidth}px`;
+    document.body.appendChild(dragImage);
+    event.dataTransfer.setDragImage(dragImage, 24, 24);
+    window.requestAnimationFrame(() => {
+      dragImage.remove();
+    });
+  }
+
+  function handleDragEnd() {
+    setDraggingDeadlineId('');
+    setDragOverColumnKey('');
+  }
+
+  function handleDragOver(event, columnKey) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+
+    if (dragOverColumnKey !== columnKey) {
+      setDragOverColumnKey(columnKey);
+    }
+  }
+
+  function handleDragLeave(event, columnKey) {
+    if (event.currentTarget.contains(event.relatedTarget)) {
+      return;
+    }
+
+    if (dragOverColumnKey === columnKey) {
+      setDragOverColumnKey('');
+    }
   }
 
   function handleDrop(event, columnKey) {
@@ -241,6 +287,7 @@ export function DeadlinesPage() {
     const deadlineId = event.dataTransfer.getData('text/plain') || draggingDeadlineId;
     const deadline = allDeadlines.find((item) => item.id === deadlineId);
     setDraggingDeadlineId('');
+    setDragOverColumnKey('');
 
     if (deadline) {
       moveDeadline(deadline, columnKey);
@@ -349,12 +396,14 @@ export function DeadlinesPage() {
         </section>
 
         {allDeadlines.length ? (
-          <section className="deadlines-board" aria-label="Kanban de prazos fatais">
+          <section className={`deadlines-board${draggingDeadlineId ? ' is-dragging' : ''}`} aria-label="Kanban de prazos fatais">
             {DEADLINE_STATUS_COLUMNS.map((column) => (
               <section
-                className="deadline-column"
+                className={`deadline-column${dragOverColumnKey === column.key ? ' is-drop-target' : ''}`}
                 key={column.key}
-                onDragOver={(event) => event.preventDefault()}
+                onDragEnter={(event) => handleDragOver(event, column.key)}
+                onDragLeave={(event) => handleDragLeave(event, column.key)}
+                onDragOver={(event) => handleDragOver(event, column.key)}
                 onDrop={(event) => handleDrop(event, column.key)}
               >
                 <div className="deadline-column-head">
@@ -368,13 +417,21 @@ export function DeadlinesPage() {
                 </div>
 
                 <div className="deadline-column-list">
+                  {draggingDeadlineId && dragOverColumnKey === column.key ? (
+                    <div className="deadline-drop-indicator">
+                      Solte aqui
+                    </div>
+                  ) : null}
+
                   {deadlinesByColumn[column.key].length ? (
                     deadlinesByColumn[column.key].map((deadline) => (
                       <DeadlineCard
                         key={deadline.id}
                         clients={clients}
                         deadline={deadline}
-                        onDragEnd={() => setDraggingDeadlineId('')}
+                        isDragging={draggingDeadlineId === deadline.id}
+                        isMoving={movingDeadlineId === deadline.id}
+                        onDragEnd={handleDragEnd}
                         onDragStart={handleDragStart}
                         onMove={moveDeadline}
                         processes={processes}
