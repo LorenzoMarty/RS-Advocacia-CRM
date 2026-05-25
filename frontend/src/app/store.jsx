@@ -201,6 +201,8 @@ function eventFromApi(event) {
     notes: event.observacoes || '',
     reminderAt: event.lembrete_em || '',
     completed: Boolean(event.concluido),
+    elapsedSeconds: Number(event.tempo_decorrido_segundos || 0),
+    timerStartedAt: event.timer_iniciado_em || '',
   };
 }
 
@@ -243,6 +245,13 @@ function eventToPayload(event) {
     local: event.location,
     observacoes: event.notes,
     concluido: Boolean(event.completed),
+  };
+}
+
+function eventTimerToPayload(timer) {
+  return {
+    tempo_decorrido_segundos: Math.max(0, Math.floor(Number(timer.elapsedSeconds) || 0)),
+    timer_iniciado_em: timer.timerStartedAt || null,
   };
 }
 
@@ -622,6 +631,41 @@ export function AppStateProvider({ children }) {
     }
   }
 
+  async function saveEventTimer(eventId, timer) {
+    const timerPayload = {
+      elapsedSeconds: Math.max(0, Math.floor(Number(timer.elapsedSeconds) || 0)),
+      timerStartedAt: timer.timerStartedAt || '',
+    };
+
+    if (isEventsApiEnabled) {
+      try {
+        const response = await api.updateEventTimer(eventId, eventTimerToPayload(timerPayload));
+        const savedEvent = eventFromResponse(response);
+        if (!savedEvent) {
+          throw new Error('Resposta invalida da API de eventos.');
+        }
+        setEvents((currentEvents) => replaceById(currentEvents, savedEvent));
+        return savedEvent;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    let savedEvent = null;
+    setEvents((currentEvents) =>
+      currentEvents.map((event) => {
+        if (event.id !== eventId) {
+          return event;
+        }
+
+        savedEvent = { ...event, ...timerPayload };
+        return savedEvent;
+      }),
+    );
+    return savedEvent;
+  }
+
   async function saveUser(payload) {
     if (!payload.id) {
       addFlash('Usuários são criados automaticamente pelo login com Google.', 'error');
@@ -805,6 +849,7 @@ export function AppStateProvider({ children }) {
     saveClient,
     saveProcess,
     saveEvent,
+    saveEventTimer,
     syncGoogleCalendarEvents,
     loadEvent,
     saveUser,

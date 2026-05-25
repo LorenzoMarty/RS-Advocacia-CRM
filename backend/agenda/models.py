@@ -19,6 +19,8 @@ class Evento(models.Model):
     observacoes = models.TextField(blank=True)
     lembrete_em = models.DateTimeField(blank=True, null=True)
     concluido = models.BooleanField(default=False)
+    tempo_decorrido_segundos = models.PositiveIntegerField(default=0)
+    timer_iniciado_em = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { DEADLINE_STATUS_COLUMNS } from '../data';
@@ -47,6 +47,33 @@ function shiftDate(value, days) {
 
 function deadlineMoment(deadline) {
   return deadline.end || deadline.start;
+}
+
+function elapsedSecondsForDeadline(deadline, currentTime = Date.now()) {
+  const elapsedSeconds = Math.max(0, Math.floor(Number(deadline?.elapsedSeconds) || 0));
+
+  if (!deadline?.timerStartedAt) {
+    return elapsedSeconds;
+  }
+
+  const startedAt = new Date(deadline.timerStartedAt).getTime();
+
+  if (Number.isNaN(startedAt)) {
+    return elapsedSeconds;
+  }
+
+  return elapsedSeconds + Math.max(0, Math.floor((currentTime - startedAt) / 1000));
+}
+
+function formatDuration(totalSeconds) {
+  const safeSeconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
+
+  return [hours, minutes, seconds]
+    .map((value) => String(value).padStart(2, '0'))
+    .join(':');
 }
 
 function deadlineDateToIso(value) {
@@ -140,7 +167,7 @@ function DeadlineCard({
       </div>
 
       <h3 className="deadline-card-title">
-        <Link to={`/agenda/${deadline.id}`}>
+        <Link to={`/prazos/${deadline.id}`}>
           {buildDeadlineTitle(process, deadline.responsible) || deadline.title}
         </Link>
       </h3>
@@ -507,6 +534,193 @@ export function DeadlinesPage() {
   );
 }
 
+export function DeadlineDetailPage() {
+  const params = useParams();
+  const {
+    clients,
+    events,
+    isEventsLoading,
+    processes,
+    saveEventTimer,
+  } = useAppState();
+  const deadline = events.find((event) => event.id === params.deadlineId) || null;
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const [isTimerSaving, setIsTimerSaving] = useState(false);
+
+  useEffect(() => {
+    if (!deadline?.timerStartedAt) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [deadline?.timerStartedAt]);
+
+  if (!deadline) {
+    if (isEventsLoading) {
+      return null;
+    }
+
+    return <NotFoundState title="Prazo nao encontrado." />;
+  }
+
+  if (!isDeadlineEvent(deadline)) {
+    return <NotFoundState title="Este registro nao e um prazo." />;
+  }
+
+  const process = processes.find((item) => item.id === deadline.processId) || null;
+  const client = clients.find((item) => item.id === deadline.clientId) || null;
+  const deadlineTitle = buildDeadlineTitle(process, deadline.responsible) || deadline.title;
+  const isTimerRunning = Boolean(deadline.timerStartedAt);
+  const elapsedSeconds = elapsedSecondsForDeadline(deadline, currentTime);
+
+  async function handleTimerStart() {
+    if (isTimerRunning || isTimerSaving) {
+      return;
+    }
+
+    setIsTimerSaving(true);
+    try {
+      await saveEventTimer(deadline.id, {
+        elapsedSeconds,
+        timerStartedAt: new Date().toISOString(),
+      });
+      setCurrentTime(Date.now());
+    } finally {
+      setIsTimerSaving(false);
+    }
+  }
+
+  async function handleTimerPause() {
+    if (!isTimerRunning || isTimerSaving) {
+      return;
+    }
+
+    setIsTimerSaving(true);
+    try {
+      await saveEventTimer(deadline.id, {
+        elapsedSeconds,
+        timerStartedAt: '',
+      });
+      setCurrentTime(Date.now());
+    } finally {
+      setIsTimerSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <PageChrome
+        label="Prazo"
+        actions={
+          <Link className="btn btn-secondary" to={`/prazos/${deadline.id}/editar`}>
+            Editar
+          </Link>
+        }
+      />
+
+      <div className="deadline-detail-page">
+        <section className="surface deadline-detail-hero">
+          <div className="crumbs">
+            <Link to={`/prazos?data=${encodeURIComponent(dateInputValue(deadlineMoment(deadline)))}`}>
+              Prazos
+            </Link>
+          </div>
+
+          <div className="deadline-detail-head">
+            <div>
+              <h1 className="intro-title">{deadlineTitle}</h1>
+              <p className="section-note">
+                Tarefa do dia {formatDate(deadlineMoment(deadline))}
+              </p>
+            </div>
+            <StatusBadge tone={getStatusTone(deadline.status, deadline.completed)}>
+              {deadline.status || DEADLINE_DEFAULT_STATUS}
+            </StatusBadge>
+          </div>
+        </section>
+
+        <div className="deadline-detail-layout">
+          <section className="surface deadline-timer-panel">
+            <div className="deadline-timer-copy">
+              <span>Tempo gasto</span>
+              <strong>{formatDuration(elapsedSeconds)}</strong>
+              <p>{isTimerRunning ? 'Timer em andamento.' : 'Timer pausado.'}</p>
+            </div>
+
+            <div className="deadline-timer-actions">
+              <button
+                className="btn"
+                type="button"
+                onClick={handleTimerStart}
+                disabled={isTimerRunning || isTimerSaving}
+              >
+                Iniciar
+              </button>
+              <button
+                className="btn btn-secondary"
+                type="button"
+                onClick={handleTimerPause}
+                disabled={!isTimerRunning || isTimerSaving}
+              >
+                Pausar
+              </button>
+            </div>
+          </section>
+
+          <section className="surface deadline-detail-panel">
+            <div className="section-head">
+              <div>
+                <h2 className="section-title">Descricao</h2>
+                <p className="section-note">Tarefa vinculada ao prazo</p>
+              </div>
+            </div>
+
+            <div className="deadline-description-box">
+              {deadline.description || 'Sem descricao cadastrada.'}
+            </div>
+          </section>
+
+          <section className="surface deadline-detail-panel">
+            <div className="section-head">
+              <div>
+                <h2 className="section-title">Dados</h2>
+                <p className="section-note">Vinculos do prazo</p>
+              </div>
+            </div>
+
+            <div className="detail-grid">
+              <article className="detail-item">
+                <span>Processo</span>
+                {process ? <Link to={`/processos/${process.id}`}>{process.number}</Link> : <strong>-</strong>}
+              </article>
+              <article className="detail-item">
+                <span>Responsavel</span>
+                <strong>{deadline.responsible || '-'}</strong>
+              </article>
+              <article className="detail-item">
+                <span>Cliente</span>
+                {client ? <Link to={`/clientes/${client.id}`}>{client.name}</Link> : <strong>-</strong>}
+              </article>
+              <article className="detail-item">
+                <span>Status</span>
+                <div className="detail-badge-wrap">
+                  <StatusBadge tone={getStatusTone(deadline.status, deadline.completed)}>
+                    {deadline.status || DEADLINE_DEFAULT_STATUS}
+                  </StatusBadge>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export function DeadlineFormPage() {
   const navigate = useNavigate();
   const params = useParams();
@@ -570,6 +784,8 @@ export function DeadlineFormPage() {
       description: form.description.trim(),
       notes: deadline?.notes || '',
       completed: deadline?.completed || false,
+      elapsedSeconds: deadline?.elapsedSeconds || 0,
+      timerStartedAt: deadline?.timerStartedAt || '',
       createdBy: deadline?.createdBy || form.responsible.trim() || 'Interno',
     });
 

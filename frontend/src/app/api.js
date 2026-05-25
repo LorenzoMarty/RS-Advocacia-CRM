@@ -160,6 +160,7 @@ export const api = {
   getEvent: (id) => eventRequest(`${id}/`),
   createEvent: (payload) => eventRequest('criar/', jsonOptions('POST', payload)),
   updateEvent: (id, payload) => eventRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
+  updateEventTimer: (id, payload) => eventRequest(`${id}/timer/`, jsonOptions('PATCH', payload)),
   deleteEvent: (id) => eventRequest(`${id}/excluir/`, { method: 'DELETE' }),
   listUsers: () => apiRequest('/api/usuarios/'),
   updateUser: (id, payload) => apiRequest(`/api/usuarios/${id}/editar/`, jsonOptions('PUT', payload)),

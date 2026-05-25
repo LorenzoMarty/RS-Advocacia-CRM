@@ -13,6 +13,7 @@ urlpatterns = [
         name="sincronizar_google_calendar",
     ),
     path("api/eventos/<int:evento_id>/", views.detalhes_evento, name="detalhes_evento"),
+    path("api/eventos/<int:evento_id>/timer/", views.atualizar_timer_evento, name="atualizar_timer_evento"),
     path("api/eventos/<int:evento_id>/editar/", views.editar_evento, name="editar_evento"),
     path("api/eventos/<int:evento_id>/excluir/", views.excluir_evento, name="excluir_evento"),
 ]

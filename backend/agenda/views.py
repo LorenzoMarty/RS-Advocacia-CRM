@@ -1,6 +1,7 @@
 import logging
 
 from django.shortcuts import get_object_or_404
+from django.utils.dateparse import parse_datetime
 
 from agenda.forms import EventoForm
 from agenda.models import Evento
@@ -82,6 +83,8 @@ def serialize_evento(evento):
         "observacoes": evento.observacoes,
         "lembrete_em": isoformat_ou_nulo(evento.lembrete_em),
         "concluido": evento.concluido,
+        "tempo_decorrido_segundos": evento.tempo_decorrido_segundos,
+        "timer_iniciado_em": isoformat_ou_nulo(evento.timer_iniciado_em),
     }
 
 
@@ -168,6 +171,62 @@ def editar_evento(request, evento_id):
         )
 
     return resposta_erro(erros_formulario(form), status=400)
+
+
+@app_permissions_required("agenda.change_evento")
+def atualizar_timer_evento(request, evento_id):
+    if request.method not in {"PUT", "PATCH"}:
+        return metodo_nao_permitido(["PUT", "PATCH"])
+
+    evento = get_object_or_404(Evento.objects.select_related("cliente", "processo"), pk=evento_id)
+
+    try:
+        payload = ler_corpo_json(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    update_fields = ["updated_at"]
+
+    if "tempo_decorrido_segundos" in payload:
+        try:
+            tempo_decorrido_segundos = int(payload.get("tempo_decorrido_segundos") or 0)
+        except (TypeError, ValueError):
+            return resposta_erro(
+                {"tempo_decorrido_segundos": ["Informe um numero inteiro."]},
+                status=400,
+            )
+
+        if tempo_decorrido_segundos < 0:
+            return resposta_erro(
+                {"tempo_decorrido_segundos": ["O tempo nao pode ser negativo."]},
+                status=400,
+            )
+
+        evento.tempo_decorrido_segundos = tempo_decorrido_segundos
+        update_fields.append("tempo_decorrido_segundos")
+
+    if "timer_iniciado_em" in payload:
+        timer_iniciado_em = payload.get("timer_iniciado_em")
+        if timer_iniciado_em in ("", None):
+            evento.timer_iniciado_em = None
+        elif isinstance(timer_iniciado_em, str):
+            parsed_timer = parse_datetime(timer_iniciado_em)
+            if parsed_timer is None:
+                return resposta_erro(
+                    {"timer_iniciado_em": ["Informe uma data/hora valida."]},
+                    status=400,
+                )
+            evento.timer_iniciado_em = parsed_timer
+        else:
+            return resposta_erro(
+                {"timer_iniciado_em": ["Informe uma data/hora valida."]},
+                status=400,
+            )
+        update_fields.append("timer_iniciado_em")
+
+    evento.save(update_fields=update_fields)
+    serialized = serialize_evento(evento)
+    return resposta_sucesso({"evento": serialized}, mensagem="Timer atualizado.")
 
 
 @app_permissions_required("agenda.delete_evento")
