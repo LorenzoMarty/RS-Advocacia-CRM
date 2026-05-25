@@ -278,7 +278,7 @@ html[data-theme="light"] .logout-link:hover{
 }
 
 .bottom-nav{
-    width:min(100%, 720px);
+    width:min(100%, 840px);
     margin:0 auto;
     padding:10px;
     border-radius:28px;
@@ -291,7 +291,7 @@ html[data-theme="light"] .logout-link:hover{
 
 .bottom-nav-track{
     display:grid;
-    grid-template-columns:repeat(5, minmax(0, 1fr));
+    grid-template-columns:repeat(auto-fit, minmax(58px, 1fr));
     gap:8px;
 }
 
