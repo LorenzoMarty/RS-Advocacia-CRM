@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from 'react';
 
-import { api, isApiEnabled, isEventsApiEnabled } from './api';
+import { api, isApiEnabled, isDeadlinesApiEnabled, isEventsApiEnabled, isPetitionsApiEnabled } from './api';
 
 const AppStateContext = createContext(null);
 
@@ -87,6 +87,22 @@ function eventsFromResponse(payload) {
 
 function eventFromResponse(payload) {
   return eventFromApi(itemFromResponse(payload, 'evento'));
+}
+
+function deadlinesFromResponse(payload) {
+  return collectionFromResponse(payload, 'prazos').map(deadlineFromApi).filter(Boolean);
+}
+
+function deadlineFromResponse(payload) {
+  return deadlineFromApi(itemFromResponse(payload, 'prazo'));
+}
+
+function petitionsFromResponse(payload) {
+  return collectionFromResponse(payload, 'peticoes').map(petitionFromApi).filter(Boolean);
+}
+
+function petitionFromResponse(payload) {
+  return petitionFromApi(itemFromResponse(payload, 'peticao'));
 }
 
 function permissionGroupsFromResponse(payload) {
@@ -201,8 +217,32 @@ function eventFromApi(event) {
     notes: event.observacoes || '',
     reminderAt: event.lembrete_em || '',
     completed: Boolean(event.concluido),
-    elapsedSeconds: Number(event.tempo_decorrido_segundos || 0),
-    timerStartedAt: event.timer_iniciado_em || '',
+  };
+}
+
+function deadlineFromApi(deadline) {
+  if (!deadline) {
+    return null;
+  }
+
+  return {
+    ...deadline,
+    id: String(deadline.id || deadline.pk),
+    title: deadline.titulo || '',
+    description: deadline.descricao || '',
+    date: deadline.data_limite || '',
+    status: deadline.status || '',
+    priority: deadline.prioridade || '',
+    clientId: String(deadline.cliente_id || ''),
+    clientName: deadline.cliente_nome || '',
+    processId: String(deadline.processo_id || ''),
+    processNumber: deadline.processo_numero || '',
+    responsible: deadline.responsavel || '',
+    createdBy: deadline.criado_por || '',
+    notes: deadline.observacoes || '',
+    completed: Boolean(deadline.concluido),
+    elapsedSeconds: Number(deadline.tempo_decorrido_segundos || 0),
+    timerStartedAt: deadline.timer_iniciado_em || '',
   };
 }
 
@@ -248,7 +288,55 @@ function eventToPayload(event) {
   };
 }
 
-function eventTimerToPayload(timer) {
+function petitionFromApi(petition) {
+  if (!petition) {
+    return null;
+  }
+
+  return {
+    ...petition,
+    id: String(petition.id || petition.pk),
+    clientId: String(petition.cliente_id || ''),
+    clientName: petition.cliente_nome || '',
+    adversary: petition.adverso || '',
+    responsible: petition.responsavel_acao || '',
+    driveLink: petition.link_drive || '',
+    pendingReason: petition.motivo_pendente || '',
+    area: petition.area_juridica || '',
+    status: petition.status || '',
+    createdBy: petition.criado_por || '',
+    createdAt: petition.criado_em || '',
+    updatedAt: petition.atualizado_em || '',
+  };
+}
+
+function deadlineToPayload(deadline) {
+  return {
+    titulo: deadline.title,
+    descricao: deadline.description,
+    data_limite: deadline.date,
+    processo: deadline.processId,
+    responsavel: deadline.responsible,
+    status: deadline.status,
+    prioridade: deadline.priority,
+    observacoes: deadline.notes,
+    concluido: Boolean(deadline.completed),
+  };
+}
+
+function petitionToPayload(petition) {
+  return {
+    cliente: petition.clientId,
+    adverso: petition.adversary,
+    responsavel_acao: petition.responsible,
+    link_drive: petition.driveLink,
+    motivo_pendente: petition.pendingReason,
+    area_juridica: petition.area,
+    status: petition.status,
+  };
+}
+
+function deadlineTimerToPayload(timer) {
   return {
     tempo_decorrido_segundos: Math.max(0, Math.floor(Number(timer.elapsedSeconds) || 0)),
     timer_iniciado_em: timer.timerStartedAt || null,
@@ -310,10 +398,14 @@ export function AppStateProvider({ children }) {
   const [clients, setClients] = useState([]);
   const [processes, setProcesses] = useState([]);
   const [events, setEvents] = useState([]);
+  const [deadlines, setDeadlines] = useState([]);
+  const [petitions, setPetitions] = useState([]);
   const [flashes, setFlashes] = useState([]);
-  const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled);
-  const [apiStatus, setApiStatus] = useState((isApiEnabled || isEventsApiEnabled) ? 'loading' : 'local');
+  const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled);
+  const [apiStatus, setApiStatus] = useState((isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled) ? 'loading' : 'local');
   const [isEventsLoading, setIsEventsLoading] = useState(isEventsApiEnabled);
+  const [isDeadlinesLoading, setIsDeadlinesLoading] = useState(isDeadlinesApiEnabled);
+  const [isPetitionsLoading, setIsPetitionsLoading] = useState(isPetitionsApiEnabled);
   const [currentSessionUser, setCurrentSessionUser] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem('rs-advocacia-user') || null);
 
@@ -349,6 +441,8 @@ export function AppStateProvider({ children }) {
     setClients(sortByName(clientsFromResponse(payload)));
     setProcesses(processesFromResponse(payload));
     setEvents(eventsFromResponse(payload));
+    setDeadlines(deadlinesFromResponse(payload));
+    setPetitions(petitionsFromResponse(payload));
   }
 
   async function loadRemoteCollections() {
@@ -366,6 +460,14 @@ export function AppStateProvider({ children }) {
       {
         load: api.listEvents,
         apply: (payload) => setEvents(eventsFromResponse(payload)),
+      },
+      {
+        load: api.listDeadlines,
+        apply: (payload) => setDeadlines(deadlinesFromResponse(payload)),
+      },
+      {
+        load: api.listPetitions,
+        apply: (payload) => setPetitions(petitionsFromResponse(payload)),
       },
       {
         load: api.listRoles,
@@ -436,6 +538,8 @@ export function AppStateProvider({ children }) {
         if (isMounted) {
           setIsLoading(false);
           setIsEventsLoading(false);
+          setIsDeadlinesLoading(false);
+          setIsPetitionsLoading(false);
         }
       }
     }
@@ -485,6 +589,8 @@ export function AppStateProvider({ children }) {
     setClients([]);
     setProcesses([]);
     setEvents([]);
+    setDeadlines([]);
+    setPetitions([]);
     addFlash('Sessão encerrada.', 'info');
   }
 
@@ -587,6 +693,72 @@ export function AppStateProvider({ children }) {
     return nextEvent;
   }
 
+  async function saveDeadline(payload) {
+    if (isDeadlinesApiEnabled) {
+      try {
+        const response = payload.id
+          ? await api.updateDeadline(payload.id, deadlineToPayload(payload))
+          : await api.createDeadline(deadlineToPayload(payload));
+        const savedDeadline = deadlineFromResponse(response);
+        if (!savedDeadline) {
+          throw new Error('Resposta invalida da API de prazos.');
+        }
+        setDeadlines((currentDeadlines) => replaceById(currentDeadlines, savedDeadline));
+        addFlash(payload.id ? 'Prazo atualizado.' : 'Prazo salvo.', 'success');
+        return savedDeadline;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    if (payload.id) {
+      setDeadlines((currentDeadlines) =>
+        currentDeadlines.map((deadline) => (deadline.id === payload.id ? { ...deadline, ...payload } : deadline)),
+      );
+      addFlash('Prazo atualizado.', 'success');
+      return payload;
+    }
+
+    const nextDeadline = { ...payload, id: nextId('deadline') };
+    setDeadlines((currentDeadlines) => [...currentDeadlines, nextDeadline]);
+    addFlash('Prazo salvo.', 'success');
+    return nextDeadline;
+  }
+
+  async function savePetition(payload) {
+    if (isPetitionsApiEnabled) {
+      try {
+        const response = payload.id
+          ? await api.updatePetition(payload.id, petitionToPayload(payload))
+          : await api.createPetition(petitionToPayload(payload));
+        const savedPetition = petitionFromResponse(response);
+        if (!savedPetition) {
+          throw new Error('Resposta invalida da API de peticoes.');
+        }
+        setPetitions((currentPetitions) => replaceById(currentPetitions, savedPetition));
+        addFlash(payload.id ? 'Peticao atualizada.' : 'Peticao salva.', 'success');
+        return savedPetition;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    if (payload.id) {
+      setPetitions((currentPetitions) =>
+        currentPetitions.map((petition) => (petition.id === payload.id ? { ...petition, ...payload } : petition)),
+      );
+      addFlash('Peticao atualizada.', 'success');
+      return payload;
+    }
+
+    const nextPetition = { ...payload, id: nextId('petition') };
+    setPetitions((currentPetitions) => [...currentPetitions, nextPetition]);
+    addFlash('Peticao salva.', 'success');
+    return nextPetition;
+  }
+
   async function loadEvent(eventId) {
     if (!isEventsApiEnabled) {
       return events.find((event) => event.id === eventId) || null;
@@ -606,6 +778,50 @@ export function AppStateProvider({ children }) {
       return null;
     } finally {
       setIsEventsLoading(false);
+    }
+  }
+
+  async function loadDeadline(deadlineId) {
+    if (!isDeadlinesApiEnabled) {
+      return deadlines.find((deadline) => deadline.id === deadlineId) || null;
+    }
+
+    setIsDeadlinesLoading(true);
+
+    try {
+      const response = await api.getDeadline(deadlineId);
+      const deadline = deadlineFromResponse(response);
+      if (deadline) {
+        setDeadlines((currentDeadlines) => replaceById(currentDeadlines, deadline));
+      }
+      return deadline;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    } finally {
+      setIsDeadlinesLoading(false);
+    }
+  }
+
+  async function loadPetition(petitionId) {
+    if (!isPetitionsApiEnabled) {
+      return petitions.find((petition) => petition.id === petitionId) || null;
+    }
+
+    setIsPetitionsLoading(true);
+
+    try {
+      const response = await api.getPetition(petitionId);
+      const petition = petitionFromResponse(response);
+      if (petition) {
+        setPetitions((currentPetitions) => replaceById(currentPetitions, petition));
+      }
+      return petition;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    } finally {
+      setIsPetitionsLoading(false);
     }
   }
 
@@ -631,39 +847,39 @@ export function AppStateProvider({ children }) {
     }
   }
 
-  async function saveEventTimer(eventId, timer) {
+  async function saveDeadlineTimer(deadlineId, timer) {
     const timerPayload = {
       elapsedSeconds: Math.max(0, Math.floor(Number(timer.elapsedSeconds) || 0)),
       timerStartedAt: timer.timerStartedAt || '',
     };
 
-    if (isEventsApiEnabled) {
+    if (isDeadlinesApiEnabled) {
       try {
-        const response = await api.updateEventTimer(eventId, eventTimerToPayload(timerPayload));
-        const savedEvent = eventFromResponse(response);
-        if (!savedEvent) {
-          throw new Error('Resposta invalida da API de eventos.');
+        const response = await api.updateDeadlineTimer(deadlineId, deadlineTimerToPayload(timerPayload));
+        const savedDeadline = deadlineFromResponse(response);
+        if (!savedDeadline) {
+          throw new Error('Resposta invalida da API de prazos.');
         }
-        setEvents((currentEvents) => replaceById(currentEvents, savedEvent));
-        return savedEvent;
+        setDeadlines((currentDeadlines) => replaceById(currentDeadlines, savedDeadline));
+        return savedDeadline;
       } catch (error) {
         addFlash(errorMessage(error), 'error');
         return null;
       }
     }
 
-    let savedEvent = null;
-    setEvents((currentEvents) =>
-      currentEvents.map((event) => {
-        if (event.id !== eventId) {
-          return event;
+    let savedDeadline = null;
+    setDeadlines((currentDeadlines) =>
+      currentDeadlines.map((deadline) => {
+        if (deadline.id !== deadlineId) {
+          return deadline;
         }
 
-        savedEvent = { ...event, ...timerPayload };
-        return savedEvent;
+        savedDeadline = { ...deadline, ...timerPayload };
+        return savedDeadline;
       }),
     );
-    return savedEvent;
+    return savedDeadline;
   }
 
   async function saveUser(payload) {
@@ -758,6 +974,10 @@ export function AppStateProvider({ children }) {
     setEvents((currentEvents) =>
       currentEvents.filter((event) => event.clientId !== clientId && !relatedProcessIds.includes(event.processId)),
     );
+    setDeadlines((currentDeadlines) =>
+      currentDeadlines.filter((deadline) => deadline.clientId !== clientId && !relatedProcessIds.includes(deadline.processId)),
+    );
+    setPetitions((currentPetitions) => currentPetitions.filter((petition) => petition.clientId !== clientId));
     addFlash('Cliente excluído.', 'success');
     return true;
   }
@@ -774,6 +994,7 @@ export function AppStateProvider({ children }) {
 
     setProcesses((currentProcesses) => currentProcesses.filter((process) => process.id !== processId));
     setEvents((currentEvents) => currentEvents.filter((event) => event.processId !== processId));
+    setDeadlines((currentDeadlines) => currentDeadlines.filter((deadline) => deadline.processId !== processId));
     addFlash('Processo excluído.', 'success');
     return true;
   }
@@ -790,6 +1011,36 @@ export function AppStateProvider({ children }) {
 
     setEvents((currentEvents) => currentEvents.filter((event) => event.id !== eventId));
     addFlash('Compromisso excluído.', 'success');
+    return true;
+  }
+
+  async function deleteDeadline(deadlineId) {
+    if (isDeadlinesApiEnabled) {
+      try {
+        await api.deleteDeadline(deadlineId);
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return false;
+      }
+    }
+
+    setDeadlines((currentDeadlines) => currentDeadlines.filter((deadline) => deadline.id !== deadlineId));
+    addFlash('Prazo excluido.', 'success');
+    return true;
+  }
+
+  async function deletePetition(petitionId) {
+    if (isPetitionsApiEnabled) {
+      try {
+        await api.deletePetition(petitionId);
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return false;
+      }
+    }
+
+    setPetitions((currentPetitions) => currentPetitions.filter((petition) => petition.id !== petitionId));
+    addFlash('Peticao excluida.', 'success');
     return true;
   }
 
@@ -836,12 +1087,16 @@ export function AppStateProvider({ children }) {
     clients,
     processes,
     events,
+    deadlines,
+    petitions,
     flashes,
     currentUser,
     currentRole,
     isApiEnabled,
     isLoading,
     isEventsLoading,
+    isDeadlinesLoading,
+    isPetitionsLoading,
     apiStatus,
     removeFlash,
     addFlash,
@@ -849,14 +1104,20 @@ export function AppStateProvider({ children }) {
     saveClient,
     saveProcess,
     saveEvent,
-    saveEventTimer,
+    saveDeadline,
+    savePetition,
+    saveDeadlineTimer,
     syncGoogleCalendarEvents,
     loadEvent,
+    loadDeadline,
+    loadPetition,
     saveUser,
     saveRole,
     deleteClient,
     deleteProcess,
     deleteEvent,
+    deleteDeadline,
+    deletePetition,
     deleteUser,
     deleteRole,
   };

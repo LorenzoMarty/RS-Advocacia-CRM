@@ -8,12 +8,9 @@ from .models import Evento
 
 STATUS_CHOICES = (
     "Agendado",
-    "A fazer",
     "Confirmado",
     "Aguardando",
     "Em andamento",
-    "Protocolar",
-    "Protocolado",
     "Concluído",
     "Adiado",
     "Cancelado",
@@ -103,8 +100,11 @@ class EventoForm(forms.ModelForm):
         current_responsavel = getattr(instance, "responsavel", "")
         current_status = getattr(instance, "status", "")
         usuarios = Usuario.objects.values_list("nome", flat=True)
-        existing_responsaveis = Evento.objects.values_list("responsavel", flat=True)
-        existing_statuses = Evento.objects.values_list("status", flat=True)
+        existing_events = Evento.objects.exclude(tipo_evento__icontains="prazo")
+        existing_responsaveis = existing_events.values_list("responsavel", flat=True)
+        existing_statuses = existing_events.exclude(
+            status__in=("A fazer", "Protocolar", "Protocolado")
+        ).values_list("status", flat=True)
 
         cliente_field = self.fields.get("cliente")
         processo_field = self.fields.get("processo")

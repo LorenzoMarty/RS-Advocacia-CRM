@@ -84,6 +84,22 @@ class AgendaIntegrationViewsTests(TestCase):
         )
         sync_local_event.assert_called_once()
 
+    @patch("agenda.views.sync_local_event")
+    def test_criar_prazo_como_evento_e_bloqueado(self, sync_local_event):
+        payload = self.payload()
+        payload["titulo"] = "Prazo"
+        payload["tipo_evento"] = "Prazo"
+
+        response = self.client.post(
+            reverse("criar_evento"),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Evento.objects.filter(tipo_evento__iexact="Prazo").exists())
+        sync_local_event.assert_not_called()
+
     @patch("agenda.views.delete_remote_event", side_effect=RuntimeError("google down"))
     def test_exclusao_remota_falha_sem_apagar_evento_local(self, delete_remote_event):
         evento = Evento.objects.create(

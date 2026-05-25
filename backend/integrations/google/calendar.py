@@ -323,7 +323,8 @@ def _matching_local_event(calendar: GoogleCalendar, item: dict) -> Evento | None
     if fields is None:
         return None
     return (
-        Evento.objects.filter(
+        Evento.objects.exclude(tipo_evento__icontains="prazo")
+        .filter(
             titulo=fields["titulo"],
             descricao=fields["descricao"],
             local=fields["local"],
@@ -534,8 +535,10 @@ def sync_calendar(usuario, calendar: GoogleCalendar, service) -> dict:
             summary["importados"] += 1
 
     threshold = timezone.now() - timedelta(days=getattr(settings, "GOOGLE_SYNC_PAST_DAYS", 180))
-    local_events = Evento.objects.filter(data_inicio__gte=threshold).exclude(
-        status__iexact="Cancelado"
+    local_events = (
+        Evento.objects.exclude(tipo_evento__icontains="prazo")
+        .filter(data_inicio__gte=threshold)
+        .exclude(status__iexact="Cancelado")
     )
     for evento in local_events:
         link = GoogleEventLink.objects.filter(calendar=calendar, evento=evento).first()

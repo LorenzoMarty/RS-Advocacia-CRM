@@ -4,6 +4,8 @@ const apiBaseUrl = (rawApiBaseUrl || DEFAULT_API_BASE_URL).replace(/\/+$/, '');
 
 export const isApiEnabled = Boolean(apiBaseUrl);
 export const isEventsApiEnabled = isApiEnabled;
+export const isDeadlinesApiEnabled = isApiEnabled;
+export const isPetitionsApiEnabled = isApiEnabled;
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE']);
 
@@ -135,6 +137,20 @@ function eventRequest(path = '', options = {}) {
   });
 }
 
+function deadlineRequest(path = '', options = {}) {
+  return apiRequest(`/api/prazos/${path}`, options, {
+    baseUrl: apiBaseUrl,
+    requireConfiguredApi: false,
+  });
+}
+
+function petitionRequest(path = '', options = {}) {
+  return apiRequest(`/api/peticoes/${path}`, options, {
+    baseUrl: apiBaseUrl,
+    requireConfiguredApi: false,
+  });
+}
+
 export const api = {
   carregarInicializacao: () => apiRequest('/api/inicializacao/'),
   obterUsuarioAtual: () => apiRequest('/api/usuarios/atual/'),
@@ -160,8 +176,18 @@ export const api = {
   getEvent: (id) => eventRequest(`${id}/`),
   createEvent: (payload) => eventRequest('criar/', jsonOptions('POST', payload)),
   updateEvent: (id, payload) => eventRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
-  updateEventTimer: (id, payload) => eventRequest(`${id}/timer/`, jsonOptions('PATCH', payload)),
   deleteEvent: (id) => eventRequest(`${id}/excluir/`, { method: 'DELETE' }),
+  listDeadlines: () => deadlineRequest(),
+  getDeadline: (id) => deadlineRequest(`${id}/`),
+  createDeadline: (payload) => deadlineRequest('criar/', jsonOptions('POST', payload)),
+  updateDeadline: (id, payload) => deadlineRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
+  updateDeadlineTimer: (id, payload) => deadlineRequest(`${id}/timer/`, jsonOptions('PATCH', payload)),
+  deleteDeadline: (id) => deadlineRequest(`${id}/excluir/`, { method: 'DELETE' }),
+  listPetitions: () => petitionRequest(),
+  getPetition: (id) => petitionRequest(`${id}/`),
+  createPetition: (payload) => petitionRequest('criar/', jsonOptions('POST', payload)),
+  updatePetition: (id, payload) => petitionRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
+  deletePetition: (id) => petitionRequest(`${id}/excluir/`, { method: 'DELETE' }),
   listUsers: () => apiRequest('/api/usuarios/'),
   updateUser: (id, payload) => apiRequest(`/api/usuarios/${id}/editar/`, jsonOptions('PUT', payload)),
   deleteUser: (id) => apiRequest(`/api/usuarios/${id}/excluir/`, { method: 'DELETE' }),

@@ -207,7 +207,7 @@ export function UserFormPage() {
 
 export function UserDetailPage() {
   const params = useParams();
-  const { events, processes, roles, users } = useAppState();
+  const { deadlines, events, processes, roles, users } = useAppState();
   const user = users.find((item) => item.id === params.userId) || null;
 
   if (!user) {
@@ -216,6 +216,7 @@ export function UserDetailPage() {
 
   const relatedProcesses = processes.filter((process) => normalizeText(process.owner) === normalizeText(user.name));
   const relatedEvents = events.filter((event) => normalizeText(event.responsible) === normalizeText(user.name));
+  const relatedDeadlines = deadlines.filter((deadline) => normalizeText(deadline.responsible) === normalizeText(user.name));
   const linkedRole = roles.find((role) => role.id === user.roleId) || null;
 
   return (
@@ -248,8 +249,12 @@ export function UserDetailPage() {
                   <strong>{relatedProcesses.length}</strong>
                 </article>
                 <article className="summary-card">
-                  <span>Agenda</span>
+                  <span>Compromissos</span>
                   <strong>{relatedEvents.length}</strong>
+                </article>
+                <article className="summary-card">
+                  <span>Prazos</span>
+                  <strong>{relatedDeadlines.length}</strong>
                 </article>
               </aside>
             </div>
@@ -325,6 +330,29 @@ export function UserDetailPage() {
                       <div className="related-meta">
                         {event.type ? <span className="meta-chip">{event.type}</span> : null}
                         {event.status ? <span className="meta-chip">{event.status}</span> : null}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {relatedDeadlines.length ? (
+              <section className="surface section-card">
+                <div className="section-head">
+                  <div>
+                    <h2 className="section-title">Prazos</h2>
+                    <p className="section-note">{formatCount(relatedDeadlines.length, 'prazo', 'prazos')}</p>
+                  </div>
+                </div>
+
+                <div className="related-list">
+                  {relatedDeadlines.map((deadline) => (
+                    <article key={deadline.id} className="related-item">
+                      <h3 className="related-title">{deadline.title}</h3>
+                      <p className="related-copy">{new Date(`${deadline.date}T12:00:00`).toLocaleDateString('pt-BR')}</p>
+                      <div className="related-meta">
+                        {deadline.status ? <span className="meta-chip">{deadline.status}</span> : null}
                       </div>
                     </article>
                   ))}

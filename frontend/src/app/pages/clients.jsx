@@ -309,7 +309,7 @@ export function ClientFormPage() {
 
 export function ClientDetailPage() {
   const params = useParams();
-  const { clients, events, processes } = useAppState();
+  const { clients, deadlines, events, processes } = useAppState();
   const client = clients.find((item) => item.id === params.clientId) || null;
 
   if (!client) {
@@ -318,6 +318,7 @@ export function ClientDetailPage() {
 
   const relatedProcesses = processes.filter((process) => process.clientId === client.id);
   const relatedEvents = events.filter((event) => event.clientId === client.id);
+  const relatedDeadlines = deadlines.filter((deadline) => deadline.clientId === client.id);
 
   return (
     <>
@@ -377,6 +378,40 @@ export function ClientDetailPage() {
                   <span>Observações</span>
                   <strong>{client.notes ? 'Disponíveis' : '-'}</strong>
                 </article>
+              </div>
+            </section>
+
+            <section className="surface section-card">
+              <div className="section-head">
+                <div>
+                  <h2 className="section-title">Prazos</h2>
+                  <p className="section-note">{formatCount(relatedDeadlines.length, 'prazo', 'prazos')}</p>
+                </div>
+              </div>
+
+              <div className="list">
+                {relatedDeadlines.length ? relatedDeadlines.map((deadline) => (
+                  <article key={deadline.id} className="event-item">
+                    <div className="list-top">
+                      <div>
+                        <h3 className="list-title">{deadline.title}</h3>
+                        <p className="list-subtitle">{formatDate(new Date(`${deadline.date}T12:00:00`))}</p>
+                      </div>
+                      <StatusBadge tone={getStatusTone(deadline.status, deadline.completed)}>{deadline.status}</StatusBadge>
+                    </div>
+
+                    <div className="list-meta">
+                      {deadline.processId ? <span className="meta-chip">{processes.find((process) => process.id === deadline.processId)?.number}</span> : null}
+                      {deadline.responsible ? <span className="meta-chip">{deadline.responsible}</span> : null}
+                    </div>
+                  </article>
+                )) : (
+                  <EmptyState
+                    title="Sem prazos."
+                    copy="Cadastre um prazo separado dos compromissos."
+                    actions={<Link className="btn" to="/prazos/novo">Novo prazo</Link>}
+                  />
+                )}
               </div>
             </section>
 

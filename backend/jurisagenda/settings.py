@@ -152,6 +152,8 @@ INSTALLED_APPS = [
     "clientes",
     "processos",
     "agenda",
+    "prazos",
+    "peticoes",
     "core",
     "usuarios",
     "integrations",

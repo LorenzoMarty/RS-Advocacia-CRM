@@ -1,7 +1,6 @@
 import logging
 
 from django.shortcuts import get_object_or_404
-from django.utils.dateparse import parse_datetime
 
 from agenda.forms import EventoForm
 from agenda.models import Evento
@@ -21,6 +20,10 @@ from integrations.google.oauth import current_usuario
 
 EVENTO_DATETIME_FIELDS = ("data_inicio", "data_fim", "lembrete_em")
 logger = logging.getLogger(__name__)
+
+
+def _eventos_compromisso_queryset():
+    return Evento.objects.exclude(tipo_evento__icontains="prazo")
 
 
 def _resolver_criador_evento(request):
@@ -83,8 +86,6 @@ def serialize_evento(evento):
         "observacoes": evento.observacoes,
         "lembrete_em": isoformat_ou_nulo(evento.lembrete_em),
         "concluido": evento.concluido,
-        "tempo_decorrido_segundos": evento.tempo_decorrido_segundos,
-        "timer_iniciado_em": isoformat_ou_nulo(evento.timer_iniciado_em),
     }
 
 
@@ -98,7 +99,7 @@ def listar_eventos(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    eventos = Evento.objects.select_related("cliente", "processo").all()
+    eventos = _eventos_compromisso_queryset().select_related("cliente", "processo").all()
     serialized = [serialize_evento(evento) for evento in eventos]
     return resposta_sucesso({"eventos": serialized})
 
@@ -139,7 +140,7 @@ def detalhes_evento(request, evento_id):
         return metodo_nao_permitido(["GET"])
 
     evento = get_object_or_404(
-        Evento.objects.select_related("cliente", "processo"), pk=evento_id
+        _eventos_compromisso_queryset().select_related("cliente", "processo"), pk=evento_id
     )
     serialized = serialize_evento(evento)
     return resposta_sucesso({"evento": serialized})
@@ -150,7 +151,7 @@ def editar_evento(request, evento_id):
     if request.method not in {"PUT", "PATCH"}:
         return metodo_nao_permitido(["PUT", "PATCH"])
 
-    evento = get_object_or_404(Evento, pk=evento_id)
+    evento = get_object_or_404(_eventos_compromisso_queryset(), pk=evento_id)
 
     try:
         payload = _evento_api_payload(request)
@@ -173,68 +174,12 @@ def editar_evento(request, evento_id):
     return resposta_erro(erros_formulario(form), status=400)
 
 
-@app_permissions_required("agenda.change_evento")
-def atualizar_timer_evento(request, evento_id):
-    if request.method not in {"PUT", "PATCH"}:
-        return metodo_nao_permitido(["PUT", "PATCH"])
-
-    evento = get_object_or_404(Evento.objects.select_related("cliente", "processo"), pk=evento_id)
-
-    try:
-        payload = ler_corpo_json(request)
-    except ValueError as exc:
-        return resposta_erro(str(exc), status=400)
-
-    update_fields = ["updated_at"]
-
-    if "tempo_decorrido_segundos" in payload:
-        try:
-            tempo_decorrido_segundos = int(payload.get("tempo_decorrido_segundos") or 0)
-        except (TypeError, ValueError):
-            return resposta_erro(
-                {"tempo_decorrido_segundos": ["Informe um numero inteiro."]},
-                status=400,
-            )
-
-        if tempo_decorrido_segundos < 0:
-            return resposta_erro(
-                {"tempo_decorrido_segundos": ["O tempo nao pode ser negativo."]},
-                status=400,
-            )
-
-        evento.tempo_decorrido_segundos = tempo_decorrido_segundos
-        update_fields.append("tempo_decorrido_segundos")
-
-    if "timer_iniciado_em" in payload:
-        timer_iniciado_em = payload.get("timer_iniciado_em")
-        if timer_iniciado_em in ("", None):
-            evento.timer_iniciado_em = None
-        elif isinstance(timer_iniciado_em, str):
-            parsed_timer = parse_datetime(timer_iniciado_em)
-            if parsed_timer is None:
-                return resposta_erro(
-                    {"timer_iniciado_em": ["Informe uma data/hora valida."]},
-                    status=400,
-                )
-            evento.timer_iniciado_em = parsed_timer
-        else:
-            return resposta_erro(
-                {"timer_iniciado_em": ["Informe uma data/hora valida."]},
-                status=400,
-            )
-        update_fields.append("timer_iniciado_em")
-
-    evento.save(update_fields=update_fields)
-    serialized = serialize_evento(evento)
-    return resposta_sucesso({"evento": serialized}, mensagem="Timer atualizado.")
-
-
 @app_permissions_required("agenda.delete_evento")
 def excluir_evento(request, evento_id):
     if request.method != "DELETE":
         return metodo_nao_permitido(["DELETE"])
 
-    evento = get_object_or_404(Evento, pk=evento_id)
+    evento = get_object_or_404(_eventos_compromisso_queryset(), pk=evento_id)
 
     try:
         delete_remote_event(_usuario_google_atual(request), evento)
@@ -258,7 +203,7 @@ def eventos_calendario(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    eventos = Evento.objects.all()
+    eventos = _eventos_compromisso_queryset().all()
     serialized = [
         {
             "titulo": evento.titulo,
@@ -287,7 +232,7 @@ def sincronizar_google_calendar(request):
             status=502,
         )
 
-    eventos = Evento.objects.select_related("cliente", "processo").all()
+    eventos = _eventos_compromisso_queryset().select_related("cliente", "processo").all()
     serialized = [serialize_evento(evento) for evento in eventos]
     return resposta_sucesso(
         {
