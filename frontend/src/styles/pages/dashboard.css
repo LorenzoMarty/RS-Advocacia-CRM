@@ -1,7 +1,7 @@
 .hero{
         padding:30px;
         background:
-            radial-gradient(circle at top right, rgba(194,154,99,.12), transparent 28%),
+            radial-gradient(circle at top right, rgba(var(--gold-rgb),.12), transparent 28%),
             linear-gradient(135deg, rgba(14,17,23,.96), rgba(11,13,18,.88));
     }
 
@@ -91,8 +91,8 @@
         min-height:30px;
         padding:0 11px;
         border-radius:999px;
-        border:1px solid rgba(194,154,99,.18);
-        background:rgba(194,154,99,.08);
+        border:1px solid rgba(var(--gold-rgb),.18);
+        background:rgba(var(--gold-rgb),.08);
         color:var(--gold-soft);
         font-size:.68rem;
         font-weight:700;
@@ -186,15 +186,15 @@
     .shortcut:hover,
     .rail-stat:hover{
         transform:translateY(-1px);
-        border-color:rgba(194,154,99,.18);
-        background:rgba(194,154,99,.06);
+        border-color:rgba(var(--gold-rgb),.18);
+        background:rgba(var(--gold-rgb),.06);
     }
 
     .item-link:focus-visible{
         outline:none;
-        border-color:rgba(194,154,99,.28);
-        background:rgba(194,154,99,.08);
-        box-shadow:0 0 0 3px rgba(194,154,99,.12);
+        border-color:rgba(var(--gold-rgb),.28);
+        background:rgba(var(--gold-rgb),.08);
+        box-shadow:0 0 0 3px rgba(var(--gold-rgb),.12);
     }
 
     .item-time{
@@ -206,8 +206,8 @@
         font-size:.92rem;
         font-weight:700;
         letter-spacing:-.03em;
-        background:rgba(194,154,99,.08);
-        border:1px solid rgba(194,154,99,.18);
+        background:rgba(var(--gold-rgb),.08);
+        border:1px solid rgba(var(--gold-rgb),.18);
     }
 
     .item-title{
@@ -279,8 +279,8 @@
         margin-top:0;
         border-radius:13px;
         color:var(--gold-soft);
-        background:rgba(194,154,99,.08);
-        border:1px solid rgba(194,154,99,.18);
+        background:rgba(var(--gold-rgb),.08);
+        border:1px solid rgba(var(--gold-rgb),.18);
     }
 
     .shortcut-icon svg{
@@ -299,7 +299,7 @@
 
     html[data-theme="light"] .hero{
         background:
-            radial-gradient(circle at top right, rgba(181,138,79,.1), transparent 30%),
+            radial-gradient(circle at top right, rgba(var(--gold-rgb),.1), transparent 30%),
             linear-gradient(135deg, rgba(255,255,255,.9), rgba(247,242,235,.86));
     }
 
@@ -318,8 +318,8 @@
     html[data-theme="light"] .item-time,
     html[data-theme="light"] .shortcut-icon,
     html[data-theme="light"] .focus-label{
-        background:rgba(181,138,79,.1);
-        border-color:rgba(181,138,79,.2);
+        background:rgba(var(--gold-rgb),.1);
+        border-color:rgba(var(--gold-rgb),.2);
     }
 
     @media (max-width:1180px){

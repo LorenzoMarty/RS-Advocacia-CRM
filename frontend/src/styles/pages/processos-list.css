@@ -48,8 +48,8 @@
 
     .process-row:hover{
         transform:translateY(-1px);
-        border-color:rgba(194,154,99,.18);
-        background:rgba(194,154,99,.06);
+        border-color:rgba(var(--gold-rgb),.18);
+        background:rgba(var(--gold-rgb),.06);
     }
 
     .process-main,
@@ -130,8 +130,8 @@
 
     .status-badge.gold{
         color:var(--gold-soft);
-        background:rgba(194,154,99,.08);
-        border-color:rgba(194,154,99,.2);
+        background:rgba(var(--gold-rgb),.08);
+        border-color:rgba(var(--gold-rgb),.2);
     }
 
     .status-badge.success{
@@ -170,8 +170,8 @@
 
     .action-link:hover{
         transform:translateY(-1px);
-        border-color:rgba(194,154,99,.2);
-        background:rgba(194,154,99,.08);
+        border-color:rgba(var(--gold-rgb),.2);
+        background:rgba(var(--gold-rgb),.08);
     }
 
     .action-link-danger{
@@ -217,8 +217,8 @@
     }
 
     html[data-theme="light"] .status-badge.gold{
-        background:rgba(181,138,79,.1);
-        border-color:rgba(181,138,79,.2);
+        background:rgba(var(--gold-rgb),.1);
+        border-color:rgba(var(--gold-rgb),.2);
     }
 
     @media (max-width:1180px){

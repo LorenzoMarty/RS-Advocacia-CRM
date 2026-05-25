@@ -1,0 +1,59 @@
+.flash-stack{
+    display:grid;
+    gap:10px;
+    margin-bottom:18px;
+}
+
+.flash{
+    padding:14px 16px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:var(--ghost);
+    color:var(--text);
+    line-height:1.6;
+}
+
+.flash-success{
+    border-color:rgba(112,205,155,.22);
+    background:rgba(112,205,155,.1);
+}
+
+.flash-error{
+    border-color:rgba(239,122,122,.22);
+    background:rgba(239,122,122,.1);
+}
+
+.flash-warning{
+    border-color:rgba(228,183,105,.22);
+    background:rgba(228,183,105,.1);
+}
+
+.flash-info{
+    border-color:rgba(126,165,239,.22);
+    background:rgba(126,165,239,.1);
+}
+
+html[data-theme="light"] .flash{
+    background:rgba(24,30,42,.04);
+    border-color:rgba(30,34,45,.1);
+}
+
+html[data-theme="light"] .flash-success{
+    background:rgba(112,205,155,.12);
+    border-color:rgba(112,205,155,.22);
+}
+
+html[data-theme="light"] .flash-error{
+    background:rgba(239,122,122,.12);
+    border-color:rgba(239,122,122,.22);
+}
+
+html[data-theme="light"] .flash-warning{
+    background:rgba(228,183,105,.12);
+    border-color:rgba(228,183,105,.22);
+}
+
+html[data-theme="light"] .flash-info{
+    background:rgba(126,165,239,.12);
+    border-color:rgba(126,165,239,.22);
+}

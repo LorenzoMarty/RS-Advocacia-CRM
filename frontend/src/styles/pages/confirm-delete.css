@@ -49,8 +49,8 @@
     }
 
     .confirm-alert.is-blocked{
-        border-color:rgba(194,154,99,.22);
-        background:rgba(194,154,99,.08);
+        border-color:rgba(var(--gold-rgb),.22);
+        background:rgba(var(--gold-rgb),.08);
     }
 
     .confirm-meta{
