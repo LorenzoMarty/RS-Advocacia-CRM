@@ -73,9 +73,9 @@
 }
 
 .field input:focus{
-    border-color:rgba(var(--gold-rgb),.24);
+    border-color:rgba(194,154,99,.24);
     background:var(--ghost-strong);
-    box-shadow:0 0 0 4px rgba(var(--gold-rgb),.08);
+    box-shadow:0 0 0 4px rgba(194,154,99,.08);
 }
 
 .field.has-error input,
@@ -217,13 +217,13 @@
 
 .permission-action-option:hover{
     transform:translateY(-1px);
-    border-color:rgba(var(--gold-rgb),.18);
-    background:rgba(var(--gold-rgb),.06);
+    border-color:rgba(194,154,99,.18);
+    background:rgba(194,154,99,.06);
 }
 
 .permission-action-option:has(input:checked){
-    border-color:rgba(var(--gold-rgb),.34);
-    background:rgba(var(--gold-rgb),.12);
+    border-color:rgba(194,154,99,.34);
+    background:rgba(194,154,99,.12);
 }
 
 .permission-action-option input{

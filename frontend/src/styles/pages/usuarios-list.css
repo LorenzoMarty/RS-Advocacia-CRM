@@ -48,8 +48,8 @@
 
     .user-row:hover{
         transform:translateY(-1px);
-        border-color:rgba(var(--gold-rgb),.18);
-        background:rgba(var(--gold-rgb),.06);
+        border-color:rgba(194,154,99,.18);
+        background:rgba(194,154,99,.06);
     }
 
     .user-avatar{
@@ -57,8 +57,8 @@
         height:44px;
         overflow:hidden;
         border-radius:16px;
-        border:1px solid rgba(var(--gold-rgb),.18);
-        background:rgba(var(--gold-rgb),.08);
+        border:1px solid rgba(194,154,99,.18);
+        background:rgba(194,154,99,.08);
         color:var(--gold-soft);
         display:grid;
         place-items:center;
@@ -114,8 +114,8 @@
 
     .role-badge{
         color:var(--gold-soft);
-        background:rgba(var(--gold-rgb),.08);
-        border-color:rgba(var(--gold-rgb),.2);
+        background:rgba(194,154,99,.08);
+        border-color:rgba(194,154,99,.2);
     }
 
     .user-actions{
@@ -142,8 +142,8 @@
 
     .action-link:hover{
         transform:translateY(-1px);
-        border-color:rgba(var(--gold-rgb),.2);
-        background:rgba(var(--gold-rgb),.08);
+        border-color:rgba(194,154,99,.2);
+        background:rgba(194,154,99,.08);
     }
 
     .action-link-danger{
@@ -188,8 +188,8 @@
 
     html[data-theme="light"] .role-badge,
     html[data-theme="light"] .user-avatar{
-        background:rgba(var(--gold-rgb),.1);
-        border-color:rgba(var(--gold-rgb),.2);
+        background:rgba(181,138,79,.1);
+        border-color:rgba(181,138,79,.2);
     }
 
     @media (max-width:1160px){
