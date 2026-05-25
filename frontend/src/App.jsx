@@ -29,7 +29,7 @@ import {
   EventDetailPage,
   EventDeletePage,
 } from "./app/pages/agendas";
-import { DeadlinesPage } from "./app/pages/deadlines";
+import { DeadlineFormPage, DeadlinesPage } from "./app/pages/deadlines";
 import {
   UsersListPage,
   UserFormPage,
@@ -62,6 +62,12 @@ function EventFormRoute() {
   const { eventId } = useParams();
   const location = useLocation();
   return <EventFormPage key={eventId || `event-new-${location.search}`} />;
+}
+
+function DeadlineFormRoute() {
+  const { deadlineId } = useParams();
+  const location = useLocation();
+  return <DeadlineFormPage key={deadlineId || `deadline-new-${location.search}`} />;
 }
 
 function UserFormRoute() {
@@ -127,6 +133,8 @@ export default function App() {
             />
 
             <Route path="/prazos" element={<DeadlinesPage />} />
+            <Route path="/prazos/novo" element={<DeadlineFormRoute />} />
+            <Route path="/prazos/:deadlineId/editar" element={<DeadlineFormRoute />} />
 
             <Route path="/reunioes" element={<MeetingsPage />} />
 

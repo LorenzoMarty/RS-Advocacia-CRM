@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { DEADLINE_STATUS_COLUMNS } from '../data';
 import { PageChrome, StatusBadge } from '../layout';
@@ -14,15 +14,21 @@ import {
   isSameDay,
   normalizeText,
 } from '../utils';
-import { EmptyState } from './common';
+import { EmptyState, Field, NotFoundState } from './common';
 
 const DEADLINE_TYPE = 'Prazo';
+const DEADLINE_DEFAULT_STATUS = DEADLINE_STATUS_COLUMNS[0].label;
+const DEADLINE_DEFAULT_TIME = '18:00';
 
 function dateInputValue(value = new Date()) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return '';
+    return dateInputValue();
   }
 
   const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
@@ -43,8 +49,24 @@ function deadlineMoment(deadline) {
   return deadline.end || deadline.start;
 }
 
+function deadlineDateToIso(value) {
+  const dateValue = /^\d{4}-\d{2}-\d{2}$/.test(value || '') ? value : dateInputValue();
+  return new Date(`${dateValue}T${DEADLINE_DEFAULT_TIME}:00`).toISOString();
+}
+
 function isDeadlineEvent(event) {
   return normalizeText(event.type).includes('prazo');
+}
+
+function buildDeadlineTitle(process, responsible) {
+  const processNumber = process?.number || '';
+  const responsibleName = responsible.trim();
+
+  if (!processNumber && !responsibleName) {
+    return '';
+  }
+
+  return `${processNumber || 'Processo'} - ${responsibleName || 'Responsavel'}`;
 }
 
 function deadlineColumnKey(deadline) {
@@ -67,13 +89,20 @@ function deadlineColumnKey(deadline) {
 
 function deadlineCreatePath(selectedDate) {
   const params = new URLSearchParams({
-    tipo: DEADLINE_TYPE,
-    status: DEADLINE_STATUS_COLUMNS[0].label,
     data: selectedDate || dateInputValue(),
-    voltar: '/prazos',
   });
 
-  return `/agenda/novo?${params.toString()}`;
+  return `/prazos/novo?${params.toString()}`;
+}
+
+function validateDeadlineForm(form) {
+  const nextErrors = {};
+
+  if (!form.processId) nextErrors.processId = 'Selecione o processo.';
+  if (!form.description.trim()) nextErrors.description = 'Informe a descricao.';
+  if (!form.responsible.trim()) nextErrors.responsible = 'Informe o responsavel.';
+
+  return nextErrors;
 }
 
 function DeadlineCard({
@@ -111,7 +140,9 @@ function DeadlineCard({
       </div>
 
       <h3 className="deadline-card-title">
-        <Link to={`/agenda/${deadline.id}`}>{deadline.title}</Link>
+        <Link to={`/agenda/${deadline.id}`}>
+          {buildDeadlineTitle(process, deadline.responsible) || deadline.title}
+        </Link>
       </h3>
 
       <p className="deadline-card-date">
@@ -151,7 +182,7 @@ function DeadlineCard({
             {nextColumn.label}
           </button>
         ) : null}
-        <Link className="deadline-edit" to={`/agenda/${deadline.id}/editar`}>
+        <Link className="deadline-edit" to={`/prazos/${deadline.id}/editar`}>
           Editar
         </Link>
       </div>
@@ -161,7 +192,8 @@ function DeadlineCard({
 
 export function DeadlinesPage() {
   const { clients, events, processes, saveEvent } = useAppState();
-  const [selectedDate, setSelectedDate] = useState(() => dateInputValue());
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedDate, setSelectedDate] = useState(() => dateInputValue(searchParams.get('data') || new Date()));
   const [search, setSearch] = useState('');
   const [responsible, setResponsible] = useState('');
   const [processId, setProcessId] = useState('');
@@ -230,8 +262,10 @@ export function DeadlinesPage() {
     setMovingDeadlineId(deadline.id);
 
     try {
+      const deadlineProcess = processes.find((process) => process.id === deadline.processId) || null;
       await saveEvent({
         ...deadline,
+        title: buildDeadlineTitle(deadlineProcess, deadline.responsible) || deadline.title,
         status: nextColumn.label,
         completed: nextColumn.key === 'protocolado',
       });
@@ -240,6 +274,19 @@ export function DeadlinesPage() {
         setMovingDeadlineId('');
       }, 220);
     }
+  }
+
+  function updateSelectedDate(nextDate) {
+    const nextValue = typeof nextDate === 'function' ? nextDate(selectedDate) : nextDate;
+    setSelectedDate(nextValue);
+
+    const nextSearchParams = new URLSearchParams(searchParams);
+    if (nextValue) {
+      nextSearchParams.set('data', nextValue);
+    } else {
+      nextSearchParams.delete('data');
+    }
+    setSearchParams(nextSearchParams, { replace: true });
   }
 
   function handleDragStart(event, deadlineId) {
@@ -321,7 +368,7 @@ export function DeadlinesPage() {
                 className="icon-control"
                 type="button"
                 aria-label="Dia anterior"
-                onClick={() => setSelectedDate((value) => shiftDate(value, -1))}
+                onClick={() => updateSelectedDate((value) => shiftDate(value, -1))}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m15 18-6-6 6-6" />
@@ -332,20 +379,20 @@ export function DeadlinesPage() {
                 <input
                   type="date"
                   value={selectedDate}
-                  onChange={(event) => setSelectedDate(event.target.value)}
+                  onChange={(event) => updateSelectedDate(event.target.value)}
                 />
               </label>
               <button
                 className="icon-control"
                 type="button"
                 aria-label="Proximo dia"
-                onClick={() => setSelectedDate((value) => shiftDate(value, 1))}
+                onClick={() => updateSelectedDate((value) => shiftDate(value, 1))}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m9 18 6-6-6-6" />
                 </svg>
               </button>
-              <button className="btn btn-secondary" type="button" onClick={() => setSelectedDate(dateInputValue())}>
+              <button className="btn btn-secondary" type="button" onClick={() => updateSelectedDate(dateInputValue())}>
                 Hoje
               </button>
             </div>
@@ -450,8 +497,176 @@ export function DeadlinesPage() {
           <section className="surface section-card">
             <EmptyState
               title="Nenhum prazo cadastrado."
-              copy="Crie um compromisso do tipo Prazo para organiza-lo no Kanban."
+              copy="Crie uma tarefa de prazo para organiza-la no Kanban."
               actions={<Link className="btn" to={deadlineCreatePath(selectedDate)}>Novo prazo</Link>}
+            />
+          </section>
+        )}
+      </div>
+    </>
+  );
+}
+
+export function DeadlineFormPage() {
+  const navigate = useNavigate();
+  const params = useParams();
+  const [searchParams] = useSearchParams();
+  const isEditing = Boolean(params.deadlineId);
+  const {
+    events,
+    isEventsLoading,
+    processes,
+    saveEvent,
+    users,
+  } = useAppState();
+  const deadline = events.find((event) => event.id === params.deadlineId) || null;
+  const initialDate = dateInputValue(searchParams.get('data') || new Date());
+  const [form, setForm] = useState(() => ({
+    processId: deadline?.processId || '',
+    description: deadline?.description || '',
+    responsible: deadline?.responsible || '',
+    date: deadline ? dateInputValue(deadlineMoment(deadline)) : initialDate,
+  }));
+  const [errors, setErrors] = useState({});
+
+  if (isEditing && !deadline) {
+    if (isEventsLoading) {
+      return null;
+    }
+
+    return <NotFoundState title="Prazo nao encontrado." />;
+  }
+
+  if (deadline && !isDeadlineEvent(deadline)) {
+    return <NotFoundState title="Este registro nao e um prazo." />;
+  }
+
+  const selectedProcess = processes.find((process) => process.id === form.processId) || null;
+  const generatedTitle = buildDeadlineTitle(selectedProcess, form.responsible);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    const nextErrors = validateDeadlineForm(form);
+
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    const process = processes.find((item) => item.id === form.processId) || null;
+    const savedDeadline = await saveEvent({
+      id: deadline?.id,
+      title: buildDeadlineTitle(process, form.responsible),
+      type: DEADLINE_TYPE,
+      priority: deadline?.priority || 'Alta',
+      start: deadlineDateToIso(form.date),
+      end: deadlineDateToIso(form.date),
+      reminderAt: deadline?.reminderAt || '',
+      clientId: process?.clientId || '',
+      processId: form.processId,
+      responsible: form.responsible.trim(),
+      status: deadline?.status || DEADLINE_DEFAULT_STATUS,
+      location: process?.court || 'Tarefa de prazo',
+      description: form.description.trim(),
+      notes: deadline?.notes || '',
+      completed: deadline?.completed || false,
+      createdBy: deadline?.createdBy || form.responsible.trim() || 'Interno',
+    });
+
+    if (!savedDeadline) {
+      return;
+    }
+
+    navigate(`/prazos?data=${encodeURIComponent(form.date)}`, { replace: true });
+  }
+
+  return (
+    <>
+      <PageChrome label={isEditing ? 'Editar prazo' : 'Novo prazo'} />
+
+      <div className="deadline-form-page">
+        <section className="surface deadline-form-intro">
+          <div className="intro-grid">
+            <Link className="intro-link" to={`/prazos?data=${encodeURIComponent(form.date)}`}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              Voltar para prazos
+            </Link>
+
+            <div>
+              <h1 className="intro-title">{isEditing ? 'Editar prazo' : 'Novo prazo'}</h1>
+              <p className="intro-note">
+                Tarefa do dia {formatDate(dateFromInput(form.date))}.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {processes.length ? (
+          <section className="surface deadline-form-panel">
+            <form className="deadline-task-form" onSubmit={handleSubmit}>
+              <div className="deadline-generated-name">
+                <span>Nome do prazo</span>
+                <strong>{generatedTitle || 'Selecione processo e responsavel'}</strong>
+              </div>
+
+              <div className="form-grid">
+                <Field id="deadline-process" label="Processo" className="span-2" error={errors.processId}>
+                  <select
+                    id="deadline-process"
+                    value={form.processId}
+                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, processId: event.target.value }))}
+                  >
+                    <option value="">Selecione o processo</option>
+                    {processes.map((process) => (
+                      <option key={process.id} value={process.id}>
+                        {process.number}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field id="deadline-responsible" label="Responsavel" className="span-2" error={errors.responsible}>
+                  <input
+                    id="deadline-responsible"
+                    list="deadline-responsibles"
+                    value={form.responsible}
+                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, responsible: event.target.value }))}
+                  />
+                  <datalist id="deadline-responsibles">
+                    {users.map((user) => (
+                      <option key={user.id} value={user.name} />
+                    ))}
+                  </datalist>
+                </Field>
+
+                <Field id="deadline-description" label="Descricao" className="span-2" error={errors.description}>
+                  <textarea
+                    id="deadline-description"
+                    rows="6"
+                    value={form.description}
+                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, description: event.target.value }))}
+                  />
+                </Field>
+              </div>
+
+              <div className="form-actions">
+                <button className="btn" type="submit">
+                  {isEditing ? 'Atualizar prazo' : 'Salvar prazo'}
+                </button>
+                <Link className="btn btn-secondary" to={`/prazos?data=${encodeURIComponent(form.date)}`}>
+                  Cancelar
+                </Link>
+              </div>
+            </form>
+          </section>
+        ) : (
+          <section className="surface section-card">
+            <EmptyState
+              title="Nenhum processo cadastrado."
+              copy="Cadastre um processo antes de criar uma tarefa de prazo."
+              actions={<Link className="btn" to="/processos/novo">Novo processo</Link>}
             />
           </section>
         )}
