@@ -199,7 +199,12 @@ html[data-theme="light"] .action-link-danger:hover{
 }
 
 .sidebar,
-.topbar,
+.topbar{
+    border-color:#fff;
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+}
+
 .bottom-nav{
     border-color:var(--line);
     backdrop-filter:blur(18px);
