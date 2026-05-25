@@ -13,9 +13,9 @@
     align-items:start;
 }
 .petition-column{
-    --petition-accent:#c29a63;
-    --petition-accent-soft:rgba(194,154,99,.12);
-    --petition-accent-border:rgba(194,154,99,.26);
+    --petition-accent:var(--gold);
+    --petition-accent-soft:rgba(var(--gold-rgb),.12);
+    --petition-accent-border:rgba(var(--gold-rgb),.26);
     display:grid;
     gap:12px;
     min-width:0;
@@ -110,9 +110,9 @@
 .petition-card.is-dragging{
     opacity:.38;
     transform:scale(.96) rotate(-1deg);
-    border-color:rgba(194,154,99,.32);
+    border-color:rgba(var(--gold-rgb),.32);
     border-style:dashed;
-    background:rgba(194,154,99,.07);
+    background:rgba(var(--gold-rgb),.07);
     box-shadow:none;
     cursor:grabbing;
 }
@@ -171,7 +171,7 @@
     font-size:.72rem;
     font-weight:800;
 }
-.petition-card-actions a:hover,.petition-card-actions button:hover{border-color:rgba(194,154,99,.2);color:var(--text);background:rgba(194,154,99,.08)}
+.petition-card-actions a:hover,.petition-card-actions button:hover{border-color:rgba(var(--gold-rgb),.2);color:var(--text);background:rgba(var(--gold-rgb),.08)}
 .petition-card-actions button{cursor:pointer}
 .petition-editing-summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .petition-editing-summary span{

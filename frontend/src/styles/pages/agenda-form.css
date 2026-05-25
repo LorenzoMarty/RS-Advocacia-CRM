@@ -166,7 +166,7 @@
     }
 
     .field select:hover{
-        border-color:rgba(194,154,99,.18);
+        border-color:rgba(var(--gold-rgb),.18);
         background-color:var(--ghost-strong);
     }
 
@@ -179,9 +179,9 @@
     .field input:focus,
     .field select:focus,
     .field textarea:focus{
-        border-color:rgba(194,154,99,.24);
+        border-color:rgba(var(--gold-rgb),.24);
         background:var(--ghost-strong);
-        box-shadow:0 0 0 4px rgba(194,154,99,.08);
+        box-shadow:0 0 0 4px rgba(var(--gold-rgb),.08);
     }
 
     .field.has-error input,
@@ -193,8 +193,8 @@
 
     .field select option,
     .field select optgroup{
-        background:#161a22;
-        color:#f6f1e8;
+        background:var(--panel-solid);
+        color:var(--text);
     }
 
     html[data-theme="light"] .field select{

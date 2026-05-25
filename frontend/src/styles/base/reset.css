@@ -7,6 +7,7 @@ body{
     font-family:var(--sans);
     color:var(--text);
     background:var(--body-bg);
+    font-feature-settings:"cv02","cv03","cv04","cv11";
     -webkit-font-smoothing:antialiased;
     overflow-x:hidden;
     transition:background .22s ease,color .22s ease;
@@ -20,4 +21,4 @@ svg,img{display:block}
 ::selection{background:var(--selection)}
 ::-webkit-scrollbar{width:8px}
 ::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:999px}
-:focus-visible{outline:none}
+:focus-visible{outline:2px solid rgba(var(--gold-rgb),.62);outline-offset:3px}

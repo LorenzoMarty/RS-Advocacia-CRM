@@ -2,12 +2,12 @@
 .bottom-nav-link:focus-visible,
 .theme-toggle:focus-visible,
 .btn:focus-visible{
-    box-shadow:0 0 0 4px rgba(194,154,99,.14);
+    box-shadow:0 0 0 4px rgba(var(--gold-rgb),.14);
 }
 
 .sidebar-toggle-clean:focus-visible{
     outline:none;
-    box-shadow:var(--sidebar-toggle-shadow), 0 0 0 4px rgba(194,154,99,.1);
+    box-shadow:var(--sidebar-toggle-shadow), 0 0 0 4px rgba(var(--gold-rgb),.1);
 }
 
 .sr-only{

@@ -50,8 +50,8 @@
     height:58px;
     flex:0 0 auto;
     border-radius:18px;
-    border:1px solid rgba(194,154,99,.18);
-    background:rgba(194,154,99,.08);
+    border:1px solid rgba(var(--gold-rgb),.18);
+    background:rgba(var(--gold-rgb),.08);
     color:var(--gold-soft);
     display:grid;
     place-items:center;
@@ -232,8 +232,8 @@
     min-height:30px;
     padding:0 10px;
     border-radius:8px;
-    border:1px solid rgba(194,154,99,.18);
-    background:rgba(194,154,99,.08);
+    border:1px solid rgba(var(--gold-rgb),.18);
+    background:rgba(var(--gold-rgb),.08);
     color:var(--gold-soft);
     font-size:.76rem;
     font-weight:700;
@@ -282,8 +282,8 @@
 
 .action-link:hover{
     transform:translateY(-1px);
-    border-color:rgba(194,154,99,.2);
-    background:rgba(194,154,99,.08);
+    border-color:rgba(var(--gold-rgb),.2);
+    background:rgba(var(--gold-rgb),.08);
 }
 
 html[data-theme="light"] .cargo-mark,
