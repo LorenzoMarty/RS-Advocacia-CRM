@@ -29,7 +29,11 @@ import {
   EventDetailPage,
   EventDeletePage,
 } from "./app/pages/agendas";
-import { DeadlineFormPage, DeadlinesPage } from "./app/pages/deadlines";
+import {
+  DeadlineDetailPage,
+  DeadlineFormPage,
+  DeadlinesPage,
+} from "./app/pages/deadlines";
 import {
   UsersListPage,
   UserFormPage,
@@ -134,6 +138,7 @@ export default function App() {
 
             <Route path="/prazos" element={<DeadlinesPage />} />
             <Route path="/prazos/novo" element={<DeadlineFormRoute />} />
+            <Route path="/prazos/:deadlineId" element={<DeadlineDetailPage />} />
             <Route path="/prazos/:deadlineId/editar" element={<DeadlineFormRoute />} />
 
             <Route path="/reunioes" element={<MeetingsPage />} />
