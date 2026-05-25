@@ -13,6 +13,9 @@
     display:grid;
     gap:18px;
     min-width:0;
+    width:100%;
+    max-width:var(--page-max-width);
+    margin:0 auto;
 }
 .main > *{
     position:relative;
