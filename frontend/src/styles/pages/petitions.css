@@ -11,11 +11,12 @@
     gap:14px;
     min-width:0;
     align-items:start;
+    padding:18px;
 }
 .petition-column{
-    --petition-accent:#c29a63;
-    --petition-accent-soft:rgba(194,154,99,.12);
-    --petition-accent-border:rgba(194,154,99,.26);
+    --petition-accent:#D4AF37;
+    --petition-accent-soft:rgba(212,175,55,.12);
+    --petition-accent-border:rgba(212,175,55,.26);
     display:grid;
     gap:12px;
     min-width:0;
@@ -110,9 +111,9 @@
 .petition-card.is-dragging{
     opacity:.38;
     transform:scale(.96) rotate(-1deg);
-    border-color:rgba(194,154,99,.32);
+    border-color:rgba(212,175,55,.32);
     border-style:dashed;
-    background:rgba(194,154,99,.07);
+    background:rgba(212,175,55,.07);
     box-shadow:none;
     cursor:grabbing;
 }
@@ -171,7 +172,7 @@
     font-size:.72rem;
     font-weight:800;
 }
-.petition-card-actions a:hover,.petition-card-actions button:hover{border-color:rgba(194,154,99,.2);color:var(--text);background:rgba(194,154,99,.08)}
+.petition-card-actions a:hover,.petition-card-actions button:hover{border-color:rgba(212,175,55,.2);color:var(--text);background:rgba(212,175,55,.08)}
 .petition-card-actions button{cursor:pointer}
 .petition-editing-summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .petition-editing-summary span{
@@ -204,13 +205,13 @@ html[data-theme="light"] .petition-card-actions button{background:rgba(24,30,42,
 }
 @media (max-width:1280px){
     .petitions-workspace{grid-template-columns:1fr}
-    .petitions-board{grid-template-columns:repeat(4,minmax(230px,1fr));overflow-x:auto;padding-bottom:4px}
+    .petitions-board{grid-template-columns:repeat(4,minmax(230px,1fr));overflow-x:auto;padding:18px 18px 4px}
 }
 @media (max-width:820px){
     .petitions-intro,.petition-form-panel,.petition-editing-summary{padding:16px}
     .petitions-toolbar{grid-template-columns:1fr}
     .petition-form .form-grid{grid-template-columns:1fr}
-    .petitions-board{grid-template-columns:1fr;overflow:visible}
+    .petitions-board{grid-template-columns:1fr;overflow:visible;padding:14px}
     .petition-column{padding:12px;border-radius:18px}
     .petition-card{padding:14px;border-radius:16px}
     .petition-card-footer{align-items:flex-start;flex-direction:column}

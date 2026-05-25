@@ -52,8 +52,8 @@
         flex:0 0 auto;
         overflow:hidden;
         border-radius:18px;
-        border:1px solid rgba(194,154,99,.18);
-        background:rgba(194,154,99,.08);
+        border:1px solid rgba(212,175,55,.18);
+        background:rgba(212,175,55,.08);
         color:var(--gold-soft);
         display:grid;
         place-items:center;
@@ -108,8 +108,8 @@
 
     .role-pill{
         color:var(--gold-soft);
-        background:rgba(194,154,99,.08);
-        border-color:rgba(194,154,99,.2);
+        background:rgba(212,175,55,.08);
+        border-color:rgba(212,175,55,.2);
     }
 
     .cargo-pill,

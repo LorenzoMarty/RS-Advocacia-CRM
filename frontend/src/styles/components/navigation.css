@@ -16,8 +16,8 @@
     place-items:center;
     border-radius:15px;
     color:var(--gold-soft);
-    background:linear-gradient(145deg, rgba(194,154,99,.18), rgba(194,154,99,.04));
-    border:1px solid rgba(194,154,99,.18);
+    background:linear-gradient(145deg, rgba(212,175,55,.18), rgba(212,175,55,.04));
+    border:1px solid rgba(212,175,55,.18);
 }
 
 .brand-copy{min-width:0;max-width:180px}
@@ -53,8 +53,8 @@
 .nav-link:hover{color:var(--text);transform:translateX(2px)}
 .nav-link.active{
     color:var(--gold-soft);
-    background:rgba(194,154,99,.08);
-    box-shadow:inset 0 0 0 1px rgba(194,154,99,.12);
+    background:rgba(212,175,55,.08);
+    box-shadow:inset 0 0 0 1px rgba(212,175,55,.12);
 }
 
 .nav-icon{
@@ -70,7 +70,7 @@
 .nav-link:hover .nav-icon{color:var(--text);transform:translateY(-1px)}
 .nav-link.active .nav-icon{
     color:var(--gold-soft);
-    filter:drop-shadow(0 0 10px rgba(194,154,99,.18));
+    filter:drop-shadow(0 0 10px rgba(212,175,55,.18));
 }
 
 .nav-link span:last-child{
@@ -228,15 +228,15 @@ html[data-theme="light"] .sidebar-profile{
 .theme-toggle:hover,
 .topbar-icon-link:hover{
     background:var(--hover);
-    border-color:rgba(194,154,99,.22);
+    border-color:rgba(212,175,55,.22);
     transform:translateY(-1px);
 }
 
 .theme-toggle:focus-visible,
 .topbar-icon-link:focus-visible{
     outline:none;
-    border-color:rgba(194,154,99,.28);
-    box-shadow:0 0 0 3px rgba(194,154,99,.12);
+    border-color:rgba(212,175,55,.28);
+    box-shadow:0 0 0 3px rgba(212,175,55,.12);
 }
 
 .logout-link:hover{

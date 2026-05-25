@@ -1,8 +1,8 @@
-.hero{
+    .hero{
         padding:30px;
         background:
-            radial-gradient(circle at top right, rgba(194,154,99,.12), transparent 28%),
-            linear-gradient(135deg, rgba(14,17,23,.96), rgba(11,13,18,.88));
+            radial-gradient(circle at top right, rgba(212,175,55,.12), transparent 28%),
+            linear-gradient(135deg, rgba(15,23,42,.96), rgba(2,6,23,.92));
     }
 
     .hero-grid{
@@ -51,8 +51,8 @@
     .metric{
         padding:16px;
         border-radius:18px;
-        border:1px solid rgba(255,255,255,.07);
-        background:rgba(255,255,255,.035);
+        border:1px solid var(--line);
+        background:rgba(15,23,42,.58);
     }
 
     .metric span{
@@ -78,8 +78,8 @@
         gap:14px;
         padding:22px;
         border-radius:22px;
-        border:1px solid rgba(255,255,255,.07);
-        background:rgba(255,255,255,.04);
+        border:1px solid var(--line);
+        background:rgba(15,23,42,.62);
         box-shadow:0 16px 36px rgba(0,0,0,.16);
     }
 
@@ -91,8 +91,8 @@
         min-height:30px;
         padding:0 11px;
         border-radius:999px;
-        border:1px solid rgba(194,154,99,.18);
-        background:rgba(194,154,99,.08);
+        border:1px solid rgba(212,175,55,.18);
+        background:rgba(212,175,55,.08);
         color:var(--gold-soft);
         font-size:.68rem;
         font-weight:700;
@@ -186,15 +186,15 @@
     .shortcut:hover,
     .rail-stat:hover{
         transform:translateY(-1px);
-        border-color:rgba(194,154,99,.18);
-        background:rgba(194,154,99,.06);
+        border-color:rgba(212,175,55,.18);
+        background:rgba(212,175,55,.06);
     }
 
     .item-link:focus-visible{
         outline:none;
-        border-color:rgba(194,154,99,.28);
-        background:rgba(194,154,99,.08);
-        box-shadow:0 0 0 3px rgba(194,154,99,.12);
+        border-color:rgba(212,175,55,.28);
+        background:rgba(212,175,55,.08);
+        box-shadow:0 0 0 3px rgba(212,175,55,.12);
     }
 
     .item-time{
@@ -206,8 +206,8 @@
         font-size:.92rem;
         font-weight:700;
         letter-spacing:-.03em;
-        background:rgba(194,154,99,.08);
-        border:1px solid rgba(194,154,99,.18);
+        background:rgba(212,175,55,.08);
+        border:1px solid rgba(212,175,55,.18);
     }
 
     .item-title{
@@ -279,8 +279,8 @@
         margin-top:0;
         border-radius:13px;
         color:var(--gold-soft);
-        background:rgba(194,154,99,.08);
-        border:1px solid rgba(194,154,99,.18);
+        background:rgba(212,175,55,.08);
+        border:1px solid rgba(212,175,55,.18);
     }
 
     .shortcut-icon svg{

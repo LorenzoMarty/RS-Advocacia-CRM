@@ -55,8 +55,8 @@
         font-size:1.05rem;
         font-weight:700;
         letter-spacing:.02em;
-        background:rgba(194,154,99,.08);
-        border:1px solid rgba(194,154,99,.18);
+        background:rgba(212,175,55,.08);
+        border:1px solid rgba(212,175,55,.18);
     }
 
     .client-page .client-name{
@@ -109,8 +109,8 @@
 
     .client-tier-mensalista{
         color:var(--gold-soft);
-        background:rgba(194,154,99,.1);
-        border-color:rgba(194,154,99,.2);
+        background:rgba(212,175,55,.1);
+        border-color:rgba(212,175,55,.2);
     }
 
     .hero-summary{
@@ -205,8 +205,8 @@
     .process-item:hover,
     .event-item:hover{
         transform:translateY(-1px);
-        border-color:rgba(194,154,99,.18);
-        background:rgba(194,154,99,.06);
+        border-color:rgba(212,175,55,.18);
+        background:rgba(212,175,55,.06);
     }
 
     .process-link{
@@ -280,8 +280,8 @@
 
     .status-badge.gold{
         color:var(--gold-soft);
-        background:rgba(194,154,99,.08);
-        border-color:rgba(194,154,99,.2);
+        background:rgba(212,175,55,.08);
+        border-color:rgba(212,175,55,.2);
     }
 
     .status-badge.success{
