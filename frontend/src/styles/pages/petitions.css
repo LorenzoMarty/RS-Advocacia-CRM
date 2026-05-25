@@ -22,9 +22,7 @@
     padding:14px;
     border-radius:20px;
     border:1px solid var(--petition-accent-border);
-    background:
-        radial-gradient(circle at 18% 0%, var(--petition-accent-soft), transparent 34%),
-        linear-gradient(180deg, rgba(255,255,255,.052), rgba(255,255,255,.018));
+    background:linear-gradient(180deg, rgba(255,255,255,.052), rgba(255,255,255,.018));
     transition:transform .22s ease,border-color .22s ease,background .22s ease,box-shadow .22s ease;
 }
 .petition-column:nth-child(1){--petition-accent:#e8b25c;--petition-accent-soft:rgba(232,178,92,.15);--petition-accent-border:rgba(232,178,92,.28)}
@@ -34,9 +32,7 @@
 .petition-column.is-drop-target{
     transform:translateY(-3px);
     border-color:var(--petition-accent);
-    background:
-        radial-gradient(circle at 18% 0%, var(--petition-accent-soft), transparent 36%),
-        linear-gradient(180deg, var(--petition-accent-soft), rgba(255,255,255,.025));
+    background:linear-gradient(180deg, var(--petition-accent-soft), rgba(255,255,255,.025));
     box-shadow:0 18px 34px rgba(0,0,0,.14), inset 0 0 0 1px var(--petition-accent-border);
 }
 .petition-column-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
@@ -157,6 +153,8 @@
     line-height:1.45;
 }
 .petition-card-footer{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.petitions-board .badge::before,
+.petitions-board .status-badge::before{display:none}
 .petition-card-actions{display:flex;align-items:center;gap:8px}
 .petition-card-actions a,.petition-card-actions button{
     min-height:30px;
@@ -183,7 +181,7 @@
 }
 .petition-editing-summary strong{font-size:.95rem}
 .petition-editing-summary small{color:var(--muted)}
-html[data-theme="light"] .petition-column{border-color:var(--petition-accent-border);background:radial-gradient(circle at 18% 0%, var(--petition-accent-soft), transparent 34%),linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.68))}
+html[data-theme="light"] .petition-column{border-color:var(--petition-accent-border);background:linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.68))}
 html[data-theme="light"] .petition-card{border-color:var(--petition-accent-border);background:linear-gradient(135deg, var(--petition-accent-soft), rgba(255,255,255,.92) 44%, rgba(255,255,255,.78));box-shadow:0 12px 24px rgba(58,44,20,.08)}
 html[data-theme="light"] .petition-column-empty{border-color:rgba(30,34,45,.14)}
 html[data-theme="light"] .petition-card-meta span,

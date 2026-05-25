@@ -7,8 +7,30 @@
 }
 
 .profile .avatar{width:34px;height:34px;border-radius:11px}
-.main{display:grid;gap:18px;min-width:0}
-.main > *{min-width:0}
+.main{
+    position:relative;
+    isolation:isolate;
+    display:grid;
+    gap:18px;
+    min-width:0;
+}
+.main > *{
+    position:relative;
+    z-index:1;
+    min-width:0;
+}
+.main::before{
+    content:"";
+    position:absolute;
+    top:-6rem;
+    right:-5rem;
+    width:24rem;
+    height:24rem;
+    border-radius:999px;
+    background:radial-gradient(circle, rgba(120,147,209,.14), transparent 68%);
+    pointer-events:none;
+    z-index:0;
+}
 .surface{
     position:relative;
     min-width:0;
