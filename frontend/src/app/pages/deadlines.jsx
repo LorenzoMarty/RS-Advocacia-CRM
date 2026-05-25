@@ -8,9 +8,7 @@ import {
   buildSearchText,
   formatCount,
   formatDate,
-  formatTime,
   getStatusTone,
-  isOverdueEvent,
   isSameDay,
   normalizeText,
 } from '../utils';
@@ -114,6 +112,10 @@ function deadlineColumnKey(deadline) {
   return 'a_fazer';
 }
 
+function deadlineStatusLabel(deadline) {
+  return DEADLINE_STATUS_COLUMNS.find((column) => column.key === deadlineColumnKey(deadline))?.label || DEADLINE_DEFAULT_STATUS;
+}
+
 function deadlineCreatePath(selectedDate) {
   const params = new URLSearchParams({
     data: selectedDate || dateInputValue(),
@@ -133,86 +135,27 @@ function validateDeadlineForm(form) {
 }
 
 function DeadlineCard({
-  clients,
   deadline,
   isDragging,
   isMoving,
-  onMove,
   onDragStart,
   onDragEnd,
   processes,
 }) {
   const process = processes.find((item) => item.id === deadline.processId) || null;
-  const client = clients.find((item) => item.id === deadline.clientId) || null;
-  const currentColumnKey = deadlineColumnKey(deadline);
-  const currentColumnIndex = DEADLINE_STATUS_COLUMNS.findIndex((column) => column.key === currentColumnKey);
-  const previousColumn = DEADLINE_STATUS_COLUMNS[currentColumnIndex - 1] || null;
-  const nextColumn = DEADLINE_STATUS_COLUMNS[currentColumnIndex + 1] || null;
-  const isOverdue = isOverdueEvent(deadline) && currentColumnKey !== 'protocolado';
 
   return (
     <article
-      className={`deadline-card${isOverdue ? ' is-overdue' : ''}${isDragging ? ' is-dragging' : ''}${isMoving ? ' is-moving' : ''}`}
+      className={`deadline-card${isDragging ? ' is-dragging' : ''}${isMoving ? ' is-moving' : ''}`}
       draggable
       onDragStart={(event) => onDragStart(event, deadline.id)}
       onDragEnd={onDragEnd}
     >
-      <div className="deadline-card-top">
-        <StatusBadge tone={isOverdue ? 'danger' : getStatusTone(deadline.status, deadline.completed)}>
-          {isOverdue ? 'Atrasado' : deadline.status || 'A fazer'}
-        </StatusBadge>
-        <span className="deadline-card-time">
-          {formatTime(deadlineMoment(deadline))}
-        </span>
-      </div>
-
       <h3 className="deadline-card-title">
         <Link to={`/prazos/${deadline.id}`}>
           {buildDeadlineTitle(process, deadline.responsible) || deadline.title}
         </Link>
       </h3>
-
-      <p className="deadline-card-date">
-        Prazo fatal em {formatDate(deadlineMoment(deadline))}
-      </p>
-
-      <div className="deadline-card-meta">
-        {process ? (
-          <Link className="meta-chip" to={`/processos/${process.id}`}>
-            {process.number}
-          </Link>
-        ) : (
-          <span className="meta-chip">Processo nao vinculado</span>
-        )}
-        {deadline.responsible ? (
-          <span className="meta-chip">{deadline.responsible}</span>
-        ) : null}
-        {client ? <span className="meta-chip">{client.name}</span> : null}
-      </div>
-
-      <div className="deadline-card-actions">
-        {previousColumn ? (
-          <button
-            className="deadline-move"
-            type="button"
-            onClick={() => onMove(deadline, previousColumn.key)}
-          >
-            {previousColumn.label}
-          </button>
-        ) : null}
-        {nextColumn ? (
-          <button
-            className="deadline-move deadline-move-primary"
-            type="button"
-            onClick={() => onMove(deadline, nextColumn.key)}
-          >
-            {nextColumn.label}
-          </button>
-        ) : null}
-        <Link className="deadline-edit" to={`/prazos/${deadline.id}/editar`}>
-          Editar
-        </Link>
-      </div>
     </article>
   );
 }
@@ -501,13 +444,11 @@ export function DeadlinesPage() {
                     deadlinesByColumn[column.key].map((deadline) => (
                       <DeadlineCard
                         key={deadline.id}
-                        clients={clients}
                         deadline={deadline}
                         isDragging={draggingDeadlineId === deadline.id}
                         isMoving={movingDeadlineId === deadline.id}
                         onDragEnd={handleDragEnd}
                         onDragStart={handleDragStart}
-                        onMove={moveDeadline}
                         processes={processes}
                       />
                     ))
@@ -574,6 +515,7 @@ export function DeadlineDetailPage() {
   const process = processes.find((item) => item.id === deadline.processId) || null;
   const client = clients.find((item) => item.id === deadline.clientId) || null;
   const deadlineTitle = buildDeadlineTitle(process, deadline.responsible) || deadline.title;
+  const statusLabel = deadlineStatusLabel(deadline);
   const isTimerRunning = Boolean(deadline.timerStartedAt);
   const elapsedSeconds = elapsedSecondsForDeadline(deadline, currentTime);
 
@@ -637,8 +579,8 @@ export function DeadlineDetailPage() {
                 Tarefa do dia {formatDate(deadlineMoment(deadline))}
               </p>
             </div>
-            <StatusBadge tone={getStatusTone(deadline.status, deadline.completed)}>
-              {deadline.status || DEADLINE_DEFAULT_STATUS}
+            <StatusBadge tone={getStatusTone(statusLabel, deadline.completed)}>
+              {statusLabel}
             </StatusBadge>
           </div>
         </section>
@@ -708,8 +650,8 @@ export function DeadlineDetailPage() {
               <article className="detail-item">
                 <span>Status</span>
                 <div className="detail-badge-wrap">
-                  <StatusBadge tone={getStatusTone(deadline.status, deadline.completed)}>
-                    {deadline.status || DEADLINE_DEFAULT_STATUS}
+                  <StatusBadge tone={getStatusTone(statusLabel, deadline.completed)}>
+                    {statusLabel}
                   </StatusBadge>
                 </div>
               </article>
