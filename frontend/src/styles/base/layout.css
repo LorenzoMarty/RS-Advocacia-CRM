@@ -55,30 +55,24 @@ html[data-theme="dark"] .ambient-light{
 .sidebar{
     display:none;
     position:fixed;
-    top:18px;
-    left:18px;
-    bottom:18px;
+    top:0;
+    left:0;
+    bottom:0;
     width:var(--sidebar);
-    padding:18px;
-    border-radius:30px;
+    padding:0;
+    border-radius:0;
     background:var(--sidebar-bg);
-    border:1px solid var(--line);
-    box-shadow:var(--shadow);
-    backdrop-filter:blur(18px);
+    border:0;
+    border-right:1px solid var(--line);
+    box-shadow:none;
+    backdrop-filter:none;
     overflow:visible;
     z-index:40;
     transition:transform .35s cubic-bezier(.22,1,.36,1),width .35s cubic-bezier(.22,1,.36,1),padding .35s cubic-bezier(.22,1,.36,1),background .22s ease,border-color .22s ease;
 }
 
 .sidebar::before{
-    content:"";
-    position:absolute;
-    inset:auto 0 -4rem -2rem;
-    width:12rem;
-    height:12rem;
-    border-radius:999px;
-    background:radial-gradient(circle, rgba(194,154,99,.12), transparent 68%);
-    pointer-events:none;
+    display:none;
 }
 
 .sidebar > *{position:relative;z-index:1}
@@ -91,7 +85,7 @@ html[data-theme="dark"] .ambient-light{
     width:100%;
     overflow-y:auto;
     overflow-x:hidden;
-    padding-right:2px;
+    padding:18px;
     scrollbar-gutter:stable;
     scrollbar-width:thin;
     scrollbar-color:var(--scroll-thumb) transparent;
@@ -104,28 +98,29 @@ html[data-theme="dark"] .ambient-light{
 
 .page{
     margin-left:0;
-    padding:14px var(--layout-gutter) var(--bottom-nav-offset);
+    padding:0 0 var(--bottom-nav-offset);
     transition:margin-left .35s cubic-bezier(.22,1,.36,1),padding .22s ease;
 }
 .page-wrap{
-    max-width:var(--page-max-width);
+    max-width:none;
     min-width:0;
-    margin:0 auto;
+    margin:0;
 }
 .topbar{
     position:sticky;
-    top:14px;
+    top:0;
     z-index:30;
     display:flex;
     flex-direction:column;
     gap:12px;
-    margin-bottom:22px;
+    margin-bottom:0;
     padding:12px 14px;
-    border-radius:20px;
-    border:1px solid var(--line);
+    border-radius:0;
+    border:0;
+    border-bottom:1px solid var(--line);
     background:var(--topbar-bg);
-    box-shadow:0 18px 42px rgba(0,0,0,.07);
-    backdrop-filter:blur(16px);
+    box-shadow:none;
+    backdrop-filter:none;
 }
 
 .topbar-main{
