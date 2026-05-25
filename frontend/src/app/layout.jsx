@@ -127,6 +127,34 @@ export function StatusBadge({ tone = 'gold', children, className = '' }) {
   return <span className={nextClassName}>{children}</span>;
 }
 
+function LoadingScreen() {
+  return (
+    <main className="loading-screen" aria-live="polite" aria-busy="true">
+      <section className="loading-card" role="status">
+        <div className="loading-mark" aria-hidden="true">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3v18" />
+            <path d="m19 8 3 8a5 5 0 0 1-6 0z" />
+            <path d="m5 8 3 8a5 5 0 0 1-6 0z" />
+            <path d="M3 7h18" />
+            <path d="M7 21h10" />
+          </svg>
+        </div>
+
+        <div className="loading-copy">
+          <span className="loading-kicker">RS Advocacia</span>
+          <h1>Carregando sistema</h1>
+          <p>Preparando agenda, processos e prazos.</p>
+        </div>
+
+        <div className="loading-progress" aria-hidden="true">
+          <span />
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function SidebarNavigation() {
   return (
     <nav className="nav" aria-label="Áreas do sistema">
@@ -248,7 +276,7 @@ export function GuestLayout() {
   }, []);
 
   if (isLoading) {
-    return null;
+    return <LoadingScreen />;
   }
 
   if (currentUser) {
@@ -275,7 +303,7 @@ export function ProtectedLayout() {
   }, [location.pathname, location.search]);
 
   if (isLoading) {
-    return null;
+    return <LoadingScreen />;
   }
 
   if (!currentUser) {
