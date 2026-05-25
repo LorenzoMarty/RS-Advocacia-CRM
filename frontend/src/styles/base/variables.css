@@ -33,11 +33,11 @@
     --selection:rgba(212,175,55,.3);
     --scroll-thumb:rgba(71,85,105,.72);
     --backdrop:rgba(2,6,23,.72);
-    --select-field-solid:rgba(11,12,16,.98);
-    --select-field-hover:rgba(15,23,42,.99);
+    --select-field-solid:rgba(15,23,42,.98);
+    --select-field-hover:rgba(30,41,59,.99);
     --select-field-border:rgba(148,163,184,.16);
     --select-field-border-strong:rgba(212,175,55,.32);
-    --select-dropdown-bg:rgba(11,12,16,.985);
+    --select-dropdown-bg:rgba(15,23,42,.985);
     --select-option-hover:rgba(148,163,184,.08);
     --select-option-selected:rgba(212,175,55,.14);
     --select-option-selected-border:rgba(212,175,55,.28);

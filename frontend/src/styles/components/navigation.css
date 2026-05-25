@@ -216,7 +216,7 @@ html[data-theme="light"] .sidebar-profile{
     backdrop-filter:blur(14px);
     -webkit-backdrop-filter:blur(14px);
     transform:translateY(-50%);
-    transition:right .28s cubic-bezier(.22,1,.36,1),transform .24s ease,background-color .24s ease,border-color .24s ease,box-shadow .24s ease,color .24s ease;
+    transition:right .28s cubic-bezier(.22,1,.36,1),opacity .18s ease,transform .24s ease,background-color .24s ease,border-color .24s ease,box-shadow .24s ease,color .24s ease;
 }
 
 .sidebar-toggle-clean svg{
