@@ -6,7 +6,6 @@ import {
   useLocation,
   useParams,
 } from "react-router-dom";
-import { Toaster } from "sonner";
 
 import { GuestLayout, ProtectedLayout } from "./app/layout";
 import { AppStateProvider } from "./app/store";
@@ -171,7 +170,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </HashRouter>
-      <Toaster position="bottom-right" richColors expand={false} closeButton />
     </AppStateProvider>
   );
 }

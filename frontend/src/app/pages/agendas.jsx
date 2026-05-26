@@ -7,7 +7,6 @@ import {
 } from "react-router-dom";
 
 import { PageChrome, StatusBadge } from "../layout";
-import { useConfirmPopup } from "../hooks/use-confirm-popup";
 import { useAppState } from "../store";
 import {
   buildSearchText,
@@ -1408,10 +1407,8 @@ export function EventDetailPage() {
 export function EventDeletePage() {
   const navigate = useNavigate();
   const params = useParams();
-  const { confirm, confirmPopup } = useConfirmPopup();
   const { deleteEvent, events, isEventsLoading } = useAppState();
   const eventItem = events.find((item) => item.id === params.eventId) || null;
-  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!eventItem) {
     if (isEventsLoading) {
@@ -1423,20 +1420,7 @@ export function EventDeletePage() {
 
   async function handleDelete(event) {
     event.preventDefault();
-    const canDelete = await confirm({
-      title: "Excluir compromisso",
-      message: `O compromisso "${eventItem.title}" será removido da agenda.`,
-      confirmLabel: "Excluir compromisso",
-      tone: "danger",
-    });
-
-    if (!canDelete) {
-      return;
-    }
-
-    setIsDeleting(true);
     const wasDeleted = await deleteEvent(eventItem.id);
-    setIsDeleting(false);
     if (!wasDeleted) {
       return;
     }
@@ -1453,7 +1437,6 @@ export function EventDeletePage() {
           </Link>
         }
       />
-      {confirmPopup}
 
       <div className="confirm-page">
         <section className="surface confirm-intro">
@@ -1486,8 +1469,8 @@ export function EventDeletePage() {
 
             <form onSubmit={handleDelete}>
               <div className="confirm-actions">
-                <button className="btn btn-danger" type="submit" disabled={isDeleting}>
-                  {isDeleting ? "Excluindo..." : "Confirmar exclusão"}
+                <button className="btn btn-danger" type="submit">
+                  Confirmar exclusão
                 </button>
                 <Link
                   className="btn btn-secondary"

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import {
@@ -516,7 +515,6 @@ export function ClientDetailPage() {
 export function ClientDeletePage() {
   const navigate = useNavigate();
   const params = useParams();
-  const { confirm, confirmPopup } = useConfirmPopup();
   const { clients, deleteClient } = useAppState();
   const client = clients.find((item) => item.id === params.clientId) || null;
   const [isDeleting, setIsDeleting] = useState(false);
@@ -527,17 +525,6 @@ export function ClientDeletePage() {
 
   async function handleDelete(event) {
     event.preventDefault();
-    const canDelete = await confirm({
-      title: 'Excluir cliente',
-      message: `O cliente "${client.name}" e seus vínculos serão removidos do fluxo principal.`,
-      confirmLabel: 'Excluir cliente',
-      tone: 'danger',
-    });
-
-    if (!canDelete) {
-      return;
-    }
-
     setIsDeleting(true);
     const wasDeleted = await deleteClient(client.id);
     setIsDeleting(false);
@@ -550,7 +537,6 @@ export function ClientDeletePage() {
   return (
     <>
       <PageChrome label="Excluir" actions={<Link className="btn btn-secondary" to={`/clientes/${client.id}`}>Voltar</Link>} />
-      {confirmPopup}
 
       <div className="confirm-page">
         <section className="surface confirm-intro">
@@ -577,9 +563,7 @@ export function ClientDeletePage() {
 
             <form onSubmit={handleDelete}>
               <div className="confirm-actions">
-                <button className="btn btn-danger" type="submit" disabled={isDeleting}>
-                  {isDeleting ? 'Excluindo...' : 'Confirmar exclusão'}
-                </button>
+                <button className="btn btn-danger" type="submit" disabled={isDeleting}>Confirmar exclusão</button>
                 <Link className="btn btn-secondary" to={`/clientes/${client.id}`}>Cancelar</Link>
               </div>
             </form>

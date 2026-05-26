@@ -2,16 +2,14 @@
     position:fixed;
     inset:0;
     z-index:120;
+    display:grid;
+    place-items:center;
+    padding:20px;
     background:rgba(2,6,23,.72);
-    backdrop-filter:blur(8px);
+    backdrop-filter:blur(10px);
 }
 
 .popup-panel{
-    position:fixed;
-    top:50%;
-    left:50%;
-    translate:-50% -50%;
-    z-index:121;
     width:min(440px, 100%);
     display:grid;
     gap:16px;
@@ -22,8 +20,7 @@
         radial-gradient(circle at 12% 0%, rgba(212,175,55,.12), transparent 36%),
         linear-gradient(180deg, rgba(15,23,42,.98), rgba(2,6,23,.98));
     color:var(--text);
-    box-shadow:0 22px 48px rgba(0,0,0,.36);
-    outline:none;
+    box-shadow:0 26px 64px rgba(0,0,0,.44);
 }
 
 .popup-mark{
@@ -57,16 +54,14 @@
     text-transform:uppercase;
 }
 
-.popup-copy h2,
-.popup-copy [data-radix-dialog-title]{
+.popup-copy h2{
     margin:0;
     font-size:1.15rem;
     line-height:1.25;
     letter-spacing:-.02em;
 }
 
-.popup-copy p:not(.popup-kicker),
-.popup-copy [data-radix-dialog-description]{
+.popup-copy p:not(.popup-kicker){
     margin:0;
     color:var(--soft);
     font-size:.9rem;
@@ -97,12 +92,13 @@ html[data-theme="light"] .popup-panel-danger .popup-mark{
 }
 
 @media (max-width:640px){
+    .popup-layer{
+        align-items:end;
+        padding:14px;
+    }
+
     .popup-panel{
-        top:auto;
-        bottom:14px;
-        width:calc(100vw - 28px);
         border-radius:20px;
-        translate:-50% 0;
     }
 
     .popup-actions .btn{

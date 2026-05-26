@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch } from '../layout';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, normalizeText } from '../utils';
@@ -390,10 +389,8 @@ export function UserDetailPage() {
 export function UserDeletePage() {
   const navigate = useNavigate();
   const params = useParams();
-  const { confirm, confirmPopup } = useConfirmPopup();
   const { currentUser, deleteUser, roles, users } = useAppState();
   const user = users.find((item) => item.id === params.userId) || null;
-  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!user) {
     return <NotFoundState title="Usuário não encontrado." />;
@@ -407,20 +404,7 @@ export function UserDeletePage() {
       return;
     }
 
-    const canDelete = await confirm({
-      title: 'Excluir usuário',
-      message: `O usuário "${user.name}" será removido do sistema.`,
-      confirmLabel: 'Excluir usuário',
-      tone: 'danger',
-    });
-
-    if (!canDelete) {
-      return;
-    }
-
-    setIsDeleting(true);
     const wasDeleted = await deleteUser(user.id);
-    setIsDeleting(false);
     if (!wasDeleted) {
       return;
     }
@@ -430,7 +414,6 @@ export function UserDeletePage() {
   return (
     <>
       <PageChrome label="Excluir" actions={<Link className="btn btn-secondary" to={`/usuarios/${user.id}`}>Voltar</Link>} />
-      {confirmPopup}
 
       <div className="confirm-page">
         <section className="surface confirm-intro">
@@ -462,9 +445,7 @@ export function UserDeletePage() {
             ) : (
               <form onSubmit={handleDelete}>
                 <div className="confirm-actions">
-                  <button className="btn btn-danger" type="submit" disabled={isDeleting}>
-                    {isDeleting ? 'Excluindo...' : 'Confirmar exclusão'}
-                  </button>
+                  <button className="btn btn-danger" type="submit">Confirmar exclusão</button>
                   <Link className="btn btn-secondary" to={`/usuarios/${user.id}`}>Cancelar</Link>
                 </div>
               </form>
