@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { api, isApiEnabled, isDeadlinesApiEnabled, isEventsApiEnabled, isPetitionsApiEnabled } from './api';
 
@@ -562,11 +563,42 @@ export function AppStateProvider({ children }) {
   }, [currentUserId]);
 
   function addFlash(message, type = 'success') {
-    const id = nextId('flash');
-    setFlashes((currentFlashes) => [...currentFlashes, { id, message, type }]);
-    window.setTimeout(() => {
-      setFlashes((currentFlashes) => currentFlashes.filter((flash) => flash.id !== id));
-    }, 3500);
+    const durationByType = {
+      success: 1800,
+      info: 1800,
+      warning: 2600,
+      error: 4200,
+    };
+    const options = { duration: durationByType[type] || 2200 };
+
+    if (type === 'error') {
+      toast.error(message, options);
+      return;
+    }
+
+    if (type === 'warning') {
+      toast.warning(message, options);
+      return;
+    }
+
+    if (type === 'info') {
+      toast.info(message, options);
+      return;
+    }
+
+    toast.success(message, options);
+  }
+
+  function addDeleteToast(message, onUndo = null) {
+    toast(message, {
+      duration: onUndo ? 4500 : 1800,
+      action: onUndo
+        ? {
+            label: 'Desfazer',
+            onClick: onUndo,
+          }
+        : undefined,
+    });
   }
 
   function removeFlash(flashId) {
@@ -956,6 +988,15 @@ export function AppStateProvider({ children }) {
   }
 
   async function deleteClient(clientId) {
+    const previousState = {
+      clients,
+      processes,
+      events,
+      deadlines,
+      petitions,
+    };
+    const canUndo = !isApiEnabled && !isEventsApiEnabled && !isDeadlinesApiEnabled && !isPetitionsApiEnabled;
+
     if (isApiEnabled) {
       try {
         await api.deleteClient(clientId);
@@ -978,11 +1019,24 @@ export function AppStateProvider({ children }) {
       currentDeadlines.filter((deadline) => deadline.clientId !== clientId && !relatedProcessIds.includes(deadline.processId)),
     );
     setPetitions((currentPetitions) => currentPetitions.filter((petition) => petition.clientId !== clientId));
-    addFlash('Cliente excluído.', 'success');
+    addDeleteToast('Cliente excluído.', canUndo ? () => {
+      setClients(previousState.clients);
+      setProcesses(previousState.processes);
+      setEvents(previousState.events);
+      setDeadlines(previousState.deadlines);
+      setPetitions(previousState.petitions);
+    } : null);
     return true;
   }
 
   async function deleteProcess(processId) {
+    const previousState = {
+      processes,
+      events,
+      deadlines,
+    };
+    const canUndo = !isApiEnabled && !isEventsApiEnabled && !isDeadlinesApiEnabled;
+
     if (isApiEnabled) {
       try {
         await api.deleteProcess(processId);
@@ -995,11 +1049,16 @@ export function AppStateProvider({ children }) {
     setProcesses((currentProcesses) => currentProcesses.filter((process) => process.id !== processId));
     setEvents((currentEvents) => currentEvents.filter((event) => event.processId !== processId));
     setDeadlines((currentDeadlines) => currentDeadlines.filter((deadline) => deadline.processId !== processId));
-    addFlash('Processo excluído.', 'success');
+    addDeleteToast('Processo excluído.', canUndo ? () => {
+      setProcesses(previousState.processes);
+      setEvents(previousState.events);
+      setDeadlines(previousState.deadlines);
+    } : null);
     return true;
   }
 
   async function deleteEvent(eventId) {
+    const previousEvents = events;
     if (isEventsApiEnabled) {
       try {
         await api.deleteEvent(eventId);
@@ -1010,11 +1069,12 @@ export function AppStateProvider({ children }) {
     }
 
     setEvents((currentEvents) => currentEvents.filter((event) => event.id !== eventId));
-    addFlash('Compromisso excluído.', 'success');
+    addDeleteToast('Compromisso excluído.', !isEventsApiEnabled ? () => setEvents(previousEvents) : null);
     return true;
   }
 
   async function deleteDeadline(deadlineId) {
+    const previousDeadlines = deadlines;
     if (isDeadlinesApiEnabled) {
       try {
         await api.deleteDeadline(deadlineId);
@@ -1025,11 +1085,12 @@ export function AppStateProvider({ children }) {
     }
 
     setDeadlines((currentDeadlines) => currentDeadlines.filter((deadline) => deadline.id !== deadlineId));
-    addFlash('Prazo excluido.', 'success');
+    addDeleteToast('Prazo excluido.', !isDeadlinesApiEnabled ? () => setDeadlines(previousDeadlines) : null);
     return true;
   }
 
   async function deletePetition(petitionId) {
+    const previousPetitions = petitions;
     if (isPetitionsApiEnabled) {
       try {
         await api.deletePetition(petitionId);
@@ -1040,11 +1101,13 @@ export function AppStateProvider({ children }) {
     }
 
     setPetitions((currentPetitions) => currentPetitions.filter((petition) => petition.id !== petitionId));
-    addFlash('Peticao excluida.', 'success');
+    addDeleteToast('Peticao excluida.', !isPetitionsApiEnabled ? () => setPetitions(previousPetitions) : null);
     return true;
   }
 
   async function deleteUser(userId) {
+    const previousUsers = users;
+    const previousCurrentUserId = currentUserId;
     if (isApiEnabled) {
       try {
         await api.deleteUser(userId);
@@ -1058,11 +1121,15 @@ export function AppStateProvider({ children }) {
     if (userId === currentUserId) {
       setCurrentUserId(null);
     }
-    addFlash('Usuário excluído.', 'success');
+    addDeleteToast('Usuário excluído.', !isApiEnabled ? () => {
+      setUsers(previousUsers);
+      setCurrentUserId(previousCurrentUserId);
+    } : null);
     return true;
   }
 
   async function deleteRole(roleId) {
+    const previousRoles = roles;
     if (isApiEnabled) {
       try {
         await api.deleteRole(roleId);
@@ -1073,7 +1140,7 @@ export function AppStateProvider({ children }) {
     }
 
     setRoles((currentRoles) => currentRoles.filter((role) => role.id !== roleId));
-    addFlash('Cargo excluído.', 'success');
+    addDeleteToast('Cargo excluído.', !isApiEnabled ? () => setRoles(previousRoles) : null);
     return true;
   }
 

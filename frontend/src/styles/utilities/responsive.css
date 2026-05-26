@@ -77,7 +77,7 @@
     }
 
     html[data-sidebar-collapsed="true"] .sidebar-scroll{
-        padding:18px 14px;
+        padding:10px;
         scrollbar-gutter:auto;
     }
 
@@ -89,10 +89,24 @@
     html[data-sidebar-collapsed="true"] .nav-link{
         gap:0;
         justify-content:center;
+        padding-left:0;
+        padding-right:0;
     }
 
     html[data-sidebar-collapsed="true"] .brand{
-        padding-right:8px;
+        padding:0;
+        min-height:40px;
+    }
+
+    html[data-sidebar-collapsed="true"] .brand-mark{
+        width:36px;
+        height:36px;
+        border-radius:12px;
+    }
+
+    html[data-sidebar-collapsed="true"] .nav-link{
+        min-height:40px;
+        border-radius:13px;
     }
 
     html[data-sidebar-collapsed="true"] .brand-copy,
@@ -116,8 +130,9 @@
     }
 
     html[data-sidebar-collapsed="true"] .sidebar-profile .avatar{
-        width:40px;
-        height:40px;
+        width:36px;
+        height:36px;
+        border-radius:12px;
     }
 
     html[data-sidebar-collapsed="true"] .sidebar-footer{

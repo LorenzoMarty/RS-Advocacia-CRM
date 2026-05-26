@@ -1,83 +1,82 @@
-import { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import * as Dialog from '@radix-ui/react-dialog';
+import { AnimatePresence, motion as Motion } from 'framer-motion';
+import { AlertTriangle } from 'lucide-react';
+
+import { cn } from '../../lib/utils';
+import { Button } from './ui/button';
 
 export function ConfirmPopup({
   cancelLabel = 'Cancelar',
   confirmLabel = 'Confirmar',
   message,
+  open,
   onCancel,
   onConfirm,
   title = 'Confirmar ação',
   tone = 'danger',
 }) {
-  const cancelButtonRef = useRef(null);
-
-  useEffect(() => {
-    cancelButtonRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') {
-        onCancel();
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onCancel]);
-
-  function handleLayerClick(event) {
-    if (event.target === event.currentTarget) {
+  function handleOpenChange(nextOpen) {
+    if (!nextOpen) {
       onCancel();
     }
   }
 
-  return createPortal(
-    <div
-      className="popup-layer"
-      role="presentation"
-      onMouseDown={handleLayerClick}
-    >
-      <section
-        aria-labelledby="confirm-popup-title"
-        aria-modal="true"
-        className={`popup-panel popup-panel-${tone}`}
-        role="dialog"
-      >
-        <div className="popup-mark" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 9v4" />
-            <path d="M12 17h.01" />
-            <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
-          </svg>
-        </div>
+  return (
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Portal forceMount>
+        <AnimatePresence>
+          {open ? (
+            <Dialog.Overlay asChild forceMount>
+              <Motion.div
+                className="popup-layer"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              />
+            </Dialog.Overlay>
+          ) : null}
+        </AnimatePresence>
 
-        <div className="popup-copy">
-          <p className="popup-kicker">Confirmação</p>
-          <h2 id="confirm-popup-title">{title}</h2>
-          {message ? <p>{message}</p> : null}
-        </div>
+        <AnimatePresence>
+          {open ? (
+            <Dialog.Content asChild forceMount>
+              <Motion.section
+                className={cn('popup-panel rounded-xl', `popup-panel-${tone}`)}
+                initial={{ opacity: 0, scale: 0.97, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="popup-mark" aria-hidden="true">
+                  <AlertTriangle size={20} strokeWidth={1.9} />
+                </div>
 
-        <div className="popup-actions">
-          <button
-            className="btn btn-secondary"
-            type="button"
-            ref={cancelButtonRef}
-            onClick={onCancel}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            className={`btn${tone === 'danger' ? ' btn-danger' : ''}`}
-            type="button"
-            onClick={onConfirm}
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </section>
-    </div>,
-    document.body,
+                <div className="popup-copy">
+                  <p className="popup-kicker">Confirmação</p>
+                  <Dialog.Title>{title}</Dialog.Title>
+                  {message ? <Dialog.Description>{message}</Dialog.Description> : null}
+                </div>
+
+                <div className="popup-actions">
+                  <Dialog.Close asChild>
+                    <Button variant="secondary" type="button">
+                      {cancelLabel}
+                    </Button>
+                  </Dialog.Close>
+                  <Button
+                    variant={tone === 'danger' ? 'destructive' : 'default'}
+                    type="button"
+                    onClick={onConfirm}
+                  >
+                    {confirmLabel}
+                  </Button>
+                </div>
+              </Motion.section>
+            </Dialog.Content>
+          ) : null}
+        </AnimatePresence>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
