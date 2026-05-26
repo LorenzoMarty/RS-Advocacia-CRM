@@ -15,19 +15,16 @@ import {
   ClientsListPage,
   ClientFormPage,
   ClientDetailPage,
-  ClientDeletePage,
 } from "./app/pages/clients";
 import {
   ProcessesListPage,
   ProcessFormPage,
   ProcessDetailPage,
-  ProcessDeletePage,
 } from "./app/pages/processes";
 import {
   AgendaListPage,
   EventFormPage,
   EventDetailPage,
-  EventDeletePage,
 } from "./app/pages/agendas";
 import {
   DeadlineDetailPage,
@@ -39,13 +36,11 @@ import {
   UsersListPage,
   UserFormPage,
   UserDetailPage,
-  UserDeletePage,
 } from "./app/pages/users";
 import {
   RolesListPage,
   RoleFormPage,
   RoleDetailPage,
-  RoleDeletePage,
 } from "./app/pages/roles";
 import { ApiTestPage } from "./app/pages/api-test";
 import { MeetingsPage } from "./app/pages/meetings";
@@ -110,10 +105,6 @@ export default function App() {
               path="/clientes/:clientId/editar"
               element={<ClientFormRoute />}
             />
-            <Route
-              path="/clientes/:clientId/excluir"
-              element={<ClientDeletePage />}
-            />
 
             <Route path="/processos" element={<ProcessesListPage />} />
             <Route path="/processos/novo" element={<ProcessFormRoute />} />
@@ -125,10 +116,6 @@ export default function App() {
               path="/processos/:processId/editar"
               element={<ProcessFormRoute />}
             />
-            <Route
-              path="/processos/:processId/excluir"
-              element={<ProcessDeletePage />}
-            />
 
             <Route path="/agenda" element={<AgendaListPage />} />
             <Route path="/agenda/novo" element={<EventFormRoute />} />
@@ -136,10 +123,6 @@ export default function App() {
             <Route
               path="/agenda/:eventId/editar"
               element={<EventFormRoute />}
-            />
-            <Route
-              path="/agenda/:eventId/excluir"
-              element={<EventDeletePage />}
             />
 
             <Route path="/prazos" element={<DeadlinesPage />} />
@@ -160,19 +143,11 @@ export default function App() {
               path="/usuarios/:userId/editar"
               element={<UserFormRoute />}
             />
-            <Route
-              path="/usuarios/:userId/excluir"
-              element={<UserDeletePage />}
-            />
 
             <Route path="/cargos" element={<RolesListPage />} />
             <Route path="/cargos/novo" element={<RoleFormRoute />} />
             <Route path="/cargos/:roleId" element={<RoleDetailPage />} />
             <Route path="/cargos/:roleId/editar" element={<RoleFormRoute />} />
-            <Route
-              path="/cargos/:roleId/excluir"
-              element={<RoleDeletePage />}
-            />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

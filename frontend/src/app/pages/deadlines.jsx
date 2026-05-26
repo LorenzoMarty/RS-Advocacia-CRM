@@ -149,7 +149,7 @@ function DeadlineCard({
 }
 
 export function DeadlinesPage() {
-  const { clients, deadlines, processes, saveDeadline } = useAppState();
+  const { addFlash, clients, deadlines, processes, saveDeadline } = useAppState();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState(() => dateInputValue(searchParams.get('data') || new Date()));
   const [search, setSearch] = useState('');
@@ -220,12 +220,16 @@ export function DeadlinesPage() {
 
     try {
       const deadlineProcess = processes.find((process) => process.id === deadline.processId) || null;
-      await saveDeadline({
+      const savedDeadline = await saveDeadline({
         ...deadline,
         title: buildDeadlineTitle(deadlineProcess, deadline.responsible) || deadline.title,
         status: nextColumn.label,
         completed: nextColumn.key === 'protocolado',
-      });
+      }, { silent: true });
+
+      if (savedDeadline) {
+        addFlash(`Prazo movido para ${nextColumn.label}.`, 'info');
+      }
     } finally {
       window.setTimeout(() => {
         setMovingDeadlineId('');
@@ -539,9 +543,9 @@ export function DeadlineDetailPage() {
 
   async function handleDelete() {
     const canDelete = await confirm({
-      title: 'Excluir prazo',
-      message: `O prazo "${deadlineTitle}" sera removido permanentemente.`,
-      confirmLabel: 'Excluir prazo',
+      title: 'Tem certeza?',
+      message: `O prazo "${deadlineTitle}" será deletado.`,
+      confirmLabel: 'Deletar',
       tone: 'danger',
     });
 
@@ -768,9 +772,9 @@ export function DeadlineFormPage() {
     }
 
     const canDelete = await confirm({
-      title: 'Excluir prazo',
-      message: `O prazo "${generatedTitle || deadline.title}" sera removido permanentemente.`,
-      confirmLabel: 'Excluir prazo',
+      title: 'Tem certeza?',
+      message: `O prazo "${generatedTitle || deadline.title}" será deletado.`,
+      confirmLabel: 'Deletar',
       tone: 'danger',
     });
 

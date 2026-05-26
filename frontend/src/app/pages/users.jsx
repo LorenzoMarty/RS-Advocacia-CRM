@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch } from '../layout';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, normalizeText } from '../utils';
@@ -24,15 +25,37 @@ function validateUserForm(form, users, currentId) {
 }
 
 export function UsersListPage() {
-  const { roles, users } = useAppState();
+  const { addFlash, currentUser, deleteUser, roles, users } = useAppState();
+  const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
 
   const filteredUsers = users.filter((user) =>
     buildSearchText([user.name, user.email, roleLabel(roles, user.roleId)]).includes(normalizeText(search)),
   );
 
+  async function handleDeleteUser(user) {
+    if (currentUser?.id === user.id) {
+      addFlash('Você não pode deletar o usuário da sessão atual.', 'warning');
+      return;
+    }
+
+    const canDelete = await confirm({
+      title: 'Tem certeza?',
+      message: `O usuário "${user.name}" será deletado.`,
+      confirmLabel: 'Deletar',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
+      return;
+    }
+
+    await deleteUser(user.id);
+  }
+
   return (
     <>
+      {confirmPopup}
       <PageChrome label="Usuários" />
 
       <div className="users-page">
@@ -88,7 +111,7 @@ export function UsersListPage() {
                     <div className="user-actions">
                       <Link className="action-link" to={`/usuarios/${user.id}`}>Ver</Link>
                       <Link className="action-link" to={`/usuarios/${user.id}/editar`}>Editar</Link>
-                      <Link className="action-link action-link-danger" to={`/usuarios/${user.id}/excluir`}>Excluir</Link>
+                      <button className="action-link action-link-danger" type="button" onClick={() => handleDeleteUser(user)}>Excluir</button>
                     </div>
                   </article>
                 ))}
@@ -358,77 +381,6 @@ export function UserDetailPage() {
             </section>
           </div>
         </div>
-      </div>
-    </>
-  );
-}
-
-export function UserDeletePage() {
-  const navigate = useNavigate();
-  const params = useParams();
-  const { currentUser, deleteUser, roles, users } = useAppState();
-  const user = users.find((item) => item.id === params.userId) || null;
-
-  if (!user) {
-    return <NotFoundState title="Usuário não encontrado." />;
-  }
-
-  const isBlocked = currentUser?.id === user.id;
-
-  async function handleDelete(event) {
-    event.preventDefault();
-    if (isBlocked) {
-      return;
-    }
-
-    const wasDeleted = await deleteUser(user.id);
-    if (!wasDeleted) {
-      return;
-    }
-    navigate('/usuarios', { replace: true });
-  }
-
-  return (
-    <>
-      <PageChrome label="Excluir" actions={<Link className="btn btn-secondary" to={`/usuarios/${user.id}`}>Voltar</Link>} />
-
-      <div className="confirm-page">
-        <section className="surface confirm-intro">
-          <div className="section-head">
-            <div>
-              <h1 className="confirm-title">Excluir usuário</h1>
-              <p className="confirm-copy">Revise o registro antes de confirmar. A exclusão remove este item do fluxo principal.</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="surface confirm-panel">
-          <div className="confirm-box">
-            <div className={`confirm-alert${isBlocked ? ' is-blocked' : ''}`}>
-              <strong>{isBlocked ? 'Ação bloqueada.' : 'Ação irreversível.'}</strong>
-              <p>{isBlocked ? 'Você não pode excluir o usuário que está utilizando a sessão atual.' : 'Depois da confirmação, este registro não poderá ser recuperado pela interface.'}</p>
-            </div>
-
-            <div className="confirm-meta">
-              <span>Registro selecionado</span>
-              <strong>{user.name}</strong>
-              <p>{roleLabel(roles, user.roleId)}</p>
-            </div>
-
-            {isBlocked ? (
-              <div className="confirm-actions">
-                <Link className="btn btn-secondary" to={`/usuarios/${user.id}`}>Voltar</Link>
-              </div>
-            ) : (
-              <form onSubmit={handleDelete}>
-                <div className="confirm-actions">
-                  <button className="btn btn-danger" type="submit">Confirmar exclusão</button>
-                  <Link className="btn btn-secondary" to={`/usuarios/${user.id}`}>Cancelar</Link>
-                </div>
-              </form>
-            )}
-          </div>
-        </section>
       </div>
     </>
   );

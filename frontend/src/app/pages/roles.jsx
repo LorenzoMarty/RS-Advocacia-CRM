@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome } from '../layout';
 import { useAppState } from '../store';
 import { formatCount } from '../utils';
@@ -188,10 +189,34 @@ function validateRoleForm(form) {
 }
 
 export function RolesListPage() {
-  const { permissionGroups, roles, users } = useAppState();
+  const { addFlash, deleteRole, permissionGroups, roles, users } = useAppState();
+  const { confirm, confirmPopup } = useConfirmPopup();
+
+  async function handleDeleteRole(role) {
+    const roleUsers = linkedUsers(users, role.id);
+
+    if (roleUsers.length) {
+      addFlash('Realoque os usuários vinculados antes de deletar este cargo.', 'warning');
+      return;
+    }
+
+    const canDelete = await confirm({
+      title: 'Tem certeza?',
+      message: `O cargo "${role.name}" será deletado.`,
+      confirmLabel: 'Deletar',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
+      return;
+    }
+
+    await deleteRole(role.id);
+  }
 
   return (
     <>
+      {confirmPopup}
       <PageChrome label="Cargos" />
 
       <div className="cargos-page">
@@ -252,7 +277,7 @@ export function RolesListPage() {
                       <div className="cargo-actions">
                         <Link className="action-link" to={`/cargos/${role.id}`}>Ver</Link>
                         <Link className="action-link" to={`/cargos/${role.id}/editar`}>Editar</Link>
-                        <Link className="action-link action-link-danger" to={`/cargos/${role.id}/excluir`}>Excluir</Link>
+                        <button className="action-link action-link-danger" type="button" onClick={() => handleDeleteRole(role)}>Excluir</button>
                       </div>
                     </article>
                   );
@@ -272,7 +297,8 @@ export function RoleFormPage() {
   const navigate = useNavigate();
   const params = useParams();
   const isEditing = Boolean(params.roleId);
-  const { permissionGroups, roles, saveRole } = useAppState();
+  const { addFlash, deleteRole, permissionGroups, roles, saveRole, users } = useAppState();
+  const { confirm, confirmPopup } = useConfirmPopup();
   const role = roles.find((item) => item.id === params.roleId) || null;
   const [form, setForm] = useState(() => ({
     id: role?.id || '',
@@ -329,8 +355,38 @@ export function RoleFormPage() {
     navigate(`/cargos/${savedRole.id || form.id}`, { replace: true });
   }
 
+  async function handleDeleteRole() {
+    if (!role) {
+      return;
+    }
+
+    const roleUsers = linkedUsers(users, role.id);
+
+    if (roleUsers.length) {
+      addFlash('Realoque os usuários vinculados antes de deletar este cargo.', 'warning');
+      return;
+    }
+
+    const canDelete = await confirm({
+      title: 'Tem certeza?',
+      message: `O cargo "${role.name}" será deletado.`,
+      confirmLabel: 'Deletar',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
+      return;
+    }
+
+    const wasDeleted = await deleteRole(role.id);
+    if (wasDeleted) {
+      navigate('/cargos', { replace: true });
+    }
+  }
+
   return (
     <>
+      {confirmPopup}
       <PageChrome label={isEditing ? 'Editar cargo' : 'Novo cargo'} />
 
       <div className="cargo-form-page">
@@ -433,7 +489,7 @@ export function RoleFormPage() {
 
             <div className="form-actions">
               <button className="btn" type="submit">Salvar cargo</button>
-              {isEditing ? <Link className="btn btn-danger" to={`/cargos/${role.id}/excluir`}>Excluir cargo</Link> : null}
+              {isEditing ? <button className="btn btn-danger" type="button" onClick={handleDeleteRole}>Excluir cargo</button> : null}
               <Link className="btn btn-secondary" to={isEditing ? `/cargos/${role.id}` : '/cargos'}>Cancelar</Link>
             </div>
           </form>
@@ -564,78 +620,6 @@ export function RoleDetailPage() {
             )}
           </section>
         </div>
-      </div>
-    </>
-  );
-}
-
-export function RoleDeletePage() {
-  const navigate = useNavigate();
-  const params = useParams();
-  const { deleteRole, roles, users } = useAppState();
-  const role = roles.find((item) => item.id === params.roleId) || null;
-
-  if (!role) {
-    return <NotFoundState title="Cargo não encontrado." />;
-  }
-
-  const roleUsers = linkedUsers(users, role.id);
-  const isBlocked = roleUsers.length > 0;
-
-  async function handleDelete(event) {
-    event.preventDefault();
-    if (isBlocked) {
-      return;
-    }
-
-    const wasDeleted = await deleteRole(role.id);
-    if (!wasDeleted) {
-      return;
-    }
-    navigate('/cargos', { replace: true });
-  }
-
-  return (
-    <>
-      <PageChrome label="Excluir" actions={<Link className="btn btn-secondary" to={`/cargos/${role.id}`}>Voltar</Link>} />
-
-      <div className="confirm-page">
-        <section className="surface confirm-intro">
-          <div className="section-head">
-            <div>
-              <h1 className="confirm-title">Excluir cargo</h1>
-              <p className="confirm-copy">Revise o registro antes de confirmar. A exclusão remove este item do fluxo principal.</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="surface confirm-panel">
-          <div className="confirm-box">
-            <div className={`confirm-alert${isBlocked ? ' is-blocked' : ''}`}>
-              <strong>{isBlocked ? 'Ação bloqueada.' : 'Ação irreversível.'}</strong>
-              <p>{isBlocked ? 'Existem usuários vinculados a este cargo. Realoque esses perfis antes de excluir.' : 'Depois da confirmação, este registro não poderá ser recuperado pela interface.'}</p>
-            </div>
-
-            <div className="confirm-meta">
-              <span>Registro selecionado</span>
-              <strong>{role.name}</strong>
-              <p>{roleUsers.length} usuários vinculados</p>
-            </div>
-
-            {isBlocked ? (
-              <div className="confirm-actions">
-                <Link className="btn btn-secondary" to={`/cargos/${role.id}`}>Voltar</Link>
-              </div>
-            ) : (
-              <form onSubmit={handleDelete}>
-                <div className="confirm-actions">
-                  <button className="btn btn-danger" type="submit">Confirmar exclusão</button>
-                  <Link className="btn btn-secondary" to={`/cargos/${role.id}`}>Cancelar</Link>
-                </div>
-              </form>
-            )}
-          </div>
-        </section>
       </div>
     </>
   );

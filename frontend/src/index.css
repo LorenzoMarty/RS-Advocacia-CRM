@@ -18,7 +18,6 @@
 @import "./styles/pages/usuarios-cargos.css";
 @import "./styles/pages/usuarios-cargo-form.css";
 @import "./styles/pages/usuarios-cargo-detail.css";
-@import "./styles/pages/confirm-delete.css";
 @import "./styles/pages/api-test.css";
 
 #root {
@@ -49,14 +48,11 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.flash-stack button {
-  border: 0;
-  width: 100%;
-  text-align: left;
+button.action-link {
+  appearance: none;
 }
 
 .topbar-actions > *,
-.confirm-actions > *,
 .form-actions > *,
 .empty-actions > * {
   text-decoration: none;
@@ -110,8 +106,6 @@ button:disabled {
   .create-intro,
   .event-intro,
   .form-panel,
-  .confirm-intro,
-  .confirm-panel,
   .api-test-hero,
   .api-test-list
 ) {
@@ -145,7 +139,6 @@ html[data-theme="light"] #root .main :where(
   .cargo-intro,
   .create-intro,
   .event-intro,
-  .confirm-intro,
   .api-test-hero
 ) {
   background: #ffffff;
@@ -160,7 +153,6 @@ html[data-theme="light"] #root .main :where(
   .clients-page,
   .client-page,
   .create-page,
-  .confirm-page,
   .deadlines-page,
   .deadline-form-page,
   .deadline-detail-page,

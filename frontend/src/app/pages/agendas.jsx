@@ -6,6 +6,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 
+import { useConfirmPopup } from "../hooks/use-confirm-popup";
 import { PageChrome, StatusBadge } from "../layout";
 import { useAppState } from "../store";
 import {
@@ -1105,8 +1106,10 @@ export function EventFormPage() {
 }
 
 export function EventDetailPage() {
+  const navigate = useNavigate();
   const params = useParams();
-  const { clients, events, loadEvent, processes } = useAppState();
+  const { clients, deleteEvent, events, loadEvent, processes } = useAppState();
+  const { confirm, confirmPopup } = useConfirmPopup();
   const [remoteEvent, setRemoteEvent] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(true);
   const eventItem =
@@ -1147,8 +1150,27 @@ export function EventDetailPage() {
   const process =
     processes.find((item) => item.id === eventItem.processId) || null;
 
+  async function handleDeleteEvent() {
+    const canDelete = await confirm({
+      title: "Tem certeza?",
+      message: `O compromisso "${eventItem.title}" será deletado.`,
+      confirmLabel: "Deletar",
+      tone: "danger",
+    });
+
+    if (!canDelete) {
+      return;
+    }
+
+    const wasDeleted = await deleteEvent(eventItem.id);
+    if (wasDeleted) {
+      navigate("/agenda", { replace: true });
+    }
+  }
+
   return (
     <>
+      {confirmPopup}
       <PageChrome
         label="Compromisso"
         actions={
@@ -1159,12 +1181,13 @@ export function EventDetailPage() {
             >
               Editar
             </Link>
-            <Link
+            <button
               className="btn btn-danger"
-              to={`/agenda/${eventItem.id}/excluir`}
+              type="button"
+              onClick={handleDeleteEvent}
             >
               Excluir
-            </Link>
+            </button>
           </>
         }
       />
@@ -1399,89 +1422,6 @@ export function EventDetailPage() {
             </section>
           </div>
         </div>
-      </div>
-    </>
-  );
-}
-
-export function EventDeletePage() {
-  const navigate = useNavigate();
-  const params = useParams();
-  const { deleteEvent, events, isEventsLoading } = useAppState();
-  const eventItem = events.find((item) => item.id === params.eventId) || null;
-
-  if (!eventItem) {
-    if (isEventsLoading) {
-      return null;
-    }
-
-    return <NotFoundState title="Compromisso não encontrado." />;
-  }
-
-  async function handleDelete(event) {
-    event.preventDefault();
-    const wasDeleted = await deleteEvent(eventItem.id);
-    if (!wasDeleted) {
-      return;
-    }
-    navigate("/agenda", { replace: true });
-  }
-
-  return (
-    <>
-      <PageChrome
-        label="Excluir"
-        actions={
-          <Link className="btn btn-secondary" to={`/agenda/${eventItem.id}`}>
-            Voltar
-          </Link>
-        }
-      />
-
-      <div className="confirm-page">
-        <section className="surface confirm-intro">
-          <div className="section-head">
-            <div>
-              <h1 className="confirm-title">Excluir compromisso</h1>
-              <p className="confirm-copy">
-                Revise o registro antes de confirmar. A exclusão remove este
-                item do fluxo principal.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="surface confirm-panel">
-          <div className="confirm-box">
-            <div className="confirm-alert">
-              <strong>Ação irreversível.</strong>
-              <p>
-                Depois da confirmação, este registro não poderá ser recuperado
-                pela interface.
-              </p>
-            </div>
-
-            <div className="confirm-meta">
-              <span>Registro selecionado</span>
-              <strong>{eventItem.title}</strong>
-              <p>{formatDateTime(eventItem.start)}</p>
-            </div>
-
-            <form onSubmit={handleDelete}>
-              <div className="confirm-actions">
-                <button className="btn btn-danger" type="submit">
-                  Confirmar exclusão
-                </button>
-                <Link
-                  className="btn btn-secondary"
-                  to={`/agenda/${eventItem.id}`}
-                >
-                  Cancelar
-                </Link>
-              </div>
-            </form>
-          </div>
-        </section>
       </div>
     </>
   );
