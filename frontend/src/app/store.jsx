@@ -391,6 +391,302 @@ function googleSyncMessage(summary) {
   return `Agenda sincronizada: ${parts.join(', ')}.`;
 }
 
+function demoDate(offset = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() + offset);
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 10);
+}
+
+function demoDateTime(offset, time) {
+  return `${demoDate(offset)}T${time}:00`;
+}
+
+function createDemoState() {
+  const today = demoDate(0);
+  const tomorrow = demoDate(1);
+  const nextWeek = demoDate(7);
+
+  const roles = [
+    { id: 'demo-role-admin', name: 'Administrador', permissionIds: [] },
+    { id: 'demo-role-lawyer', name: 'Advogado', permissionIds: [] },
+    { id: 'demo-role-assistant', name: 'Assistente juridico', permissionIds: [] },
+  ];
+
+  const users = [
+    {
+      id: 'demo-user-renata',
+      name: 'Renata Sampaio',
+      email: 'renata@rsadvocacia.demo',
+      picture: '',
+      roleId: 'demo-role-admin',
+      googleCalendarConnected: false,
+      googleCalendarDestination: 'agenda principal do Google',
+    },
+    {
+      id: 'demo-user-mariana',
+      name: 'Mariana Souza',
+      email: 'mariana@rsadvocacia.demo',
+      picture: '',
+      roleId: 'demo-role-lawyer',
+      googleCalendarConnected: false,
+      googleCalendarDestination: 'agenda principal do Google',
+    },
+    {
+      id: 'demo-user-lorenzo',
+      name: 'Lorenzo dos Reis',
+      email: 'lorenzo@rsadvocacia.demo',
+      picture: '',
+      roleId: 'demo-role-assistant',
+      googleCalendarConnected: false,
+      googleCalendarDestination: 'agenda principal do Google',
+    },
+  ];
+
+  const clients = [
+    {
+      id: 'demo-client-bruno',
+      name: 'Bruno Lima',
+      email: 'bruno.lima@email.demo',
+      phone: '(11) 98888-1200',
+      document: '12345678909',
+      clientType: 'mensalista',
+      notes: 'Cliente com acompanhamento ativo em demanda civel e prazos fatais nesta semana.',
+    },
+    {
+      id: 'demo-client-almeida',
+      name: 'Almeida Comercio LTDA',
+      email: 'juridico@almeidacomercio.demo',
+      phone: '(11) 3777-4400',
+      document: '12345678000190',
+      clientType: 'mensalista',
+      notes: 'Contrato mensal para consultivo empresarial e contencioso trabalhista.',
+    },
+    {
+      id: 'demo-client-ana',
+      name: 'Ana Ribeiro',
+      email: 'ana.ribeiro@email.demo',
+      phone: '(21) 97777-8844',
+      document: '98765432100',
+      clientType: 'esporadico',
+      notes: 'Atendimento pontual em acao indenizatoria.',
+    },
+  ];
+
+  const processes = [
+    {
+      id: 'demo-process-bruno',
+      number: '1000002-20.2026.8.26.0100',
+      clientId: 'demo-client-bruno',
+      clientName: 'Bruno Lima',
+      description: 'Acao de obrigacao de fazer com pedido de tutela de urgencia.',
+      court: '12a Vara Civel de Sao Paulo',
+      area: 'Civel',
+      status: 'Em andamento',
+      owner: 'Mariana Souza',
+    },
+    {
+      id: 'demo-process-almeida',
+      number: '0002451-77.2026.5.02.0031',
+      clientId: 'demo-client-almeida',
+      clientName: 'Almeida Comercio LTDA',
+      description: 'Reclamacao trabalhista com audiencia inicial designada.',
+      court: '31a Vara do Trabalho de Sao Paulo',
+      area: 'Trabalhista',
+      status: 'Aguardando despacho',
+      owner: 'Renata Sampaio',
+    },
+    {
+      id: 'demo-process-ana',
+      number: '0801123-45.2026.8.19.0001',
+      clientId: 'demo-client-ana',
+      clientName: 'Ana Ribeiro',
+      description: 'Acao indenizatoria por danos materiais e morais.',
+      court: '5a Vara Civel do Rio de Janeiro',
+      area: 'Civel',
+      status: 'Ativo',
+      owner: 'Mariana Souza',
+    },
+  ];
+
+  const events = [
+    {
+      id: 'demo-event-audiencia',
+      title: 'Audiencia de conciliacao',
+      description: 'Audiencia virtual. Conferir documentos e proposta antes do horario.',
+      start: demoDateTime(0, '09:30'),
+      end: demoDateTime(0, '10:30'),
+      type: 'Audiencia',
+      status: 'Agendado',
+      priority: 'Alta',
+      clientId: 'demo-client-bruno',
+      clientName: 'Bruno Lima',
+      processId: 'demo-process-bruno',
+      processNumber: '1000002-20.2026.8.26.0100',
+      responsible: 'Mariana Souza',
+      createdBy: 'Renata Sampaio',
+      location: 'Videoconferencia',
+      notes: 'Enviar link ao cliente 30 minutos antes.',
+      reminderAt: demoDateTime(0, '09:00'),
+      completed: false,
+    },
+    {
+      id: 'demo-event-reuniao',
+      title: 'Reuniao de alinhamento trabalhista',
+      description: 'Revisar documentos de jornada e estrategia para audiencia.',
+      start: demoDateTime(1, '14:00'),
+      end: demoDateTime(1, '15:00'),
+      type: 'Reuniao',
+      status: 'Agendado',
+      priority: 'Media',
+      clientId: 'demo-client-almeida',
+      clientName: 'Almeida Comercio LTDA',
+      processId: 'demo-process-almeida',
+      processNumber: '0002451-77.2026.5.02.0031',
+      responsible: 'Renata Sampaio',
+      createdBy: 'Lorenzo dos Reis',
+      location: 'Escritorio',
+      notes: 'Separar contrato social e controles de ponto.',
+      reminderAt: demoDateTime(1, '13:30'),
+      completed: false,
+    },
+    {
+      id: 'demo-event-tarefa',
+      title: 'Conferir documentos do cliente',
+      description: 'Checklist de provas antes do protocolo.',
+      start: demoDateTime(0, '16:00'),
+      end: demoDateTime(0, '16:30'),
+      type: 'Tarefa interna',
+      status: 'Pendente',
+      priority: 'Media',
+      clientId: 'demo-client-ana',
+      clientName: 'Ana Ribeiro',
+      processId: 'demo-process-ana',
+      processNumber: '0801123-45.2026.8.19.0001',
+      responsible: 'Lorenzo dos Reis',
+      createdBy: 'Mariana Souza',
+      location: '',
+      notes: 'Validar notas fiscais e comprovantes.',
+      reminderAt: '',
+      completed: false,
+    },
+  ];
+
+  const deadlines = [
+    {
+      id: 'demo-deadline-contestacao',
+      title: '1000002-20.2026.8.26.0100 - Bruno Lima',
+      description: 'Preparar contestacao e documentos para protocolo.',
+      date: today,
+      status: 'Pendente',
+      priority: 'Alta',
+      clientId: 'demo-client-bruno',
+      clientName: 'Bruno Lima',
+      processId: 'demo-process-bruno',
+      processNumber: '1000002-20.2026.8.26.0100',
+      responsible: 'Mariana Souza',
+      createdBy: 'Renata Sampaio',
+      notes: 'Conferir procuracao e comprovantes anexos.',
+      completed: false,
+      elapsedSeconds: 2700,
+      timerStartedAt: '',
+    },
+    {
+      id: 'demo-deadline-manifestacao',
+      title: '0002451-77.2026.5.02.0031 - Almeida Comercio LTDA',
+      description: 'Manifestacao sobre documentos juntados pela parte reclamante.',
+      date: tomorrow,
+      status: 'Em andamento',
+      priority: 'Alta',
+      clientId: 'demo-client-almeida',
+      clientName: 'Almeida Comercio LTDA',
+      processId: 'demo-process-almeida',
+      processNumber: '0002451-77.2026.5.02.0031',
+      responsible: 'Renata Sampaio',
+      createdBy: 'Lorenzo dos Reis',
+      notes: 'Revisar holerites e controles de ponto.',
+      completed: false,
+      elapsedSeconds: 5400,
+      timerStartedAt: '',
+    },
+    {
+      id: 'demo-deadline-protocolo',
+      title: '0801123-45.2026.8.19.0001 - Ana Ribeiro',
+      description: 'Protocolar peticao inicial revisada.',
+      date: nextWeek,
+      status: 'Protocolar',
+      priority: 'Media',
+      clientId: 'demo-client-ana',
+      clientName: 'Ana Ribeiro',
+      processId: 'demo-process-ana',
+      processNumber: '0801123-45.2026.8.19.0001',
+      responsible: 'Mariana Souza',
+      createdBy: 'Renata Sampaio',
+      notes: 'Aguardar assinatura final.',
+      completed: false,
+      elapsedSeconds: 0,
+      timerStartedAt: '',
+    },
+  ];
+
+  const petitions = [
+    {
+      id: 'demo-petition-bruno',
+      clientId: 'demo-client-bruno',
+      clientName: 'Bruno Lima',
+      adversary: 'Companhia Alfa S/A',
+      responsible: 'Mariana Souza',
+      driveLink: 'https://drive.google.com/',
+      pendingReason: 'Aguardando confirmacao de documentos complementares.',
+      area: 'Civel',
+      status: 'Pendente',
+      createdBy: 'Renata Sampaio',
+      createdAt: `${today}T08:30:00`,
+      updatedAt: `${today}T11:20:00`,
+    },
+    {
+      id: 'demo-petition-almeida',
+      clientId: 'demo-client-almeida',
+      clientName: 'Almeida Comercio LTDA',
+      adversary: 'Joao Pereira',
+      responsible: 'Renata Sampaio',
+      driveLink: 'https://drive.google.com/',
+      pendingReason: '',
+      area: 'Trabalhista',
+      status: 'Em andamento',
+      createdBy: 'Lorenzo dos Reis',
+      createdAt: `${today}T09:00:00`,
+      updatedAt: `${today}T13:10:00`,
+    },
+    {
+      id: 'demo-petition-ana',
+      clientId: 'demo-client-ana',
+      clientName: 'Ana Ribeiro',
+      adversary: 'Beta Seguradora',
+      responsible: 'Mariana Souza',
+      driveLink: '',
+      pendingReason: '',
+      area: 'Civel',
+      status: 'Protocolar',
+      createdBy: 'Renata Sampaio',
+      createdAt: `${today}T10:15:00`,
+      updatedAt: `${today}T15:40:00`,
+    },
+  ];
+
+  return {
+    permissionGroups: [],
+    roles,
+    users,
+    clients,
+    processes,
+    events,
+    deadlines,
+    petitions,
+    currentUser: users[0],
+  };
+}
+
 export function AppStateProvider({ children }) {
   const [permissionGroups, setPermissionGroups] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -408,6 +704,25 @@ export function AppStateProvider({ children }) {
   const [isPetitionsLoading, setIsPetitionsLoading] = useState(isPetitionsApiEnabled);
   const [currentSessionUser, setCurrentSessionUser] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem('rs-advocacia-user') || null);
+  const isDemoMode = apiStatus === 'demo';
+  const canUseApi = isApiEnabled && !isDemoMode;
+  const canUseEventsApi = isEventsApiEnabled && !isDemoMode;
+  const canUseDeadlinesApi = isDeadlinesApiEnabled && !isDemoMode;
+  const canUsePetitionsApi = isPetitionsApiEnabled && !isDemoMode;
+
+  function applyDemoState() {
+    const demoState = createDemoState();
+    setPermissionGroups(demoState.permissionGroups);
+    setRoles(sortByName(demoState.roles));
+    setUsers(sortByName(demoState.users));
+    setClients(sortByName(demoState.clients));
+    setProcesses(demoState.processes);
+    setEvents(demoState.events);
+    setDeadlines(demoState.deadlines);
+    setPetitions(demoState.petitions);
+    setCurrentSessionUser(demoState.currentUser);
+    setCurrentUserId(demoState.currentUser.id);
+  }
 
   function syncCurrentUser(user) {
     if (!user) {
@@ -509,6 +824,12 @@ export function AppStateProvider({ children }) {
     let isMounted = true;
 
     if (!isApiEnabled) {
+      applyDemoState();
+      setApiStatus('demo');
+      setIsLoading(false);
+      setIsEventsLoading(false);
+      setIsDeadlinesLoading(false);
+      setIsPetitionsLoading(false);
       return () => {
         isMounted = false;
       };
@@ -532,8 +853,9 @@ export function AppStateProvider({ children }) {
           return;
         }
 
-        setApiStatus('error');
-        addFlash(`API indisponível: ${errorMessage(error)}`, 'error');
+        applyDemoState();
+        setApiStatus('demo');
+        addFlash(`Modo demo carregado. API indisponivel: ${errorMessage(error)}`, 'info');
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -574,7 +896,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function sair() {
-    if (isApiEnabled) {
+    if (canUseApi) {
       try {
         await api.sair();
       } catch (error) {
@@ -595,7 +917,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveClient(payload) {
-    if (isApiEnabled) {
+    if (canUseApi) {
       try {
         const response = payload.id
           ? await api.updateClient(payload.id, clientToPayload(payload))
@@ -628,7 +950,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveProcess(payload) {
-    if (isApiEnabled) {
+    if (canUseApi) {
       try {
         const response = payload.id
           ? await api.updateProcess(payload.id, processToPayload(payload))
@@ -661,7 +983,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveEvent(payload) {
-    if (isEventsApiEnabled) {
+    if (canUseEventsApi) {
       try {
         const response = payload.id
           ? await api.updateEvent(payload.id, eventToPayload(payload))
@@ -694,7 +1016,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveDeadline(payload) {
-    if (isDeadlinesApiEnabled) {
+    if (canUseDeadlinesApi) {
       try {
         const response = payload.id
           ? await api.updateDeadline(payload.id, deadlineToPayload(payload))
@@ -727,7 +1049,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function savePetition(payload) {
-    if (isPetitionsApiEnabled) {
+    if (canUsePetitionsApi) {
       try {
         const response = payload.id
           ? await api.updatePetition(payload.id, petitionToPayload(payload))
@@ -760,7 +1082,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadEvent(eventId) {
-    if (!isEventsApiEnabled) {
+    if (!canUseEventsApi) {
       return events.find((event) => event.id === eventId) || null;
     }
 
@@ -782,7 +1104,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadDeadline(deadlineId) {
-    if (!isDeadlinesApiEnabled) {
+    if (!canUseDeadlinesApi) {
       return deadlines.find((deadline) => deadline.id === deadlineId) || null;
     }
 
@@ -804,7 +1126,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadPetition(petitionId) {
-    if (!isPetitionsApiEnabled) {
+    if (!canUsePetitionsApi) {
       return petitions.find((petition) => petition.id === petitionId) || null;
     }
 
@@ -826,7 +1148,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function syncGoogleCalendarEvents({ silent = false } = {}) {
-    if (!isEventsApiEnabled) {
+    if (!canUseEventsApi) {
       addFlash('API de eventos nao configurada.', 'error');
       return null;
     }
@@ -853,7 +1175,7 @@ export function AppStateProvider({ children }) {
       timerStartedAt: timer.timerStartedAt || '',
     };
 
-    if (isDeadlinesApiEnabled) {
+    if (canUseDeadlinesApi) {
       try {
         const response = await api.updateDeadlineTimer(deadlineId, deadlineTimerToPayload(timerPayload));
         const savedDeadline = deadlineFromResponse(response);
@@ -888,7 +1210,7 @@ export function AppStateProvider({ children }) {
       return null;
     }
 
-    if (isApiEnabled) {
+    if (canUseApi) {
       try {
         const response = await api.updateUser(payload.id, userToPayload(payload));
         const savedUser = userFromResponse(response);
@@ -923,7 +1245,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveRole(payload) {
-    if (isApiEnabled) {
+    if (canUseApi) {
       try {
         const response = payload.id
           ? await api.updateRole(payload.id, roleToPayload(payload))
@@ -956,7 +1278,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function deleteClient(clientId) {
-    if (isApiEnabled) {
+    if (canUseApi) {
       try {
         await api.deleteClient(clientId);
       } catch (error) {
@@ -983,7 +1305,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function deleteProcess(processId) {
-    if (isApiEnabled) {
+    if (canUseApi) {
       try {
         await api.deleteProcess(processId);
       } catch (error) {
@@ -1000,7 +1322,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function deleteEvent(eventId) {
-    if (isEventsApiEnabled) {
+    if (canUseEventsApi) {
       try {
         await api.deleteEvent(eventId);
       } catch (error) {
@@ -1015,7 +1337,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function deleteDeadline(deadlineId) {
-    if (isDeadlinesApiEnabled) {
+    if (canUseDeadlinesApi) {
       try {
         await api.deleteDeadline(deadlineId);
       } catch (error) {
@@ -1030,7 +1352,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function deletePetition(petitionId) {
-    if (isPetitionsApiEnabled) {
+    if (canUsePetitionsApi) {
       try {
         await api.deletePetition(petitionId);
       } catch (error) {
@@ -1045,7 +1367,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function deleteUser(userId) {
-    if (isApiEnabled) {
+    if (canUseApi) {
       try {
         await api.deleteUser(userId);
       } catch (error) {
@@ -1063,7 +1385,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function deleteRole(roleId) {
-    if (isApiEnabled) {
+    if (canUseApi) {
       try {
         await api.deleteRole(roleId);
       } catch (error) {
@@ -1098,6 +1420,7 @@ export function AppStateProvider({ children }) {
     isDeadlinesLoading,
     isPetitionsLoading,
     apiStatus,
+    isDemoMode,
     removeFlash,
     addFlash,
     sair,
