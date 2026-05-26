@@ -34,9 +34,6 @@ function meetingFromApi(meeting) {
     meetingAt: meeting.data_reuniao || '',
     clientId: String(meeting.cliente_id || ''),
     clientName: meeting.cliente_nome || '',
-    processId: String(meeting.processo_id || ''),
-    processNumber: meeting.processo_numero || '',
-    agenda: meeting.pauta || '',
     createdBy: meeting.criado_por || '',
     createdAt: meeting.criado_em || '',
     recordings: (meeting.gravacoes || []).map(recordingFromApi).filter(Boolean),
@@ -55,8 +52,6 @@ export async function createMeeting(meeting) {
       titulo: meeting.title,
       data_reuniao: meeting.meetingAt || null,
       cliente: meeting.clientId || null,
-      processo: meeting.processId || null,
-      pauta: meeting.agenda,
     }),
   });
   return meetingFromApi(payload.reuniao);
@@ -69,8 +64,6 @@ export async function updateMeeting(meetingId, meeting) {
       titulo: meeting.title,
       data_reuniao: meeting.meetingAt || null,
       cliente: meeting.clientId || null,
-      processo: meeting.processId || null,
-      pauta: meeting.agenda,
     }),
   });
   return meetingFromApi(payload.reuniao);

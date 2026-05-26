@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AudioRecorder } from '../components/audio-recorder';
+import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { useRecordingPolling } from '../hooks/use-recording-polling';
 import { PageChrome, StatusBadge } from '../layout';
 import {
@@ -19,8 +20,6 @@ const EMPTY_FORM = {
   title: '',
   meetingAt: '',
   clientId: '',
-  processId: '',
-  agenda: '',
 };
 
 function statusTone(status) {
@@ -70,8 +69,6 @@ function meetingToForm(meeting) {
     title: meeting.title || '',
     meetingAt: formatDateTimeInput(meeting.meetingAt),
     clientId: meeting.clientId || '',
-    processId: meeting.processId || '',
-    agenda: meeting.agenda || '',
   };
 }
 
@@ -395,7 +392,8 @@ function RecordingResult({ onDelete, onSaveTranscript, recording }) {
 }
 
 export function MeetingsPage() {
-  const { addFlash, clients, processes } = useAppState();
+  const { addFlash, clients } = useAppState();
+  const { confirm, confirmPopup } = useConfirmPopup();
   const addFlashRef = useRef(addFlash);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formMode, setFormMode] = useState('idle');
@@ -434,11 +432,6 @@ export function MeetingsPage() {
   const selectedMeeting = meetings.find((meeting) => meeting.id === selectedId) || null;
   const isMeetingFormOpen = formMode !== 'idle';
   const isEditingMeeting = formMode === 'edit';
-  const availableProcesses = useMemo(
-    () => processes.filter((process) => process.clientId === form.clientId),
-    [form.clientId, processes],
-  );
-
   const refreshRecording = useCallback(async (recordingId) => {
     const updatedRecording = await getRecording(recordingId);
     setMeetings((current) => current.map((meeting) => ({
@@ -499,7 +492,14 @@ export function MeetingsPage() {
   }
 
   async function handleDeleteMeeting(meeting) {
-    if (!window.confirm(`Apagar a reunião "${meeting.title}" e suas gravações?`)) {
+    const canDelete = await confirm({
+      title: 'Apagar reunião',
+      message: `A reunião "${meeting.title}" e suas gravações serão removidas permanentemente.`,
+      confirmLabel: 'Apagar reunião',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
       return;
     }
 
@@ -559,7 +559,14 @@ export function MeetingsPage() {
   }
 
   async function handleDeleteRecording(recording) {
-    if (!window.confirm(`Apagar a gravação "${recording.filename}"?`)) {
+    const canDelete = await confirm({
+      title: 'Apagar gravação',
+      message: `A gravação "${recording.filename}" será removida permanentemente.`,
+      confirmLabel: 'Apagar gravação',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
       return;
     }
 
@@ -578,6 +585,7 @@ export function MeetingsPage() {
   return (
     <>
       <PageChrome label="Reuniões" />
+      {confirmPopup}
       <div className="meetings-page">
         <section className="surface meetings-intro">
           <div>
@@ -683,7 +691,6 @@ export function MeetingsPage() {
                       onChange={(event) => setForm((current) => ({
                         ...current,
                         clientId: event.target.value,
-                        processId: '',
                       }))}
                     >
                       <option value="">Sem vínculo</option>
@@ -691,27 +698,6 @@ export function MeetingsPage() {
                         <option key={client.id} value={client.id}>{client.name}</option>
                       ))}
                     </select>
-                  </label>
-                  <label>
-                    Processo
-                    <select
-                      value={form.processId}
-                      onChange={(event) => setForm((current) => ({ ...current, processId: event.target.value }))}
-                      disabled={!form.clientId}
-                    >
-                      <option value="">Sem vínculo</option>
-                      {availableProcesses.map((process) => (
-                        <option key={process.id} value={process.id}>{process.number}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Pauta
-                    <textarea
-                      rows="4"
-                      value={form.agenda}
-                      onChange={(event) => setForm((current) => ({ ...current, agenda: event.target.value }))}
-                    />
                   </label>
                   <div className="meeting-form-actions">
                     <button className="btn" type="submit" disabled={isSaving}>
@@ -736,7 +722,7 @@ export function MeetingsPage() {
                   <div>
                     <h2>{selectedMeeting.title}</h2>
                     <p>
-                      {selectedMeeting.processNumber || 'Sem processo vinculado'} | {formatDateTime(selectedMeeting.meetingAt)}
+                      {selectedMeeting.clientName || 'Sem cliente vinculado'} | {formatDateTime(selectedMeeting.meetingAt)}
                     </p>
                   </div>
                   <button
