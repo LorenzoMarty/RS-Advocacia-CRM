@@ -421,6 +421,31 @@ def listar_usuarios(request):
     return resposta_sucesso(_usuarios_response(Usuario.objects.all()))
 
 
+@app_permissions_required("usuarios.add_usuario")
+def criar_usuario(request):
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    _ensure_default_cargos()
+
+    try:
+        payload = _usuario_api_payload(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    form = UsuarioForm(payload)
+    if form.is_valid():
+        usuario = form.save()
+        _sync_usuario_auth(usuario)
+        return resposta_sucesso(
+            _usuario_response(usuario),
+            mensagem="Usuário criado com sucesso.",
+            status=201,
+        )
+
+    return resposta_erro(erros_formulario(form), status=400)
+
+
 @app_permissions_required("usuarios.view_usuario")
 def detalhes_usuario(request, usuario_id):
     if request.method != "GET":

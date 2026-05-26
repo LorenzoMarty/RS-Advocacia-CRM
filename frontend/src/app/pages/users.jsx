@@ -50,6 +50,7 @@ export function UsersListPage() {
 
             <div className="list-intro-actions">
               <Link className="btn btn-secondary list-intro-action" to="/cargos">Cargos</Link>
+              <Link className="btn list-intro-action" to="/usuarios/novo">Novo</Link>
             </div>
           </div>
         </section>
@@ -94,7 +95,11 @@ export function UsersListPage() {
               </div>
             </>
           ) : (
-            <EmptyState title="Nenhum usuário encontrado." copy="Entre com Google para criar o primeiro usuário automaticamente." />
+            <EmptyState
+              title="Nenhum usuário encontrado."
+              copy="Cadastre a equipe que acessa o sistema."
+              actions={<Link className="btn" to="/usuarios/novo">Novo usuário</Link>}
+            />
           )}
         </section>
       </div>
@@ -116,7 +121,7 @@ export function UserFormPage() {
   }));
   const [errors, setErrors] = useState({});
 
-  if (!isEditing || !user) {
+  if (isEditing && !user) {
     return <NotFoundState title="Usuário não encontrado." />;
   }
 
@@ -130,7 +135,7 @@ export function UserFormPage() {
     }
 
     const savedUser = await saveUser({
-      id: form.id || undefined,
+      id: isEditing ? form.id : undefined,
       name: form.name.trim(),
       email: form.email.trim(),
       roleId: form.roleId,
@@ -145,22 +150,22 @@ export function UserFormPage() {
 
   return (
     <>
-      <PageChrome label="Editar usuário" />
+      <PageChrome label={isEditing ? 'Editar usuário' : 'Novo usuário'} />
 
       <div className="create-page">
         <section className="surface create-intro">
           <div className="intro-grid">
-            <Link className="intro-link" to={`/usuarios/${user.id}`}>
+            <Link className="intro-link" to={isEditing ? `/usuarios/${user.id}` : '/usuarios'}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m15 18-6-6 6-6" />
               </svg>
-              Voltar para o usuário
+              {isEditing ? 'Voltar para o usuário' : 'Voltar para usuários'}
             </Link>
             <div className="section-head">
               <div>
-                <h1 className="intro-title">Editar usuário</h1>
+                <h1 className="intro-title">{isEditing ? 'Editar usuário' : 'Novo usuário'}</h1>
                 <p className="intro-note">
-                  Atualize os dados do perfil sem perder o contexto atual.
+                  {isEditing ? 'Atualize os dados do perfil sem perder o contexto atual.' : 'Cadastre um membro da equipe e vincule um cargo.'}
                 </p>
                 <p className="intro-note">O cargo define automaticamente as permissões herdadas no sistema.</p>
               </div>
@@ -195,8 +200,8 @@ export function UserFormPage() {
             </div>
 
             <div className="form-actions">
-              <button className="btn" type="submit">Atualizar</button>
-              <Link className="btn btn-secondary" to={`/usuarios/${user.id}`}>Cancelar</Link>
+              <button className="btn" type="submit">{isEditing ? 'Atualizar' : 'Salvar'}</button>
+              <Link className="btn btn-secondary" to={isEditing ? `/usuarios/${user.id}` : '/usuarios'}>Cancelar</Link>
             </div>
           </form>
         </section>

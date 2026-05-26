@@ -82,7 +82,7 @@ function PetitionFormRoute() {
 
 function UserFormRoute() {
   const { userId } = useParams();
-  return <UserFormPage key={userId} />;
+  return <UserFormPage key={userId || "user-new"} />;
 }
 
 function RoleFormRoute() {
@@ -154,6 +154,7 @@ export default function App() {
             <Route path="/reunioes" element={<MeetingsPage />} />
 
             <Route path="/usuarios" element={<UsersListPage />} />
+            <Route path="/usuarios/novo" element={<UserFormRoute />} />
             <Route path="/usuarios/:userId" element={<UserDetailPage />} />
             <Route
               path="/usuarios/:userId/editar"
