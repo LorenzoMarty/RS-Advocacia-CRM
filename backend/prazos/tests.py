@@ -69,6 +69,19 @@ class PrazosViewsTests(TestCase):
         self.assertEqual(Evento.objects.count(), 0)
         self.assertEqual(response.json()["dados"]["prazo"]["data_limite"], "2026-06-23")
 
+    def test_criar_prazo_com_descricao_vazia(self):
+        payload = self.payload()
+        payload["descricao"] = ""
+
+        response = self.client.post(
+            reverse("criar_prazo"),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201, response.json())
+        self.assertEqual(Prazo.objects.get().descricao, "")
+
     def test_atualizar_timer_prazo(self):
         prazo = Prazo.objects.create(
             titulo="Prazo",

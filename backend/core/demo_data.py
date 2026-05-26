@@ -268,6 +268,7 @@ def _ensure_petitions(clients):
         cliente=bruno,
         adverso="Companhia Alfa S/A",
         defaults={
+            "tipo": Peticao.TIPO_CONTESTACAO,
             "responsavel_acao": "Mariana Souza",
             "link_drive": "https://drive.google.com/",
             "motivo_pendente": "Aguardando confirmacao de documentos complementares.",
@@ -280,6 +281,7 @@ def _ensure_petitions(clients):
         cliente=almeida,
         adverso="Joao Pereira",
         defaults={
+            "tipo": Peticao.TIPO_CONTESTACAO,
             "responsavel_acao": "Renata Sampaio",
             "link_drive": "https://drive.google.com/",
             "motivo_pendente": "",
@@ -292,6 +294,7 @@ def _ensure_petitions(clients):
         cliente=ana,
         adverso="Beta Seguradora",
         defaults={
+            "tipo": Peticao.TIPO_PETICAO,
             "responsavel_acao": "Mariana Souza",
             "link_drive": "",
             "motivo_pendente": "",

@@ -36,6 +36,7 @@ class PeticoesViewsTests(TestCase):
     def payload(self):
         return {
             "cliente": self.cliente.pk,
+            "tipo": Peticao.TIPO_CONTESTACAO,
             "adverso": "Empresa adversa",
             "responsavel_acao": self.usuario.nome,
             "link_drive": "https://drive.google.com/file/d/exemplo",
@@ -54,6 +55,7 @@ class PeticoesViewsTests(TestCase):
         self.assertEqual(response.status_code, 201, response.json())
         self.assertEqual(Peticao.objects.count(), 1)
         self.assertEqual(response.json()["dados"]["peticao"]["adverso"], "Empresa adversa")
+        self.assertEqual(response.json()["dados"]["peticao"]["tipo"], Peticao.TIPO_CONTESTACAO)
 
     def test_pendente_nao_exige_motivo(self):
         payload = self.payload()

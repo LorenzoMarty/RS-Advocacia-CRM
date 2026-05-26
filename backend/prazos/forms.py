@@ -1,5 +1,6 @@
 from django import forms
 
+from processos.models import Processo
 from usuarios.models import Usuario
 
 from .models import Prazo
@@ -69,6 +70,7 @@ class PrazoForm(forms.ModelForm):
         current_responsavel = getattr(instance, "responsavel", "")
         current_status = getattr(instance, "status", "")
         usuarios = Usuario.objects.values_list("nome", flat=True)
+        responsaveis_processos = Processo.objects.values_list("advogado_responsavel", flat=True)
         existing_responsaveis = Prazo.objects.values_list("responsavel", flat=True)
         existing_statuses = Prazo.objects.values_list("status", flat=True)
 
@@ -81,6 +83,7 @@ class PrazoForm(forms.ModelForm):
             "Selecione o responsavel",
             [current_responsavel],
             usuarios,
+            responsaveis_processos,
             existing_responsaveis,
         )
         self.fields["status"].choices = _build_choices(

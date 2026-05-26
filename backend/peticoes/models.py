@@ -2,6 +2,14 @@ from django.db import models
 
 
 class Peticao(models.Model):
+    TIPO_PETICAO = "Petição"
+    TIPO_CONTESTACAO = "Contestação"
+
+    TIPO_CHOICES = (
+        (TIPO_PETICAO, TIPO_PETICAO),
+        (TIPO_CONTESTACAO, TIPO_CONTESTACAO),
+    )
+
     STATUS_PENDENTE = "Pendente"
     STATUS_EM_ANDAMENTO = "Em andamento"
     STATUS_PROTOCOLAR = "Protocolar"
@@ -19,6 +27,7 @@ class Peticao(models.Model):
         on_delete=models.CASCADE,
         related_name="peticoes",
     )
+    tipo = models.CharField(max_length=30, choices=TIPO_CHOICES, default=TIPO_PETICAO)
     adverso = models.CharField(max_length=200)
     responsavel_acao = models.CharField(max_length=100)
     link_drive = models.URLField(max_length=500, blank=True)
