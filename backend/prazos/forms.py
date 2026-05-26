@@ -6,6 +6,7 @@ from .models import Prazo
 
 
 STATUS_CHOICES = (
+    "Pendente",
     "A fazer",
     "Em andamento",
     "Protocolar",

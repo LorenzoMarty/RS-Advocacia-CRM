@@ -49,8 +49,11 @@ DEFAULT_CARGO_PERMISSIONS = {
         "meetings.view_reuniao",
         "meetings.add_reuniao",
         "meetings.change_reuniao",
+        "meetings.delete_reuniao",
         "meetings.view_gravacao",
         "meetings.add_gravacao",
+        "meetings.change_gravacao",
+        "meetings.delete_gravacao",
         "usuarios.view_usuario",
     },
     ESTAGIARIO_CARGO_NAME: {

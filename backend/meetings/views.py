@@ -177,6 +177,32 @@ def serialize_reuniao(reuniao):
     }
 
 
+def _reuniao_api_payload(request):
+    payload = ler_corpo_json(request)
+    data = dict(payload)
+    if "clientId" in data and "cliente" not in data:
+        data["cliente"] = data["clientId"]
+    if "processId" in data and "processo" not in data:
+        data["processo"] = data["processId"]
+    if "title" in data and "titulo" not in data:
+        data["titulo"] = data["title"]
+    if "meetingAt" in data and "data_reuniao" not in data:
+        data["data_reuniao"] = data["meetingAt"]
+    if "agenda" in data and "pauta" not in data:
+        data["pauta"] = data["agenda"]
+    return data
+
+
+def _apagar_arquivo_gravacao(gravacao):
+    if not gravacao.arquivo_audio:
+        return
+
+    try:
+        gravacao.arquivo_audio.delete(save=False)
+    except Exception:
+        logger.exception("Falha ao apagar arquivo da gravacao %s.", gravacao.pk)
+
+
 @app_permissions_required("meetings.view_reuniao")
 def listar_reunioes(request):
     if request.method != "GET":
@@ -196,7 +222,7 @@ def criar_reuniao(request):
         return metodo_nao_permitido(["POST"])
 
     try:
-        payload = ler_corpo_json(request)
+        payload = _reuniao_api_payload(request)
     except ValueError as exc:
         return resposta_erro(str(exc), status=400)
 
@@ -213,6 +239,47 @@ def criar_reuniao(request):
         mensagem="Reunião criada com sucesso.",
         status=201,
     )
+
+
+@app_permissions_required("meetings.change_reuniao")
+def editar_reuniao(request, reuniao_id):
+    if request.method not in {"PUT", "PATCH"}:
+        return metodo_nao_permitido(["PUT", "PATCH"])
+
+    reuniao = get_object_or_404(Reuniao, pk=reuniao_id)
+
+    try:
+        payload = _reuniao_api_payload(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    form = ReuniaoForm(payload, instance=reuniao)
+    if not form.is_valid():
+        return resposta_erro(erros_formulario(form), status=400)
+
+    reuniao = form.save()
+    reuniao = (
+        Reuniao.objects.select_related("cliente", "processo")
+        .prefetch_related("gravacoes")
+        .get(pk=reuniao.pk)
+    )
+    return resposta_sucesso(
+        {"reuniao": serialize_reuniao(reuniao)},
+        mensagem="Reuniao atualizada com sucesso.",
+    )
+
+
+@app_permissions_required("meetings.delete_reuniao")
+def excluir_reuniao(request, reuniao_id):
+    if request.method != "DELETE":
+        return metodo_nao_permitido(["DELETE"])
+
+    reuniao = get_object_or_404(Reuniao.objects.prefetch_related("gravacoes"), pk=reuniao_id)
+    deleted_id = str(reuniao.pk)
+    for gravacao in reuniao.gravacoes.all():
+        _apagar_arquivo_gravacao(gravacao)
+    reuniao.delete()
+    return resposta_sucesso({"id": deleted_id}, mensagem="Reuniao excluida com sucesso.")
 
 
 @app_permissions_required("meetings.view_reuniao")
@@ -234,6 +301,51 @@ def detalhes_gravacao(request, gravacao_id):
 
     gravacao = get_object_or_404(Gravacao, pk=gravacao_id)
     return resposta_sucesso({"gravacao": serialize_gravacao(gravacao)})
+
+
+@app_permissions_required("meetings.change_gravacao")
+def editar_gravacao(request, gravacao_id):
+    if request.method not in {"PUT", "PATCH"}:
+        return metodo_nao_permitido(["PUT", "PATCH"])
+
+    gravacao = get_object_or_404(Gravacao, pk=gravacao_id)
+
+    try:
+        payload = ler_corpo_json(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    update_fields = []
+    if "transcricao" in payload or "transcript" in payload:
+        gravacao.transcricao = str(payload.get("transcricao", payload.get("transcript", ""))).strip()
+        update_fields.append("transcricao")
+    if "resumo" in payload or "summary" in payload:
+        gravacao.resumo = str(payload.get("resumo", payload.get("summary", ""))).strip()
+        update_fields.append("resumo")
+
+    if not update_fields:
+        return resposta_erro(
+            {"gravacao": ["Informe transcricao ou resumo para atualizar."]},
+            status=400,
+        )
+
+    gravacao.save(update_fields=update_fields)
+    return resposta_sucesso(
+        {"gravacao": serialize_gravacao(gravacao)},
+        mensagem="Gravacao atualizada com sucesso.",
+    )
+
+
+@app_permissions_required("meetings.delete_gravacao")
+def excluir_gravacao(request, gravacao_id):
+    if request.method != "DELETE":
+        return metodo_nao_permitido(["DELETE"])
+
+    gravacao = get_object_or_404(Gravacao, pk=gravacao_id)
+    deleted_id = str(gravacao.pk)
+    _apagar_arquivo_gravacao(gravacao)
+    gravacao.delete()
+    return resposta_sucesso({"id": deleted_id}, mensagem="Gravacao excluida com sucesso.")
 
 
 @app_permissions_required("meetings.add_gravacao", "meetings.view_reuniao")

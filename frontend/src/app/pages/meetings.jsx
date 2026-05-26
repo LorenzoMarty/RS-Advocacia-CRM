@@ -5,8 +5,12 @@ import { useRecordingPolling } from '../hooks/use-recording-polling';
 import { PageChrome, StatusBadge } from '../layout';
 import {
   createMeeting,
+  deleteMeeting,
+  deleteRecording,
   getRecording,
   listMeetings,
+  updateMeeting,
+  updateRecording,
   uploadRecording,
 } from '../services/meetings';
 import { useAppState } from '../store';
@@ -39,8 +43,36 @@ function formatDateTime(value) {
   }).format(new Date(value));
 }
 
+function formatDateTimeInput(value) {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 16);
+}
+
 function errorText(error) {
   return error instanceof Error ? error.message : 'Falha ao comunicar com a API.';
+}
+
+function meetingToForm(meeting) {
+  if (!meeting) {
+    return EMPTY_FORM;
+  }
+
+  return {
+    title: meeting.title || '',
+    meetingAt: formatDateTimeInput(meeting.meetingAt),
+    clientId: meeting.clientId || '',
+    processId: meeting.processId || '',
+    agenda: meeting.agenda || '',
+  };
 }
 
 const SUMMARY_SECTION_LABELS = {
@@ -262,7 +294,28 @@ function MeetingSummary({ value }) {
   );
 }
 
-function RecordingResult({ recording }) {
+function RecordingResult({ onDelete, onSaveTranscript, recording }) {
+  const [isEditingTranscript, setIsEditingTranscript] = useState(false);
+  const [transcriptDraft, setTranscriptDraft] = useState(recording.transcript || '');
+  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
+
+  useEffect(() => {
+    if (!isEditingTranscript) {
+      setTranscriptDraft(recording.transcript || '');
+    }
+  }, [isEditingTranscript, recording.transcript]);
+
+  async function handleTranscriptSubmit(event) {
+    event.preventDefault();
+    setIsSavingTranscript(true);
+    try {
+      await onSaveTranscript(recording.id, transcriptDraft);
+      setIsEditingTranscript(false);
+    } finally {
+      setIsSavingTranscript(false);
+    }
+  }
+
   return (
     <article className="recording-result">
       <div className="recording-result-head">
@@ -270,9 +323,18 @@ function RecordingResult({ recording }) {
           <strong>{recording.filename}</strong>
           <p>{recording.transcriptionModel || 'Aguardando processamento'}</p>
         </div>
-        <StatusBadge tone={statusTone(recording.status)}>
-          {recording.statusLabel || recording.status}
-        </StatusBadge>
+        <div className="recording-result-actions">
+          <StatusBadge tone={statusTone(recording.status)}>
+            {recording.statusLabel || recording.status}
+          </StatusBadge>
+          <button
+            className="btn btn-danger btn-compact"
+            type="button"
+            onClick={() => onDelete(recording)}
+          >
+            Apagar
+          </button>
+        </div>
       </div>
 
       {recording.processingError ? (
@@ -286,12 +348,48 @@ function RecordingResult({ recording }) {
         </div>
       ) : null}
 
-      {recording.transcript ? (
-        <details className="transcript-panel">
-          <summary>Ver transcrição</summary>
-          <p>{recording.transcript}</p>
-        </details>
-      ) : null}
+      <div className="transcript-panel">
+        <div className="transcript-head">
+          <h3>Transcrição</h3>
+          {!isEditingTranscript ? (
+            <button
+              className="btn btn-secondary btn-compact"
+              type="button"
+              onClick={() => setIsEditingTranscript(true)}
+            >
+              {recording.transcript ? 'Editar transcrição' : 'Adicionar transcrição'}
+            </button>
+          ) : null}
+        </div>
+
+        {isEditingTranscript ? (
+          <form className="transcript-editor" onSubmit={handleTranscriptSubmit}>
+            <textarea
+              rows="10"
+              value={transcriptDraft}
+              onChange={(event) => setTranscriptDraft(event.target.value)}
+            />
+            <div className="transcript-actions">
+              <button className="btn" type="submit" disabled={isSavingTranscript}>
+                {isSavingTranscript ? 'Salvando...' : 'Salvar transcrição'}
+              </button>
+              <button
+                className="btn btn-secondary"
+                type="button"
+                disabled={isSavingTranscript}
+                onClick={() => {
+                  setTranscriptDraft(recording.transcript || '');
+                  setIsEditingTranscript(false);
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        ) : (
+          <p>{recording.transcript || 'Transcrição ainda não disponível.'}</p>
+        )}
+      </div>
     </article>
   );
 }
@@ -300,6 +398,8 @@ export function MeetingsPage() {
   const { addFlash, clients, processes } = useAppState();
   const addFlashRef = useRef(addFlash);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [formMode, setFormMode] = useState('idle');
+  const [editingMeetingId, setEditingMeetingId] = useState('');
   const [meetings, setMeetings] = useState([]);
   const [selectedId, setSelectedId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -313,7 +413,11 @@ export function MeetingsPage() {
     try {
       const nextMeetings = await listMeetings();
       setMeetings(nextMeetings);
-      setSelectedId((currentId) => currentId || nextMeetings[0]?.id || '');
+      setSelectedId((currentId) => (
+        nextMeetings.some((meeting) => meeting.id === currentId)
+          ? currentId
+          : nextMeetings[0]?.id || ''
+      ));
     } catch (error) {
       if (showError) {
         addFlashRef.current(errorText(error), 'error');
@@ -328,6 +432,8 @@ export function MeetingsPage() {
   }, [refreshMeetings]);
 
   const selectedMeeting = meetings.find((meeting) => meeting.id === selectedId) || null;
+  const isMeetingFormOpen = formMode !== 'idle';
+  const isEditingMeeting = formMode === 'edit';
   const availableProcesses = useMemo(
     () => processes.filter((process) => process.clientId === form.clientId),
     [form.clientId, processes],
@@ -345,24 +451,73 @@ export function MeetingsPage() {
 
   useRecordingPolling(selectedMeeting?.recordings || [], refreshRecording);
 
-  async function handleCreate(event) {
+  function openCreateForm() {
+    setForm(EMPTY_FORM);
+    setEditingMeetingId('');
+    setFormMode('create');
+  }
+
+  function openEditForm(meeting) {
+    setForm(meetingToForm(meeting));
+    setEditingMeetingId(meeting.id);
+    setSelectedId(meeting.id);
+    setFormMode('edit');
+  }
+
+  function closeMeetingForm() {
+    setForm(EMPTY_FORM);
+    setEditingMeetingId('');
+    setFormMode('idle');
+  }
+
+  async function handleMeetingSubmit(event) {
     event.preventDefault();
     if (!form.title.trim()) {
-        addFlashRef.current('Informe o título da reunião.', 'error');
+      addFlashRef.current('Informe o título da reunião.', 'error');
       return;
     }
 
     setIsSaving(true);
     try {
-      const meeting = await createMeeting(form);
-      setMeetings((current) => [meeting, ...current]);
+      const meeting = isEditingMeeting
+        ? await updateMeeting(editingMeetingId, form)
+        : await createMeeting(form);
+
+      setMeetings((current) => (
+        isEditingMeeting
+          ? current.map((item) => (item.id === meeting.id ? meeting : item))
+          : [meeting, ...current]
+      ));
       setSelectedId(meeting.id);
-      setForm(EMPTY_FORM);
-      addFlashRef.current('Reunião criada.', 'success');
+      closeMeetingForm();
+      addFlashRef.current(isEditingMeeting ? 'Reunião atualizada.' : 'Reunião criada.', 'success');
     } catch (error) {
       addFlashRef.current(errorText(error), 'error');
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleDeleteMeeting(meeting) {
+    if (!window.confirm(`Apagar a reunião "${meeting.title}" e suas gravações?`)) {
+      return;
+    }
+
+    try {
+      await deleteMeeting(meeting.id);
+      setMeetings((current) => {
+        const nextMeetings = current.filter((item) => item.id !== meeting.id);
+        setSelectedId((currentId) => (
+          currentId === meeting.id ? nextMeetings[0]?.id || '' : currentId
+        ));
+        return nextMeetings;
+      });
+      if (editingMeetingId === meeting.id) {
+        closeMeetingForm();
+      }
+      addFlashRef.current('Reunião apagada.', 'success');
+    } catch (error) {
+      addFlashRef.current(errorText(error), 'error');
     }
   }
 
@@ -386,6 +541,40 @@ export function MeetingsPage() {
     }
   }
 
+  async function handleSaveTranscript(recordingId, transcript) {
+    try {
+      const updatedRecording = await updateRecording(recordingId, { transcript });
+      setMeetings((current) => current.map((meeting) => ({
+        ...meeting,
+        recordings: meeting.recordings.map((recording) => (
+          recording.id === updatedRecording.id ? updatedRecording : recording
+        )),
+      })));
+      addFlashRef.current('Transcrição atualizada.', 'success');
+      return updatedRecording;
+    } catch (error) {
+      addFlashRef.current(errorText(error), 'error');
+      throw error;
+    }
+  }
+
+  async function handleDeleteRecording(recording) {
+    if (!window.confirm(`Apagar a gravação "${recording.filename}"?`)) {
+      return;
+    }
+
+    try {
+      await deleteRecording(recording.id);
+      setMeetings((current) => current.map((meeting) => ({
+        ...meeting,
+        recordings: meeting.recordings.filter((item) => item.id !== recording.id),
+      })));
+      addFlashRef.current('Gravação apagada.', 'success');
+    } catch (error) {
+      addFlashRef.current(errorText(error), 'error');
+    }
+  }
+
   return (
     <>
       <PageChrome label="Reuniões" />
@@ -401,121 +590,186 @@ export function MeetingsPage() {
         </section>
 
         <div className="meetings-layout">
-          <section className="surface meetings-form-panel">
+          <section className="surface meetings-form-panel meetings-list-panel">
             <div className="section-head">
               <div>
-                <h2 className="section-title">Nova reunião</h2>
-                <p className="section-note">Contexto antes da gravação</p>
+                <h2 className="section-title">Reuniões</h2>
+                <p className="section-note">Lista, edição e gravações</p>
               </div>
+              <button className="btn" type="button" onClick={openCreateForm}>
+                Novo
+              </button>
             </div>
 
-            <form className="meeting-form" onSubmit={handleCreate}>
-              <label>
-                Título
-                <input
-                  value={form.title}
-                  onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-                  required
-                />
-              </label>
-              <label>
-                Data e horário
-                <input
-                  type="datetime-local"
-                  value={form.meetingAt}
-                  onChange={(event) => setForm((current) => ({ ...current, meetingAt: event.target.value }))}
-                />
-              </label>
-              <label>
-                Cliente
-                <select
-                  value={form.clientId}
-                  onChange={(event) => setForm((current) => ({
-                    ...current,
-                    clientId: event.target.value,
-                    processId: '',
-                  }))}
-                >
-                  <option value="">Sem vínculo</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>{client.name}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Processo
-                <select
-                  value={form.processId}
-                  onChange={(event) => setForm((current) => ({ ...current, processId: event.target.value }))}
-                  disabled={!form.clientId}
-                >
-                  <option value="">Sem vínculo</option>
-                  {availableProcesses.map((process) => (
-                    <option key={process.id} value={process.id}>{process.number}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Pauta
-                <textarea
-                  rows="4"
-                  value={form.agenda}
-                  onChange={(event) => setForm((current) => ({ ...current, agenda: event.target.value }))}
-                />
-              </label>
-              <button className="btn" type="submit" disabled={isSaving}>
-                {isSaving ? 'Salvando...' : 'Criar reunião'}
-              </button>
-            </form>
-          </section>
-
-          <section className="surface meetings-workspace">
-            <div className="meeting-picker">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Gravações</h2>
-                  <p className="section-note">Selecione uma reunião</p>
-                </div>
+            {isLoading ? <p className="section-note">Carregando...</p> : null}
+            {!isLoading && !meetings.length ? (
+              <div className="empty">
+                <strong>Nenhuma reunião cadastrada.</strong>
+                <p>Crie a primeira reunião para habilitar a gravação.</p>
               </div>
-
-              {isLoading ? <p className="section-note">Carregando...</p> : null}
-              {!isLoading && !meetings.length ? (
-                <div className="empty">
-                  <strong>Nenhuma reunião cadastrada.</strong>
-                  <p>Crie a primeira reunião para habilitar a gravação.</p>
-                </div>
-              ) : (
-                <div className="meeting-options">
-                  {meetings.map((meeting) => (
+            ) : (
+              <div className="meeting-options">
+                {meetings.map((meeting) => (
+                  <article
+                    className={`meeting-option${meeting.id === selectedId ? ' active' : ''}`}
+                    key={meeting.id}
+                  >
                     <button
-                      key={meeting.id}
+                      className="meeting-option-main"
                       type="button"
-                      className={`meeting-option${meeting.id === selectedId ? ' active' : ''}`}
                       onClick={() => setSelectedId(meeting.id)}
                     >
                       <strong>{meeting.title}</strong>
                       <span>{formatDateTime(meeting.meetingAt)}</span>
                       <span>{meeting.clientName || 'Sem cliente vinculado'}</span>
                     </button>
-                  ))}
+                    <div className="meeting-option-actions">
+                      <button
+                        className="btn btn-secondary btn-compact"
+                        type="button"
+                        onClick={() => openEditForm(meeting)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="btn btn-danger btn-compact"
+                        type="button"
+                        onClick={() => handleDeleteMeeting(meeting)}
+                      >
+                        Apagar
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="surface meetings-workspace">
+            {isMeetingFormOpen ? (
+              <div className="meeting-editor">
+                <div className="section-head">
+                  <div>
+                    <h2 className="section-title">
+                      {isEditingMeeting ? 'Editar reunião' : 'Nova reunião'}
+                    </h2>
+                    <p className="section-note">
+                      Contexto antes da gravação
+                    </p>
+                  </div>
                 </div>
-              )}
-            </div>
+
+                <form className="meeting-form" onSubmit={handleMeetingSubmit}>
+                  <label>
+                    Título
+                    <input
+                      value={form.title}
+                      onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Data e horário
+                    <input
+                      type="datetime-local"
+                      value={form.meetingAt}
+                      onChange={(event) => setForm((current) => ({ ...current, meetingAt: event.target.value }))}
+                    />
+                  </label>
+                  <label>
+                    Cliente
+                    <select
+                      value={form.clientId}
+                      onChange={(event) => setForm((current) => ({
+                        ...current,
+                        clientId: event.target.value,
+                        processId: '',
+                      }))}
+                    >
+                      <option value="">Sem vínculo</option>
+                      {clients.map((client) => (
+                        <option key={client.id} value={client.id}>{client.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Processo
+                    <select
+                      value={form.processId}
+                      onChange={(event) => setForm((current) => ({ ...current, processId: event.target.value }))}
+                      disabled={!form.clientId}
+                    >
+                      <option value="">Sem vínculo</option>
+                      {availableProcesses.map((process) => (
+                        <option key={process.id} value={process.id}>{process.number}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Pauta
+                    <textarea
+                      rows="4"
+                      value={form.agenda}
+                      onChange={(event) => setForm((current) => ({ ...current, agenda: event.target.value }))}
+                    />
+                  </label>
+                  <div className="meeting-form-actions">
+                    <button className="btn" type="submit" disabled={isSaving}>
+                      {isSaving ? 'Salvando...' : isEditingMeeting ? 'Salvar edição' : 'Criar reunião'}
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      type="button"
+                      disabled={isSaving}
+                      onClick={closeMeetingForm}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : null}
 
             {selectedMeeting ? (
               <div className="meeting-detail">
                 <div className="meeting-context">
-                  <h2>{selectedMeeting.title}</h2>
-                  <p>
-                    {selectedMeeting.processNumber || 'Sem processo vinculado'} | {formatDateTime(selectedMeeting.meetingAt)}
-                  </p>
+                  <div>
+                    <h2>{selectedMeeting.title}</h2>
+                    <p>
+                      {selectedMeeting.processNumber || 'Sem processo vinculado'} | {formatDateTime(selectedMeeting.meetingAt)}
+                    </p>
+                  </div>
+                  <button
+                    className="btn btn-secondary"
+                    type="button"
+                    onClick={() => openEditForm(selectedMeeting)}
+                  >
+                    Editar reunião
+                  </button>
                 </div>
                 <AudioRecorder onUpload={handleUpload} />
                 <div className="recording-results">
-                  {selectedMeeting.recordings.map((recording) => (
-                    <RecordingResult key={recording.id} recording={recording} />
-                  ))}
+                  {selectedMeeting.recordings.length ? (
+                    selectedMeeting.recordings.map((recording) => (
+                      <RecordingResult
+                        key={recording.id}
+                        onDelete={handleDeleteRecording}
+                        onSaveTranscript={handleSaveTranscript}
+                        recording={recording}
+                      />
+                    ))
+                  ) : (
+                    <div className="empty">
+                      <strong>Nenhuma gravação nesta reunião.</strong>
+                      <p>Grave ou envie um áudio para gerar transcrição e resumo.</p>
+                    </div>
+                  )}
                 </div>
+              </div>
+            ) : !isMeetingFormOpen ? (
+              <div className="empty">
+                <strong>Selecione ou crie uma reunião.</strong>
+                <p>Use o botão Novo para iniciar um registro.</p>
               </div>
             ) : null}
           </section>

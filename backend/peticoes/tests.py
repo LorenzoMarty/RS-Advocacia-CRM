@@ -55,7 +55,7 @@ class PeticoesViewsTests(TestCase):
         self.assertEqual(Peticao.objects.count(), 1)
         self.assertEqual(response.json()["dados"]["peticao"]["adverso"], "Empresa adversa")
 
-    def test_pendente_exige_motivo(self):
+    def test_pendente_nao_exige_motivo(self):
         payload = self.payload()
         payload["motivo_pendente"] = ""
 
@@ -65,5 +65,29 @@ class PeticoesViewsTests(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(Peticao.objects.count(), 0)
+        self.assertEqual(response.status_code, 201, response.json())
+        self.assertEqual(Peticao.objects.count(), 1)
+        self.assertEqual(Peticao.objects.get().status, Peticao.STATUS_PENDENTE)
+
+    def test_peticao_pode_voltar_para_pendente_sem_motivo(self):
+        peticao = Peticao.objects.create(
+            cliente=self.cliente,
+            adverso="Empresa adversa",
+            responsavel_acao=self.usuario.nome,
+            area_juridica="Civel",
+            status=Peticao.STATUS_PROTOCOLADO,
+        )
+        payload = self.payload()
+        payload["motivo_pendente"] = ""
+        payload["status"] = Peticao.STATUS_PENDENTE
+
+        response = self.client.put(
+            reverse("editar_peticao", args=[peticao.pk]),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        peticao.refresh_from_db()
+        self.assertEqual(response.status_code, 200, response.json())
+        self.assertEqual(peticao.status, Peticao.STATUS_PENDENTE)
+        self.assertEqual(peticao.motivo_pendente, "")

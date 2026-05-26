@@ -51,7 +51,7 @@ class PrazosViewsTests(TestCase):
             "data_limite": "2026-06-23",
             "processo": self.processo.pk,
             "responsavel": self.usuario.nome,
-            "status": "A fazer",
+            "status": "Pendente",
             "prioridade": "Alta",
             "observacoes": "",
             "concluido": False,
@@ -76,7 +76,7 @@ class PrazosViewsTests(TestCase):
             data_limite="2026-06-23",
             processo=self.processo,
             responsavel=self.usuario.nome,
-            status="A fazer",
+            status="Pendente",
             prioridade="Alta",
             criado_por=self.usuario.nome,
         )
@@ -90,3 +90,30 @@ class PrazosViewsTests(TestCase):
         self.assertEqual(response.status_code, 200, response.json())
         prazo.refresh_from_db()
         self.assertEqual(prazo.tempo_decorrido_segundos, 120)
+
+    def test_prazo_pode_voltar_para_pendente(self):
+        prazo = Prazo.objects.create(
+            titulo="Prazo",
+            descricao="Descricao",
+            data_limite="2026-06-23",
+            processo=self.processo,
+            responsavel=self.usuario.nome,
+            status="Protocolado",
+            prioridade="Alta",
+            concluido=True,
+            criado_por=self.usuario.nome,
+        )
+        payload = self.payload()
+        payload["status"] = "Pendente"
+        payload["concluido"] = False
+
+        response = self.client.put(
+            reverse("editar_prazo", args=[prazo.pk]),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        prazo.refresh_from_db()
+        self.assertEqual(response.status_code, 200, response.json())
+        self.assertEqual(prazo.status, "Pendente")
+        self.assertFalse(prazo.concluido)
