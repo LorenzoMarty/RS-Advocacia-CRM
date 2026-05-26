@@ -3,9 +3,11 @@ import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { NAV_ITEMS } from './data';
 import { useAppState } from './store';
+import { formatTime, normalizeText } from './utils';
 
 const PageChromeContext = createContext(() => {});
 const PAGE_CHROME_DEFAULT = { label: 'Painel', actions: null };
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 function createNavClass(isActive, baseClass) {
   return `${baseClass}${isActive ? ' active' : ''}`;
@@ -225,17 +227,108 @@ function FlashMessages() {
   return (
     <div className="flash-stack" aria-live="polite" aria-label="Mensagens do sistema">
       {flashes.map((flash) => (
-        <button
+        <article
           key={flash.id}
-          type="button"
           className={`flash flash-${flash.type}`}
-          onClick={() => removeFlash(flash.id)}
+          role={flash.type === 'error' ? 'alert' : 'status'}
         >
-          {flash.message}
-        </button>
+          <span>{flash.message}</span>
+          {flash.critical ? (
+            <button type="button" onClick={() => removeFlash(flash.id)}>
+              Fechar
+            </button>
+          ) : null}
+        </article>
       ))}
     </div>
   );
+}
+
+function localDateOnly(value = new Date()) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  const date = new Date(value);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function daysUntil(value, today = new Date()) {
+  const targetDate = localDateOnly(value);
+  const todayDate = localDateOnly(today);
+
+  if (Number.isNaN(targetDate.getTime())) {
+    return null;
+  }
+
+  return Math.round((targetDate.getTime() - todayDate.getTime()) / DAY_IN_MS);
+}
+
+function reminderLabelForDays(days) {
+  if (days === 0) {
+    return 'hoje';
+  }
+
+  if (days === 1) {
+    return 'amanhã';
+  }
+
+  return `em ${days} dias`;
+}
+
+function isFinishedTask(item) {
+  const status = normalizeText(item.status);
+  return item.completed || status.includes('conclu') || status.includes('protocolado') || status.includes('cancel');
+}
+
+function reminderStorageKey(userId) {
+  const today = localDateOnly();
+  const keyDate = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0'),
+  ].join('-');
+
+  return `rs-advocacia-reminders-${userId || 'anon'}-${keyDate}`;
+}
+
+function useReminderToasts({ addFlash, currentUser, deadlines, events, isLoading }) {
+  useEffect(() => {
+    if (isLoading || !currentUser) {
+      return;
+    }
+
+    const storageKey = reminderStorageKey(currentUser.id);
+
+    if (sessionStorage.getItem(storageKey)) {
+      return;
+    }
+
+    const upcomingDeadlines = deadlines
+      .map((deadline) => ({ ...deadline, days: daysUntil(deadline.date) }))
+      .filter((deadline) => deadline.days !== null && deadline.days >= 0 && deadline.days <= 3 && !isFinishedTask(deadline));
+
+    const tomorrowEvents = events
+      .map((event) => ({ ...event, days: daysUntil(event.start) }))
+      .filter((event) => event.days === 1 && !isFinishedTask(event));
+
+    if (upcomingDeadlines.length === 1) {
+      const [deadline] = upcomingDeadlines;
+      addFlash(`Prazo chegando: ${deadline.title || 'prazo'} vence ${reminderLabelForDays(deadline.days)}.`, 'warning', { duration: 6200 });
+    } else if (upcomingDeadlines.length > 1) {
+      addFlash(`${upcomingDeadlines.length} prazos vencem nos próximos 3 dias.`, 'warning', { duration: 6200 });
+    }
+
+    if (tomorrowEvents.length === 1) {
+      const [event] = tomorrowEvents;
+      addFlash(`Compromisso amanhã: ${event.title} às ${formatTime(event.start)}.`, 'info', { duration: 6200 });
+    } else if (tomorrowEvents.length > 1) {
+      addFlash(`${tomorrowEvents.length} compromissos marcados para amanhã.`, 'info', { duration: 6200 });
+    }
+
+    sessionStorage.setItem(storageKey, 'shown');
+  }, [addFlash, currentUser, deadlines, events, isLoading]);
 }
 
 function useShellPreferences() {
@@ -297,10 +390,12 @@ export function GuestLayout() {
 }
 
 export function ProtectedLayout() {
-  const { currentUser, isLoading, sair } = useAppState();
+  const { addFlash, currentUser, deadlines, events, isLoading, sair } = useAppState();
   const location = useLocation();
   const [chrome, setChrome] = useState(PAGE_CHROME_DEFAULT);
   const { sidebarCollapsed, toggleTheme, toggleSidebar } = useShellPreferences();
+
+  useReminderToasts({ addFlash, currentUser, deadlines, events, isLoading });
 
   useEffect(() => {
     document.body.classList.remove('login-body');
@@ -437,7 +532,6 @@ export function ProtectedLayout() {
             </header>
 
             <main className="main">
-              <FlashMessages />
               <Outlet />
             </main>
           </div>
@@ -445,6 +539,7 @@ export function ProtectedLayout() {
       </div>
 
       <BottomNavigation />
+      <FlashMessages />
     </PageChromeContext.Provider>
   );
 }

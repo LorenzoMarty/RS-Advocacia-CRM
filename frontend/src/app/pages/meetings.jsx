@@ -329,7 +329,7 @@ function RecordingResult({ onDelete, onSaveTranscript, recording }) {
             type="button"
             onClick={() => onDelete(recording)}
           >
-            Apagar
+            Excluir
           </button>
         </div>
       </div>
@@ -493,9 +493,9 @@ export function MeetingsPage() {
 
   async function handleDeleteMeeting(meeting) {
     const canDelete = await confirm({
-      title: 'Apagar reunião',
-      message: `A reunião "${meeting.title}" e suas gravações serão removidas permanentemente.`,
-      confirmLabel: 'Apagar reunião',
+      title: 'Tem certeza?',
+      message: `A reunião "${meeting.title}" e suas gravações serão deletadas.`,
+      confirmLabel: 'Deletar',
       tone: 'danger',
     });
 
@@ -515,7 +515,7 @@ export function MeetingsPage() {
       if (editingMeetingId === meeting.id) {
         closeMeetingForm();
       }
-      addFlashRef.current('Reunião apagada.', 'success');
+      addFlashRef.current('Reunião deletada.', 'success');
     } catch (error) {
       addFlashRef.current(errorText(error), 'error');
     }
@@ -560,9 +560,9 @@ export function MeetingsPage() {
 
   async function handleDeleteRecording(recording) {
     const canDelete = await confirm({
-      title: 'Apagar gravação',
-      message: `A gravação "${recording.filename}" será removida permanentemente.`,
-      confirmLabel: 'Apagar gravação',
+      title: 'Tem certeza?',
+      message: `A gravação "${recording.filename}" será deletada.`,
+      confirmLabel: 'Deletar',
       tone: 'danger',
     });
 
@@ -576,7 +576,7 @@ export function MeetingsPage() {
         ...meeting,
         recordings: meeting.recordings.filter((item) => item.id !== recording.id),
       })));
-      addFlashRef.current('Gravação apagada.', 'success');
+      addFlashRef.current('Gravação deletada.', 'success');
     } catch (error) {
       addFlashRef.current(errorText(error), 'error');
     }
@@ -644,7 +644,7 @@ export function MeetingsPage() {
                         type="button"
                         onClick={() => handleDeleteMeeting(meeting)}
                       >
-                        Apagar
+                        Excluir
                       </button>
                     </div>
                   </article>

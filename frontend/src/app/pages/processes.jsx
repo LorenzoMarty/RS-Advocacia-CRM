@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, getStatusTone, normalizeText } from '../utils';
@@ -18,7 +19,8 @@ function validateProcessForm(form) {
 }
 
 export function ProcessesListPage() {
-  const { clients, processes } = useAppState();
+  const { clients, deleteProcess, processes } = useAppState();
+  const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
 
   const filteredProcesses = processes.filter((process) =>
@@ -32,8 +34,24 @@ export function ProcessesListPage() {
     ]).includes(normalizeText(search)),
   );
 
+  async function handleDeleteProcess(process) {
+    const canDelete = await confirm({
+      title: 'Tem certeza?',
+      message: `O processo "${process.number}" será deletado.`,
+      confirmLabel: 'Deletar',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
+      return;
+    }
+
+    await deleteProcess(process.id);
+  }
+
   return (
     <>
+      {confirmPopup}
       <PageChrome label="Processos" />
 
       <div className="process-page">
@@ -95,7 +113,7 @@ export function ProcessesListPage() {
                     <div className="process-actions">
                       <Link className="action-link" to={`/processos/${process.id}`}>Ver</Link>
                       <Link className="action-link" to={`/processos/${process.id}/editar`}>Editar</Link>
-                      <Link className="action-link action-link-danger" to={`/processos/${process.id}/excluir`}>Excluir</Link>
+                      <button className="action-link action-link-danger" type="button" onClick={() => handleDeleteProcess(process)}>Excluir</button>
                     </div>
                   </article>
                 ))}
@@ -549,65 +567,6 @@ export function ProcessDetailPage() {
             </section>
           </div>
         </div>
-      </div>
-    </>
-  );
-}
-
-export function ProcessDeletePage() {
-  const navigate = useNavigate();
-  const params = useParams();
-  const { deleteProcess, processes } = useAppState();
-  const process = processes.find((item) => item.id === params.processId) || null;
-
-  if (!process) {
-    return <NotFoundState title="Processo não encontrado." />;
-  }
-
-  async function handleDelete(event) {
-    event.preventDefault();
-    const wasDeleted = await deleteProcess(process.id);
-    if (!wasDeleted) {
-      return;
-    }
-    navigate('/processos', { replace: true });
-  }
-
-  return (
-    <>
-      <PageChrome label="Excluir" actions={<Link className="btn btn-secondary" to={`/processos/${process.id}`}>Voltar</Link>} />
-
-      <div className="confirm-page">
-        <section className="surface confirm-intro">
-          <div className="section-head">
-            <div>
-              <h1 className="confirm-title">Excluir processo</h1>
-              <p className="confirm-copy">Revise o registro antes de confirmar. A exclusão remove este item do fluxo principal.</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="surface confirm-panel">
-          <div className="confirm-box">
-            <div className="confirm-alert">
-              <strong>Ação irreversível.</strong>
-              <p>Depois da confirmação, este registro não poderá ser recuperado pela interface.</p>
-            </div>
-
-            <div className="confirm-meta">
-              <span>Registro selecionado</span>
-              <strong>{process.number}</strong>
-              <p>{process.area || 'Processo jurídico'}</p>
-            </div>
-
-            <form onSubmit={handleDelete}>
-              <div className="confirm-actions">
-                <button className="btn btn-danger" type="submit">Confirmar exclusão</button>
-                <Link className="btn btn-secondary" to={`/processos/${process.id}`}>Cancelar</Link>
-              </div>
-            </form>
-          </div>
-        </section>
       </div>
     </>
   );

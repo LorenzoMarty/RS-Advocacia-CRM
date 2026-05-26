@@ -897,12 +897,17 @@ export function AppStateProvider({ children }) {
     localStorage.removeItem('rs-advocacia-user');
   }, [currentUserId]);
 
-  function addFlash(message, type = 'success') {
+  function addFlash(message, type = 'success', options = {}) {
     const id = nextId('flash');
-    setFlashes((currentFlashes) => [...currentFlashes, { id, message, type }]);
-    window.setTimeout(() => {
-      setFlashes((currentFlashes) => currentFlashes.filter((flash) => flash.id !== id));
-    }, 3500);
+    const critical = Boolean(options.critical);
+
+    setFlashes((currentFlashes) => [...currentFlashes, { id, message, type, critical }]);
+
+    if (!critical) {
+      window.setTimeout(() => {
+        setFlashes((currentFlashes) => currentFlashes.filter((flash) => flash.id !== id));
+      }, options.duration || (type === 'error' ? 5200 : 3500));
+    }
   }
 
   function removeFlash(flashId) {
@@ -1029,7 +1034,7 @@ export function AppStateProvider({ children }) {
     return nextEvent;
   }
 
-  async function saveDeadline(payload) {
+  async function saveDeadline(payload, options = {}) {
     if (canUseDeadlinesApi) {
       try {
         const response = payload.id
@@ -1040,7 +1045,9 @@ export function AppStateProvider({ children }) {
           throw new Error('Resposta invalida da API de prazos.');
         }
         setDeadlines((currentDeadlines) => replaceById(currentDeadlines, savedDeadline));
-        addFlash(payload.id ? 'Prazo atualizado.' : 'Prazo salvo.', 'success');
+        if (!options.silent) {
+          addFlash(payload.id ? 'Prazo atualizado.' : 'Prazo salvo.', 'success');
+        }
         return savedDeadline;
       } catch (error) {
         addFlash(errorMessage(error), 'error');
@@ -1052,17 +1059,21 @@ export function AppStateProvider({ children }) {
       setDeadlines((currentDeadlines) =>
         currentDeadlines.map((deadline) => (deadline.id === payload.id ? { ...deadline, ...payload } : deadline)),
       );
-      addFlash('Prazo atualizado.', 'success');
+      if (!options.silent) {
+        addFlash('Prazo atualizado.', 'success');
+      }
       return payload;
     }
 
     const nextDeadline = { ...payload, id: nextId('deadline') };
     setDeadlines((currentDeadlines) => [...currentDeadlines, nextDeadline]);
-    addFlash('Prazo salvo.', 'success');
+    if (!options.silent) {
+      addFlash('Prazo salvo.', 'success');
+    }
     return nextDeadline;
   }
 
-  async function savePetition(payload) {
+  async function savePetition(payload, options = {}) {
     if (canUsePetitionsApi) {
       try {
         const response = payload.id
@@ -1073,7 +1084,9 @@ export function AppStateProvider({ children }) {
           throw new Error('Resposta invalida da API de peticoes.');
         }
         setPetitions((currentPetitions) => replaceById(currentPetitions, savedPetition));
-        addFlash(payload.id ? 'Peticao atualizada.' : 'Peticao salva.', 'success');
+        if (!options.silent) {
+          addFlash(payload.id ? 'Petição atualizada.' : 'Petição salva.', 'success');
+        }
         return savedPetition;
       } catch (error) {
         addFlash(errorMessage(error), 'error');
@@ -1085,13 +1098,17 @@ export function AppStateProvider({ children }) {
       setPetitions((currentPetitions) =>
         currentPetitions.map((petition) => (petition.id === payload.id ? { ...petition, ...payload } : petition)),
       );
-      addFlash('Peticao atualizada.', 'success');
+      if (!options.silent) {
+        addFlash('Petição atualizada.', 'success');
+      }
       return payload;
     }
 
     const nextPetition = { ...payload, id: nextId('petition') };
     setPetitions((currentPetitions) => [...currentPetitions, nextPetition]);
-    addFlash('Peticao salva.', 'success');
+    if (!options.silent) {
+      addFlash('Petição salva.', 'success');
+    }
     return nextPetition;
   }
 
@@ -1318,7 +1335,7 @@ export function AppStateProvider({ children }) {
       currentDeadlines.filter((deadline) => deadline.clientId !== clientId && !relatedProcessIds.includes(deadline.processId)),
     );
     setPetitions((currentPetitions) => currentPetitions.filter((petition) => petition.clientId !== clientId));
-    addFlash('Cliente excluído.', 'success');
+    addFlash('Cliente deletado.', 'success');
     return true;
   }
 
@@ -1340,7 +1357,7 @@ export function AppStateProvider({ children }) {
         petition.processId === processId ? { ...petition, processId: '', processNumber: '' } : petition,
       ),
     );
-    addFlash('Processo excluído.', 'success');
+    addFlash('Processo deletado.', 'success');
     return true;
   }
 
@@ -1355,7 +1372,7 @@ export function AppStateProvider({ children }) {
     }
 
     setEvents((currentEvents) => currentEvents.filter((event) => event.id !== eventId));
-    addFlash('Compromisso excluído.', 'success');
+    addFlash('Compromisso deletado.', 'success');
     return true;
   }
 
@@ -1370,7 +1387,7 @@ export function AppStateProvider({ children }) {
     }
 
     setDeadlines((currentDeadlines) => currentDeadlines.filter((deadline) => deadline.id !== deadlineId));
-    addFlash('Prazo excluido.', 'success');
+    addFlash('Prazo deletado.', 'success');
     return true;
   }
 
@@ -1385,7 +1402,7 @@ export function AppStateProvider({ children }) {
     }
 
     setPetitions((currentPetitions) => currentPetitions.filter((petition) => petition.id !== petitionId));
-    addFlash('Peticao excluida.', 'success');
+    addFlash('Petição deletada.', 'success');
     return true;
   }
 
@@ -1403,7 +1420,7 @@ export function AppStateProvider({ children }) {
     if (userId === currentUserId) {
       setCurrentUserId(null);
     }
-    addFlash('Usuário excluído.', 'success');
+    addFlash('Usuário deletado.', 'success');
     return true;
   }
 
@@ -1418,7 +1435,7 @@ export function AppStateProvider({ children }) {
     }
 
     setRoles((currentRoles) => currentRoles.filter((role) => role.id !== roleId));
-    addFlash('Cargo excluído.', 'success');
+    addFlash('Cargo deletado.', 'success');
     return true;
   }
 

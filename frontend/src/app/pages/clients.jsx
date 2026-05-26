@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import {
@@ -29,7 +30,8 @@ function validateClientForm(form) {
 }
 
 export function ClientsListPage() {
-  const { clients, processes } = useAppState();
+  const { clients, deleteClient, processes } = useAppState();
+  const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
   const [clientType, setClientType] = useState('todos');
 
@@ -45,8 +47,24 @@ export function ClientsListPage() {
     return matchesSearch && matchesType;
   });
 
+  async function handleDeleteClient(client) {
+    const canDelete = await confirm({
+      title: 'Tem certeza?',
+      message: `O cliente "${client.name}" será deletado.`,
+      confirmLabel: 'Deletar',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
+      return;
+    }
+
+    await deleteClient(client.id);
+  }
+
   return (
     <>
+      {confirmPopup}
       <PageChrome label="Clientes" />
 
       <div className="clients-page">
@@ -124,7 +142,7 @@ export function ClientsListPage() {
                       <div className="client-actions">
                         <Link className="action-link" to={`/clientes/${client.id}`}>Ver</Link>
                         <Link className="action-link" to={`/clientes/${client.id}/editar`}>Editar</Link>
-                        <Link className="action-link action-link-danger" to={`/clientes/${client.id}/excluir`}>Excluir</Link>
+                        <button className="action-link action-link-danger" type="button" onClick={() => handleDeleteClient(client)}>Excluir</button>
                       </div>
                     </article>
                   );
@@ -472,68 +490,6 @@ export function ClientDetailPage() {
             </section>
           </div>
         </div>
-      </div>
-    </>
-  );
-}
-
-export function ClientDeletePage() {
-  const navigate = useNavigate();
-  const params = useParams();
-  const { clients, deleteClient } = useAppState();
-  const client = clients.find((item) => item.id === params.clientId) || null;
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  if (!client) {
-    return <NotFoundState title="Cliente não encontrado." />;
-  }
-
-  async function handleDelete(event) {
-    event.preventDefault();
-    setIsDeleting(true);
-    const wasDeleted = await deleteClient(client.id);
-    setIsDeleting(false);
-    if (!wasDeleted) {
-      return;
-    }
-    navigate('/clientes', { replace: true });
-  }
-
-  return (
-    <>
-      <PageChrome label="Excluir" actions={<Link className="btn btn-secondary" to={`/clientes/${client.id}`}>Voltar</Link>} />
-
-      <div className="confirm-page">
-        <section className="surface confirm-intro">
-          <div className="section-head">
-            <div>
-              <h1 className="confirm-title">Excluir cliente</h1>
-              <p className="confirm-copy">Revise o registro antes de confirmar. A exclusão remove este item do fluxo principal.</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="surface confirm-panel">
-          <div className="confirm-box">
-            <div className="confirm-alert">
-              <strong>Ação irreversível.</strong>
-              <p>Depois da confirmação, este registro não poderá ser recuperado pela interface.</p>
-            </div>
-
-            <div className="confirm-meta">
-              <span>Registro selecionado</span>
-              <strong>{client.name}</strong>
-              <p>{formatDocument(client.document)}</p>
-            </div>
-
-            <form onSubmit={handleDelete}>
-              <div className="confirm-actions">
-                <button className="btn btn-danger" type="submit" disabled={isDeleting}>Confirmar exclusão</button>
-                <Link className="btn btn-secondary" to={`/clientes/${client.id}`}>Cancelar</Link>
-              </div>
-            </form>
-          </div>
-        </section>
       </div>
     </>
   );

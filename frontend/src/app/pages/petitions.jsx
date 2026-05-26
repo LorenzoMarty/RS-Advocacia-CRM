@@ -130,29 +130,20 @@ function PetitionCard({
 
 export function PetitionsPage() {
   const {
+    addFlash,
     clients,
     isPetitionsLoading,
     petitions,
     processes,
     savePetition,
-    users,
   } = useAppState();
   const [search, setSearch] = useState('');
-  const [responsibleFilter, setResponsibleFilter] = useState('');
-  const [areaFilter, setAreaFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [draggingPetitionId, setDraggingPetitionId] = useState('');
   const [dragOverColumnKey, setDragOverColumnKey] = useState('');
   const [movingPetitionId, setMovingPetitionId] = useState('');
 
   const clientOptions = [...clients].sort((left, right) => left.name.localeCompare(right.name, 'pt-BR'));
-  const responsibleOptions = sortedUnique([
-    ...users.map((user) => user.name),
-    ...petitions.map((petition) => petition.responsible),
-  ]);
-  const areaOptions = sortedUnique([
-    ...PROCESS_AREA_OPTIONS,
-    ...petitions.map((petition) => petition.area),
-  ]);
   const allPetitions = [...petitions].sort((left, right) => {
     const leftClient = left.clientName || clients.find((client) => client.id === left.clientId)?.name || '';
     const rightClient = right.clientName || clients.find((client) => client.id === right.clientId)?.name || '';
@@ -179,11 +170,7 @@ export function PetitionsPage() {
       return false;
     }
 
-    if (responsibleFilter && normalizeText(petition.responsible) !== normalizeText(responsibleFilter)) {
-      return false;
-    }
-
-    if (areaFilter && normalizeText(petition.area) !== normalizeText(areaFilter)) {
+    if (typeFilter && normalizeText(petition.type) !== normalizeText(typeFilter)) {
       return false;
     }
 
@@ -209,10 +196,14 @@ export function PetitionsPage() {
     setMovingPetitionId(petition.id);
 
     try {
-      await savePetition({
+      const savedPetition = await savePetition({
         ...petition,
         status: nextColumn.label,
-      });
+      }, { silent: true });
+
+      if (savedPetition) {
+        addFlash(`Peça movida para ${nextColumn.label}.`, 'info');
+      }
     } finally {
       window.setTimeout(() => {
         setMovingPetitionId('');
@@ -300,7 +291,7 @@ export function PetitionsPage() {
               </svg>
               <input
                 type="search"
-                placeholder="Buscar por cliente, adverso, responsável ou área"
+                placeholder="Buscar por cliente, adverso, tipo ou área"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
@@ -308,24 +299,12 @@ export function PetitionsPage() {
 
             <select
               className="filter-select"
-              aria-label="Filtrar por responsável"
-              value={responsibleFilter}
-              onChange={(event) => setResponsibleFilter(event.target.value)}
+              aria-label="Filtrar por petições ou contestações"
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value)}
             >
-              <option value="">Responsável</option>
-              {responsibleOptions.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </select>
-
-            <select
-              className="filter-select"
-              aria-label="Filtrar por área jurídica"
-              value={areaFilter}
-              onChange={(event) => setAreaFilter(event.target.value)}
-            >
-              <option value="">Área jurídica</option>
-              {areaOptions.map((option) => (
+              <option value="">Petições ou contestações</option>
+              {PETITION_TYPE_OPTIONS.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
             </select>
@@ -512,9 +491,9 @@ export function PetitionFormPage() {
     }
 
     const canDelete = await confirm({
-      title: 'Excluir peça',
-      message: 'Esta petição ou contestação será removida permanentemente.',
-      confirmLabel: 'Excluir peça',
+      title: 'Tem certeza?',
+      message: 'Esta petição ou contestação será deletada.',
+      confirmLabel: 'Deletar',
       tone: 'danger',
     });
 
