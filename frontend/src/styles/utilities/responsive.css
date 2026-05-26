@@ -18,6 +18,10 @@
         padding:0;
     }
 
+    .page-wrap{
+        padding-top:57px;
+    }
+
     .topbar{
         top:0;
         gap:8px;
@@ -131,10 +135,15 @@
 }
 
 @media (max-width:1200px){
+    .page-wrap{
+        padding-top:61px;
+    }
+
     .topbar{
-        position:relative;
-        top:auto;
-        left:auto;
+        position:absolute;
+        top:0;
+        left:0;
+        right:0;
         width:auto;
         padding:10px 12px;
         border-radius:0;
@@ -188,6 +197,9 @@
 
     .page{
         padding:0 0 var(--bottom-nav-offset);
+    }
+    .page-wrap{
+        padding-top:53px;
     }
     .main{gap:0}
     .surface{border-radius:0}
@@ -318,6 +330,9 @@
 
     .page{
         padding:0 0 var(--bottom-nav-offset);
+    }
+    .page-wrap{
+        padding-top:49px;
     }
 
     .main{gap:0}
