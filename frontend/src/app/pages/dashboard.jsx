@@ -346,7 +346,7 @@ export function DashboardPage() {
                 <Link className="shortcut" to="/peticoes-contestacoes">
                   <div className="shortcut-copy">
                     <strong>Petições</strong>
-                    <span>Peças e contestações</span>
+                    <span>Petições ou contestações</span>
                   </div>
                   <span className="shortcut-icon" aria-hidden="true">
                     <svg

@@ -460,7 +460,7 @@ export function ProcessDetailPage() {
             <section className="surface section-card">
               <div className="section-head">
                 <div>
-                  <h2 className="section-title">Petições e contestações</h2>
+                  <h2 className="section-title">Petições ou contestações</h2>
                   <p className="section-note">{formatCount(relatedPetitions.length, 'peça', 'peças')}</p>
                 </div>
               </div>

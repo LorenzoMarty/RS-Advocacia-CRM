@@ -274,12 +274,12 @@ export function PetitionsPage() {
 
   return (
     <>
-      <PageChrome label="Petições e contestações" />
+      <PageChrome label="Petições ou contestações" />
       <div className="petitions-page">
         <section className="surface petitions-intro">
           <div className="section-head">
             <div>
-              <h1 className="intro-title">Petições e contestações</h1>
+              <h1 className="intro-title">Petições ou contestações</h1>
               <p className="section-note">Kanban separado para peças, protocolo e acompanhamento.</p>
             </div>
             <div className="petitions-head-actions">
@@ -293,7 +293,7 @@ export function PetitionsPage() {
           </div>
 
           <div className="petitions-toolbar">
-            <label className="toolbar-search" aria-label="Buscar petições e contestações">
+            <label className="toolbar-search" aria-label="Buscar petições ou contestações">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="7" />
                 <path d="m21 21-4.3-4.3" />
@@ -333,7 +333,7 @@ export function PetitionsPage() {
         </section>
 
         {clientOptions.length ? (
-          <section className={`petitions-board${draggingPetitionId ? ' is-dragging' : ''}`} aria-label="Kanban de petições e contestações">
+          <section className={`petitions-board${draggingPetitionId ? ' is-dragging' : ''}`} aria-label="Kanban de petições ou contestações">
             {PETITION_STATUS_COLUMNS.map((column) => (
               <section
                 className={`petition-column${dragOverColumnKey === column.key ? ' is-drop-target' : ''}`}
@@ -468,7 +468,7 @@ export function PetitionFormPage() {
         <section className="surface section-card">
           <EmptyState
             title="Peça não encontrada."
-            copy="Volte para o kanban de petições e contestações."
+            copy="Volte para o kanban de petições ou contestações."
             actions={<Link className="btn" to="/peticoes-contestacoes">Voltar</Link>}
           />
         </section>

@@ -29,7 +29,7 @@ const AREA_LABELS = {
   auth: 'Cargos e acessos',
   clientes: 'Clientes',
   prazos: 'Prazos',
-  peticoes: 'Petições e contestações',
+  peticoes: 'Petições ou contestações',
   processos: 'Processos',
   usuarios: 'Usuários',
 };
@@ -50,7 +50,7 @@ const RESOURCE_LABELS = {
   group: 'Cargos',
   permission: 'Regras de acesso',
   prazo: 'Prazos',
-  peticao: 'Petições e contestações',
+  peticao: 'Petições ou contestações',
   processo: 'Processos',
   user: 'Contas internas',
   usuario: 'Usuários',
