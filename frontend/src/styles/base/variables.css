@@ -24,9 +24,9 @@
         radial-gradient(circle at 12% 10%, rgba(212,175,55,.08), transparent 28%),
         radial-gradient(circle at 88% 0%, rgba(51,65,85,.2), transparent 24%),
         linear-gradient(180deg, #020617, #020617 100%);
-    --sidebar-bg:linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.98));
-    --topbar-bg:linear-gradient(180deg, rgba(15,23,42,.9), rgba(2,6,23,.9));
-    --surface-bg:linear-gradient(180deg, rgba(15,23,42,.84), rgba(2,6,23,.92)), var(--panel);
+    --sidebar-bg:transparent;
+    --topbar-bg:transparent;
+    --surface-bg:transparent;
     --ghost:rgba(148,163,184,.06);
     --ghost-strong:rgba(148,163,184,.1);
     --hover:rgba(212,175,55,.09);
@@ -78,9 +78,9 @@ html[data-theme="light"]{
         radial-gradient(circle at 12% 10%, rgba(181,138,79,.12), transparent 28%),
         radial-gradient(circle at 88% 0%, rgba(126,141,177,.1), transparent 22%),
         linear-gradient(180deg, #f6f1e8, #eee7dc 100%);
-    --sidebar-bg:linear-gradient(180deg, rgba(255,255,255,.92), rgba(250,245,238,.86)), rgba(255,255,255,.9);
-    --topbar-bg:linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.78)), rgba(255,255,255,.82);
-    --surface-bg:linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.74)), var(--panel);
+    --sidebar-bg:transparent;
+    --topbar-bg:transparent;
+    --surface-bg:transparent;
     --ghost:rgba(25,31,45,.04);
     --ghost-strong:rgba(25,31,45,.06);
     --hover:rgba(181,138,79,.09);

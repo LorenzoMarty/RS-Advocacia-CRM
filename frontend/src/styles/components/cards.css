@@ -7,15 +7,13 @@
 }
 
 .profile .avatar{width:34px;height:34px;border-radius:11px}
-.main{display:grid;gap:0;min-width:0}
+.main{display:grid;gap:0;min-width:0;background:transparent}
 .main > *{min-width:0}
 .surface{
     position:relative;
     min-width:0;
     border-radius:0;
     border:0;
-    border-right:1px solid var(--line);
-    border-bottom:1px solid var(--line);
     background:var(--surface-bg);
     box-shadow:none;
     overflow:hidden;
