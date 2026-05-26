@@ -115,6 +115,9 @@ button:disabled {
   .api-test-list
 ) {
   border-radius: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
 }
 
 #root :where(

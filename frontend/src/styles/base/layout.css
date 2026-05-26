@@ -63,7 +63,6 @@ html[data-theme="dark"] .ambient-light{
     border-radius:0;
     background:var(--sidebar-bg);
     border:0;
-    border-right:1px solid var(--line);
     box-shadow:none;
     backdrop-filter:none;
     overflow:visible;
@@ -99,12 +98,14 @@ html[data-theme="dark"] .ambient-light{
 .page{
     margin-left:0;
     padding:0 0 var(--bottom-nav-offset);
+    background:transparent;
     transition:margin-left .35s cubic-bezier(.22,1,.36,1),padding .22s ease;
 }
 .page-wrap{
     max-width:none;
     min-width:0;
     margin:0;
+    background:transparent;
 }
 .topbar{
     position:sticky;
@@ -117,7 +118,6 @@ html[data-theme="dark"] .ambient-light{
     padding:12px 14px;
     border-radius:0;
     border:0;
-    border-bottom:1px solid var(--line);
     background:var(--topbar-bg);
     box-shadow:none;
     backdrop-filter:none;
