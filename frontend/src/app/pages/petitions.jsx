@@ -62,9 +62,6 @@ function validatePetitionForm(form) {
   if (!form.adversary.trim()) nextErrors.adversary = 'Informe o adverso.';
   if (!form.responsible.trim()) nextErrors.responsible = 'Informe o responsável pela ação.';
   if (!form.area.trim()) nextErrors.area = 'Informe a área jurídica.';
-  if (normalizeText(form.status).includes('pendente') && !form.pendingReason.trim()) {
-    nextErrors.pendingReason = 'Informe o motivo da pendência.';
-  }
   if (form.driveLink.trim() && !/^https?:\/\//i.test(form.driveLink.trim())) {
     nextErrors.driveLink = 'Informe um link iniciado por http:// ou https://.';
   }
@@ -124,7 +121,6 @@ function PetitionCard({
 
 export function PetitionsPage() {
   const {
-    addFlash,
     clients,
     deletePetition,
     isPetitionsLoading,
@@ -245,13 +241,6 @@ export function PetitionsPage() {
     const nextColumn = PETITION_STATUS_COLUMNS.find((column) => column.key === nextColumnKey);
 
     if (!nextColumn || petitionColumnKey(petition) === nextColumnKey) {
-      return;
-    }
-
-    if (nextColumn.key === 'pendente' && !petition.pendingReason.trim()) {
-      beginEdit(petition, { status: nextColumn.label });
-      setErrors({ pendingReason: 'Informe o motivo da pendência antes de mover para Pendente.' });
-      addFlash('Informe o motivo da pendência antes de mover para Pendente.', 'error');
       return;
     }
 
