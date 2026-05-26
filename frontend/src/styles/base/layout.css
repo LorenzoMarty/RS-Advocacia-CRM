@@ -63,6 +63,8 @@ html[data-theme="dark"] .ambient-light{
     border-radius:0;
     background:var(--sidebar-bg);
     border:0;
+    outline:1px solid var(--line);
+    outline-offset:-1px;
     box-shadow:none;
     backdrop-filter:none;
     overflow:visible;
@@ -118,6 +120,8 @@ html[data-theme="dark"] .ambient-light{
     padding:12px 14px;
     border-radius:0;
     border:0;
+    outline:1px solid var(--line);
+    outline-offset:-1px;
     background:var(--topbar-bg);
     box-shadow:none;
     backdrop-filter:none;

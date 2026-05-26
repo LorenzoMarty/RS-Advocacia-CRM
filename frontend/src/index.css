@@ -118,6 +118,8 @@ button:disabled {
   border-color: transparent;
   background: transparent;
   box-shadow: none;
+  outline: 1px solid var(--line);
+  outline-offset: -1px;
 }
 
 #root :where(
