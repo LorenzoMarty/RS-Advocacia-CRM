@@ -54,6 +54,27 @@ class UsuariosTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(auth_user.groups.filter(name="Administrador").exists())
 
+    def test_cria_usuario_pela_api(self):
+        cargo = Group.objects.create(name="Operacional")
+        response = self.client.post(
+            reverse("criar_usuario"),
+            data=json.dumps(
+                {
+                    "nome": "Novo Usuario",
+                    "email": "novo@example.com",
+                    "cargo_id": str(cargo.pk),
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201, response.json())
+        usuario = Usuario.objects.get(email="novo@example.com")
+        auth_user = get_user_model().objects.get(email="novo@example.com")
+        self.assertEqual(usuario.cargo, cargo.name)
+        self.assertTrue(auth_user.groups.filter(name=cargo.name).exists())
+        self.assertEqual(response.json()["dados"]["usuario"]["id"], str(usuario.pk))
+
     def test_serializa_conexao_google_a_partir_da_integracao(self):
         usuario = Usuario.objects.create(
             nome="Agenda",

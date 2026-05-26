@@ -1219,14 +1219,11 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveUser(payload) {
-    if (!payload.id) {
-      addFlash('Usuários são criados automaticamente pelo login com Google.', 'error');
-      return null;
-    }
-
     if (canUseApi) {
       try {
-        const response = await api.updateUser(payload.id, userToPayload(payload));
+        const response = payload.id
+          ? await api.updateUser(payload.id, userToPayload(payload))
+          : await api.createUser(userToPayload(payload));
         const savedUser = userFromResponse(response);
         if (!savedUser) {
           throw new Error('Resposta inválida da API de usuários.');
@@ -1235,12 +1232,19 @@ export function AppStateProvider({ children }) {
         if (savedUser.id === currentUserId) {
           setCurrentSessionUser(savedUser);
         }
-        addFlash('Usuário atualizado.', 'success');
+        addFlash(payload.id ? 'Usuário atualizado.' : 'Usuário criado.', 'success');
         return savedUser;
       } catch (error) {
         addFlash(errorMessage(error), 'error');
         return null;
       }
+    }
+
+    if (!payload.id) {
+      const nextUser = { ...payload, id: nextId('user') };
+      setUsers((currentUsers) => sortByName([...currentUsers, nextUser]));
+      addFlash('Usuário criado.', 'success');
+      return nextUser;
     }
 
     let savedUser = null;
