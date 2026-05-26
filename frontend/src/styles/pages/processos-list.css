@@ -8,10 +8,6 @@
         padding:22px;
     }
 
-    .process-intro .list-intro-toolbar{
-        grid-template-columns:minmax(260px, 1fr) auto auto;
-    }
-
     .intro-title{
         margin:0;
         font-family:var(--serif);
@@ -21,52 +17,11 @@
         letter-spacing:-.06em;
     }
 
-    .process-table{
-        display:grid;
-        gap:10px;
-    }
-
-    .process-density-control{
-        display:flex;
-        align-items:center;
-        justify-content:flex-end;
-        gap:10px;
-        min-width:0;
-        color:var(--muted);
-        font-size:.72rem;
-        font-weight:700;
-        letter-spacing:.08em;
-        text-transform:uppercase;
-    }
-
-    .process-density-control span{
-        white-space:nowrap;
-    }
-
-    .process-density-control select{
-        min-height:36px;
-        border-radius:11px;
-        border:1px solid var(--line);
-        background:var(--ghost);
-        color:var(--soft);
-        padding:0 34px 0 11px;
-        font-size:.76rem;
-        font-weight:700;
-        outline:0;
-    }
-
     .process-head{
-        position:sticky;
-        top:64px;
-        z-index:4;
         display:grid;
-        grid-template-columns:34px minmax(0, 1.45fr) minmax(220px, .9fr) minmax(170px, .8fr) 128px 132px;
-        gap:12px;
-        align-items:center;
-        padding:8px 14px 10px;
-        border-bottom:1px solid var(--line);
-        background:rgba(2,6,23,.94);
-        backdrop-filter:blur(12px);
+        grid-template-columns:minmax(0, 1.45fr) minmax(220px, .9fr) minmax(170px, .8fr) 128px 272px;
+        gap:14px;
+        padding:0 14px 12px 14px;
         color:var(--muted);
         font-size:.7rem;
         font-weight:700;
@@ -76,64 +31,25 @@
 
     .process-list{
         display:grid;
-        gap:8px;
+        gap:10px;
     }
 
     .process-row{
-        position:relative;
         display:grid;
-        grid-template-columns:34px minmax(0, 1.45fr) minmax(220px, .9fr) minmax(170px, .8fr) 128px 132px;
-        gap:12px;
+        grid-template-columns:minmax(0, 1.45fr) minmax(220px, .9fr) minmax(170px, .8fr) 128px 272px;
+        gap:14px;
         align-items:center;
-        padding:14px;
+        padding:16px 14px;
         border-radius:20px;
         border:1px solid var(--line);
         background:var(--ghost);
-        cursor:pointer;
-        transition:border-color .16s ease,background .16s ease,box-shadow .16s ease;
-        will-change:transform;
-    }
-
-    .process-row::before{
-        content:"";
-        position:absolute;
-        left:0;
-        top:20%;
-        bottom:20%;
-        width:2px;
-        border-radius:999px;
-        background:transparent;
-        transition:background .16s ease;
+        transition:border-color .2s ease,background .2s ease,transform .2s ease;
     }
 
     .process-row:hover{
+        transform:translateY(-1px);
         border-color:rgba(212,175,55,.18);
-        background:rgba(148,163,184,.075);
-        box-shadow:0 8px 20px rgba(0,0,0,.1);
-    }
-
-    .process-row.is-selected{
-        border-color:rgba(212,175,55,.24);
-        background:rgba(212,175,55,.055);
-    }
-
-    .process-row.is-selected::before{
-        background:var(--gold-soft);
-    }
-
-    .process-row:focus-visible{
-        border-color:rgba(212,175,55,.28);
-        box-shadow:0 0 0 3px rgba(212,175,55,.1);
-    }
-
-    .process-table.density-compact .process-row{
-        padding-top:10px;
-        padding-bottom:10px;
-    }
-
-    .process-table.density-spacious .process-row{
-        padding-top:18px;
-        padding-bottom:18px;
+        background:rgba(212,175,55,.06);
     }
 
     .process-main,
@@ -142,21 +58,6 @@
     .process-status,
     .process-actions{
         min-width:0;
-    }
-
-    .process-select{
-        width:26px;
-        height:26px;
-        display:grid;
-        place-items:center;
-        border-radius:10px;
-    }
-
-    .process-select input{
-        width:15px;
-        height:15px;
-        accent-color:var(--gold);
-        cursor:pointer;
     }
 
     .process-number{
@@ -250,24 +151,14 @@
         justify-content:flex-end;
         gap:8px;
         flex-wrap:wrap;
-        opacity:0;
-        transform:translateX(4px);
-        transition:opacity .12s ease,transform .12s ease;
-    }
-
-    .process-row:hover .process-actions,
-    .process-row:focus-within .process-actions{
-        opacity:1;
-        transform:translateX(0);
     }
 
     .action-link{
         display:inline-flex;
         align-items:center;
         justify-content:center;
-        min-width:38px;
         min-height:38px;
-        padding:0 12px;
+        padding:0 14px;
         border-radius:12px;
         border:1px solid var(--line);
         background:var(--ghost);
@@ -275,11 +166,6 @@
         font-size:.82rem;
         font-weight:600;
         transition:border-color .2s ease,background .2s ease,transform .2s ease;
-    }
-
-    .action-link-icon{
-        width:38px;
-        padding:0;
     }
 
     .action-link:hover{
@@ -325,15 +211,6 @@
         border-color:rgba(30,34,45,.1);
     }
 
-    html[data-theme="light"] .process-head{
-        background:rgba(246,241,232,.94);
-    }
-
-    html[data-theme="light"] .process-row:hover{
-        background:rgba(24,30,42,.045);
-        box-shadow:0 8px 20px rgba(58,44,20,.07);
-    }
-
     html[data-theme="light"] .action-link-danger{
         background:rgba(229,111,111,.08);
         border-color:rgba(229,111,111,.18);
@@ -350,21 +227,19 @@
         }
 
         .process-row{
-            grid-template-columns:34px minmax(0, 1fr) auto;
+            grid-template-columns:minmax(0, 1fr) auto;
             grid-template-areas:
-                "select main actions"
-                "select meta meta"
-                "select owner status";
+                "main actions"
+                "meta meta"
+                "owner status";
             align-items:start;
         }
 
-        .process-select{grid-area:select}
         .process-main{grid-area:main}
         .process-meta{grid-area:meta}
         .process-owner{grid-area:owner}
         .process-status{grid-area:status;justify-content:flex-end}
         .process-actions{grid-area:actions}
-        .process-actions{opacity:1;transform:none}
     }
 
 @media (max-width:640px){
@@ -373,21 +248,12 @@
         padding:16px;
     }
 
-    .process-intro .list-intro-toolbar{
-        grid-template-columns:1fr;
-    }
-
-    .process-density-control{
-        justify-content:flex-start;
-        flex-wrap:wrap;
-    }
-
     .process-row{
-        grid-template-columns:28px minmax(0, 1fr) auto;
+        grid-template-columns:minmax(0, 1fr) auto;
         grid-template-areas:
-            "select main actions"
-            "select meta meta"
-            "select owner status";
+            "main actions"
+            "meta meta"
+            "owner status";
         gap:10px;
         padding:13px 12px;
         border-radius:18px;

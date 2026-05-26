@@ -1,52 +1,59 @@
-[data-sonner-toaster]{
-    --normal-bg:rgba(15,23,42,.96);
-    --normal-border:var(--line-strong);
-    --normal-text:var(--text);
-    --success-bg:rgba(13,52,43,.96);
-    --success-border:rgba(115,211,177,.28);
-    --success-text:#d9fff1;
-    --error-bg:rgba(62,20,26,.96);
-    --error-border:rgba(239,122,122,.32);
-    --error-text:#ffe5e5;
-    --warning-bg:rgba(58,42,17,.96);
-    --warning-border:rgba(232,178,92,.28);
-    --warning-text:#fff0d7;
+.flash-stack{
+    display:grid;
+    gap:10px;
+    margin-bottom:18px;
 }
 
-[data-sonner-toast]{
-    min-height:42px;
-    border-radius:14px!important;
-    box-shadow:0 16px 34px rgba(0,0,0,.28)!important;
-    font-family:var(--sans)!important;
-    font-size:.82rem!important;
-    font-weight:650!important;
+.flash{
+    padding:14px 16px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:var(--ghost);
+    color:var(--text);
+    line-height:1.6;
 }
 
-[data-sonner-toast] [data-title]{
-    line-height:1.35!important;
+.flash-success{
+    border-color:rgba(112,205,155,.22);
+    background:rgba(112,205,155,.1);
 }
 
-[data-sonner-toast] [data-close-button]{
-    border-color:var(--line)!important;
-    background:rgba(255,255,255,.08)!important;
-    color:var(--text)!important;
+.flash-error{
+    border-color:rgba(239,122,122,.22);
+    background:rgba(239,122,122,.1);
 }
 
-html[data-theme="light"] [data-sonner-toaster]{
-    --normal-bg:rgba(255,251,245,.98);
-    --normal-border:rgba(30,34,45,.12);
-    --normal-text:#16181f;
-    --success-bg:rgba(235,251,244,.98);
-    --success-border:rgba(24,125,83,.22);
-    --success-text:#145c3f;
-    --error-bg:rgba(255,242,242,.98);
-    --error-border:rgba(143,41,41,.22);
-    --error-text:#8f2929;
-    --warning-bg:rgba(255,248,235,.98);
-    --warning-border:rgba(181,126,31,.22);
-    --warning-text:#7b4f12;
+.flash-warning{
+    border-color:rgba(228,183,105,.22);
+    background:rgba(228,183,105,.1);
 }
 
-html[data-theme="light"] [data-sonner-toast]{
-    box-shadow:0 14px 30px rgba(58,44,20,.14)!important;
+.flash-info{
+    border-color:rgba(126,165,239,.22);
+    background:rgba(126,165,239,.1);
+}
+
+html[data-theme="light"] .flash{
+    background:rgba(24,30,42,.04);
+    border-color:rgba(30,34,45,.1);
+}
+
+html[data-theme="light"] .flash-success{
+    background:rgba(112,205,155,.12);
+    border-color:rgba(112,205,155,.22);
+}
+
+html[data-theme="light"] .flash-error{
+    background:rgba(239,122,122,.12);
+    border-color:rgba(239,122,122,.22);
+}
+
+html[data-theme="light"] .flash-warning{
+    background:rgba(228,183,105,.12);
+    border-color:rgba(228,183,105,.22);
+}
+
+html[data-theme="light"] .flash-info{
+    background:rgba(126,165,239,.12);
+    border-color:rgba(126,165,239,.22);
 }

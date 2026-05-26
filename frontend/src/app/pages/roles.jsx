@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome } from '../layout';
 import { useAppState } from '../store';
 import { formatCount } from '../utils';
@@ -573,10 +572,8 @@ export function RoleDetailPage() {
 export function RoleDeletePage() {
   const navigate = useNavigate();
   const params = useParams();
-  const { confirm, confirmPopup } = useConfirmPopup();
   const { deleteRole, roles, users } = useAppState();
   const role = roles.find((item) => item.id === params.roleId) || null;
-  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!role) {
     return <NotFoundState title="Cargo não encontrado." />;
@@ -591,20 +588,7 @@ export function RoleDeletePage() {
       return;
     }
 
-    const canDelete = await confirm({
-      title: 'Excluir cargo',
-      message: `O cargo "${role.name}" será removido permanentemente.`,
-      confirmLabel: 'Excluir cargo',
-      tone: 'danger',
-    });
-
-    if (!canDelete) {
-      return;
-    }
-
-    setIsDeleting(true);
     const wasDeleted = await deleteRole(role.id);
-    setIsDeleting(false);
     if (!wasDeleted) {
       return;
     }
@@ -614,7 +598,6 @@ export function RoleDeletePage() {
   return (
     <>
       <PageChrome label="Excluir" actions={<Link className="btn btn-secondary" to={`/cargos/${role.id}`}>Voltar</Link>} />
-      {confirmPopup}
 
       <div className="confirm-page">
         <section className="surface confirm-intro">
@@ -646,9 +629,7 @@ export function RoleDeletePage() {
             ) : (
               <form onSubmit={handleDelete}>
                 <div className="confirm-actions">
-                  <button className="btn btn-danger" type="submit" disabled={isDeleting}>
-                    {isDeleting ? 'Excluindo...' : 'Confirmar exclusão'}
-                  </button>
+                  <button className="btn btn-danger" type="submit">Confirmar exclusão</button>
                   <Link className="btn btn-secondary" to={`/cargos/${role.id}`}>Cancelar</Link>
                 </div>
               </form>
