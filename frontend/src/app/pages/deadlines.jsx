@@ -41,12 +41,6 @@ function dateFromInput(value) {
   return value ? new Date(`${value}T12:00:00`) : null;
 }
 
-function shiftDate(value, days) {
-  const date = dateFromInput(value) || new Date();
-  date.setDate(date.getDate() + days);
-  return dateInputValue(date);
-}
-
 function deadlineMoment(deadline) {
   return dateFromInput(deadline.date) || new Date();
 }
@@ -313,7 +307,7 @@ export function DeadlinesPage() {
           <div className="section-head">
             <div>
               <h1 className="intro-title">Prazos</h1>
-              <p className="section-note">Kanban diario dos prazos fatais</p>
+              <p className="section-note">Organização dos prazos fatais</p>
             </div>
             <div className="deadlines-head-actions">
               <span className="badge gold">
@@ -327,16 +321,6 @@ export function DeadlinesPage() {
 
           <div className="deadlines-toolbar">
             <div className="deadline-day-control">
-              <button
-                className="icon-control"
-                type="button"
-                aria-label="Dia anterior"
-                onClick={() => updateSelectedDate((value) => shiftDate(value, -1))}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m15 18-6-6 6-6" />
-                </svg>
-              </button>
               <label className="deadline-date-field">
                 <span>Dia</span>
                 <input
@@ -345,19 +329,6 @@ export function DeadlinesPage() {
                   onChange={(event) => updateSelectedDate(event.target.value)}
                 />
               </label>
-              <button
-                className="icon-control"
-                type="button"
-                aria-label="Proximo dia"
-                onClick={() => updateSelectedDate((value) => shiftDate(value, 1))}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
-              </button>
-              <button className="btn btn-secondary" type="button" onClick={() => updateSelectedDate(dateInputValue())}>
-                Hoje
-              </button>
             </div>
 
             <div className="deadline-filter-grid">

@@ -4,7 +4,7 @@ export const NAV_ITEMS = [
   { key: 'processos', label: 'Processos', mobileLabel: 'Processos', to: '/processos' },
   { key: 'agenda', label: 'Agenda', mobileLabel: 'Agenda', to: '/agenda' },
   { key: 'prazos', label: 'Prazos', mobileLabel: 'Prazos', to: '/prazos' },
-  { key: 'peticoes', label: 'Petições e contestações', mobileLabel: 'Petições', to: '/peticoes-contestacoes' },
+  { key: 'peticoes', label: 'Petições ou contestações', mobileLabel: 'Petições', to: '/peticoes-contestacoes' },
   { key: 'reunioes', label: 'Reuniões', mobileLabel: 'Reuniões', to: '/reunioes' },
   { key: 'usuarios', label: 'Usuários', mobileLabel: 'Usuários', to: '/usuarios' },
 ];
