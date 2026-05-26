@@ -32,9 +32,22 @@
 .recording-result-head p{margin:5px 0 0;color:var(--muted);font-size:.78rem}
 .ai-output{display:grid;gap:10px}
 .ai-output h3{margin:0;color:var(--gold-soft);font-size:.88rem;text-transform:uppercase;letter-spacing:.12em}
-.ai-output pre{margin:0;padding:14px;border-radius:13px;background:rgba(0,0,0,.13);color:var(--soft);font:inherit;font-size:.9rem;line-height:1.6;white-space:pre-wrap}
+.summary-report{display:grid;gap:10px}
+.summary-section{display:grid;gap:10px;padding:14px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.018)),var(--ghost)}
+.summary-section-nested{padding:12px;border-radius:14px;background:rgba(255,255,255,.028)}
+.summary-section-header{display:flex;align-items:center;gap:9px}
+.summary-section-header::before{content:"";width:7px;height:7px;flex:0 0 auto;border-radius:999px;background:var(--gold-soft);box-shadow:0 0 14px rgba(212,175,55,.24)}
+.summary-section-header h4{margin:0;color:var(--text);font-size:.82rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+.summary-section-body{display:grid;gap:9px;color:var(--soft);font-size:.9rem;line-height:1.62}
+.summary-section-body p{margin:0}
+.summary-list{margin:0;padding-left:18px;display:grid;gap:6px}
+.summary-list li::marker{color:var(--gold-soft)}
+.summary-checklist{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+.summary-checkitem{display:flex;align-items:flex-start;gap:9px}
+.summary-checkitem span{width:15px;height:15px;flex:0 0 auto;margin-top:3px;border-radius:5px;border:1px solid rgba(212,175,55,.34);background:rgba(212,175,55,.08)}
+.summary-checkitem p{margin:0}
+.summary-subsections{display:grid;gap:8px}
 .transcript-panel summary{cursor:pointer;color:var(--soft);font-weight:600}
 .transcript-panel p{margin:12px 0 0;color:var(--soft);font-size:.9rem;line-height:1.7;white-space:pre-wrap}
 @media (max-width:980px){.meetings-layout{grid-template-columns:1fr}}
-@media (max-width:640px){.meetings-intro,.meetings-form-panel,.meetings-workspace{padding:16px}.recording-result-head{display:grid}.recording-actions .btn,.recording-ready .btn{flex:1}}
-
+@media (max-width:640px){.meetings-intro,.meetings-form-panel,.meetings-workspace{padding:16px}.recording-result-head{display:grid}.summary-section{padding:12px}.summary-section-header h4{font-size:.72rem}.recording-actions .btn,.recording-ready .btn{flex:1}}
