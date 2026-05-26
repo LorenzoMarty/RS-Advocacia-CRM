@@ -78,9 +78,9 @@ html[data-theme="light"]{
         radial-gradient(circle at 12% 10%, rgba(181,138,79,.12), transparent 28%),
         radial-gradient(circle at 88% 0%, rgba(126,141,177,.1), transparent 22%),
         linear-gradient(180deg, #f6f1e8, #eee7dc 100%);
-    --sidebar-bg:transparent;
-    --topbar-bg:transparent;
-    --surface-bg:transparent;
+    --sidebar-bg:#ffffff;
+    --topbar-bg:#ffffff;
+    --surface-bg:#ffffff;
     --ghost:rgba(25,31,45,.04);
     --ghost-strong:rgba(25,31,45,.06);
     --hover:rgba(181,138,79,.09);

@@ -122,6 +122,30 @@ button:disabled {
   outline-offset: -1px;
 }
 
+html[data-theme="light"] :where(.sidebar, .topbar),
+html[data-theme="light"] #root .main :where(
+  .hero,
+  .agenda-intro,
+  .deadlines-intro,
+  .deadline-form-intro,
+  .deadline-detail-hero,
+  .petitions-intro,
+  .meetings-intro,
+  .clients-intro,
+  .client-hero,
+  .process-hero,
+  .event-hero,
+  .user-hero,
+  .cargo-hero,
+  .cargos-intro,
+  .create-intro,
+  .event-intro,
+  .confirm-intro,
+  .api-test-hero
+) {
+  background: #ffffff;
+}
+
 #root :where(
   .main,
   .agenda-page,
