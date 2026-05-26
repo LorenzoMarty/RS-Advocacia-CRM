@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { PETITION_STATUS_COLUMNS, PROCESS_AREA_OPTIONS } from '../data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
@@ -25,6 +25,7 @@ function sortedUnique(values) {
 function createPetitionForm(petition = null, overrides = {}) {
   return {
     clientId: petition?.clientId || '',
+    processId: petition?.processId || '',
     type: petition?.type || PETITION_DEFAULT_TYPE,
     adversary: petition?.adversary || '',
     responsible: petition?.responsible || '',
@@ -80,9 +81,12 @@ function PetitionCard({
   onDragEnd,
   onDragStart,
   petition,
+  processes,
 }) {
   const client = clients.find((item) => item.id === petition.clientId) || null;
+  const process = processes.find((item) => item.id === petition.processId) || null;
   const clientName = client?.name || petition.clientName || 'Cliente';
+  const processNumber = process?.number || petition.processNumber || '';
   const statusLabel = petitionStatusLabel(petition);
 
   return (
@@ -96,6 +100,7 @@ function PetitionCard({
         <span className="petition-card-client">{clientName}</span>
         <h3>{petition.adversary || 'Adverso não informado'}</h3>
         <div className="petition-card-meta">
+          {processNumber ? <span>{processNumber}</span> : null}
           <span>{petition.type || PETITION_DEFAULT_TYPE}</span>
           <span>{petition.responsible || 'Sem responsável'}</span>
           <span>{petition.area || 'Sem área'}</span>
@@ -128,6 +133,7 @@ export function PetitionsPage() {
     clients,
     isPetitionsLoading,
     petitions,
+    processes,
     savePetition,
     users,
   } = useAppState();
@@ -155,15 +161,18 @@ export function PetitionsPage() {
 
   const filteredPetitions = allPetitions.filter((petition) => {
     const client = clients.find((item) => item.id === petition.clientId) || null;
+    const process = processes.find((item) => item.id === petition.processId) || null;
     const haystack = buildSearchText([
       petition.adversary,
       petition.responsible,
       petition.area,
       petition.type,
+      petition.processNumber,
       petition.pendingReason,
       petition.status,
       petition.clientName,
       client?.name,
+      process?.number,
     ]);
 
     if (search && !haystack.includes(normalizeText(search))) {
@@ -357,6 +366,7 @@ export function PetitionsPage() {
                         onDragEnd={handleDragEnd}
                         onDragStart={handleDragStart}
                         petition={petition}
+                        processes={processes}
                       />
                     ))
                   ) : (
@@ -386,21 +396,31 @@ export function PetitionsPage() {
 export function PetitionFormPage() {
   const navigate = useNavigate();
   const params = useParams();
+  const [searchParams] = useSearchParams();
   const { confirm, confirmPopup } = useConfirmPopup();
   const {
     clients,
     deletePetition,
     isPetitionsLoading,
     petitions,
+    processes,
     savePetition,
     users,
   } = useAppState();
   const isEditing = Boolean(params.petitionId);
   const petition = petitions.find((item) => item.id === params.petitionId) || null;
-  const [form, setForm] = useState(() => createPetitionForm(petition));
+  const initialClientId = searchParams.get('cliente') || '';
+  const initialProcessId = searchParams.get('processo') || '';
+  const [form, setForm] = useState(() => createPetitionForm(
+    petition,
+    isEditing ? {} : { clientId: initialClientId, processId: initialProcessId },
+  ));
   const [errors, setErrors] = useState({});
 
   const clientOptions = [...clients].sort((left, right) => left.name.localeCompare(right.name, 'pt-BR'));
+  const processOptions = [...processes]
+    .filter((process) => !form.clientId || process.clientId === form.clientId)
+    .sort((left, right) => left.number.localeCompare(right.number, 'pt-BR'));
   const responsibleOptions = sortedUnique([
     ...users.map((user) => user.name),
     ...petitions.map((item) => item.responsible),
@@ -418,6 +438,24 @@ export function PetitionFormPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm(createPetitionForm(petition));
   }, [petition]);
+
+  useEffect(() => {
+    if (isEditing || !initialProcessId) {
+      return;
+    }
+
+    const selectedProcess = processes.find((process) => process.id === initialProcessId);
+    if (!selectedProcess) {
+      return;
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm((currentForm) => ({
+      ...currentForm,
+      clientId: currentForm.clientId || selectedProcess.clientId,
+      processId: currentForm.processId || selectedProcess.id,
+    }));
+  }, [initialProcessId, isEditing, processes]);
 
   if (isEditing && !petition) {
     if (isPetitionsLoading) {
@@ -440,7 +478,9 @@ export function PetitionFormPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    const nextErrors = validatePetitionForm(form);
+    const selectedProcess = processes.find((process) => process.id === form.processId) || null;
+    const clientId = form.clientId || selectedProcess?.clientId || '';
+    const nextErrors = validatePetitionForm({ ...form, clientId });
 
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors);
@@ -449,7 +489,9 @@ export function PetitionFormPage() {
 
     const savedPetition = await savePetition({
       id: petition?.id,
-      clientId: form.clientId,
+      clientId,
+      processId: form.processId,
+      processNumber: selectedProcess?.number || form.processNumber || '',
       type: form.type || PETITION_DEFAULT_TYPE,
       adversary: form.adversary.trim(),
       responsible: form.responsible.trim(),
@@ -516,12 +558,48 @@ export function PetitionFormPage() {
                   <select
                     id="petition-client"
                     value={form.clientId}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, clientId: event.target.value }))}
+                    onChange={(event) => {
+                      const clientId = event.target.value;
+                      setForm((currentForm) => {
+                        const currentProcess = processes.find((process) => process.id === currentForm.processId);
+                        return {
+                          ...currentForm,
+                          clientId,
+                          processId: currentProcess?.clientId === clientId ? currentForm.processId : '',
+                        };
+                      });
+                    }}
                   >
                     <option value="">Selecione o cliente</option>
                     {clientOptions.map((client) => (
                       <option key={client.id} value={client.id}>{client.name}</option>
                     ))}
+                  </select>
+                </Field>
+
+                <Field id="petition-process" label="Processo vinculado" className="span-2">
+                  <select
+                    id="petition-process"
+                    value={form.processId}
+                    onChange={(event) => {
+                      const processId = event.target.value;
+                      const selectedProcess = processes.find((process) => process.id === processId) || null;
+                      setForm((currentForm) => ({
+                        ...currentForm,
+                        processId,
+                        clientId: selectedProcess?.clientId || currentForm.clientId,
+                      }));
+                    }}
+                  >
+                    <option value="">Sem processo vinculado</option>
+                    {processOptions.map((process) => {
+                      const client = clients.find((item) => item.id === process.clientId) || null;
+                      return (
+                        <option key={process.id} value={process.id}>
+                          {process.number}{client ? ` - ${client.name}` : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </Field>
 

@@ -262,12 +262,14 @@ def _ensure_deadlines(processes):
     )
 
 
-def _ensure_petitions(clients):
+def _ensure_petitions(clients, processes):
     bruno, almeida, ana = clients
+    processo_bruno, processo_almeida, processo_ana = processes
     Peticao.objects.update_or_create(
         cliente=bruno,
         adverso="Companhia Alfa S/A",
         defaults={
+            "processo": processo_bruno,
             "tipo": Peticao.TIPO_CONTESTACAO,
             "responsavel_acao": "Mariana Souza",
             "link_drive": "https://drive.google.com/",
@@ -281,6 +283,7 @@ def _ensure_petitions(clients):
         cliente=almeida,
         adverso="Joao Pereira",
         defaults={
+            "processo": processo_almeida,
             "tipo": Peticao.TIPO_CONTESTACAO,
             "responsavel_acao": "Renata Sampaio",
             "link_drive": "https://drive.google.com/",
@@ -294,6 +297,7 @@ def _ensure_petitions(clients):
         cliente=ana,
         adverso="Beta Seguradora",
         defaults={
+            "processo": processo_ana,
             "tipo": Peticao.TIPO_PETICAO,
             "responsavel_acao": "Mariana Souza",
             "link_drive": "",
@@ -386,7 +390,7 @@ def ensure_demo_data():
     processes = _ensure_processes(clients)
     _ensure_events(processes)
     _ensure_deadlines(processes)
-    _ensure_petitions(clients)
+    _ensure_petitions(clients, processes)
     _ensure_meetings(clients)
     return demo_usuario, demo_auth_user
 

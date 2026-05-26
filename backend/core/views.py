@@ -93,7 +93,7 @@ def inicializacao(request):
         .select_related("cliente", "processo")
         .all()
     )
-    peticoes = Peticao.objects.select_related("cliente").all()
+    peticoes = Peticao.objects.select_related("cliente", "processo").all()
     prazos = Prazo.objects.select_related("processo__cliente").all()
     serialized_clientes = [serialize_cliente(cliente) for cliente in clientes]
     serialized_processos = [serialize_processo(processo) for processo in processos]

@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from clientes.models import Cliente
 from peticoes.models import Peticao
+from processos.models import Processo
 from usuarios.models import Usuario
 
 
@@ -32,10 +33,20 @@ class PeticoesViewsTests(TestCase):
             cpf="123.456.789-00",
             tipo_cliente="esporadico",
         )
+        self.processo = Processo.objects.create(
+            numero_processo="1000000-00.2026.8.26.0000",
+            cliente=self.cliente,
+            descricao="Processo de teste",
+            vara="1a Vara Civel",
+            area_juridica="Civel",
+            status="Ativo",
+            advogado_responsavel=self.usuario.nome,
+        )
 
     def payload(self):
         return {
             "cliente": self.cliente.pk,
+            "processo": self.processo.pk,
             "tipo": Peticao.TIPO_CONTESTACAO,
             "adverso": "Empresa adversa",
             "responsavel_acao": self.usuario.nome,
@@ -56,6 +67,7 @@ class PeticoesViewsTests(TestCase):
         self.assertEqual(Peticao.objects.count(), 1)
         self.assertEqual(response.json()["dados"]["peticao"]["adverso"], "Empresa adversa")
         self.assertEqual(response.json()["dados"]["peticao"]["tipo"], Peticao.TIPO_CONTESTACAO)
+        self.assertEqual(response.json()["dados"]["peticao"]["processo_id"], str(self.processo.pk))
 
     def test_pendente_nao_exige_motivo(self):
         payload = self.payload()

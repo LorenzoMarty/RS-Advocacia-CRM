@@ -291,7 +291,7 @@ export function ProcessFormPage() {
 
 export function ProcessDetailPage() {
   const params = useParams();
-  const { clients, deadlines, events, processes } = useAppState();
+  const { clients, deadlines, events, petitions, processes } = useAppState();
   const process = processes.find((item) => item.id === params.processId) || null;
 
   if (!process) {
@@ -301,6 +301,7 @@ export function ProcessDetailPage() {
   const client = clients.find((item) => item.id === process.clientId) || null;
   const relatedEvents = events.filter((event) => event.processId === process.id);
   const relatedDeadlines = deadlines.filter((deadline) => deadline.processId === process.id);
+  const relatedPetitions = petitions.filter((petition) => petition.processId === process.id);
 
   return (
     <>
@@ -334,6 +335,10 @@ export function ProcessDetailPage() {
                 <article className="summary-card">
                   <span>Prazos</span>
                   <strong>{relatedDeadlines.length}</strong>
+                </article>
+                <article className="summary-card">
+                  <span>Peças</span>
+                  <strong>{relatedPetitions.length}</strong>
                 </article>
                 <article className="summary-card">
                   <span>Responsável</span>
@@ -447,6 +452,45 @@ export function ProcessDetailPage() {
                     title="Sem prazos."
                     copy="Cadastre prazos na area de prazos, separados dos compromissos."
                     actions={<Link className="btn" to="/prazos/novo">Novo prazo</Link>}
+                  />
+                )}
+              </div>
+            </section>
+
+            <section className="surface section-card">
+              <div className="section-head">
+                <div>
+                  <h2 className="section-title">Petições e contestações</h2>
+                  <p className="section-note">{formatCount(relatedPetitions.length, 'peça', 'peças')}</p>
+                </div>
+              </div>
+
+              <div className="list">
+                {relatedPetitions.length ? relatedPetitions.map((petition) => (
+                  <article key={petition.id} className="event-item">
+                    <div className="list-top">
+                      <div>
+                        <h3 className="list-title">{petition.adversary || 'Adverso não informado'}</h3>
+                        <p className="list-subtitle">{petition.type || 'Petição'}</p>
+                      </div>
+                      <StatusBadge tone={getStatusTone(petition.status)}>{petition.status}</StatusBadge>
+                    </div>
+
+                    <div className="list-meta">
+                      {petition.responsible ? <span className="meta-chip">{petition.responsible}</span> : null}
+                      {petition.area ? <span className="meta-chip">{petition.area}</span> : null}
+                      {petition.driveLink ? (
+                        <a className="meta-chip" href={petition.driveLink} target="_blank" rel="noreferrer">
+                          Drive
+                        </a>
+                      ) : null}
+                    </div>
+                  </article>
+                )) : (
+                  <EmptyState
+                    title="Sem peças."
+                    copy="Vincule petições ou contestações a este processo."
+                    actions={<Link className="btn" to={`/peticoes-contestacoes/novo?processo=${process.id}&cliente=${client?.id || ''}`}>Nova peça</Link>}
                   />
                 )}
               </div>

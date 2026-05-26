@@ -27,6 +27,13 @@ class Peticao(models.Model):
         on_delete=models.CASCADE,
         related_name="peticoes",
     )
+    processo = models.ForeignKey(
+        "processos.Processo",
+        on_delete=models.SET_NULL,
+        related_name="peticoes",
+        null=True,
+        blank=True,
+    )
     tipo = models.CharField(max_length=30, choices=TIPO_CHOICES, default=TIPO_PETICAO)
     adverso = models.CharField(max_length=200)
     responsavel_acao = models.CharField(max_length=100)
