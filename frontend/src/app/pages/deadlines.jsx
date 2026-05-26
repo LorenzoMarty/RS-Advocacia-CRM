@@ -16,6 +16,11 @@ import { EmptyState, Field, NotFoundState } from './common';
 
 const DEADLINE_DEFAULT_STATUS = DEADLINE_STATUS_COLUMNS[0].label;
 
+function sortedUnique(values) {
+  return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))]
+    .sort((left, right) => left.localeCompare(right, 'pt-BR'));
+}
+
 function dateInputValue(value = new Date()) {
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return value;
@@ -117,7 +122,6 @@ function validateDeadlineForm(form) {
   const nextErrors = {};
 
   if (!form.processId) nextErrors.processId = 'Selecione o processo.';
-  if (!form.description.trim()) nextErrors.description = 'Informe a descricao.';
   if (!form.responsible.trim()) nextErrors.responsible = 'Informe o responsavel.';
 
   return nextErrors;
@@ -674,6 +678,7 @@ export function DeadlineFormPage() {
   const [searchParams] = useSearchParams();
   const isEditing = Boolean(params.deadlineId);
   const {
+    currentUser,
     deadlines,
     isDeadlinesLoading,
     processes,
@@ -714,6 +719,13 @@ export function DeadlineFormPage() {
 
   const selectedProcess = processes.find((process) => process.id === form.processId) || null;
   const generatedTitle = buildDeadlineTitle(selectedProcess, form.responsible);
+  const responsibleOptions = sortedUnique([
+    currentUser?.name,
+    ...users.map((user) => user.name),
+    ...processes.map((process) => process.owner),
+    ...deadlines.map((item) => item.responsible),
+    deadline?.responsible,
+  ]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -797,20 +809,19 @@ export function DeadlineFormPage() {
                 </Field>
 
                 <Field id="deadline-responsible" label="Responsavel" className="span-2" error={errors.responsible}>
-                  <input
+                  <select
                     id="deadline-responsible"
-                    list="deadline-responsibles"
                     value={form.responsible}
                     onChange={(event) => setForm((currentForm) => ({ ...currentForm, responsible: event.target.value }))}
-                  />
-                  <datalist id="deadline-responsibles">
-                    {users.map((user) => (
-                      <option key={user.id} value={user.name} />
+                  >
+                    <option value="">Selecione o responsavel</option>
+                    {responsibleOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
                     ))}
-                  </datalist>
+                  </select>
                 </Field>
 
-                <Field id="deadline-description" label="Descricao" className="span-2" error={errors.description}>
+                <Field id="deadline-description" label="Descricao opcional" className="span-2" error={errors.description}>
                   <textarea
                     id="deadline-description"
                     rows="6"

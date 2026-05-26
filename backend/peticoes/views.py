@@ -40,6 +40,7 @@ def serialize_peticao(peticao):
         "pk": peticao.pk,
         "cliente_id": str(peticao.cliente_id),
         "cliente_nome": peticao.cliente.nome if peticao.cliente_id else "",
+        "tipo": peticao.tipo,
         "adverso": peticao.adverso,
         "responsavel_acao": peticao.responsavel_acao,
         "link_drive": peticao.link_drive,
@@ -57,6 +58,8 @@ def _peticao_api_payload(request):
     data = dict(payload)
     if "cliente_id" in data and "cliente" not in data:
         data["cliente"] = data["cliente_id"]
+    if "type" in data and "tipo" not in data:
+        data["tipo"] = data["type"]
     if "responsible" in data and "responsavel_acao" not in data:
         data["responsavel_acao"] = data["responsible"]
     return data

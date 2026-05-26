@@ -28,6 +28,7 @@ def _build_choices(placeholder, *groups):
 
 
 class PeticaoForm(forms.ModelForm):
+    tipo = forms.ChoiceField(choices=Peticao.TIPO_CHOICES, label="Tipo")
     responsavel_acao = forms.ChoiceField(choices=(), label="Responsavel pela acao")
     area_juridica = forms.ChoiceField(choices=(), label="Area juridica")
     status = forms.ChoiceField(choices=Peticao.STATUS_CHOICES, label="Status")
@@ -36,6 +37,7 @@ class PeticaoForm(forms.ModelForm):
         model = Peticao
         fields = [
             "cliente",
+            "tipo",
             "adverso",
             "responsavel_acao",
             "link_drive",

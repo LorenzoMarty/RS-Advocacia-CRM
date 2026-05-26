@@ -14,6 +14,8 @@ import {
 import { EmptyState, Field } from './common';
 
 const PETITION_DEFAULT_STATUS = PETITION_STATUS_COLUMNS[0].label;
+const PETITION_TYPE_OPTIONS = ['Petição', 'Contestação'];
+const PETITION_DEFAULT_TYPE = PETITION_TYPE_OPTIONS[0];
 
 function sortedUnique(values) {
   return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))]
@@ -23,6 +25,7 @@ function sortedUnique(values) {
 function createPetitionForm(petition = null, overrides = {}) {
   return {
     clientId: petition?.clientId || '',
+    type: petition?.type || PETITION_DEFAULT_TYPE,
     adversary: petition?.adversary || '',
     responsible: petition?.responsible || '',
     driveLink: petition?.driveLink || '',
@@ -59,6 +62,7 @@ function validatePetitionForm(form) {
   const nextErrors = {};
 
   if (!form.clientId) nextErrors.clientId = 'Selecione o cliente.';
+  if (!PETITION_TYPE_OPTIONS.includes(form.type)) nextErrors.type = 'Selecione o tipo da peça.';
   if (!form.adversary.trim()) nextErrors.adversary = 'Informe o adverso.';
   if (!form.responsible.trim()) nextErrors.responsible = 'Informe o responsável pela ação.';
   if (!form.area.trim()) nextErrors.area = 'Informe a área jurídica.';
@@ -92,6 +96,7 @@ function PetitionCard({
         <span className="petition-card-client">{clientName}</span>
         <h3>{petition.adversary || 'Adverso não informado'}</h3>
         <div className="petition-card-meta">
+          <span>{petition.type || PETITION_DEFAULT_TYPE}</span>
           <span>{petition.responsible || 'Sem responsável'}</span>
           <span>{petition.area || 'Sem área'}</span>
         </div>
@@ -154,6 +159,7 @@ export function PetitionsPage() {
       petition.adversary,
       petition.responsible,
       petition.area,
+      petition.type,
       petition.pendingReason,
       petition.status,
       petition.clientName,
@@ -444,6 +450,7 @@ export function PetitionFormPage() {
     const savedPetition = await savePetition({
       id: petition?.id,
       clientId: form.clientId,
+      type: form.type || PETITION_DEFAULT_TYPE,
       adversary: form.adversary.trim(),
       responsible: form.responsible.trim(),
       driveLink: form.driveLink.trim(),
@@ -514,6 +521,18 @@ export function PetitionFormPage() {
                     <option value="">Selecione o cliente</option>
                     {clientOptions.map((client) => (
                       <option key={client.id} value={client.id}>{client.name}</option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field id="petition-type" label="Tipo de peça" error={errors.type}>
+                  <select
+                    id="petition-type"
+                    value={form.type}
+                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, type: event.target.value }))}
+                  >
+                    {PETITION_TYPE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
                     ))}
                   </select>
                 </Field>
