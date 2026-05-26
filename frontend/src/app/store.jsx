@@ -298,6 +298,8 @@ function petitionFromApi(petition) {
     id: String(petition.id || petition.pk),
     clientId: String(petition.cliente_id || ''),
     clientName: petition.cliente_nome || '',
+    processId: String(petition.processo_id || petition.processId || ''),
+    processNumber: petition.processo_numero || petition.processNumber || '',
     type: petition.tipo || petition.type || 'Petição',
     adversary: petition.adverso || '',
     responsible: petition.responsavel_acao || '',
@@ -328,6 +330,7 @@ function deadlineToPayload(deadline) {
 function petitionToPayload(petition) {
   return {
     cliente: petition.clientId,
+    processo: petition.processId || '',
     tipo: petition.type || 'Petição',
     adverso: petition.adversary,
     responsavel_acao: petition.responsible,
@@ -636,6 +639,8 @@ function createDemoState() {
       id: 'demo-petition-bruno',
       clientId: 'demo-client-bruno',
       clientName: 'Bruno Lima',
+      processId: 'demo-process-bruno',
+      processNumber: '1000002-20.2026.8.26.0100',
       type: 'Contestação',
       adversary: 'Companhia Alfa S/A',
       responsible: 'Mariana Souza',
@@ -651,6 +656,8 @@ function createDemoState() {
       id: 'demo-petition-almeida',
       clientId: 'demo-client-almeida',
       clientName: 'Almeida Comercio LTDA',
+      processId: 'demo-process-almeida',
+      processNumber: '0002451-77.2026.5.02.0031',
       type: 'Contestação',
       adversary: 'Joao Pereira',
       responsible: 'Renata Sampaio',
@@ -666,6 +673,8 @@ function createDemoState() {
       id: 'demo-petition-ana',
       clientId: 'demo-client-ana',
       clientName: 'Ana Ribeiro',
+      processId: 'demo-process-ana',
+      processNumber: '0801123-45.2026.8.19.0001',
       type: 'Petição',
       adversary: 'Beta Seguradora',
       responsible: 'Mariana Souza',
@@ -1322,6 +1331,11 @@ export function AppStateProvider({ children }) {
     setProcesses((currentProcesses) => currentProcesses.filter((process) => process.id !== processId));
     setEvents((currentEvents) => currentEvents.filter((event) => event.processId !== processId));
     setDeadlines((currentDeadlines) => currentDeadlines.filter((deadline) => deadline.processId !== processId));
+    setPetitions((currentPetitions) =>
+      currentPetitions.map((petition) =>
+        petition.processId === processId ? { ...petition, processId: '', processNumber: '' } : petition,
+      ),
+    );
     addFlash('Processo excluído.', 'success');
     return true;
   }

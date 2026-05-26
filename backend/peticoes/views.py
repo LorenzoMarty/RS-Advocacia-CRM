@@ -40,6 +40,8 @@ def serialize_peticao(peticao):
         "pk": peticao.pk,
         "cliente_id": str(peticao.cliente_id),
         "cliente_nome": peticao.cliente.nome if peticao.cliente_id else "",
+        "processo_id": str(peticao.processo_id) if peticao.processo_id else "",
+        "processo_numero": peticao.processo.numero_processo if peticao.processo_id else "",
         "tipo": peticao.tipo,
         "adverso": peticao.adverso,
         "responsavel_acao": peticao.responsavel_acao,
@@ -58,6 +60,10 @@ def _peticao_api_payload(request):
     data = dict(payload)
     if "cliente_id" in data and "cliente" not in data:
         data["cliente"] = data["cliente_id"]
+    if "processo_id" in data and "processo" not in data:
+        data["processo"] = data["processo_id"]
+    if "processId" in data and "processo" not in data:
+        data["processo"] = data["processId"]
     if "type" in data and "tipo" not in data:
         data["tipo"] = data["type"]
     if "responsible" in data and "responsavel_acao" not in data:
@@ -70,7 +76,7 @@ def listar_peticoes(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    peticoes = Peticao.objects.select_related("cliente").all()
+    peticoes = Peticao.objects.select_related("cliente", "processo").all()
     return resposta_sucesso({"peticoes": [serialize_peticao(peticao) for peticao in peticoes]})
 
 
@@ -89,7 +95,7 @@ def criar_peticao(request):
         peticao = form.save(commit=False)
         peticao.criado_por = _resolver_criador_peticao(request)
         peticao.save()
-        peticao = Peticao.objects.select_related("cliente").get(pk=peticao.pk)
+        peticao = Peticao.objects.select_related("cliente", "processo").get(pk=peticao.pk)
         return resposta_sucesso(
             {"peticao": serialize_peticao(peticao)},
             mensagem="Peticao criada com sucesso.",
@@ -104,7 +110,7 @@ def detalhes_peticao(request, peticao_id):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    peticao = get_object_or_404(Peticao.objects.select_related("cliente"), pk=peticao_id)
+    peticao = get_object_or_404(Peticao.objects.select_related("cliente", "processo"), pk=peticao_id)
     return resposta_sucesso({"peticao": serialize_peticao(peticao)})
 
 
@@ -123,7 +129,7 @@ def editar_peticao(request, peticao_id):
     form = PeticaoForm(payload, instance=peticao)
     if form.is_valid():
         peticao = form.save()
-        peticao = Peticao.objects.select_related("cliente").get(pk=peticao.pk)
+        peticao = Peticao.objects.select_related("cliente", "processo").get(pk=peticao.pk)
         return resposta_sucesso(
             {"peticao": serialize_peticao(peticao)},
             mensagem="Peticao atualizada com sucesso.",

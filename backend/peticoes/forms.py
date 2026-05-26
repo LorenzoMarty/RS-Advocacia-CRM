@@ -1,6 +1,7 @@
 from django import forms
 
 from processos.forms import AREA_JURIDICA_CHOICES
+from processos.models import Processo
 from usuarios.models import Usuario
 
 from .models import Peticao
@@ -37,6 +38,7 @@ class PeticaoForm(forms.ModelForm):
         model = Peticao
         fields = [
             "cliente",
+            "processo",
             "tipo",
             "adverso",
             "responsavel_acao",
@@ -64,6 +66,11 @@ class PeticaoForm(forms.ModelForm):
             cliente_field.empty_label = "Selecione o cliente"
             cliente_field.queryset = cliente_field.queryset.order_by("nome")
 
+        processo_field = self.fields.get("processo")
+        if isinstance(processo_field, forms.ModelChoiceField):
+            processo_field.empty_label = "Selecione o processo"
+            processo_field.queryset = Processo.objects.select_related("cliente").order_by("numero_processo")
+
         self.fields["responsavel_acao"].choices = _build_choices(
             "Selecione o responsavel",
             [current_responsavel],
@@ -76,3 +83,13 @@ class PeticaoForm(forms.ModelForm):
             AREA_JURIDICA_CHOICES,
             existing_areas,
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cliente = cleaned_data.get("cliente")
+        processo = cleaned_data.get("processo")
+
+        if cliente and processo and processo.cliente_id != cliente.pk:
+            self.add_error("processo", "O processo selecionado nao pertence ao cliente.")
+
+        return cleaned_data

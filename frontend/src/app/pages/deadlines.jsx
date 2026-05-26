@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { DEADLINE_STATUS_COLUMNS } from '../data';
+import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import {
@@ -468,9 +469,12 @@ export function DeadlinesPage() {
 }
 
 export function DeadlineDetailPage() {
+  const navigate = useNavigate();
   const params = useParams();
+  const { confirm, confirmPopup } = useConfirmPopup();
   const {
     clients,
+    deleteDeadline,
     deadlines,
     isDeadlinesLoading,
     loadDeadline,
@@ -562,14 +566,38 @@ export function DeadlineDetailPage() {
     }
   }
 
+  async function handleDelete() {
+    const canDelete = await confirm({
+      title: 'Excluir prazo',
+      message: `O prazo "${deadlineTitle}" sera removido permanentemente.`,
+      confirmLabel: 'Excluir prazo',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
+      return;
+    }
+
+    const wasDeleted = await deleteDeadline(deadline.id);
+    if (wasDeleted) {
+      navigate(`/prazos?data=${encodeURIComponent(dateInputValue(deadlineMoment(deadline)))}`, { replace: true });
+    }
+  }
+
   return (
     <>
+      {confirmPopup}
       <PageChrome
         label="Prazo"
         actions={
-          <Link className="btn btn-secondary" to={`/prazos/${deadline.id}/editar`}>
-            Editar
-          </Link>
+          <>
+            <Link className="btn btn-secondary" to={`/prazos/${deadline.id}/editar`}>
+              Editar
+            </Link>
+            <button className="btn btn-danger" type="button" onClick={handleDelete}>
+              Excluir
+            </button>
+          </>
         }
       />
 
@@ -676,9 +704,11 @@ export function DeadlineFormPage() {
   const navigate = useNavigate();
   const params = useParams();
   const [searchParams] = useSearchParams();
+  const { confirm, confirmPopup } = useConfirmPopup();
   const isEditing = Boolean(params.deadlineId);
   const {
     currentUser,
+    deleteDeadline,
     deadlines,
     isDeadlinesLoading,
     processes,
@@ -761,9 +791,32 @@ export function DeadlineFormPage() {
     navigate(`/prazos?data=${encodeURIComponent(form.date)}`, { replace: true });
   }
 
+  async function handleDelete() {
+    if (!deadline) {
+      return;
+    }
+
+    const canDelete = await confirm({
+      title: 'Excluir prazo',
+      message: `O prazo "${generatedTitle || deadline.title}" sera removido permanentemente.`,
+      confirmLabel: 'Excluir prazo',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
+      return;
+    }
+
+    const wasDeleted = await deleteDeadline(deadline.id);
+    if (wasDeleted) {
+      navigate(`/prazos?data=${encodeURIComponent(form.date)}`, { replace: true });
+    }
+  }
+
   return (
     <>
       <PageChrome label={isEditing ? 'Editar prazo' : 'Novo prazo'} />
+      {confirmPopup}
 
       <div className="deadline-form-page">
         <section className="surface deadline-form-intro">
@@ -835,6 +888,11 @@ export function DeadlineFormPage() {
                 <button className="btn" type="submit">
                   {isEditing ? 'Atualizar prazo' : 'Salvar prazo'}
                 </button>
+                {isEditing ? (
+                  <button className="btn btn-danger" type="button" onClick={handleDelete}>
+                    Excluir
+                  </button>
+                ) : null}
                 <Link className="btn btn-secondary" to={`/prazos?data=${encodeURIComponent(form.date)}`}>
                   Cancelar
                 </Link>
