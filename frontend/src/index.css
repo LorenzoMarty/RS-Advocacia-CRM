@@ -276,3 +276,59 @@ html:not([data-theme="light"]) #root .main select:not(.rs-native-select) :where(
 ) {
   border-radius: 12px;
 }
+
+#root .main :where(
+  .badge,
+  .status-badge,
+  .priority-badge,
+  .meta-chip,
+  .meta-pill,
+  .legend-chip,
+  .client-tier-pill,
+  .owner-chip,
+  .role-badge,
+  .contact-chip,
+  .cargo-app-chip,
+  .cargo-chip,
+  .cargo-pill,
+  .permission-action-chip,
+  .item-time,
+  .calendar-event-time,
+  .deadline-move,
+  .deadline-edit,
+  .petition-card-meta span,
+  .petition-card-actions a,
+  .petition-card-actions button
+) {
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+}
+
+#root .main :where(.badge, .status-badge, .legend-chip)::before {
+  flex: 0 0 auto;
+}
+
+#root .main :where(.badge, .status-badge, .priority-badge) {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+#root .main :where(.detail-badge-wrap, .summary-card-status) {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#root .main :where(.detail-badge-wrap, .summary-card-status) :where(
+  .badge,
+  .status-badge,
+  .priority-badge
+) {
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+}
