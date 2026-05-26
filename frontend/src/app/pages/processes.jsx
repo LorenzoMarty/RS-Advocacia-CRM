@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { motion as Motion } from 'framer-motion';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, getStatusTone, normalizeText } from '../utils';
@@ -18,8 +21,11 @@ function validateProcessForm(form) {
 }
 
 export function ProcessesListPage() {
+  const navigate = useNavigate();
   const { clients, processes } = useAppState();
   const [search, setSearch] = useState('');
+  const [density, setDensity] = useState('default');
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const filteredProcesses = processes.filter((process) =>
     buildSearchText([
@@ -31,6 +37,29 @@ export function ProcessesListPage() {
       process.status,
     ]).includes(normalizeText(search)),
   );
+  const selectedVisibleCount = filteredProcesses.filter((process) => selectedIds.includes(process.id)).length;
+  const allVisibleSelected = filteredProcesses.length > 0 && selectedVisibleCount === filteredProcesses.length;
+
+  function toggleAllVisible() {
+    if (allVisibleSelected) {
+      setSelectedIds((currentIds) => currentIds.filter((id) => !filteredProcesses.some((process) => process.id === id)));
+      return;
+    }
+
+    setSelectedIds((currentIds) => [...new Set([...currentIds, ...filteredProcesses.map((process) => process.id)])]);
+  }
+
+  function toggleProcessSelection(processId) {
+    setSelectedIds((currentIds) => (
+      currentIds.includes(processId)
+        ? currentIds.filter((id) => id !== processId)
+        : [...currentIds, processId]
+    ));
+  }
+
+  function openProcess(processId) {
+    navigate(`/processos/${processId}`);
+  }
 
   return (
     <>
@@ -52,14 +81,32 @@ export function ProcessesListPage() {
               onChange={(event) => setSearch(event.target.value)}
               label="Buscar processos"
             />
+            <div className="process-density-control">
+              <span>Mostrando {filteredProcesses.length ? `1-${filteredProcesses.length}` : '0'} de {processes.length} processos</span>
+              <label>
+                <span className="sr-only">Densidade da tabela</span>
+                <select value={density} onChange={(event) => setDensity(event.target.value)}>
+                  <option value="compact">Compacto</option>
+                  <option value="default">Padrão</option>
+                  <option value="spacious">Espaçado</option>
+                </select>
+              </label>
+            </div>
             <Link className="btn list-intro-action" to="/processos/novo">Novo</Link>
           </div>
         </section>
 
         <section className="surface process-panel">
           {filteredProcesses.length ? (
-            <>
-              <div className="process-head" aria-hidden="true">
+            <div className={`process-table density-${density}`} role="table" aria-label="Tabela de processos">
+              <div className="process-head" role="row">
+                <label className="process-select process-select-head" aria-label="Selecionar processos visíveis">
+                  <input
+                    type="checkbox"
+                    checked={allVisibleSelected}
+                    onChange={toggleAllVisible}
+                  />
+                </label>
                 <span>Processo</span>
                 <span>Área</span>
                 <span>Responsável</span>
@@ -69,7 +116,30 @@ export function ProcessesListPage() {
 
               <div className="process-list">
                 {filteredProcesses.map((process) => (
-                  <article key={process.id} className="process-row">
+                  <Motion.article
+                    key={process.id}
+                    className={`process-row${selectedIds.includes(process.id) ? ' is-selected' : ''}`}
+                    role="row"
+                    tabIndex={0}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => openProcess(process.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        openProcess(process.id);
+                      }
+                    }}
+                  >
+                    <label className="process-select" aria-label={`Selecionar processo ${process.number}`} onClick={(event) => event.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(process.id)}
+                        onChange={() => toggleProcessSelection(process.id)}
+                      />
+                    </label>
                     <div className="process-main">
                       <h2 className="process-number">{process.number}</h2>
                       <span className="process-client">{clients.find((client) => client.id === process.clientId)?.name}</span>
@@ -93,14 +163,20 @@ export function ProcessesListPage() {
                     </div>
 
                     <div className="process-actions">
-                      <Link className="action-link" to={`/processos/${process.id}`}>Ver</Link>
-                      <Link className="action-link" to={`/processos/${process.id}/editar`}>Editar</Link>
-                      <Link className="action-link action-link-danger" to={`/processos/${process.id}/excluir`}>Excluir</Link>
+                      <Link className="action-link action-link-icon" to={`/processos/${process.id}`} title="Ver processo" aria-label="Ver processo" onClick={(event) => event.stopPropagation()}>
+                        <Eye size={15} />
+                      </Link>
+                      <Link className="action-link action-link-icon" to={`/processos/${process.id}/editar`} title="Editar processo" aria-label="Editar processo" onClick={(event) => event.stopPropagation()}>
+                        <Pencil size={15} />
+                      </Link>
+                      <Link className="action-link action-link-icon action-link-danger" to={`/processos/${process.id}/excluir`} title="Excluir processo" aria-label="Excluir processo" onClick={(event) => event.stopPropagation()}>
+                        <Trash2 size={15} />
+                      </Link>
                     </div>
-                  </article>
+                  </Motion.article>
                 ))}
               </div>
-            </>
+            </div>
           ) : (
             <EmptyState
               title="Nenhum processo encontrado."
@@ -513,8 +589,10 @@ export function ProcessDetailPage() {
 export function ProcessDeletePage() {
   const navigate = useNavigate();
   const params = useParams();
+  const { confirm, confirmPopup } = useConfirmPopup();
   const { deleteProcess, processes } = useAppState();
   const process = processes.find((item) => item.id === params.processId) || null;
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!process) {
     return <NotFoundState title="Processo não encontrado." />;
@@ -522,7 +600,20 @@ export function ProcessDeletePage() {
 
   async function handleDelete(event) {
     event.preventDefault();
+    const canDelete = await confirm({
+      title: 'Excluir processo',
+      message: `O processo "${process.number}" será removido do fluxo principal.`,
+      confirmLabel: 'Excluir processo',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
+      return;
+    }
+
+    setIsDeleting(true);
     const wasDeleted = await deleteProcess(process.id);
+    setIsDeleting(false);
     if (!wasDeleted) {
       return;
     }
@@ -532,6 +623,7 @@ export function ProcessDeletePage() {
   return (
     <>
       <PageChrome label="Excluir" actions={<Link className="btn btn-secondary" to={`/processos/${process.id}`}>Voltar</Link>} />
+      {confirmPopup}
 
       <div className="confirm-page">
         <section className="surface confirm-intro">
@@ -558,7 +650,9 @@ export function ProcessDeletePage() {
 
             <form onSubmit={handleDelete}>
               <div className="confirm-actions">
-                <button className="btn btn-danger" type="submit">Confirmar exclusão</button>
+                <button className="btn btn-danger" type="submit" disabled={isDeleting}>
+                  {isDeleting ? 'Excluindo...' : 'Confirmar exclusão'}
+                </button>
                 <Link className="btn btn-secondary" to={`/processos/${process.id}`}>Cancelar</Link>
               </div>
             </form>

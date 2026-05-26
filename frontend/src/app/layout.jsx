@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import * as Tooltip from '@radix-ui/react-tooltip';
+import { AnimatePresence, motion as Motion } from 'framer-motion';
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { NAV_ITEMS } from './data';
@@ -157,7 +159,9 @@ function LoadingScreen() {
           <p>Preparando agenda, processos, prazos e petições.</p>
         </div>
 
-        <div className="loading-progress" aria-hidden="true">
+        <div className="loading-skeleton" aria-hidden="true">
+          <span />
+          <span />
           <span />
         </div>
       </section>
@@ -165,23 +169,46 @@ function LoadingScreen() {
   );
 }
 
-function SidebarNavigation() {
+function SidebarNavigation({ collapsed }) {
   return (
     <nav className="nav" aria-label="Áreas do sistema">
       {NAV_ITEMS.map((item) => (
-        <NavLink
-          key={item.key}
-          to={item.to}
-          end={item.to === '/'}
-          className={({ isActive }) => createNavClass(isActive, 'nav-link')}
-          aria-label={item.label}
-          title={item.label}
-        >
-          <span className="nav-icon" aria-hidden="true">
-            <NavigationIcon icon={item.key} />
-          </span>
-          <span>{item.label}</span>
-        </NavLink>
+        <Tooltip.Root key={item.key} delayDuration={220}>
+          <Tooltip.Trigger asChild>
+            <NavLink
+              to={item.to}
+              end={item.to === '/'}
+              className={({ isActive }) => createNavClass(isActive, 'nav-link')}
+              aria-label={item.label}
+              title={collapsed ? undefined : item.label}
+            >
+              <span className="nav-icon" aria-hidden="true">
+                <NavigationIcon icon={item.key} />
+              </span>
+              <AnimatePresence initial={false}>
+                {!collapsed ? (
+                  <Motion.span
+                    key="label"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                  >
+                    {item.label}
+                  </Motion.span>
+                ) : null}
+              </AnimatePresence>
+            </NavLink>
+          </Tooltip.Trigger>
+          {collapsed ? (
+            <Tooltip.Portal>
+              <Tooltip.Content className="nav-tooltip" side="right" align="center" sideOffset={12}>
+                {item.label}
+                <Tooltip.Arrow className="nav-tooltip-arrow" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          ) : null}
+        </Tooltip.Root>
       ))}
     </nav>
   );
@@ -211,29 +238,6 @@ function BottomNavigation() {
           ))}
         </div>
       </nav>
-    </div>
-  );
-}
-
-function FlashMessages() {
-  const { flashes, removeFlash } = useAppState();
-
-  if (!flashes.length) {
-    return null;
-  }
-
-  return (
-    <div className="flash-stack" aria-live="polite" aria-label="Mensagens do sistema">
-      {flashes.map((flash) => (
-        <button
-          key={flash.id}
-          type="button"
-          className={`flash flash-${flash.type}`}
-          onClick={() => removeFlash(flash.id)}
-        >
-          {flash.message}
-        </button>
-      ))}
     </div>
   );
 }
@@ -322,6 +326,7 @@ export function ProtectedLayout() {
 
   return (
     <PageChromeContext.Provider value={setChrome}>
+      <Tooltip.Provider delayDuration={220} skipDelayDuration={80}>
       <div className="ambient-light" aria-hidden="true">
         <span className="ambient-light__blob ambient-light__blob--gold" />
         <span className="ambient-light__blob ambient-light__blob--blue" />
@@ -359,7 +364,7 @@ export function ProtectedLayout() {
               </div>
             </Link>
 
-            <SidebarNavigation />
+            <SidebarNavigation collapsed={sidebarCollapsed} />
 
             <div className="sidebar-footer">
               <div className="profile sidebar-profile">
@@ -436,15 +441,24 @@ export function ProtectedLayout() {
 
             </header>
 
-            <main className="main">
-              <FlashMessages />
-              <Outlet />
-            </main>
+            <AnimatePresence mode="wait" initial={false}>
+              <Motion.main
+                key={location.pathname}
+                className="main"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+              >
+                <Outlet />
+              </Motion.main>
+            </AnimatePresence>
           </div>
         </div>
       </div>
 
       <BottomNavigation />
+      </Tooltip.Provider>
     </PageChromeContext.Provider>
   );
 }

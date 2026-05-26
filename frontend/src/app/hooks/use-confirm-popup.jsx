@@ -4,12 +4,16 @@ import { ConfirmPopup } from '../components/confirm-popup';
 
 export function useConfirmPopup() {
   const [popupOptions, setPopupOptions] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
   const resolverRef = useRef(null);
 
   const closePopup = useCallback((confirmed) => {
-    resolverRef.current?.(confirmed);
-    resolverRef.current = null;
-    setPopupOptions(null);
+    setIsOpen(false);
+    window.setTimeout(() => {
+      resolverRef.current?.(confirmed);
+      resolverRef.current = null;
+      setPopupOptions(null);
+    }, confirmed ? 0 : 150);
   }, []);
 
   const confirm = useCallback((options) => {
@@ -20,6 +24,7 @@ export function useConfirmPopup() {
     return new Promise((resolve) => {
       resolverRef.current = resolve;
       setPopupOptions(options);
+      setIsOpen(true);
     });
   }, []);
 
@@ -30,6 +35,7 @@ export function useConfirmPopup() {
   const confirmPopup = popupOptions ? (
     <ConfirmPopup
       {...popupOptions}
+      open={isOpen}
       onCancel={() => closePopup(false)}
       onConfirm={() => closePopup(true)}
     />
