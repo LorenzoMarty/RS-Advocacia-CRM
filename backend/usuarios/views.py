@@ -591,6 +591,11 @@ def usuario_atual(request: HttpRequest):
         return metodo_nao_permitido(["GET"])
 
     usuario = get_usuario_atual(request)["usuario_logado"]
+    if usuario is None:
+        from core.demo_data import ensure_demo_session
+
+        usuario = ensure_demo_session(request)
+
     auth_user = _authenticated_user(request)
     if usuario and auth_user is not None:
         _sync_usuario_auth(usuario, preferred_auth_user=auth_user)
