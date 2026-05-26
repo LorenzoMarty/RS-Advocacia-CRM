@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -32,10 +31,6 @@ class Peticao(models.Model):
 
     class Meta:
         ordering = ("status", "cliente__nome", "adverso")
-
-    def clean(self):
-        if self.status == self.STATUS_PENDENTE and not self.motivo_pendente.strip():
-            raise ValidationError({"motivo_pendente": "Informe o motivo da pendencia."})
 
     def __str__(self):
         return f"{self.cliente.nome} x {self.adverso}"

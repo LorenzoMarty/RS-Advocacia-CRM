@@ -62,6 +62,27 @@ export async function createMeeting(meeting) {
   return meetingFromApi(payload.reuniao);
 }
 
+export async function updateMeeting(meetingId, meeting) {
+  const payload = await apiRequest(`/api/reunioes/${meetingId}/editar/`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      titulo: meeting.title,
+      data_reuniao: meeting.meetingAt || null,
+      cliente: meeting.clientId || null,
+      processo: meeting.processId || null,
+      pauta: meeting.agenda,
+    }),
+  });
+  return meetingFromApi(payload.reuniao);
+}
+
+export async function deleteMeeting(meetingId) {
+  await apiRequest(`/api/reunioes/${meetingId}/excluir/`, {
+    method: 'DELETE',
+  });
+  return String(meetingId);
+}
+
 export async function uploadRecording(meetingId, recording) {
   const data = new FormData();
   data.append('audio', recording.blob, recording.filename);
@@ -78,3 +99,19 @@ export async function getRecording(recordingId) {
   return recordingFromApi(payload.gravacao);
 }
 
+export async function updateRecording(recordingId, recording) {
+  const payload = await apiRequest(`/api/reunioes/gravacoes/${recordingId}/editar/`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      transcricao: recording.transcript,
+    }),
+  });
+  return recordingFromApi(payload.gravacao);
+}
+
+export async function deleteRecording(recordingId) {
+  await apiRequest(`/api/reunioes/gravacoes/${recordingId}/excluir/`, {
+    method: 'DELETE',
+  });
+  return String(recordingId);
+}

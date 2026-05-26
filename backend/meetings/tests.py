@@ -1,3 +1,4 @@
+import json
 import tempfile
 from unittest.mock import patch
 
@@ -209,6 +210,71 @@ class MeetingAPITests(TemporaryMediaTestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertFalse(Gravacao.objects.exists())
+
+    def test_edita_reuniao(self):
+        response = self.client.put(
+            reverse("editar_reuniao", args=[self.reuniao.pk]),
+            data=json.dumps({
+                "titulo": "Reuniao atualizada",
+                "data_reuniao": None,
+                "cliente": self.cliente.pk,
+                "processo": self.processo.pk,
+                "pauta": "Pauta revisada",
+            }),
+            content_type="application/json",
+        )
+
+        self.reuniao.refresh_from_db()
+        self.assertEqual(response.status_code, 200, response.json())
+        self.assertEqual(self.reuniao.titulo, "Reuniao atualizada")
+        self.assertEqual(response.json()["dados"]["reuniao"]["pauta"], "Pauta revisada")
+
+    def test_exclui_reuniao_com_gravacoes(self):
+        Gravacao.objects.create(
+            reuniao=self.reuniao,
+            arquivo_audio=SimpleUploadedFile("reuniao.webm", b"audio"),
+            nome_original="reuniao.webm",
+            mime_type="audio/webm",
+        )
+
+        response = self.client.delete(reverse("excluir_reuniao", args=[self.reuniao.pk]))
+
+        self.assertEqual(response.status_code, 200, response.json())
+        self.assertFalse(Reuniao.objects.filter(pk=self.reuniao.pk).exists())
+        self.assertFalse(Gravacao.objects.exists())
+
+    def test_edita_transcricao_gravacao(self):
+        gravacao = Gravacao.objects.create(
+            reuniao=self.reuniao,
+            arquivo_audio=SimpleUploadedFile("reuniao.webm", b"audio"),
+            nome_original="reuniao.webm",
+            mime_type="audio/webm",
+            transcricao="Transcricao original",
+        )
+
+        response = self.client.patch(
+            reverse("editar_gravacao", args=[gravacao.pk]),
+            data=json.dumps({"transcricao": "Transcricao revisada"}),
+            content_type="application/json",
+        )
+
+        gravacao.refresh_from_db()
+        self.assertEqual(response.status_code, 200, response.json())
+        self.assertEqual(gravacao.transcricao, "Transcricao revisada")
+        self.assertEqual(response.json()["dados"]["gravacao"]["transcricao"], "Transcricao revisada")
+
+    def test_exclui_gravacao(self):
+        gravacao = Gravacao.objects.create(
+            reuniao=self.reuniao,
+            arquivo_audio=SimpleUploadedFile("reuniao.webm", b"audio"),
+            nome_original="reuniao.webm",
+            mime_type="audio/webm",
+        )
+
+        response = self.client.delete(reverse("excluir_gravacao", args=[gravacao.pk]))
+
+        self.assertEqual(response.status_code, 200, response.json())
+        self.assertFalse(Gravacao.objects.filter(pk=gravacao.pk).exists())
 
 
 class MeetingTaskTests(TemporaryMediaTestCase):
