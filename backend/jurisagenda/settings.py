@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -318,6 +319,8 @@ GOOGLE_CALENDAR_WEBHOOK_URL = os.getenv("GOOGLE_CALENDAR_WEBHOOK_URL", "").strip
 GOOGLE_WATCH_RENEWAL_HOURS = int(
     os.getenv("GOOGLE_WATCH_RENEWAL_HOURS", "").strip() or "24"
 )
+
+DEMO_DATA_ENABLED = _env_flag("DEMO_DATA_ENABLED", default="test" not in sys.argv)
 
 AI_PROVIDER = os.getenv("AI_PROVIDER", "openai").strip() or "openai"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
