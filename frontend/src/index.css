@@ -92,6 +92,7 @@ button:disabled {
   .deadline-timer-panel,
   .deadline-detail-panel,
   .petitions-intro,
+  .petition-form-intro,
   .petition-form-panel,
   .petition-editing-summary,
   .meetings-intro,
@@ -130,6 +131,7 @@ html[data-theme="light"] #root .main :where(
   .deadline-form-intro,
   .deadline-detail-hero,
   .petitions-intro,
+  .petition-form-intro,
   .meetings-intro,
   .clients-intro,
   .client-hero,
@@ -160,6 +162,7 @@ html[data-theme="light"] #root .main :where(
   .deadline-form-page,
   .deadline-detail-page,
   .petitions-page,
+  .petition-form-page,
   .process-page,
   .meetings-page,
   .cargos-page,
@@ -175,7 +178,6 @@ html[data-theme="light"] #root .main :where(
   .user-layout,
   .cargo-layout,
   .deadline-detail-layout,
-  .petitions-workspace,
   .meetings-layout,
   .stack
 ) {

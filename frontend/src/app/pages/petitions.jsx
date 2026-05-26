@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { PETITION_STATUS_COLUMNS, PROCESS_AREA_OPTIONS } from '../data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
@@ -8,7 +8,6 @@ import { useAppState } from '../store';
 import {
   buildSearchText,
   formatCount,
-  formatDate,
   getStatusTone,
   normalizeText,
 } from '../utils';
@@ -76,7 +75,6 @@ function PetitionCard({
   isMoving,
   onDragEnd,
   onDragStart,
-  onEdit,
   petition,
 }) {
   const client = clients.find((item) => item.id === petition.clientId) || null;
@@ -111,9 +109,9 @@ function PetitionCard({
               Drive
             </a>
           ) : null}
-          <button type="button" onClick={() => onEdit(petition)}>
+          <Link to={`/peticoes-contestacoes/${petition.id}/editar`}>
             Editar
-          </button>
+          </Link>
         </div>
       </div>
     </article>
@@ -121,18 +119,13 @@ function PetitionCard({
 }
 
 export function PetitionsPage() {
-  const { confirm, confirmPopup } = useConfirmPopup();
   const {
     clients,
-    deletePetition,
     isPetitionsLoading,
     petitions,
     savePetition,
     users,
   } = useAppState();
-  const [editingPetitionId, setEditingPetitionId] = useState('');
-  const [form, setForm] = useState(() => createPetitionForm());
-  const [errors, setErrors] = useState({});
   const [search, setSearch] = useState('');
   const [responsibleFilter, setResponsibleFilter] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
@@ -190,65 +183,6 @@ export function PetitionsPage() {
   filteredPetitions.forEach((petition) => {
     petitionsByColumn[petitionColumnKey(petition)].push(petition);
   });
-
-  function resetForm() {
-    setEditingPetitionId('');
-    setForm(createPetitionForm());
-    setErrors({});
-  }
-
-  function beginEdit(petition, overrides = {}) {
-    setEditingPetitionId(petition.id);
-    setForm(createPetitionForm(petition, overrides));
-    setErrors({});
-  }
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    const nextErrors = validatePetitionForm(form);
-
-    if (Object.keys(nextErrors).length) {
-      setErrors(nextErrors);
-      return;
-    }
-
-    const savedPetition = await savePetition({
-      id: editingPetitionId || undefined,
-      clientId: form.clientId,
-      adversary: form.adversary.trim(),
-      responsible: form.responsible.trim(),
-      driveLink: form.driveLink.trim(),
-      pendingReason: form.pendingReason.trim(),
-      area: form.area.trim(),
-      status: form.status || PETITION_DEFAULT_STATUS,
-    });
-
-    if (savedPetition) {
-      resetForm();
-    }
-  }
-
-  async function handleDelete() {
-    if (!editingPetitionId) {
-      return;
-    }
-
-    const canDelete = await confirm({
-      title: 'Excluir peça',
-      message: 'Esta petição ou contestação será removida permanentemente.',
-      confirmLabel: 'Excluir peça',
-      tone: 'danger',
-    });
-
-    if (!canDelete) {
-      return;
-    }
-
-    const wasDeleted = await deletePetition(editingPetitionId);
-    if (wasDeleted) {
-      resetForm();
-    }
-  }
 
   async function movePetition(petition, nextColumnKey) {
     const nextColumn = PETITION_STATUS_COLUMNS.find((column) => column.key === nextColumnKey);
@@ -326,8 +260,6 @@ export function PetitionsPage() {
   return (
     <>
       <PageChrome label="Petições e contestações" />
-      {confirmPopup}
-
       <div className="petitions-page">
         <section className="surface petitions-intro">
           <div className="section-head">
@@ -335,9 +267,14 @@ export function PetitionsPage() {
               <h1 className="intro-title">Petições e contestações</h1>
               <p className="section-note">Kanban separado para peças, protocolo e acompanhamento.</p>
             </div>
-            <span className="badge gold">
-              {formatCount(filteredPetitions.length, 'peça', 'peças')}
-            </span>
+            <div className="petitions-head-actions">
+              <span className="badge gold">
+                {formatCount(filteredPetitions.length, 'peça', 'peças')}
+              </span>
+              <Link className="btn" to="/peticoes-contestacoes/novo">
+                Nova peça
+              </Link>
+            </div>
           </div>
 
           <div className="petitions-toolbar">
@@ -381,163 +318,50 @@ export function PetitionsPage() {
         </section>
 
         {clientOptions.length ? (
-          <div className="petitions-workspace">
-            <section className="surface petition-form-panel">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">{editingPetitionId ? 'Editar peça' : 'Nova peça'}</h2>
-                  <p className="section-note">Cadastro de petição ou contestação.</p>
-                </div>
-              </div>
-
-              <form className="petition-form" onSubmit={handleSubmit}>
-                <div className="form-grid">
-                  <Field id="petition-client" label="Cliente" className="span-2" error={errors.clientId}>
-                    <select
-                      id="petition-client"
-                      value={form.clientId}
-                      onChange={(event) => setForm((currentForm) => ({ ...currentForm, clientId: event.target.value }))}
-                    >
-                      <option value="">Selecione o cliente</option>
-                      {clientOptions.map((client) => (
-                        <option key={client.id} value={client.id}>{client.name}</option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <Field id="petition-adversary" label="Adverso" error={errors.adversary}>
-                    <input
-                      id="petition-adversary"
-                      value={form.adversary}
-                      onChange={(event) => setForm((currentForm) => ({ ...currentForm, adversary: event.target.value }))}
-                    />
-                  </Field>
-
-                  <Field id="petition-responsible" label="Responsável pela ação" error={errors.responsible}>
-                    <select
-                      id="petition-responsible"
-                      value={form.responsible}
-                      onChange={(event) => setForm((currentForm) => ({ ...currentForm, responsible: event.target.value }))}
-                    >
-                      <option value="">Selecione o responsável</option>
-                      {responsibleOptions.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <Field id="petition-area" label="Área jurídica" error={errors.area}>
-                    <select
-                      id="petition-area"
-                      value={form.area}
-                      onChange={(event) => setForm((currentForm) => ({ ...currentForm, area: event.target.value }))}
-                    >
-                      <option value="">Selecione a área</option>
-                      {areaOptions.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <Field id="petition-status" label="Status" error={errors.status}>
-                    <select
-                      id="petition-status"
-                      value={form.status}
-                      onChange={(event) => setForm((currentForm) => ({ ...currentForm, status: event.target.value }))}
-                    >
-                      {PETITION_STATUS_COLUMNS.map((column) => (
-                        <option key={column.key} value={column.label}>{column.label}</option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <Field id="petition-drive" label="Link do Drive" className="span-2" error={errors.driveLink}>
-                    <input
-                      id="petition-drive"
-                      type="url"
-                      value={form.driveLink}
-                      placeholder="https://drive.google.com/..."
-                      onChange={(event) => setForm((currentForm) => ({ ...currentForm, driveLink: event.target.value }))}
-                    />
-                  </Field>
-
-                  <Field
-                    id="petition-pending-reason"
-                    label="Pendente: qual motivo?"
-                    className="span-2"
-                    error={errors.pendingReason}
-                  >
-                    <textarea
-                      id="petition-pending-reason"
-                      rows="4"
-                      value={form.pendingReason}
-                      onChange={(event) => setForm((currentForm) => ({ ...currentForm, pendingReason: event.target.value }))}
-                    />
-                  </Field>
+          <section className={`petitions-board${draggingPetitionId ? ' is-dragging' : ''}`} aria-label="Kanban de petições e contestações">
+            {PETITION_STATUS_COLUMNS.map((column) => (
+              <section
+                className={`petition-column${dragOverColumnKey === column.key ? ' is-drop-target' : ''}`}
+                key={column.key}
+                onDragEnter={(event) => handleDragOver(event, column.key)}
+                onDragLeave={(event) => handleDragLeave(event, column.key)}
+                onDragOver={(event) => handleDragOver(event, column.key)}
+                onDrop={(event) => handleDrop(event, column.key)}
+              >
+                <div className="petition-column-head">
+                  <div>
+                    <h2>{column.label}</h2>
+                    <p>{formatCount(petitionsByColumn[column.key].length, 'peça', 'peças')}</p>
+                  </div>
+                  <span>{petitionsByColumn[column.key].length}</span>
                 </div>
 
-                <div className="form-actions">
-                  <button className="btn" type="submit">
-                    {editingPetitionId ? 'Atualizar peça' : 'Salvar peça'}
-                  </button>
-                  {editingPetitionId ? (
-                    <button className="btn btn-danger" type="button" onClick={handleDelete}>
-                      Excluir
-                    </button>
+                <div className="petition-column-list">
+                  {draggingPetitionId && dragOverColumnKey === column.key ? (
+                    <div className="petition-drop-indicator">Solte aqui</div>
                   ) : null}
-                  <button className="btn btn-secondary" type="button" onClick={resetForm}>
-                    Limpar
-                  </button>
-                </div>
-              </form>
-            </section>
 
-            <section className={`petitions-board${draggingPetitionId ? ' is-dragging' : ''}`} aria-label="Kanban de petições e contestações">
-              {PETITION_STATUS_COLUMNS.map((column) => (
-                <section
-                  className={`petition-column${dragOverColumnKey === column.key ? ' is-drop-target' : ''}`}
-                  key={column.key}
-                  onDragEnter={(event) => handleDragOver(event, column.key)}
-                  onDragLeave={(event) => handleDragLeave(event, column.key)}
-                  onDragOver={(event) => handleDragOver(event, column.key)}
-                  onDrop={(event) => handleDrop(event, column.key)}
-                >
-                  <div className="petition-column-head">
-                    <div>
-                      <h2>{column.label}</h2>
-                      <p>{formatCount(petitionsByColumn[column.key].length, 'peça', 'peças')}</p>
+                  {petitionsByColumn[column.key].length ? (
+                    petitionsByColumn[column.key].map((petition) => (
+                      <PetitionCard
+                        key={petition.id}
+                        clients={clients}
+                        isDragging={draggingPetitionId === petition.id}
+                        isMoving={movingPetitionId === petition.id}
+                        onDragEnd={handleDragEnd}
+                        onDragStart={handleDragStart}
+                        petition={petition}
+                      />
+                    ))
+                  ) : (
+                    <div className="petition-column-empty">
+                      {isPetitionsLoading ? 'Carregando peças.' : 'Nenhuma peça nesta coluna.'}
                     </div>
-                    <span>{petitionsByColumn[column.key].length}</span>
-                  </div>
-
-                  <div className="petition-column-list">
-                    {draggingPetitionId && dragOverColumnKey === column.key ? (
-                      <div className="petition-drop-indicator">Solte aqui</div>
-                    ) : null}
-
-                    {petitionsByColumn[column.key].length ? (
-                      petitionsByColumn[column.key].map((petition) => (
-                        <PetitionCard
-                          key={petition.id}
-                          clients={clients}
-                          isDragging={draggingPetitionId === petition.id}
-                          isMoving={movingPetitionId === petition.id}
-                          onDragEnd={handleDragEnd}
-                          onDragStart={handleDragStart}
-                          onEdit={beginEdit}
-                          petition={petition}
-                        />
-                      ))
-                    ) : (
-                      <div className="petition-column-empty">
-                        {isPetitionsLoading ? 'Carregando peças.' : 'Nenhuma peça nesta coluna.'}
-                      </div>
-                    )}
-                  </div>
-                </section>
-              ))}
-            </section>
-          </div>
+                  )}
+                </div>
+              </section>
+            ))}
+          </section>
         ) : (
           <section className="surface section-card">
             <EmptyState
@@ -548,15 +372,242 @@ export function PetitionsPage() {
           </section>
         )}
 
-        {editingPetitionId ? (
-          <section className="surface petition-editing-summary">
-            <span>Editando</span>
-            <strong>
-              {clients.find((client) => client.id === form.clientId)?.name || 'Cliente'} x {form.adversary || 'adverso'}
-            </strong>
-            <small>Última atualização: {formatDate(petitions.find((petition) => petition.id === editingPetitionId)?.updatedAt)}</small>
+      </div>
+    </>
+  );
+}
+
+export function PetitionFormPage() {
+  const navigate = useNavigate();
+  const params = useParams();
+  const { confirm, confirmPopup } = useConfirmPopup();
+  const {
+    clients,
+    deletePetition,
+    isPetitionsLoading,
+    petitions,
+    savePetition,
+    users,
+  } = useAppState();
+  const isEditing = Boolean(params.petitionId);
+  const petition = petitions.find((item) => item.id === params.petitionId) || null;
+  const [form, setForm] = useState(() => createPetitionForm(petition));
+  const [errors, setErrors] = useState({});
+
+  const clientOptions = [...clients].sort((left, right) => left.name.localeCompare(right.name, 'pt-BR'));
+  const responsibleOptions = sortedUnique([
+    ...users.map((user) => user.name),
+    ...petitions.map((item) => item.responsible),
+  ]);
+  const areaOptions = sortedUnique([
+    ...PROCESS_AREA_OPTIONS,
+    ...petitions.map((item) => item.area),
+  ]);
+
+  useEffect(() => {
+    if (!petition) {
+      return;
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm(createPetitionForm(petition));
+  }, [petition]);
+
+  if (isEditing && !petition) {
+    if (isPetitionsLoading) {
+      return null;
+    }
+
+    return (
+      <>
+        <PageChrome label="Peça" />
+        <section className="surface section-card">
+          <EmptyState
+            title="Peça não encontrada."
+            copy="Volte para o kanban de petições e contestações."
+            actions={<Link className="btn" to="/peticoes-contestacoes">Voltar</Link>}
+          />
+        </section>
+      </>
+    );
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    const nextErrors = validatePetitionForm(form);
+
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    const savedPetition = await savePetition({
+      id: petition?.id,
+      clientId: form.clientId,
+      adversary: form.adversary.trim(),
+      responsible: form.responsible.trim(),
+      driveLink: form.driveLink.trim(),
+      pendingReason: form.pendingReason.trim(),
+      area: form.area.trim(),
+      status: form.status || PETITION_DEFAULT_STATUS,
+    });
+
+    if (savedPetition) {
+      navigate('/peticoes-contestacoes', { replace: true });
+    }
+  }
+
+  async function handleDelete() {
+    if (!petition) {
+      return;
+    }
+
+    const canDelete = await confirm({
+      title: 'Excluir peça',
+      message: 'Esta petição ou contestação será removida permanentemente.',
+      confirmLabel: 'Excluir peça',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
+      return;
+    }
+
+    const wasDeleted = await deletePetition(petition.id);
+    if (wasDeleted) {
+      navigate('/peticoes-contestacoes', { replace: true });
+    }
+  }
+
+  return (
+    <>
+      <PageChrome label={isEditing ? 'Editar peça' : 'Nova peça'} />
+      {confirmPopup}
+
+      <div className="petition-form-page">
+        <section className="surface petition-form-intro">
+          <div className="intro-grid">
+            <Link className="intro-link" to="/peticoes-contestacoes">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              Voltar para petições
+            </Link>
+
+            <div>
+              <h1 className="intro-title">{isEditing ? 'Editar peça' : 'Nova peça'}</h1>
+              <p className="intro-note">Cadastro de petição ou contestação.</p>
+            </div>
+          </div>
+        </section>
+
+        {clientOptions.length ? (
+          <section className="surface petition-form-panel">
+            <form className="petition-form" onSubmit={handleSubmit}>
+              <div className="form-grid">
+                <Field id="petition-client" label="Cliente" className="span-2" error={errors.clientId}>
+                  <select
+                    id="petition-client"
+                    value={form.clientId}
+                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, clientId: event.target.value }))}
+                  >
+                    <option value="">Selecione o cliente</option>
+                    {clientOptions.map((client) => (
+                      <option key={client.id} value={client.id}>{client.name}</option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field id="petition-adversary" label="Adverso" error={errors.adversary}>
+                  <input
+                    id="petition-adversary"
+                    value={form.adversary}
+                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, adversary: event.target.value }))}
+                  />
+                </Field>
+
+                <Field id="petition-responsible" label="Responsável pela ação" error={errors.responsible}>
+                  <select
+                    id="petition-responsible"
+                    value={form.responsible}
+                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, responsible: event.target.value }))}
+                  >
+                    <option value="">Selecione o responsável</option>
+                    {responsibleOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field id="petition-area" label="Área jurídica" error={errors.area}>
+                  <select
+                    id="petition-area"
+                    value={form.area}
+                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, area: event.target.value }))}
+                  >
+                    <option value="">Selecione a área</option>
+                    {areaOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field id="petition-status" label="Status" error={errors.status}>
+                  <select
+                    id="petition-status"
+                    value={form.status}
+                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, status: event.target.value }))}
+                  >
+                    {PETITION_STATUS_COLUMNS.map((column) => (
+                      <option key={column.key} value={column.label}>{column.label}</option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field id="petition-drive" label="Link do Drive" className="span-2" error={errors.driveLink}>
+                  <input
+                    id="petition-drive"
+                    type="url"
+                    value={form.driveLink}
+                    placeholder="https://drive.google.com/..."
+                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, driveLink: event.target.value }))}
+                  />
+                </Field>
+
+                <Field id="petition-pending-reason" label="Pendente: qual motivo?" className="span-2" error={errors.pendingReason}>
+                  <textarea
+                    id="petition-pending-reason"
+                    rows="6"
+                    value={form.pendingReason}
+                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, pendingReason: event.target.value }))}
+                  />
+                </Field>
+              </div>
+
+              <div className="form-actions">
+                <button className="btn" type="submit">
+                  {isEditing ? 'Atualizar peça' : 'Salvar peça'}
+                </button>
+                {isEditing ? (
+                  <button className="btn btn-danger" type="button" onClick={handleDelete}>
+                    Excluir
+                  </button>
+                ) : null}
+                <Link className="btn btn-secondary" to="/peticoes-contestacoes">
+                  Cancelar
+                </Link>
+              </div>
+            </form>
           </section>
-        ) : null}
+        ) : (
+          <section className="surface section-card">
+            <EmptyState
+              title="Nenhum cliente cadastrado."
+              copy="Cadastre um cliente antes de criar uma petição ou contestação."
+              actions={<Link className="btn" to="/clientes/novo">Novo cliente</Link>}
+            />
+          </section>
+        )}
       </div>
     </>
   );

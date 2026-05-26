@@ -34,7 +34,7 @@ import {
   DeadlineFormPage,
   DeadlinesPage,
 } from "./app/pages/deadlines";
-import { PetitionsPage } from "./app/pages/petitions";
+import { PetitionFormPage, PetitionsPage } from "./app/pages/petitions";
 import {
   UsersListPage,
   UserFormPage,
@@ -73,6 +73,11 @@ function DeadlineFormRoute() {
   const { deadlineId } = useParams();
   const location = useLocation();
   return <DeadlineFormPage key={deadlineId || `deadline-new-${location.search}`} />;
+}
+
+function PetitionFormRoute() {
+  const { petitionId } = useParams();
+  return <PetitionFormPage key={petitionId || "petition-new"} />;
 }
 
 function UserFormRoute() {
@@ -143,6 +148,8 @@ export default function App() {
             <Route path="/prazos/:deadlineId/editar" element={<DeadlineFormRoute />} />
 
             <Route path="/peticoes-contestacoes" element={<PetitionsPage />} />
+            <Route path="/peticoes-contestacoes/novo" element={<PetitionFormRoute />} />
+            <Route path="/peticoes-contestacoes/:petitionId/editar" element={<PetitionFormRoute />} />
 
             <Route path="/reunioes" element={<MeetingsPage />} />
 
