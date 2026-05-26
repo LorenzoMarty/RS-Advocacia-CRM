@@ -1,7 +1,6 @@
 from pathlib import Path
 from uuid import uuid4
 
-from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -20,30 +19,12 @@ class Reuniao(models.Model):
         on_delete=models.PROTECT,
         related_name="reunioes",
     )
-    processo = models.ForeignKey(
-        "processos.Processo",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        related_name="reunioes",
-    )
-    pauta = models.TextField(blank=True)
     criado_por = models.CharField(max_length=100, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ("-data_reuniao", "-criado_em")
-
-    def clean(self):
-        if (
-            self.processo_id
-            and self.cliente_id
-            and self.processo.cliente_id != self.cliente_id
-        ):
-            raise ValidationError(
-                {"processo": "O processo deve pertencer ao cliente selecionado."}
-            )
 
     def __str__(self):
         return self.titulo

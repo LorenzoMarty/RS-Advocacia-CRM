@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { PETITION_STATUS_COLUMNS, PROCESS_AREA_OPTIONS } from '../data';
+import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import {
@@ -120,6 +121,7 @@ function PetitionCard({
 }
 
 export function PetitionsPage() {
+  const { confirm, confirmPopup } = useConfirmPopup();
   const {
     clients,
     deletePetition,
@@ -227,7 +229,18 @@ export function PetitionsPage() {
   }
 
   async function handleDelete() {
-    if (!editingPetitionId || !window.confirm('Excluir esta petição ou contestação?')) {
+    if (!editingPetitionId) {
+      return;
+    }
+
+    const canDelete = await confirm({
+      title: 'Excluir peça',
+      message: 'Esta petição ou contestação será removida permanentemente.',
+      confirmLabel: 'Excluir peça',
+      tone: 'danger',
+    });
+
+    if (!canDelete) {
       return;
     }
 
@@ -313,6 +326,7 @@ export function PetitionsPage() {
   return (
     <>
       <PageChrome label="Petições e contestações" />
+      {confirmPopup}
 
       <div className="petitions-page">
         <section className="surface petitions-intro">

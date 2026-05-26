@@ -6,7 +6,7 @@ import { formatDate, formatTime, getStatusTone, isSameDay } from "../utils";
 import { EmptyState } from "./common";
 
 export function DashboardPage() {
-  const { clients, deadlines, events, processes, users } = useAppState();
+  const { clients, deadlines, events, processes } = useAppState();
   const today = new Date();
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const eventsToday = events.filter((event) => isSameDay(event.start, today));
@@ -249,8 +249,8 @@ export function DashboardPage() {
               <div className="shortcut-grid">
                 <Link className="shortcut" to="/agenda/novo">
                   <div className="shortcut-copy">
-                    <strong>Novo</strong>
-                    <span>Compromisso</span>
+                    <strong>Compromisso</strong>
+                    <span>Novo compromisso</span>
                   </div>
                   <span className="shortcut-icon" aria-hidden="true">
                     <svg
@@ -272,7 +272,7 @@ export function DashboardPage() {
                 <Link className="shortcut" to="/clientes/novo">
                   <div className="shortcut-copy">
                     <strong>Cliente</strong>
-                    <span>Novo cadastro</span>
+                    <span>Novo cliente</span>
                   </div>
                   <span className="shortcut-icon" aria-hidden="true">
                     <svg
@@ -296,7 +296,7 @@ export function DashboardPage() {
                 <Link className="shortcut" to="/processos/novo">
                   <div className="shortcut-copy">
                     <strong>Processo</strong>
-                    <span>Novo registro</span>
+                    <span>Novo processo</span>
                   </div>
                   <span className="shortcut-icon" aria-hidden="true">
                     <svg
@@ -317,10 +317,10 @@ export function DashboardPage() {
                   </span>
                 </Link>
 
-                <Link className="shortcut" to="/usuarios">
+                <Link className="shortcut" to="/prazos/novo">
                   <div className="shortcut-copy">
-                    <strong>Usuários</strong>
-                    <span>Equipe</span>
+                    <strong>Prazo</strong>
+                    <span>Novo prazo</span>
                   </div>
                   <span className="shortcut-icon" aria-hidden="true">
                     <svg
@@ -333,41 +333,40 @@ export function DashboardPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="10" cy="7" r="4" />
-                      <path d="M20 8v6" />
-                      <path d="M17 11h6" />
+                      <path d="M8 2v4" />
+                      <path d="M16 2v4" />
+                      <rect x="3" y="4" width="18" height="18" rx="2" />
+                      <path d="M3 10h18" />
+                      <path d="M12 14v4" />
+                      <path d="M10 16h4" />
                     </svg>
                   </span>
                 </Link>
-              </div>
-            </div>
 
-            <div className="rail-group">
-              <div className="rail-stats">
-                <article className="rail-stat">
-                  <div className="rail-copy">
-                    <strong>Prazos</strong>
-                    <span>Hoje</span>
+                <Link className="shortcut" to="/peticoes-contestacoes">
+                  <div className="shortcut-copy">
+                    <strong>Petições</strong>
+                    <span>Peças e contestações</span>
                   </div>
-                  <div className="rail-number">{deadlinesToday.length}</div>
-                </article>
-
-                <article className="rail-stat">
-                  <div className="rail-copy">
-                    <strong>Carteira</strong>
-                    <span>Processos</span>
-                  </div>
-                  <div className="rail-number">{processes.length}</div>
-                </article>
-
-                <article className="rail-stat">
-                  <div className="rail-copy">
-                    <strong>Equipe</strong>
-                    <span>Usuários</span>
-                  </div>
-                  <div className="rail-number">{users.length}</div>
-                </article>
+                  <span className="shortcut-icon" aria-hidden="true">
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z" />
+                      <path d="M14 2v5h5" />
+                      <path d="M9 13h6" />
+                      <path d="M9 17h6" />
+                      <path d="M9 9h1" />
+                    </svg>
+                  </span>
+                </Link>
               </div>
             </div>
           </article>

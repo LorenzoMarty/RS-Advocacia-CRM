@@ -9,7 +9,6 @@ from django.urls import reverse
 
 from clientes.models import Cliente
 from meetings.models import Gravacao, Reuniao
-from processos.models import Processo
 
 
 class TemporaryMediaTestCase(TestCase):
@@ -37,19 +36,9 @@ class MeetingAPITests(TemporaryMediaTestCase):
             telefone="11999999999",
             cpf="12345678901",
         )
-        self.processo = Processo.objects.create(
-            numero_processo="0001",
-            cliente=self.cliente,
-            descricao="",
-            vara="1a Vara",
-            area_juridica="Civel",
-            status="Ativo",
-            advogado_responsavel="Advogada",
-        )
         self.reuniao = Reuniao.objects.create(
             titulo="Reuniao inicial",
             cliente=self.cliente,
-            processo=self.processo,
         )
 
     @override_settings(
@@ -218,8 +207,6 @@ class MeetingAPITests(TemporaryMediaTestCase):
                 "titulo": "Reuniao atualizada",
                 "data_reuniao": None,
                 "cliente": self.cliente.pk,
-                "processo": self.processo.pk,
-                "pauta": "Pauta revisada",
             }),
             content_type="application/json",
         )
@@ -227,7 +214,7 @@ class MeetingAPITests(TemporaryMediaTestCase):
         self.reuniao.refresh_from_db()
         self.assertEqual(response.status_code, 200, response.json())
         self.assertEqual(self.reuniao.titulo, "Reuniao atualizada")
-        self.assertEqual(response.json()["dados"]["reuniao"]["pauta"], "Pauta revisada")
+        self.assertNotIn("pauta", response.json()["dados"]["reuniao"])
 
     def test_exclui_reuniao_com_gravacoes(self):
         Gravacao.objects.create(

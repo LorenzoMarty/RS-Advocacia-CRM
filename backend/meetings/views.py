@@ -160,7 +160,6 @@ def serialize_gravacao(gravacao):
 
 def serialize_reuniao(reuniao):
     cliente_nome = reuniao.cliente.nome if reuniao.cliente_id else ""
-    processo_numero = reuniao.processo.numero_processo if reuniao.processo_id else ""
     return {
         "id": str(reuniao.pk),
         "pk": reuniao.pk,
@@ -168,9 +167,6 @@ def serialize_reuniao(reuniao):
         "data_reuniao": isoformat_ou_nulo(reuniao.data_reuniao),
         "cliente_id": str(reuniao.cliente_id or ""),
         "cliente_nome": cliente_nome,
-        "processo_id": str(reuniao.processo_id or ""),
-        "processo_numero": processo_numero,
-        "pauta": reuniao.pauta,
         "criado_por": reuniao.criado_por,
         "criado_em": isoformat_ou_nulo(reuniao.criado_em),
         "gravacoes": [serialize_gravacao(item) for item in reuniao.gravacoes.all()],
@@ -182,14 +178,10 @@ def _reuniao_api_payload(request):
     data = dict(payload)
     if "clientId" in data and "cliente" not in data:
         data["cliente"] = data["clientId"]
-    if "processId" in data and "processo" not in data:
-        data["processo"] = data["processId"]
     if "title" in data and "titulo" not in data:
         data["titulo"] = data["title"]
     if "meetingAt" in data and "data_reuniao" not in data:
         data["data_reuniao"] = data["meetingAt"]
-    if "agenda" in data and "pauta" not in data:
-        data["pauta"] = data["agenda"]
     return data
 
 
@@ -209,7 +201,7 @@ def listar_reunioes(request):
         return metodo_nao_permitido(["GET"])
 
     reunioes = (
-        Reuniao.objects.select_related("cliente", "processo")
+        Reuniao.objects.select_related("cliente")
         .prefetch_related("gravacoes")
         .all()
     )
@@ -233,7 +225,7 @@ def criar_reuniao(request):
     reuniao = form.save(commit=False)
     reuniao.criado_por = _resolver_criador(request)
     reuniao.save()
-    reuniao = Reuniao.objects.select_related("cliente", "processo").get(pk=reuniao.pk)
+    reuniao = Reuniao.objects.select_related("cliente").get(pk=reuniao.pk)
     return resposta_sucesso(
         {"reuniao": serialize_reuniao(reuniao)},
         mensagem="Reunião criada com sucesso.",
@@ -259,7 +251,7 @@ def editar_reuniao(request, reuniao_id):
 
     reuniao = form.save()
     reuniao = (
-        Reuniao.objects.select_related("cliente", "processo")
+        Reuniao.objects.select_related("cliente")
         .prefetch_related("gravacoes")
         .get(pk=reuniao.pk)
     )
@@ -288,7 +280,7 @@ def detalhes_reuniao(request, reuniao_id):
         return metodo_nao_permitido(["GET"])
 
     reuniao = get_object_or_404(
-        Reuniao.objects.select_related("cliente", "processo").prefetch_related("gravacoes"),
+        Reuniao.objects.select_related("cliente").prefetch_related("gravacoes"),
         pk=reuniao_id,
     )
     return resposta_sucesso({"reuniao": serialize_reuniao(reuniao)})

@@ -11,8 +11,8 @@ class GravacaoInline(admin.TabularInline):
 
 @admin.register(Reuniao)
 class ReuniaoAdmin(admin.ModelAdmin):
-    list_display = ("titulo", "cliente", "processo", "data_reuniao", "criado_em")
-    search_fields = ("titulo", "cliente__nome", "processo__numero_processo")
+    list_display = ("titulo", "cliente", "data_reuniao", "criado_em")
+    search_fields = ("titulo", "cliente__nome")
     inlines = (GravacaoInline,)
 
 
@@ -21,4 +21,3 @@ class GravacaoAdmin(admin.ModelAdmin):
     list_display = ("reuniao", "status", "nome_original", "criada_em", "processada_em")
     list_filter = ("status",)
     readonly_fields = ("transcricao", "resumo", "erro_processamento")
-
