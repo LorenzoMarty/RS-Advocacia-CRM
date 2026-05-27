@@ -61,6 +61,28 @@ function calendarDays(viewDate, events) {
   return rows;
 }
 
+function dayLabel(date) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatDayParam(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function parseDayParam(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return null;
+  const [y, mo, d] = value.split("-").map(Number);
+  return new Date(y, mo - 1, d);
+}
+
 function RailList({ events, clients, processes, emptyTitle, emptyCopy }) {
   if (!events.length) {
     return (
@@ -455,7 +477,13 @@ export function AgendaListPage() {
                     className={`day-card${day.date.getMonth() !== viewDate.getMonth() ? " is-muted" : ""}${isSameDay(day.date, today) ? " is-today" : ""}${day.events.some((event) => isOverdueEvent(event)) ? " is-overdue" : ""}${day.events.length ? " has-events" : ""}`}
                   >
                     <div className="day-head">
-                      <span className="day-number">{day.date.getDate()}</span>
+                      <Link
+                        className="day-number day-number-link"
+                        to={`/agenda/dia/${formatDayParam(day.date)}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {day.date.getDate()}
+                      </Link>
                       <span className="day-dot" />
                     </div>
 
@@ -1422,6 +1450,173 @@ export function EventDetailPage() {
             </section>
           </div>
         </div>
+      </div>
+    </>
+  );
+}
+
+const DAY_HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 07–22
+
+export function AgendaDayPage() {
+  const params = useParams();
+  const navigate = useNavigate();
+  const { clients, events, processes } = useAppState();
+
+  const date = parseDayParam(params.date);
+
+  if (!date) {
+    return <NotFoundState title="Data inválida." />;
+  }
+
+  const dayEvents = events
+    .filter((e) => isSameDay(e.start, date))
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
+
+  const today = new Date();
+  const isToday = isSameDay(date, today);
+  const currentHour = today.getHours();
+
+  function goDay(offset) {
+    const next = new Date(date);
+    next.setDate(next.getDate() + offset);
+    navigate(`/agenda/dia/${formatDayParam(next)}`);
+  }
+
+  return (
+    <>
+      <PageChrome label={dayLabel(date)} />
+
+      <div className="agenda-day-page">
+        <section className="surface agenda-day-intro">
+          <div className="crumbs">
+            <Link to="/agenda">Agenda</Link>
+          </div>
+
+          <div className="day-intro-head">
+            <div className="day-nav-row">
+              <div className="day-nav-controls">
+                <button
+                  className="icon-control"
+                  type="button"
+                  aria-label="Dia anterior"
+                  onClick={() => goDay(-1)}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </button>
+
+                <h1 className="day-title">{dayLabel(date)}</h1>
+
+                <button
+                  className="icon-control"
+                  type="button"
+                  aria-label="Próximo dia"
+                  onClick={() => goDay(1)}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </button>
+              </div>
+
+              <Link className="btn" to={`/agenda/novo?data=${params.date}`}>
+                Novo
+              </Link>
+            </div>
+
+            <div className="day-summary">
+              <span className="badge gold">
+                {formatCount(dayEvents.length, "compromisso", "compromissos")}
+              </span>
+              {isToday && <span className="badge">Hoje</span>}
+            </div>
+          </div>
+        </section>
+
+        <section className="surface agenda-day-timeline">
+          {!dayEvents.length && (
+            <div className="timeline-day-empty">
+              <strong>Nenhum compromisso neste dia.</strong>
+              <p>
+                <Link to={`/agenda/novo?data=${params.date}`}>
+                  Criar compromisso
+                </Link>{" "}
+                para {formatDate(date)}.
+              </p>
+            </div>
+          )}
+
+          <div className="timeline-grid">
+            {DAY_HOURS.map((hour) => {
+              const slotEvents = dayEvents.filter(
+                (e) => new Date(e.start).getHours() === hour,
+              );
+              const isNow = isToday && currentHour === hour;
+
+              return (
+                <div
+                  key={hour}
+                  className={`timeline-row${slotEvents.length ? " has-events" : ""}${isNow ? " is-now" : ""}`}
+                >
+                  <div className="timeline-hour">
+                    <span>{String(hour).padStart(2, "0")}:00</span>
+                  </div>
+
+                  <div className="timeline-slot">
+                    {slotEvents.map((event) => {
+                      const client = clients.find((c) => c.id === event.clientId);
+                      const process = processes.find((p) => p.id === event.processId);
+
+                      return (
+                        <Link
+                          key={event.id}
+                          className={`timeline-event type-${getEventTypeKey(event.type)}${isOverdueEvent(event) ? " is-overdue" : ""}`}
+                          to={`/agenda/${event.id}`}
+                        >
+                          <span className="timeline-event-time">
+                            {formatTime(event.start)}
+                            {event.end ? ` — ${formatTime(event.end)}` : ""}
+                          </span>
+                          <strong className="timeline-event-title">
+                            {event.title}
+                          </strong>
+                          <div className="timeline-event-meta">
+                            {event.type ? (
+                              <span className="meta-chip">{event.type}</span>
+                            ) : null}
+                            {client ? (
+                              <span className="meta-chip">{client.name}</span>
+                            ) : null}
+                            {process ? (
+                              <span className="meta-chip">{process.number}</span>
+                            ) : null}
+                            {event.responsible && !client ? (
+                              <span className="meta-chip">{event.responsible}</span>
+                            ) : null}
+                          </div>
+                        </Link>
+                      );
+                    })}
+
+                    {!slotEvents.length && (
+                      <Link
+                        className="timeline-slot-add"
+                        to={`/agenda/novo?data=${params.date}`}
+                        aria-label={`Adicionar compromisso às ${String(hour).padStart(2, "0")}:00`}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M12 5v14M5 12h14" />
+                        </svg>
+                        Adicionar compromisso
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </div>
     </>
   );

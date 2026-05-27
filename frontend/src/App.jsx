@@ -23,6 +23,7 @@ import {
 } from "./app/pages/processes";
 import {
   AgendaListPage,
+  AgendaDayPage,
   EventFormPage,
   EventDetailPage,
 } from "./app/pages/agendas";
@@ -120,6 +121,7 @@ export default function App() {
 
             <Route path="/agenda" element={<AgendaListPage />} />
             <Route path="/agenda/novo" element={<EventFormRoute />} />
+            <Route path="/agenda/dia/:date" element={<AgendaDayPage />} />
             <Route path="/agenda/:eventId" element={<EventDetailPage />} />
             <Route
               path="/agenda/:eventId/editar"
