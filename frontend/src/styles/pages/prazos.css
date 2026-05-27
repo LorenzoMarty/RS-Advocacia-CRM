@@ -91,7 +91,7 @@
 .deadline-card{
     position:relative;
     display:grid;
-    gap:0;
+    gap:10px;
     min-height:112px;
     padding:18px 18px 18px 22px;
     border-radius:18px;

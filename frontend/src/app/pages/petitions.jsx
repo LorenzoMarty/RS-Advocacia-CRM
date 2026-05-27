@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { PETITION_STATUS_COLUMNS, PROCESS_AREA_OPTIONS } from '../data';
+import { TaskTimer } from '../components/productivity';
+import { petitionTaskType } from '../productivity-utils';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, StatusBadge } from '../layout';
 import { useAppState } from '../store';
@@ -99,6 +101,13 @@ function PetitionCard({
       <div className="petition-card-main">
         <span className="petition-card-client">{clientName}</span>
         <h3>{petition.adversary || 'Adverso não informado'}</h3>
+        <TaskTimer
+          taskId={petition.id}
+          taskType={petitionTaskType(petition)}
+          title={petition.adversary || petition.type || PETITION_DEFAULT_TYPE}
+          processId={petition.processId}
+          processNumber={processNumber}
+        />
         <div className="petition-card-meta">
           {processNumber ? <span>{processNumber}</span> : null}
           <span>{petition.type || PETITION_DEFAULT_TYPE}</span>

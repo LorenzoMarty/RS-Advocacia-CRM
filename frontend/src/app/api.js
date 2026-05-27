@@ -6,6 +6,7 @@ export const isApiEnabled = Boolean(apiBaseUrl);
 export const isEventsApiEnabled = isApiEnabled;
 export const isDeadlinesApiEnabled = isApiEnabled;
 export const isPetitionsApiEnabled = isApiEnabled;
+export const isProductivityApiEnabled = isApiEnabled;
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE']);
 
@@ -151,6 +152,13 @@ function petitionRequest(path = '', options = {}) {
   });
 }
 
+function productivityRequest(path = '', options = {}) {
+  return apiRequest(`/api/produtividade/${path}`, options, {
+    baseUrl: apiBaseUrl,
+    requireConfiguredApi: false,
+  });
+}
+
 export const api = {
   carregarInicializacao: () => apiRequest('/api/inicializacao/'),
   obterUsuarioAtual: () => apiRequest('/api/usuarios/atual/'),
@@ -188,6 +196,12 @@ export const api = {
   createPetition: (payload) => petitionRequest('criar/', jsonOptions('POST', payload)),
   updatePetition: (id, payload) => petitionRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
   deletePetition: (id) => petitionRequest(`${id}/excluir/`, { method: 'DELETE' }),
+  getProductivity: () => productivityRequest(),
+  startTimeEntry: (payload) => productivityRequest('time-entries/iniciar/', jsonOptions('POST', payload)),
+  pauseTimeEntry: (id) => productivityRequest(`time-entries/${id}/pausar/`, jsonOptions('PATCH', {})),
+  resumeTimeEntry: (id, payload = {}) => productivityRequest(`time-entries/${id}/retomar/`, jsonOptions('PATCH', payload)),
+  stopTimeEntry: (id) => productivityRequest(`time-entries/${id}/encerrar/`, jsonOptions('PATCH', {})),
+  saveProductivityGoals: (payload) => productivityRequest('metas/salvar/', jsonOptions('PUT', payload)),
   listUsers: () => apiRequest('/api/usuarios/'),
   createUser: (payload) => apiRequest('/api/usuarios/criar/', jsonOptions('POST', payload)),
   updateUser: (id, payload) => apiRequest(`/api/usuarios/${id}/editar/`, jsonOptions('PUT', payload)),

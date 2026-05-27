@@ -17,6 +17,13 @@ from peticoes.models import Peticao
 from peticoes.views import serialize_peticao
 from prazos.models import Prazo
 from prazos.views import serialize_prazo
+from productivity.models import TimeEntry
+from productivity.views import (
+    _is_admin,
+    _goals_response,
+    _time_entries_response,
+    _current_usuario,
+)
 from usuarios.models import Usuario
 from usuarios.views import (
     CARGO_LIST_PERMISSIONS,
@@ -100,6 +107,7 @@ def inicializacao(request):
     serialized_eventos = [serialize_evento(evento) for evento in eventos]
     serialized_peticoes = [serialize_peticao(peticao) for peticao in peticoes]
     serialized_prazos = [serialize_prazo(prazo) for prazo in prazos]
+    usuario_atual = _current_usuario(request)
 
     can_include_cargos = user_has_any_permissions(request, CARGO_LIST_PERMISSIONS)
     serialized_cargos = []
@@ -122,6 +130,15 @@ def inicializacao(request):
 
     if can_include_cargos:
         data["cargos"] = serialized_cargos
+
+    if usuario_atual and user_has_permission(request, "productivity.view_timeentry"):
+        time_entries = TimeEntry.objects.select_related("user")
+        if not _is_admin(request, usuario_atual):
+            time_entries = time_entries.filter(user=usuario_atual)
+        data["time_entries"] = _time_entries_response(time_entries)
+
+    if usuario_atual and user_has_permission(request, "productivity.view_productivitygoal"):
+        data["productivity_goals"] = _goals_response(request, usuario_atual)
 
     return resposta_sucesso(data)
 

@@ -12,6 +12,7 @@ PERMISSION_APP_LABELS = OrderedDict(
         ("agenda", "Agenda"),
         ("prazos", "Prazos"),
         ("peticoes", "Petições ou contestações"),
+        ("productivity", "Produtividade"),
         ("meetings", "Reuniões"),
         ("usuarios", "Usuários"),
         ("auth", "Sistema"),

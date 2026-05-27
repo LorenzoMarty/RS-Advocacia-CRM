@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { DEADLINE_STATUS_COLUMNS } from '../data';
+import { TaskTimer } from '../components/productivity';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, StatusBadge } from '../layout';
 import { useAppState } from '../store';
@@ -131,6 +132,7 @@ function DeadlineCard({
   processes,
 }) {
   const process = processes.find((item) => item.id === deadline.processId) || null;
+  const cardTitle = buildDeadlineTitle(process, deadline.responsible) || deadline.title;
 
   return (
     <article
@@ -141,9 +143,16 @@ function DeadlineCard({
     >
       <h3 className="deadline-card-title">
         <Link to={`/prazos/${deadline.id}`}>
-          {buildDeadlineTitle(process, deadline.responsible) || deadline.title}
+          {cardTitle}
         </Link>
       </h3>
+      <TaskTimer
+        taskId={deadline.id}
+        taskType="prazo"
+        title={cardTitle}
+        processId={deadline.processId}
+        processNumber={process?.number || deadline.processNumber || ''}
+      />
     </article>
   );
 }

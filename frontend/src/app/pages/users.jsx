@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
+import { UserProductivitySection } from '../components/productivity';
 import { PageChrome, PageSearch } from '../layout';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, normalizeText } from '../utils';
@@ -25,9 +26,10 @@ function validateUserForm(form, users, currentId) {
 }
 
 export function UsersListPage() {
-  const { addFlash, currentUser, deleteUser, roles, users } = useAppState();
+  const { addFlash, currentRole, currentUser, deleteUser, roles, users } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
+  const isAdmin = currentRole?.name === 'Administrador';
 
   const filteredUsers = users.filter((user) =>
     buildSearchText([user.name, user.email, roleLabel(roles, user.roleId)]).includes(normalizeText(search)),
@@ -73,6 +75,7 @@ export function UsersListPage() {
 
             <div className="list-intro-actions">
               <Link className="btn btn-secondary list-intro-action" to="/cargos">Cargos</Link>
+              {isAdmin ? <Link className="btn btn-secondary list-intro-action" to="/produtividade">Produtividade</Link> : null}
               <Link className="btn list-intro-action" to="/usuarios/novo">Novo</Link>
             </div>
           </div>
@@ -235,7 +238,7 @@ export function UserFormPage() {
 
 export function UserDetailPage() {
   const params = useParams();
-  const { events, processes, roles, users } = useAppState();
+  const { currentRole, events, processes, roles, users } = useAppState();
   const user = users.find((item) => item.id === params.userId) || null;
 
   if (!user) {
@@ -245,6 +248,7 @@ export function UserDetailPage() {
   const relatedProcesses = processes.filter((process) => normalizeText(process.owner) === normalizeText(user.name));
   const relatedEvents = events.filter((event) => normalizeText(event.responsible) === normalizeText(user.name));
   const linkedRole = roles.find((role) => role.id === user.roleId) || null;
+  const isAdmin = currentRole?.name === 'Administrador';
 
   return (
     <>
@@ -379,6 +383,8 @@ export function UserDetailPage() {
                 <div className="note-box">Este usuário ainda não possui um cargo vinculado.</div>
               )}
             </section>
+
+            <UserProductivitySection user={user} isAdmin={isAdmin} />
           </div>
         </div>
       </div>

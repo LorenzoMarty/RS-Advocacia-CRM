@@ -1,7 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from 'react';
 
-import { api, isApiEnabled, isDeadlinesApiEnabled, isEventsApiEnabled, isPetitionsApiEnabled } from './api';
+import {
+  api,
+  isApiEnabled,
+  isDeadlinesApiEnabled,
+  isEventsApiEnabled,
+  isPetitionsApiEnabled,
+  isProductivityApiEnabled,
+} from './api';
 
 const AppStateContext = createContext(null);
 
@@ -103,6 +110,18 @@ function petitionsFromResponse(payload) {
 
 function petitionFromResponse(payload) {
   return petitionFromApi(itemFromResponse(payload, 'peticao'));
+}
+
+function timeEntriesFromResponse(payload) {
+  return collectionFromResponse(payload, 'time_entries').map(timeEntryFromApi).filter(Boolean);
+}
+
+function timeEntryFromResponse(payload) {
+  return timeEntryFromApi(itemFromResponse(payload, 'time_entry'));
+}
+
+function productivityGoalsFromResponse(payload) {
+  return collectionFromResponse(payload, 'productivity_goals').map(productivityGoalFromApi).filter(Boolean);
 }
 
 function permissionGroupsFromResponse(payload) {
@@ -394,6 +413,26 @@ function googleSyncMessage(summary) {
   }
 
   return `Agenda sincronizada: ${parts.join(', ')}.`;
+}
+
+function elapsedSecondsForTimeEntry(entry, currentTime = Date.now()) {
+  const totalSeconds = Math.max(0, Math.floor(Number(entry?.totalSeconds) || 0));
+
+  if (entry?.status !== 'running') {
+    return totalSeconds;
+  }
+
+  const baseTime = new Date(entry.resumedAt || entry.startedAt).getTime();
+
+  if (Number.isNaN(baseTime)) {
+    return totalSeconds;
+  }
+
+  return totalSeconds + Math.max(0, Math.floor((currentTime - baseTime) / 1000));
+}
+
+function taskDisplayName(payload) {
+  return payload.taskName || payload.title || payload.name || 'Tarefa';
 }
 
 function demoDate(offset = 0) {
@@ -697,7 +736,55 @@ function createDemoState() {
     events,
     deadlines,
     petitions,
+    timeEntries: [],
+    productivityGoals: users.map((user) => ({
+      id: `demo-goal-${user.id}`,
+      userId: user.id,
+      dailyHours: 6,
+      weeklyHours: 30,
+      configured: false,
+    })),
     currentUser: users[0],
+  };
+}
+
+function timeEntryFromApi(entry) {
+  if (!entry) {
+    return null;
+  }
+
+  return {
+    ...entry,
+    id: String(entry.id || entry.pk),
+    userId: String(entry.user_id || entry.userId || ''),
+    userName: entry.user_name || entry.userName || '',
+    taskId: String(entry.task_id || entry.taskId || ''),
+    taskType: entry.task_type || entry.taskType || '',
+    taskName: entry.task_name || entry.taskName || '',
+    processId: String(entry.process_id || entry.processId || ''),
+    processNumber: entry.process_number || entry.processNumber || '',
+    startedAt: entry.started_at || entry.startedAt || '',
+    pausedAt: entry.paused_at || entry.pausedAt || '',
+    resumedAt: entry.resumed_at || entry.resumedAt || '',
+    endedAt: entry.ended_at || entry.endedAt || '',
+    totalSeconds: Number(entry.total_seconds ?? entry.totalSeconds ?? 0),
+    elapsedSeconds: Number(entry.elapsed_seconds ?? entry.elapsedSeconds ?? entry.total_seconds ?? 0),
+    status: entry.status || 'stopped',
+  };
+}
+
+function productivityGoalFromApi(goal) {
+  if (!goal) {
+    return null;
+  }
+
+  return {
+    ...goal,
+    id: String(goal.id || goal.pk || ''),
+    userId: String(goal.user_id || goal.userId || ''),
+    dailyHours: Number(goal.daily_hours ?? goal.dailyHours ?? 6),
+    weeklyHours: Number(goal.weekly_hours ?? goal.weeklyHours ?? 30),
+    configured: Boolean(goal.configured),
   };
 }
 
@@ -710,9 +797,11 @@ export function AppStateProvider({ children }) {
   const [events, setEvents] = useState([]);
   const [deadlines, setDeadlines] = useState([]);
   const [petitions, setPetitions] = useState([]);
+  const [timeEntries, setTimeEntries] = useState([]);
+  const [productivityGoals, setProductivityGoals] = useState([]);
   const [flashes, setFlashes] = useState([]);
-  const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled);
-  const [apiStatus, setApiStatus] = useState((isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled) ? 'loading' : 'local');
+  const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled);
+  const [apiStatus, setApiStatus] = useState((isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled) ? 'loading' : 'local');
   const [isEventsLoading, setIsEventsLoading] = useState(isEventsApiEnabled);
   const [isDeadlinesLoading, setIsDeadlinesLoading] = useState(isDeadlinesApiEnabled);
   const [isPetitionsLoading, setIsPetitionsLoading] = useState(isPetitionsApiEnabled);
@@ -723,6 +812,7 @@ export function AppStateProvider({ children }) {
   const canUseEventsApi = isEventsApiEnabled && !isDemoMode;
   const canUseDeadlinesApi = isDeadlinesApiEnabled && !isDemoMode;
   const canUsePetitionsApi = isPetitionsApiEnabled && !isDemoMode;
+  const canUseProductivityApi = isProductivityApiEnabled && !isDemoMode;
 
   function applyDemoState() {
     const demoState = createDemoState();
@@ -734,6 +824,8 @@ export function AppStateProvider({ children }) {
     setEvents(demoState.events);
     setDeadlines(demoState.deadlines);
     setPetitions(demoState.petitions);
+    setTimeEntries(demoState.timeEntries);
+    setProductivityGoals(demoState.productivityGoals);
     setCurrentSessionUser(demoState.currentUser);
     setCurrentUserId(demoState.currentUser.id);
   }
@@ -772,6 +864,12 @@ export function AppStateProvider({ children }) {
     setEvents(eventsFromResponse(payload));
     setDeadlines(deadlinesFromResponse(payload));
     setPetitions(petitionsFromResponse(payload));
+    if (Object.prototype.hasOwnProperty.call(payload, 'time_entries')) {
+      setTimeEntries(timeEntriesFromResponse(payload));
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, 'productivity_goals')) {
+      setProductivityGoals(productivityGoalsFromResponse(payload));
+    }
   }
 
   async function loadRemoteCollections() {
@@ -797,6 +895,13 @@ export function AppStateProvider({ children }) {
       {
         load: api.listPetitions,
         apply: (payload) => setPetitions(petitionsFromResponse(payload)),
+      },
+      {
+        load: api.getProductivity,
+        apply: (payload) => {
+          setTimeEntries(timeEntriesFromResponse(payload));
+          setProductivityGoals(productivityGoalsFromResponse(payload));
+        },
       },
       {
         load: api.listRoles,
@@ -932,6 +1037,8 @@ export function AppStateProvider({ children }) {
     setEvents([]);
     setDeadlines([]);
     setPetitions([]);
+    setTimeEntries([]);
+    setProductivityGoals([]);
     addFlash('Sessão encerrada.', 'info');
   }
 
@@ -1439,6 +1546,244 @@ export function AppStateProvider({ children }) {
     return true;
   }
 
+  function pauseRunningEntries(entries, exceptEntryId = '') {
+    const currentTime = Date.now();
+    const pausedAt = new Date(currentTime).toISOString();
+
+    return entries.map((entry) => {
+      if (entry.userId !== currentUserId || entry.status !== 'running' || entry.id === exceptEntryId) {
+        return entry;
+      }
+
+      return {
+        ...entry,
+        status: 'paused',
+        pausedAt,
+        totalSeconds: elapsedSecondsForTimeEntry(entry, currentTime),
+        elapsedSeconds: elapsedSecondsForTimeEntry(entry, currentTime),
+      };
+    });
+  }
+
+  async function startTimeEntry(payload, options = {}) {
+    const currentTime = Date.now();
+    const startedAt = new Date(currentTime).toISOString();
+    const currentUser = users.find((user) => user.id === currentUserId) || currentSessionUser;
+
+    if (!currentUser) {
+      addFlash('Usuário atual não encontrado.', 'error');
+      return null;
+    }
+
+    if (canUseProductivityApi) {
+      try {
+        const response = await api.startTimeEntry({
+          task_id: payload.taskId,
+          task_type: payload.taskType,
+          pause_existing: Boolean(options.pauseExisting),
+        });
+        const savedEntry = timeEntryFromResponse(response);
+        if (!savedEntry) {
+          throw new Error('Resposta inválida da API de produtividade.');
+        }
+        setTimeEntries((currentEntries) => replaceById(
+          options.pauseExisting ? pauseRunningEntries(currentEntries, savedEntry.id) : currentEntries,
+          savedEntry,
+        ));
+        return savedEntry;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    const nextEntry = {
+      id: nextId('time-entry'),
+      userId: currentUser.id,
+      userName: currentUser.name,
+      taskId: String(payload.taskId),
+      taskType: payload.taskType,
+      taskName: taskDisplayName(payload),
+      processId: payload.processId || '',
+      processNumber: payload.processNumber || '',
+      startedAt,
+      pausedAt: '',
+      resumedAt: '',
+      endedAt: '',
+      totalSeconds: 0,
+      elapsedSeconds: 0,
+      status: 'running',
+    };
+
+    setTimeEntries((currentEntries) => replaceById(
+      options.pauseExisting ? pauseRunningEntries(currentEntries, nextEntry.id) : currentEntries,
+      nextEntry,
+    ));
+    return nextEntry;
+  }
+
+  async function pauseTimeEntry(entryId) {
+    if (canUseProductivityApi) {
+      try {
+        const response = await api.pauseTimeEntry(entryId);
+        const savedEntry = timeEntryFromResponse(response);
+        if (savedEntry) {
+          setTimeEntries((currentEntries) => replaceById(currentEntries, savedEntry));
+        }
+        return savedEntry;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    const currentTime = Date.now();
+    const pausedAt = new Date(currentTime).toISOString();
+    let savedEntry = null;
+    setTimeEntries((currentEntries) => currentEntries.map((entry) => {
+      if (entry.id !== entryId || entry.status !== 'running') {
+        return entry;
+      }
+
+      savedEntry = {
+        ...entry,
+        status: 'paused',
+        pausedAt,
+        totalSeconds: elapsedSecondsForTimeEntry(entry, currentTime),
+        elapsedSeconds: elapsedSecondsForTimeEntry(entry, currentTime),
+      };
+      return savedEntry;
+    }));
+    return savedEntry;
+  }
+
+  async function resumeTimeEntry(entryId, options = {}) {
+    const currentTime = Date.now();
+    const resumedAt = new Date(currentTime).toISOString();
+
+    if (canUseProductivityApi) {
+      try {
+        const response = await api.resumeTimeEntry(entryId, { pause_existing: Boolean(options.pauseExisting) });
+        const savedEntry = timeEntryFromResponse(response);
+        if (savedEntry) {
+          setTimeEntries((currentEntries) => replaceById(
+            options.pauseExisting ? pauseRunningEntries(currentEntries, savedEntry.id) : currentEntries,
+            savedEntry,
+          ));
+        }
+        return savedEntry;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    let savedEntry = null;
+    setTimeEntries((currentEntries) => {
+      const preparedEntries = options.pauseExisting ? pauseRunningEntries(currentEntries, entryId) : currentEntries;
+      return preparedEntries.map((entry) => {
+        if (entry.id !== entryId || entry.status !== 'paused') {
+          return entry;
+        }
+
+        savedEntry = {
+          ...entry,
+          status: 'running',
+          resumedAt,
+        };
+        return savedEntry;
+      });
+    });
+    return savedEntry;
+  }
+
+  async function stopTimeEntry(entryId) {
+    if (canUseProductivityApi) {
+      try {
+        const response = await api.stopTimeEntry(entryId);
+        const savedEntry = timeEntryFromResponse(response);
+        if (savedEntry) {
+          setTimeEntries((currentEntries) => replaceById(currentEntries, savedEntry));
+        }
+        return savedEntry;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    const currentTime = Date.now();
+    const endedAt = new Date(currentTime).toISOString();
+    let savedEntry = null;
+    setTimeEntries((currentEntries) => currentEntries.map((entry) => {
+      if (entry.id !== entryId || entry.status === 'stopped') {
+        return entry;
+      }
+
+      savedEntry = {
+        ...entry,
+        status: 'stopped',
+        endedAt,
+        totalSeconds: elapsedSecondsForTimeEntry(entry, currentTime),
+        elapsedSeconds: elapsedSecondsForTimeEntry(entry, currentTime),
+      };
+      return savedEntry;
+    }));
+    return savedEntry;
+  }
+
+  async function saveProductivityGoals(payload) {
+    const goalsPayload = Array.isArray(payload.goals) ? payload.goals : [payload];
+    const apiPayload = {
+      ...(payload.applyAll ? { apply_all: true } : {}),
+      ...(payload.goals ? {
+        goals: goalsPayload.map((goal) => ({
+          user_id: goal.userId || goal.user_id,
+          daily_hours: goal.dailyHours ?? goal.daily_hours,
+          weekly_hours: goal.weeklyHours ?? goal.weekly_hours,
+        })),
+      } : {
+        user_id: payload.userId || payload.user_id,
+        daily_hours: payload.dailyHours ?? payload.daily_hours,
+        weekly_hours: payload.weeklyHours ?? payload.weekly_hours,
+      }),
+    };
+
+    if (canUseProductivityApi) {
+      try {
+        const response = await api.saveProductivityGoals(apiPayload);
+        const savedGoals = productivityGoalsFromResponse(response);
+        setProductivityGoals(savedGoals);
+        addFlash('Metas atualizadas.', 'success');
+        return savedGoals;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    setProductivityGoals((currentGoals) => {
+      let nextGoals = currentGoals;
+      goalsPayload.forEach((goalPayload) => {
+        const targetUsers = payload.applyAll && !(goalPayload.userId || goalPayload.user_id)
+          ? users
+          : users.filter((user) => user.id === String(goalPayload.userId || goalPayload.user_id));
+        targetUsers.forEach((user) => {
+          nextGoals = replaceById(nextGoals, {
+            id: currentGoals.find((goal) => goal.userId === user.id)?.id || `goal-${user.id}`,
+            userId: user.id,
+            dailyHours: Number(goalPayload.dailyHours ?? goalPayload.daily_hours ?? 6),
+            weeklyHours: Number(goalPayload.weeklyHours ?? goalPayload.weekly_hours ?? 30),
+            configured: true,
+          });
+        });
+      });
+      return nextGoals;
+    });
+    addFlash('Metas atualizadas.', 'success');
+    return productivityGoals;
+  }
+
   const currentUser = users.find((user) => user.id === currentUserId) || currentSessionUser;
   const currentRole = roles.find((role) => role.id === currentUser?.roleId) || null;
 
@@ -1451,6 +1796,8 @@ export function AppStateProvider({ children }) {
     events,
     deadlines,
     petitions,
+    timeEntries,
+    productivityGoals,
     flashes,
     currentUser,
     currentRole,
@@ -1483,6 +1830,11 @@ export function AppStateProvider({ children }) {
     deletePetition,
     deleteUser,
     deleteRole,
+    startTimeEntry,
+    pauseTimeEntry,
+    resumeTimeEntry,
+    stopTimeEntry,
+    saveProductivityGoals,
   };
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
