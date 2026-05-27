@@ -9,6 +9,7 @@
 @import "./styles/pages/processos-detail.css";
 @import "./styles/pages/agenda-list.css";
 @import "./styles/pages/agenda-form.css";
+@import "./styles/pages/agenda-day.css";
 @import "./styles/pages/agenda-detail.css";
 @import "./styles/pages/prazos.css";
 @import "./styles/pages/petitions.css";
@@ -80,6 +81,8 @@ button.action-link {
   .rail,
   .section-card,
   .agenda-intro,
+  .agenda-day-intro,
+  .agenda-day-timeline,
   .calendar-panel,
   .rail-panel,
   .deadlines-intro,
@@ -122,6 +125,7 @@ html[data-theme="light"] :where(.sidebar, .topbar),
 html[data-theme="light"] #root .main :where(
   .hero,
   .agenda-intro,
+  .agenda-day-intro,
   .deadlines-intro,
   .deadline-form-intro,
   .deadline-detail-hero,
@@ -148,6 +152,7 @@ html[data-theme="light"] #root .main :where(
 #root :where(
   .main,
   .agenda-page,
+  .agenda-day-page,
   .event-create-page,
   .event-page,
   .api-test-page,
@@ -252,6 +257,7 @@ html:not([data-theme="light"]) #root .main select:not(.rs-native-select) :where(
   .side-item,
   .day-card,
   .calendar-event,
+  .timeline-event,
   .client-row,
   .process-row,
   .user-row,
