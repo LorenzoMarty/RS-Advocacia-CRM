@@ -208,8 +208,30 @@
     .rail-sections{display:grid;gap:18px}
     .rail-block + .rail-block{padding-top:18px;border-top:1px solid var(--line)}
     .side-list{display:grid;gap:10px}
-    .side-item{display:grid;gap:10px;padding:14px;border-radius:18px;border:1px solid var(--line);background:var(--ghost);transition:border-color .2s ease,background .2s ease,transform .2s ease}
+    .side-item{position:relative;display:grid;gap:10px;padding:14px;border-radius:18px;border:1px solid var(--line);background:var(--ghost);cursor:pointer;transition:border-color .2s ease,background .2s ease,transform .2s ease}
     .side-item:hover{transform:translateY(-1px);border-color:rgba(212,175,55,.18);background:rgba(212,175,55,.06)}
+    .side-item-delete{
+        position:absolute;
+        top:10px;
+        right:10px;
+        width:24px;
+        height:24px;
+        border-radius:8px;
+        border:none;
+        background:rgba(239,122,122,.15);
+        color:var(--danger);
+        display:grid;
+        place-items:center;
+        cursor:pointer;
+        opacity:0;
+        font-size:1.1rem;
+        line-height:1;
+        padding:0;
+        transition:opacity .15s ease,background .15s ease;
+        z-index:2;
+    }
+    .side-item:hover .side-item-delete{opacity:1}
+    .side-item-delete:hover{background:rgba(239,122,122,.36)}
     .side-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
     .side-title{margin:0;font-size:.96rem;line-height:1.4;font-weight:600}
     .side-time{margin:6px 0 0;color:var(--soft);font-size:.82rem;line-height:1.45}

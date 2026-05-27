@@ -83,6 +83,29 @@
 .timeline-event.type-reuniao{--event-accent:#7893d1}
 .timeline-event.type-tarefa{--event-accent:#b6bcc8}
 .timeline-event.is-overdue{--event-accent:#ef7a7a;border-color:rgba(239,122,122,.18)}
+.timeline-event{cursor:pointer}
+.timeline-event-delete{
+    position:absolute;
+    top:8px;
+    right:8px;
+    width:24px;
+    height:24px;
+    border-radius:8px;
+    border:none;
+    background:rgba(239,122,122,.15);
+    color:var(--danger);
+    display:grid;
+    place-items:center;
+    cursor:pointer;
+    opacity:0;
+    font-size:1.1rem;
+    line-height:1;
+    padding:0;
+    transition:opacity .15s ease,background .15s ease;
+    z-index:2;
+}
+.timeline-event:hover .timeline-event-delete{opacity:1}
+.timeline-event-delete:hover{background:rgba(239,122,122,.36)}
 
 .timeline-event-time{
     display:inline-flex;
