@@ -12,6 +12,7 @@
 @import "./styles/pages/agenda-detail.css";
 @import "./styles/pages/prazos.css";
 @import "./styles/pages/petitions.css";
+@import "./styles/pages/productivity.css";
 @import "./styles/pages/usuarios-list.css";
 @import "./styles/pages/usuarios-form.css";
 @import "./styles/pages/usuarios-detail.css";
@@ -158,6 +159,7 @@ html[data-theme="light"] #root .main :where(
   .deadline-detail-page,
   .petitions-page,
   .petition-form-page,
+  .office-productivity-page,
   .process-page,
   .meetings-page,
   .cargos-page,
@@ -264,6 +266,13 @@ html:not([data-theme="light"]) #root .main select:not(.rs-native-select) :where(
   .petition-column,
   .petition-card,
   .petition-column-empty,
+  .productivity-metric,
+  .productivity-active-item,
+  .productivity-history-row,
+  .productivity-bar-row,
+  .productivity-ranking-row,
+  .productivity-goal-row,
+  .productivity-goal-input-row,
   .meeting-option,
   .audio-recorder,
   .recording-result

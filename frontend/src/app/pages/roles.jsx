@@ -31,6 +31,7 @@ const AREA_LABELS = {
   clientes: 'Clientes',
   prazos: 'Prazos',
   peticoes: 'Petições ou contestações',
+  productivity: 'Produtividade',
   processos: 'Processos',
   usuarios: 'Usuários',
 };
@@ -41,6 +42,7 @@ const AREA_NOTES = {
   clientes: 'Cadastro, dados e histórico dos clientes.',
   prazos: 'Prazos processuais e tarefas de protocolo.',
   peticoes: 'Petição, contestação, protocolo e acompanhamento.',
+  productivity: 'Timers, metas e histórico de produtividade.',
   processos: 'Processos jurídicos e seus dados principais.',
   usuarios: 'Cadastro da equipe que usa o sistema.',
 };
@@ -52,7 +54,9 @@ const RESOURCE_LABELS = {
   permission: 'Regras de acesso',
   prazo: 'Prazos',
   peticao: 'Petições ou contestações',
+  productivitygoal: 'Metas de produtividade',
   processo: 'Processos',
+  timeentry: 'Timers',
   user: 'Contas internas',
   usuario: 'Usuários',
 };
@@ -64,7 +68,9 @@ const RESOURCE_NOTES = {
   permission: 'Regras avançadas usadas pelo sistema.',
   prazo: 'Prazos processuais separados da agenda de compromissos.',
   peticao: 'Peças jurídicas separadas de prazos e compromissos.',
+  productivitygoal: 'Metas diárias e semanais por usuário.',
   processo: 'Informações dos processos cadastrados.',
+  timeentry: 'Sessões de trabalho registradas em tarefas.',
   user: 'Contas técnicas de autenticação.',
   usuario: 'Pessoas da equipe cadastradas no sistema.',
 };
