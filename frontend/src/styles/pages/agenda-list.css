@@ -133,6 +133,28 @@
         --event-accent:#ef7a7a;
         border-color:rgba(239,122,122,.2);
     }
+    .calendar-event-delete{
+        position:absolute;
+        top:6px;
+        right:6px;
+        width:22px;
+        height:22px;
+        border-radius:7px;
+        border:none;
+        background:rgba(239,122,122,.18);
+        color:var(--danger);
+        display:grid;
+        place-items:center;
+        cursor:pointer;
+        opacity:0;
+        font-size:1rem;
+        line-height:1;
+        padding:0;
+        transition:opacity .15s ease,background .15s ease;
+        z-index:2;
+    }
+    .calendar-event:hover .calendar-event-delete{opacity:1}
+    .calendar-event-delete:hover{background:rgba(239,122,122,.36)}
     .calendar-event-time{
         display:inline-flex;
         align-items:center;
