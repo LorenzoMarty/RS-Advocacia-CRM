@@ -7,6 +7,7 @@ export const NAV_ITEMS = [
   { key: 'peticoes', label: 'Petições ou contestações', mobileLabel: 'Petições', to: '/peticoes-contestacoes' },
   { key: 'reunioes', label: 'Reuniões', mobileLabel: 'Reuniões', to: '/reunioes' },
   { key: 'produtividade', label: 'Produtividade', mobileLabel: 'Horas', to: '/produtividade' },
+  { key: 'auditoria', label: 'Auditoria', mobileLabel: 'Audit', to: '/auditoria' },
   { key: 'usuarios', label: 'Usuários', mobileLabel: 'Usuários', to: '/usuarios' },
 ];
 

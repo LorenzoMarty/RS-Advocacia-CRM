@@ -1,0 +1,130 @@
+.audit-page{display:grid;gap:16px}
+
+.audit-grid-2{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px;
+}
+
+/* Bar rows (owner / responsible / productivity) */
+.audit-bar-list{display:grid;gap:10px}
+
+.audit-bar-row{
+    display:grid;
+    grid-template-columns:minmax(140px,.7fr) minmax(160px,1fr) minmax(80px,auto);
+    gap:10px;
+    align-items:center;
+    padding:12px;
+    border-radius:16px;
+    border:1px solid var(--line);
+    background:var(--ghost);
+}
+
+.audit-bar-row strong{font-size:.88rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-bar-row>span{color:var(--soft);font-size:.76rem;white-space:nowrap;text-align:right}
+
+/* Pill distribution grid (status / area) */
+.audit-pill-grid{display:flex;flex-wrap:wrap;gap:8px}
+
+.audit-pill{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 14px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:var(--ghost);
+}
+
+.audit-pill span{color:var(--soft);font-size:.76rem}
+.audit-pill strong{font-size:1.1rem;letter-spacing:-.03em}
+
+/* Badge group (overdue + soon counts) */
+.audit-badge-group{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* Critical deadlines */
+.audit-critical-list{display:grid;gap:8px}
+
+.audit-critical-item{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    gap:10px;
+    align-items:center;
+    padding:12px 16px;
+    border-radius:14px;
+    border:1px solid var(--line);
+    background:var(--ghost);
+    color:var(--text);
+    transition:border-color .15s ease;
+}
+
+.audit-critical-item:hover{border-color:rgba(255,255,255,.15)}
+.audit-critical-item.is-overdue{border-color:rgba(239,122,122,.22);background:rgba(239,122,122,.05)}
+.audit-critical-item.is-soon{border-color:rgba(232,178,92,.2);background:rgba(232,178,92,.04)}
+
+.audit-critical-item>div{display:grid;gap:3px;min-width:0}
+.audit-critical-item>div strong{font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-critical-item>div span{color:var(--soft);font-size:.75rem}
+.audit-critical-date{color:var(--text);font-size:.82rem;font-weight:700;white-space:nowrap}
+
+/* Danger text for overdue count */
+.audit-danger-text{color:#ef7a7a}
+
+/* Orphan clients */
+.audit-orphan-list{display:grid;gap:8px}
+
+.audit-orphan-item{
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    padding:10px 14px;
+    border-radius:14px;
+    border:1px solid var(--line);
+    background:var(--ghost);
+    color:var(--text);
+    transition:border-color .15s ease;
+}
+
+.audit-orphan-item:hover{border-color:rgba(255,255,255,.12)}
+.audit-orphan-item>div{display:grid;gap:2px;min-width:0}
+.audit-orphan-item>div strong{font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-orphan-item>div span,.audit-orphan-arrow{color:var(--muted);font-size:.76rem}
+
+.audit-avatar{
+    width:34px;
+    height:34px;
+    display:grid;
+    place-items:center;
+    border-radius:11px;
+    border:1px solid rgba(212,175,55,.18);
+    background:rgba(212,175,55,.08);
+    color:var(--gold-soft);
+    font-size:.72rem;
+    font-weight:900;
+    flex-shrink:0;
+}
+
+/* Light theme */
+html[data-theme="light"] .audit-bar-row,
+html[data-theme="light"] .audit-pill,
+html[data-theme="light"] .audit-critical-item,
+html[data-theme="light"] .audit-orphan-item{
+    background:rgba(24,30,42,.04);
+    border-color:rgba(30,34,45,.1);
+}
+
+html[data-theme="light"] .audit-critical-item.is-overdue{border-color:rgba(180,50,50,.18);background:rgba(180,50,50,.04)}
+html[data-theme="light"] .audit-critical-item.is-soon{border-color:rgba(160,100,20,.16);background:rgba(160,100,20,.04)}
+
+@media(max-width:900px){
+    .audit-grid-2{grid-template-columns:1fr}
+    .audit-bar-row{grid-template-columns:minmax(0,1fr) auto}
+    .audit-bar-row .productivity-bar{display:none}
+}
+
+@media(max-width:640px){
+    .audit-critical-item{grid-template-columns:1fr}
+    .audit-critical-date,.audit-critical-item>.status-badge{display:none}
+    .audit-orphan-arrow{display:none}
+}
