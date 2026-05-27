@@ -44,6 +44,7 @@ import {
   RoleDetailPage,
 } from "./app/pages/roles";
 import { OfficeProductivityPage } from "./app/components/productivity";
+import { AuditPage } from "./app/pages/audit";
 import { ApiTestPage } from "./app/pages/api-test";
 import { MeetingsPage } from "./app/pages/meetings";
 
@@ -139,6 +140,7 @@ export default function App() {
 
             <Route path="/reunioes" element={<MeetingsPage />} />
             <Route path="/produtividade" element={<OfficeProductivityPage />} />
+            <Route path="/auditoria" element={<AuditPage />} />
 
             <Route path="/usuarios" element={<UsersListPage />} />
             <Route path="/usuarios/novo" element={<UserFormRoute />} />
