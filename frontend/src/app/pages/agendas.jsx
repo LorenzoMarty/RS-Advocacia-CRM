@@ -138,14 +138,17 @@ function RailList({ events, clients, processes, emptyTitle, emptyCopy }) {
 }
 
 export function AgendaListPage() {
+  const navigate = useNavigate();
   const {
     addFlash,
     clients,
     currentUser,
+    deleteEvent,
     events,
     processes,
     syncGoogleCalendarEvents,
   } = useAppState();
+  const { confirm, confirmPopup } = useConfirmPopup();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [eventType, setEventType] = useState("");
@@ -275,8 +278,21 @@ export function AgendaListPage() {
     return () => window.clearInterval(intervalId);
   }, [currentUser?.googleCalendarConnected, syncGoogleCalendarEvents]);
 
+  async function handleQuickDelete(eventId, eventTitle) {
+    const canDelete = await confirm({
+      title: "Tem certeza?",
+      message: `O compromisso "${eventTitle}" será deletado.`,
+      confirmLabel: "Deletar",
+      tone: "danger",
+    });
+    if (canDelete) {
+      await deleteEvent(eventId);
+    }
+  }
+
   return (
     <>
+      {confirmPopup}
       <PageChrome label="Agenda" />
 
       <div className="agenda-page">
@@ -489,10 +505,13 @@ export function AgendaListPage() {
 
                     <div className="day-events">
                       {day.events.slice(0, 2).map((event) => (
-                        <Link
+                        <div
                           key={event.id}
                           className={`calendar-event type-${getEventTypeKey(event.type)}${isOverdueEvent(event) ? " is-overdue" : ""}`}
-                          to={`/agenda/${event.id}`}
+                          role="link"
+                          tabIndex="0"
+                          onClick={() => navigate(`/agenda/${event.id}`)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/agenda/${event.id}`); }}
                         >
                           <span className="calendar-event-time">
                             {formatTime(event.start)}
@@ -510,7 +529,18 @@ export function AgendaListPage() {
                               event.type ||
                               "Compromisso"}
                           </span>
-                        </Link>
+                          <button
+                            className="calendar-event-delete"
+                            type="button"
+                            aria-label="Excluir compromisso"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuickDelete(event.id, event.title);
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
                       ))}
                       {day.events.length > 2 ? (
                         <span className="calendar-more">
@@ -649,7 +679,8 @@ export function EventFormPage() {
   const initialProcessId = searchParams.get("processo") || "";
   const requestedType = searchParams.get("tipo") || "";
   const requestedStatus = searchParams.get("status") || "";
-  const initialType = EVENT_TYPE_OPTIONS.includes(requestedType) ? requestedType : "";
+  const allEventTypes = [...new Set([...EVENT_TYPE_OPTIONS, ...events.map((e) => e.type).filter(Boolean)])];
+  const initialType = requestedType || "";
   const initialStatus = EVENT_STATUS_OPTIONS.includes(requestedStatus) ? requestedStatus : "";
   const initialDate = searchParams.get("data") || "";
   const returnTo = safeReturnPath(searchParams.get("voltar") || "");
@@ -671,6 +702,9 @@ export function EventFormPage() {
     completed: eventItem?.completed || false,
   }));
   const [errors, setErrors] = useState({});
+  const [typeMode, setTypeMode] = useState(() =>
+    allEventTypes.includes(eventItem?.type || initialType || EVENT_TYPE_OPTIONS[0]) ? 'select' : 'custom',
+  );
 
   useEffect(() => {
     if (!eventItem) {
@@ -695,7 +729,8 @@ export function EventFormPage() {
       notes: eventItem.notes || "",
       completed: eventItem.completed || false,
     });
-  }, [eventItem]);
+    setTypeMode(allEventTypes.includes(eventItem.type || '') ? 'select' : 'custom');
+  }, [eventItem]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const availableProcesses = processes.filter(
     (process) => !form.clientId || process.clientId === form.clientId,
@@ -831,28 +866,48 @@ export function EventFormPage() {
                   label="Tipo de compromisso"
                   error={errors.type}
                 >
-                  <input
-                    id="event-type"
-                    list="event-type-options"
-                    value={form.type}
-                    placeholder="Selecione ou digite um tipo"
-                    onChange={(event) =>
-                      setForm((currentForm) => ({
-                        ...currentForm,
-                        type: event.target.value,
-                      }))
-                    }
-                  />
-                  <datalist id="event-type-options">
-                    {[
-                      ...new Set([
-                        ...EVENT_TYPE_OPTIONS,
-                        ...events.map((e) => e.type).filter(Boolean),
-                      ]),
-                    ].map((option) => (
-                      <option key={option} value={option} />
-                    ))}
-                  </datalist>
+                  {typeMode === 'custom' ? (
+                    <div className="type-combo">
+                      <input
+                        id="event-type"
+                        value={form.type}
+                        placeholder="Ex: Perícia, Diligência..."
+                        autoFocus
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, type: e.target.value }))
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="type-combo-back"
+                        onClick={() => {
+                          setTypeMode('select');
+                          setForm((f) => ({ ...f, type: allEventTypes[0] || EVENT_TYPE_OPTIONS[0] }));
+                        }}
+                      >
+                        ← Selecionar
+                      </button>
+                    </div>
+                  ) : (
+                    <select
+                      id="event-type"
+                      value={form.type}
+                      onChange={(e) => {
+                        if (e.target.value === '__custom__') {
+                          setTypeMode('custom');
+                          setForm((f) => ({ ...f, type: '' }));
+                        } else {
+                          setForm((f) => ({ ...f, type: e.target.value }));
+                        }
+                      }}
+                    >
+                      <option value="">Selecione o tipo</option>
+                      {allEventTypes.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                      <option value="__custom__">+ Digitar novo tipo...</option>
+                    </select>
+                  )}
                 </Field>
 
                 <Field
@@ -1044,6 +1099,9 @@ export function EventFormPage() {
                     }
                   >
                     <option value="">Selecione o status</option>
+                    {form.status && !EVENT_STATUS_OPTIONS.includes(form.status) && (
+                      <option value={form.status}>{form.status}</option>
+                    )}
                     {EVENT_STATUS_OPTIONS.map((option) => (
                       <option key={option} value={option}>
                         {option}
