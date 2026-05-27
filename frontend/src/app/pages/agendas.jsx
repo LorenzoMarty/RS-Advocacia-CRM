@@ -83,7 +83,9 @@ function parseDayParam(value) {
   return new Date(y, mo - 1, d);
 }
 
-function RailList({ events, clients, processes, emptyTitle, emptyCopy }) {
+function RailList({ events, clients, processes, emptyTitle, emptyCopy, onDelete }) {
+  const navigate = useNavigate();
+
   if (!events.length) {
     return (
       <div className="side-list">
@@ -98,7 +100,14 @@ function RailList({ events, clients, processes, emptyTitle, emptyCopy }) {
   return (
     <div className="side-list">
       {events.map((event) => (
-        <Link key={event.id} className="side-item" to={`/agenda/${event.id}`}>
+        <div
+          key={event.id}
+          className="side-item"
+          role="link"
+          tabIndex="0"
+          onClick={() => navigate(`/agenda/${event.id}`)}
+          onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/agenda/${event.id}`); }}
+        >
           <div className="side-top">
             <div>
               <h3 className="side-title">{event.title}</h3>
@@ -131,7 +140,20 @@ function RailList({ events, clients, processes, emptyTitle, emptyCopy }) {
               </span>
             ) : null}
           </div>
-        </Link>
+          {onDelete && (
+            <button
+              className="side-item-delete"
+              type="button"
+              aria-label="Excluir compromisso"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(event.id, event.title);
+              }}
+            >
+              ×
+            </button>
+          )}
+        </div>
       ))}
     </div>
   );
@@ -581,6 +603,7 @@ export function AgendaListPage() {
                     processes={processes}
                     emptyTitle="Sem compromissos hoje."
                     emptyCopy="A agenda do dia aparece aqui."
+                    onDelete={handleQuickDelete}
                   />
                 </div>
 
@@ -601,6 +624,7 @@ export function AgendaListPage() {
                     processes={processes}
                     emptyTitle="Sem próximos compromissos."
                     emptyCopy="Os próximos registros aparecem aqui."
+                    onDelete={handleQuickDelete}
                   />
                 </div>
 
@@ -621,6 +645,7 @@ export function AgendaListPage() {
                     processes={processes}
                     emptyTitle="Sem atrasos."
                     emptyCopy="Nenhum compromisso vencido."
+                    onDelete={handleQuickDelete}
                   />
                 </div>
               </div>
@@ -1540,7 +1565,8 @@ const DAY_HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 07–22
 export function AgendaDayPage() {
   const params = useParams();
   const navigate = useNavigate();
-  const { clients, events, processes } = useAppState();
+  const { clients, deleteEvent, events, processes } = useAppState();
+  const { confirm, confirmPopup } = useConfirmPopup();
 
   const date = parseDayParam(params.date);
 
@@ -1556,6 +1582,18 @@ export function AgendaDayPage() {
   const isToday = isSameDay(date, today);
   const currentHour = today.getHours();
 
+  async function handleQuickDelete(eventId, eventTitle) {
+    const canDelete = await confirm({
+      title: "Tem certeza?",
+      message: `O compromisso "${eventTitle}" será deletado.`,
+      confirmLabel: "Deletar",
+      tone: "danger",
+    });
+    if (canDelete) {
+      await deleteEvent(eventId);
+    }
+  }
+
   function goDay(offset) {
     const next = new Date(date);
     next.setDate(next.getDate() + offset);
@@ -1564,6 +1602,7 @@ export function AgendaDayPage() {
 
   return (
     <>
+      {confirmPopup}
       <PageChrome label={dayLabel(date)} />
 
       <div className="agenda-day-page">
@@ -1649,10 +1688,13 @@ export function AgendaDayPage() {
                       const process = processes.find((p) => p.id === event.processId);
 
                       return (
-                        <Link
+                        <div
                           key={event.id}
                           className={`timeline-event type-${getEventTypeKey(event.type)}${isOverdueEvent(event) ? " is-overdue" : ""}`}
-                          to={`/agenda/${event.id}`}
+                          role="link"
+                          tabIndex="0"
+                          onClick={() => navigate(`/agenda/${event.id}`)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/agenda/${event.id}`); }}
                         >
                           <span className="timeline-event-time">
                             {formatTime(event.start)}
@@ -1675,7 +1717,18 @@ export function AgendaDayPage() {
                               <span className="meta-chip">{event.responsible}</span>
                             ) : null}
                           </div>
-                        </Link>
+                          <button
+                            className="timeline-event-delete"
+                            type="button"
+                            aria-label="Excluir compromisso"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuickDelete(event.id, event.title);
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
                       );
                     })}
 
