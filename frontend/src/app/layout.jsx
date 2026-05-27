@@ -332,24 +332,16 @@ function useReminderToasts({ addFlash, currentUser, deadlines, events, isLoading
 }
 
 function useShellPreferences() {
-  const [theme, setTheme] = useState(() => localStorage.getItem('rs-advocacia-theme') || 'dark');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('rs-advocacia-sidebar-collapsed') === 'true');
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme', 'dark');
     document.documentElement.setAttribute('data-sidebar-collapsed', sidebarCollapsed ? 'true' : 'false');
-    localStorage.setItem('rs-advocacia-theme', theme);
     localStorage.setItem('rs-advocacia-sidebar-collapsed', sidebarCollapsed ? 'true' : 'false');
-
-    const themeMeta = document.querySelector('meta[name="theme-color"]');
-    if (themeMeta) {
-      themeMeta.setAttribute('content', theme === 'light' ? '#f3ede3' : '#0b0d12');
-    }
-  }, [sidebarCollapsed, theme]);
+  }, [sidebarCollapsed]);
 
   return {
     sidebarCollapsed,
-    toggleTheme: () => setTheme((currentTheme) => (currentTheme === 'light' ? 'dark' : 'light')),
     toggleSidebar: () => {
       if (window.innerWidth <= 1200) {
         return;
@@ -393,7 +385,7 @@ export function ProtectedLayout() {
   const { addFlash, currentUser, deadlines, events, isLoading, sair } = useAppState();
   const location = useLocation();
   const [chrome, setChrome] = useState(PAGE_CHROME_DEFAULT);
-  const { sidebarCollapsed, toggleTheme, toggleSidebar } = useShellPreferences();
+  const { sidebarCollapsed, toggleSidebar } = useShellPreferences();
 
   useReminderToasts({ addFlash, currentUser, deadlines, events, isLoading });
 
@@ -480,57 +472,6 @@ export function ProtectedLayout() {
 
         <div className="page">
           <div className="page-wrap">
-            <header className="topbar">
-              <div className="topbar-main">
-                <div className="topbar-side topbar-side-left">
-                  {chrome.actions ? <div className="topbar-actions">{chrome.actions}</div> : null}
-                  <button className="theme-toggle" type="button" aria-label="Alternar tema" title="Alternar tema" onClick={toggleTheme}>
-                    <span className="theme-icon" aria-hidden="true">
-                      <svg className="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="4" />
-                        <path d="M12 2v2.5" />
-                        <path d="M12 19.5V22" />
-                        <path d="m4.93 4.93 1.77 1.77" />
-                        <path d="m17.3 17.3 1.77 1.77" />
-                        <path d="M2 12h2.5" />
-                        <path d="M19.5 12H22" />
-                        <path d="m4.93 19.07 1.77-1.77" />
-                        <path d="m17.3 6.7 1.77-1.77" />
-                      </svg>
-                      <svg className="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 3a6 6 0 1 0 9 9 9 9 0 1 1-9-9" />
-                      </svg>
-                    </span>
-                    <span className="sr-only">Alternar tema</span>
-                  </button>
-                </div>
-
-                <div className="topbar-center">
-                  <span className="topbar-pill">{chrome.label}</span>
-                </div>
-
-                <div className="topbar-side topbar-side-right">
-                  <div className="profile topbar-profile-mobile">
-                    <div className="avatar">{currentUser.name.slice(0, 1).toUpperCase()}</div>
-                    <div className="profile-copy">
-                      <strong>{currentUser.name}</strong>
-                      <span>{new Intl.DateTimeFormat('pt-BR').format(new Date())}</span>
-                    </div>
-                  </div>
-
-                  <button className="topbar-icon-link logout-link topbar-logout-mobile" type="button" aria-label="Sair" title="Sair" onClick={sair}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="m16 17 5-5-5-5" />
-                      <path d="M21 12H9" />
-                      <path d="M13 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" />
-                    </svg>
-                    <span className="sr-only">Sair</span>
-                  </button>
-                </div>
-              </div>
-
-            </header>
-
             <main className="main">
               <Outlet />
             </main>
