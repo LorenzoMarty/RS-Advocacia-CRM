@@ -1,4 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
@@ -18,34 +29,72 @@ import {
 } from '../utils';
 import { EmptyState, Field, NotFoundState } from './common';
 
-function validateClientForm(form) {
-  const nextErrors = {};
+const columnHelper = createColumnHelper();
 
-  if (!form.name.trim()) nextErrors.name = 'Informe o nome.';
-  if (!form.email.trim()) nextErrors.email = 'Informe o e-mail.';
-  if (!form.phone.trim()) nextErrors.phone = 'Informe o telefone.';
-  if (!stripDocument(form.document)) nextErrors.document = 'Informe o CPF ou CNPJ.';
+const clientSchema = z.object({
+  name: z.string().min(1, 'Informe o nome.'),
+  document: z.string().min(1, 'Informe o CPF ou CNPJ.').refine(
+    (val) => stripDocument(val).length >= 11,
+    'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).',
+  ),
+  clientType: z.enum(['esporadico', 'mensalista']),
+  phone: z.string().min(1, 'Informe o telefone.'),
+  email: z.string().min(1, 'Informe o e-mail.').email('E-mail inválido.'),
+  notes: z.string(),
+});
 
-  return nextErrors;
-}
+const SORT_ICONS = {
+  asc: (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m18 15-6-6-6 6" />
+    </svg>
+  ),
+  desc: (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  ),
+};
 
 export function ClientsListPage() {
   const { clients, deleteClient, processes } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
   const [clientType, setClientType] = useState('todos');
+  const [sorting, setSorting] = useState([]);
 
-  const filteredClients = clients.filter((client) => {
-    const matchesSearch = !search || buildSearchText([
-      client.name,
-      client.email,
-      client.phone,
-      client.document,
-      getClientTypeLabel(client.clientType),
-    ]).includes(normalizeText(search));
-    const matchesType = clientType === 'todos' || client.clientType === clientType;
-    return matchesSearch && matchesType;
+  const typeFilteredClients = useMemo(
+    () => (clientType === 'todos' ? clients : clients.filter((c) => c.clientType === clientType)),
+    [clients, clientType],
+  );
+
+  const columns = useMemo(() => [
+    columnHelper.accessor('name', { header: 'Cliente' }),
+    columnHelper.accessor('email', { header: 'Contato', enableSorting: false }),
+    columnHelper.accessor(
+      (row) => processes.filter((p) => p.clientId === row.id).length,
+      { id: 'processCount', header: 'Processos' },
+    ),
+  ], [processes]);
+
+  const table = useReactTable({
+    data: typeFilteredClients,
+    columns,
+    state: { globalFilter: search, sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    globalFilterFn: (row, _, value) => {
+      const client = row.original;
+      return buildSearchText([
+        client.name, client.email, client.phone, client.document,
+        getClientTypeLabel(client.clientType),
+      ]).includes(normalizeText(value));
+    },
   });
+
+  const rows = table.getRowModel().rows;
 
   async function handleDeleteClient(client) {
     const canDelete = await confirm({
@@ -55,10 +104,7 @@ export function ClientsListPage() {
       tone: 'danger',
     });
 
-    if (!canDelete) {
-      return;
-    }
-
+    if (!canDelete) return;
     await deleteClient(client.id);
   }
 
@@ -74,7 +120,7 @@ export function ClientsListPage() {
               <h1 className="intro-title">Clientes</h1>
               <p className="section-note">Gerencie seus clientes</p>
             </div>
-            <span className="badge gold" data-list-count>{formatCount(filteredClients.length)}</span>
+            <span className="badge gold" data-list-count>{formatCount(rows.length)}</span>
           </div>
 
           <div className="list-intro-toolbar clients-intro-toolbar">
@@ -105,17 +151,26 @@ export function ClientsListPage() {
         </section>
 
         <section className="surface clients-panel">
-          {filteredClients.length ? (
+          {rows.length ? (
             <>
               <div className="list-head" aria-hidden="true">
-                <span>Cliente</span>
-                <span>Contato</span>
-                <span>Processos</span>
+                {table.getHeaderGroups()[0].headers.map((header) => (
+                  <span
+                    key={header.id}
+                    style={header.column.getCanSort() ? { cursor: 'pointer', userSelect: 'none' } : {}}
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {' '}
+                    {SORT_ICONS[header.column.getIsSorted()] ?? null}
+                  </span>
+                ))}
                 <span>Ações</span>
               </div>
 
               <div className="clients-list">
-                {filteredClients.map((client) => {
+                {rows.map((row) => {
+                  const client = row.original;
                   const processCount = processes.filter((process) => process.clientId === client.id).length;
                   return (
                     <article key={client.id} className="client-row">
@@ -169,45 +224,35 @@ export function ClientFormPage() {
   const { clients, saveClient } = useAppState();
   const client = clients.find((item) => item.id === params.clientId) || null;
 
-  const [form, setForm] = useState(() => ({
-    id: client?.id || '',
-    name: client?.name || '',
-    document: client ? formatDocument(client.document) : '',
-    clientType: client?.clientType || 'esporadico',
-    phone: client?.phone || '',
-    email: client?.email || '',
-    notes: client?.notes || '',
-  }));
-  const [errors, setErrors] = useState({});
+  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(clientSchema),
+    defaultValues: {
+      name: client?.name ?? '',
+      document: client ? formatDocument(client.document) : '',
+      clientType: client?.clientType ?? 'esporadico',
+      phone: client?.phone ?? '',
+      email: client?.email ?? '',
+      notes: client?.notes ?? '',
+    },
+  });
 
   if (isEditing && !client) {
     return <NotFoundState title="Cliente não encontrado." />;
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-    const nextErrors = validateClientForm(form);
-
-    if (Object.keys(nextErrors).length) {
-      setErrors(nextErrors);
-      return;
-    }
-
+  async function onSubmit(data) {
     const savedClient = await saveClient({
-      id: form.id || undefined,
-      name: form.name.trim(),
-      document: stripDocument(form.document),
-      clientType: form.clientType,
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      notes: form.notes.trim(),
+      id: client?.id || undefined,
+      name: data.name.trim(),
+      document: stripDocument(data.document),
+      clientType: data.clientType,
+      phone: data.phone.trim(),
+      email: data.email.trim(),
+      notes: data.notes.trim(),
     });
 
-    if (!savedClient) {
-      return;
-    }
-
-    navigate(`/clientes/${savedClient.id || form.id}`, { replace: true });
+    if (!savedClient) return;
+    navigate(`/clientes/${savedClient.id || client?.id}`, { replace: true });
   }
 
   return (
@@ -236,35 +281,33 @@ export function ClientFormPage() {
         </section>
 
         <section className="surface form-panel">
-          <form className="client-form" onSubmit={handleSubmit}>
+          <form className="client-form" onSubmit={handleSubmit(onSubmit)}>
             <section className="form-group">
               <div className="group-head">
                 <h2 className="group-title">Identificação</h2>
               </div>
 
               <div className="form-grid">
-                <Field id="client-name" label="Nome" error={errors.name}>
-                  <input
-                    id="client-name"
-                    value={form.name}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, name: event.target.value }))}
+                <Field id="client-name" label="Nome" error={errors.name?.message}>
+                  <input id="client-name" {...register('name')} />
+                </Field>
+
+                <Field id="client-document" label="CPF / CNPJ" error={errors.document?.message}>
+                  <Controller
+                    name="document"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        id="client-document"
+                        {...field}
+                        onChange={(e) => field.onChange(formatDocument(e.target.value))}
+                      />
+                    )}
                   />
                 </Field>
 
-                <Field id="client-document" label="CPF / CNPJ" error={errors.document}>
-                  <input
-                    id="client-document"
-                    value={form.document}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, document: formatDocument(event.target.value) }))}
-                  />
-                </Field>
-
-                <Field id="client-type" label="Tipo de cliente" error={errors.clientType}>
-                  <select
-                    id="client-type"
-                    value={form.clientType}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, clientType: event.target.value }))}
-                  >
+                <Field id="client-type" label="Tipo de cliente" error={errors.clientType?.message}>
+                  <select id="client-type" {...register('clientType')}>
                     <option value="esporadico">Esporádico</option>
                     <option value="mensalista">Mensalista</option>
                   </select>
@@ -278,21 +321,12 @@ export function ClientFormPage() {
               </div>
 
               <div className="form-grid">
-                <Field id="client-phone" label="Telefone" error={errors.phone}>
-                  <input
-                    id="client-phone"
-                    value={form.phone}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, phone: event.target.value }))}
-                  />
+                <Field id="client-phone" label="Telefone" error={errors.phone?.message}>
+                  <input id="client-phone" {...register('phone')} />
                 </Field>
 
-                <Field id="client-email" label="E-mail" error={errors.email}>
-                  <input
-                    id="client-email"
-                    type="email"
-                    value={form.email}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, email: event.target.value }))}
-                  />
+                <Field id="client-email" label="E-mail" error={errors.email?.message}>
+                  <input id="client-email" type="email" {...register('email')} />
                 </Field>
               </div>
             </section>
@@ -303,20 +337,19 @@ export function ClientFormPage() {
               </div>
 
               <div className="form-grid">
-                <Field id="client-notes" label="Notas" className="span-2" error={errors.notes}>
-                  <textarea
-                    id="client-notes"
-                    rows="5"
-                    value={form.notes}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, notes: event.target.value }))}
-                  />
+                <Field id="client-notes" label="Notas" className="span-2" error={errors.notes?.message}>
+                  <textarea id="client-notes" rows="5" {...register('notes')} />
                 </Field>
               </div>
             </section>
 
             <div className="form-actions">
-              <button className="btn" type="submit">{isEditing ? 'Atualizar' : 'Salvar'}</button>
-              <Link className="btn btn-secondary" to={isEditing ? `/clientes/${client.id}` : '/clientes'}>Cancelar</Link>
+              <button className="btn" type="submit" disabled={isSubmitting}>
+                {isEditing ? 'Atualizar' : 'Salvar'}
+              </button>
+              <Link className="btn btn-secondary" to={isEditing ? `/clientes/${client.id}` : '/clientes'}>
+                Cancelar
+              </Link>
             </div>
           </form>
         </section>

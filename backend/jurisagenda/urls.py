@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import include, path
 
+from .api import api
+
 urlpatterns = [
     path("", include("integrations.urls")),
     path("api/autenticacao/", include("usuarios.auth_urls")),
@@ -14,4 +16,5 @@ urlpatterns = [
     path("", include("clientes.urls")),
     path("", include("usuarios.urls")),
     path("", include("meetings.urls")),
+    path("api/v2/", api.urls),
 ]
