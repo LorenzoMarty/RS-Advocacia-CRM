@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Toaster } from 'sonner';
 
 import { NAV_ITEMS } from './data';
 import { useAppState } from './store';
@@ -217,32 +218,6 @@ function BottomNavigation() {
   );
 }
 
-function FlashMessages() {
-  const { flashes, removeFlash } = useAppState();
-
-  if (!flashes.length) {
-    return null;
-  }
-
-  return (
-    <div className="flash-stack" aria-live="polite" aria-label="Mensagens do sistema">
-      {flashes.map((flash) => (
-        <article
-          key={flash.id}
-          className={`flash flash-${flash.type}`}
-          role={flash.type === 'error' ? 'alert' : 'status'}
-        >
-          <span>{flash.message}</span>
-          {flash.critical ? (
-            <button type="button" onClick={() => removeFlash(flash.id)}>
-              Fechar
-            </button>
-          ) : null}
-        </article>
-      ))}
-    </div>
-  );
-}
 
 function localDateOnly(value = new Date()) {
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -480,7 +455,19 @@ export function ProtectedLayout() {
       </div>
 
       <BottomNavigation />
-      <FlashMessages />
+      <Toaster
+        theme="dark"
+        position="bottom-right"
+        richColors
+        toastOptions={{
+          style: {
+            background: 'rgba(15,23,42,.98)',
+            border: '1px solid rgba(148,163,184,.16)',
+            color: '#e5e7eb',
+            fontFamily: 'var(--sans)',
+          },
+        }}
+      />
     </PageChromeContext.Provider>
   );
 }

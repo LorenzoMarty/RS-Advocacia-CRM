@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   api,
@@ -799,7 +800,6 @@ export function AppStateProvider({ children }) {
   const [petitions, setPetitions] = useState([]);
   const [timeEntries, setTimeEntries] = useState([]);
   const [productivityGoals, setProductivityGoals] = useState([]);
-  const [flashes, setFlashes] = useState([]);
   const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled);
   const [apiStatus, setApiStatus] = useState((isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled) ? 'loading' : 'local');
   const [isEventsLoading, setIsEventsLoading] = useState(isEventsApiEnabled);
@@ -1003,20 +1003,11 @@ export function AppStateProvider({ children }) {
   }, [currentUserId]);
 
   function addFlash(message, type = 'success', options = {}) {
-    const id = nextId('flash');
-    const critical = Boolean(options.critical);
-
-    setFlashes((currentFlashes) => [...currentFlashes, { id, message, type, critical }]);
-
-    if (!critical) {
-      window.setTimeout(() => {
-        setFlashes((currentFlashes) => currentFlashes.filter((flash) => flash.id !== id));
-      }, options.duration || (type === 'error' ? 5200 : 3500));
-    }
-  }
-
-  function removeFlash(flashId) {
-    setFlashes((currentFlashes) => currentFlashes.filter((flash) => flash.id !== flashId));
+    const duration = options.critical ? Infinity : (options.duration ?? (type === 'error' ? 5200 : 3500));
+    if (type === 'error') toast.error(message, { duration });
+    else if (type === 'warning') toast.warning(message, { duration });
+    else if (type === 'info') toast.info(message, { duration });
+    else toast.success(message, { duration });
   }
 
   async function sair() {
@@ -1798,7 +1789,6 @@ export function AppStateProvider({ children }) {
     petitions,
     timeEntries,
     productivityGoals,
-    flashes,
     currentUser,
     currentRole,
     isApiEnabled,
@@ -1808,7 +1798,6 @@ export function AppStateProvider({ children }) {
     isPetitionsLoading,
     apiStatus,
     isDemoMode,
-    removeFlash,
     addFlash,
     sair,
     saveClient,
