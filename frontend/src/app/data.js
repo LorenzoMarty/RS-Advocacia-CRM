@@ -11,7 +11,7 @@ export const NAV_ITEMS = [
   { key: 'usuarios', label: 'Usuários', mobileLabel: 'Usuários', to: '/usuarios' },
 ];
 
-export const EVENT_TYPE_OPTIONS = ['Audiência', 'Reunião', 'Tarefa interna'];
+export const EVENT_TYPE_OPTIONS = ['Audiência', 'Reunião'];
 export const EVENT_PRIORITY_OPTIONS = ['Alta', 'Média', 'Baixa'];
 export const DEADLINE_STATUS_COLUMNS = [
   { key: 'a_fazer', label: 'Pendente' },
@@ -26,10 +26,8 @@ export const PETITION_STATUS_COLUMNS = [
   { key: 'protocolado', label: 'Protocolado' },
 ];
 export const EVENT_STATUS_OPTIONS = [
-  'Agendado',
   'Pendente',
-  'Concluído',
-  'Cancelado',
+  'Confirmado',
 ];
 export const CLIENT_TYPE_OPTIONS = [
   { value: 'esporadico', label: 'Esporádico' },

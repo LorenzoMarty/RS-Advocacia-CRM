@@ -107,6 +107,7 @@ export function getStatusTone(value, completed = false) {
   const normalized = normalizeText(value);
 
   if (completed || normalized.includes('conclu')) return 'success';
+  if (normalized.includes('confirma')) return 'success';
   if (normalized.includes('cancel') || normalized.includes('atras') || normalized.includes('urg')) return 'danger';
   if (normalized.includes('aguard') || normalized.includes('penden') || normalized.includes('media')) return 'warn';
   return 'gold';
@@ -120,7 +121,7 @@ export function getEventTypeKey(value) {
 }
 
 export function isOverdueEvent(event) {
-  return new Date(event.end) < new Date() && !event.completed && !normalizeText(event.status).includes('conclu');
+  return new Date(event.end) < new Date() && !event.completed && normalizeText(event.status).includes('penden');
 }
 
 export function buildSearchText(parts) {
