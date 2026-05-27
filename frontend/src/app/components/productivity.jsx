@@ -368,6 +368,19 @@ function ProductivityUserContent({ user, readOnly = false }) {
   }, {})).sort((left, right) => right.seconds - left.seconds);
   const maxProcessSeconds = processTotals[0]?.seconds || 0;
 
+  const typeTotals = Object.values(filteredHistory.reduce((groups, entry) => {
+    const type = entry.taskType || 'outro';
+    groups[type] ||= { type, label: taskTypeLabel(type), seconds: 0, count: 0 };
+    groups[type].seconds += timeEntryElapsedSeconds(entry, now);
+    groups[type].count += 1;
+    return groups;
+  }, {})).sort((left, right) => right.seconds - left.seconds);
+  const maxTypeSeconds = typeTotals[0]?.seconds || 0;
+  const totalFilteredSeconds = filteredHistory.reduce(
+    (total, entry) => total + timeEntryElapsedSeconds(entry, now), 0,
+  );
+  const uniqueTaskCount = new Set(filteredHistory.map(taskKey)).size;
+
   useEffect(() => {
     const hasRunning = userEntries.some((entry) => entry.status === 'running');
     if (!hasRunning) {
@@ -387,6 +400,14 @@ function ProductivityUserContent({ user, readOnly = false }) {
       <div className="productivity-metrics">
         <ProductivityMetric label="Horas hoje" value={todaySeconds} target={goal.dailyHours * 3600} />
         <ProductivityMetric label="Horas na semana" value={weekSeconds} target={goal.weeklyHours * 3600} />
+        <article className="productivity-metric">
+          <span>Total no período</span>
+          <strong>{formatHoursCompact(totalFilteredSeconds)}</strong>
+        </article>
+        <article className="productivity-metric">
+          <span>Tarefas no período</span>
+          <strong>{uniqueTaskCount}</strong>
+        </article>
         <article className="productivity-metric">
           <span>Tarefas no mês</span>
           <strong>{monthTaskCount}</strong>
@@ -496,6 +517,31 @@ function ProductivityUserContent({ user, readOnly = false }) {
           <div className="note-box">Sem tempo agrupado por processo.</div>
         )}
       </section>
+
+      <section className="productivity-block">
+        <div className="section-head">
+          <div>
+            <h3 className="section-title">Tempo por tipo de tarefa</h3>
+            <p className="section-note">Mesmo filtro do histórico</p>
+          </div>
+        </div>
+
+        {typeTotals.length ? (
+          <div className="productivity-bars">
+            {typeTotals.map((item) => (
+              <article key={item.type} className="productivity-bar-row">
+                <div>
+                  <strong>{item.label}</strong>
+                  <span>{item.count} {item.count === 1 ? 'entrada' : 'entradas'} • {formatHoursCompact(item.seconds)}</span>
+                </div>
+                <div className="productivity-bar"><span style={{ width: `${progressPercent(item.seconds, maxTypeSeconds)}%` }} /></div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="note-box">Sem tempo agrupado por tipo.</div>
+        )}
+      </section>
     </div>
   );
 }
@@ -534,6 +580,7 @@ export function UserProductivitySection({ user, isAdmin = false }) {
 export function OfficeProductivityPage() {
   const {
     currentRole,
+    currentUser,
     productivityGoals,
     saveProductivityGoals,
     timeEntries,
@@ -621,7 +668,22 @@ export function OfficeProductivityPage() {
   }
 
   if (!isAdmin) {
-    return <NotFoundState title="Produtividade restrita." copy="Apenas administradores acessam a produtividade do escritório." />;
+    return (
+      <>
+        <PageChrome label="Produtividade" />
+        <div className="office-productivity-page">
+          <section className="surface section-card">
+            <div className="section-head">
+              <div>
+                <h1 className="intro-title">Minha produtividade</h1>
+                <p className="section-note">Horas, timers e histórico</p>
+              </div>
+            </div>
+            {currentUser ? <ProductivityUserContent user={currentUser} /> : null}
+          </section>
+        </div>
+      </>
+    );
   }
 
   return (

@@ -6,6 +6,7 @@ export const NAV_ITEMS = [
   { key: 'prazos', label: 'Prazos', mobileLabel: 'Prazos', to: '/prazos' },
   { key: 'peticoes', label: 'Petições ou contestações', mobileLabel: 'Petições', to: '/peticoes-contestacoes' },
   { key: 'reunioes', label: 'Reuniões', mobileLabel: 'Reuniões', to: '/reunioes' },
+  { key: 'produtividade', label: 'Produtividade', mobileLabel: 'Horas', to: '/produtividade' },
   { key: 'usuarios', label: 'Usuários', mobileLabel: 'Usuários', to: '/usuarios' },
 ];
 
