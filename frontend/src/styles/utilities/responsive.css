@@ -19,13 +19,7 @@
     }
 
     .page-wrap{
-        padding-top:57px;
-    }
-
-    .topbar{
-        top:0;
-        gap:8px;
-        padding:8px 12px;
+        padding-top:0;
     }
 
     .topbar-main{
@@ -136,7 +130,7 @@
 
 @media (max-width:1200px){
     .page-wrap{
-        padding-top:61px;
+        padding-top:0;
     }
 
     .topbar{
@@ -199,7 +193,7 @@
         padding:0 0 var(--bottom-nav-offset);
     }
     .page-wrap{
-        padding-top:53px;
+        padding-top:0;
     }
     .main{gap:0}
     .surface{border-radius:0}
@@ -332,7 +326,7 @@
         padding:0 0 var(--bottom-nav-offset);
     }
     .page-wrap{
-        padding-top:49px;
+        padding-top:0;
     }
 
     .main{gap:0}
