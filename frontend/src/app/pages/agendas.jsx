@@ -106,8 +106,8 @@ function RailList({ events, clients, processes, emptyTitle, emptyCopy }) {
                 {formatDate(event.start)} • {formatTime(event.start)}
               </p>
             </div>
-            <StatusBadge tone={getStatusTone(event.status, event.completed)}>
-              {event.status || "Ativo"}
+            <StatusBadge tone={getStatusTone(isOverdueEvent(event) ? 'Atrasado' : event.status, event.completed)}>
+              {isOverdueEvent(event) ? "Atrasado" : (event.status || "Ativo")}
             </StatusBadge>
           </div>
           <div className="side-meta">
@@ -831,22 +831,28 @@ export function EventFormPage() {
                   label="Tipo de compromisso"
                   error={errors.type}
                 >
-                  <select
+                  <input
                     id="event-type"
+                    list="event-type-options"
                     value={form.type}
+                    placeholder="Selecione ou digite um tipo"
                     onChange={(event) =>
                       setForm((currentForm) => ({
                         ...currentForm,
                         type: event.target.value,
                       }))
                     }
-                  >
-                    {EVENT_TYPE_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
+                  />
+                  <datalist id="event-type-options">
+                    {[
+                      ...new Set([
+                        ...EVENT_TYPE_OPTIONS,
+                        ...events.map((e) => e.type).filter(Boolean),
+                      ]),
+                    ].map((option) => (
+                      <option key={option} value={option} />
                     ))}
-                  </select>
+                  </datalist>
                 </Field>
 
                 <Field
@@ -1136,7 +1142,7 @@ export function EventFormPage() {
 export function EventDetailPage() {
   const navigate = useNavigate();
   const params = useParams();
-  const { clients, deleteEvent, events, loadEvent, processes } = useAppState();
+  const { clients, deleteEvent, events, loadEvent, processes, saveEvent } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [remoteEvent, setRemoteEvent] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(true);
@@ -1178,6 +1184,13 @@ export function EventDetailPage() {
   const process =
     processes.find((item) => item.id === eventItem.processId) || null;
 
+  async function handleConfirmEvent() {
+    const updated = await saveEvent({ ...eventItem, status: 'Confirmado' });
+    if (updated) {
+      setRemoteEvent(updated);
+    }
+  }
+
   async function handleDeleteEvent() {
     const canDelete = await confirm({
       title: "Tem certeza?",
@@ -1203,6 +1216,15 @@ export function EventDetailPage() {
         label="Compromisso"
         actions={
           <>
+            {eventItem.status === 'Pendente' && (
+              <button
+                className="btn"
+                type="button"
+                onClick={handleConfirmEvent}
+              >
+                Confirmar
+              </button>
+            )}
             <Link
               className="btn btn-secondary"
               to={`/agenda/${eventItem.id}/editar`}
@@ -1246,9 +1268,9 @@ export function EventDetailPage() {
                 <article className="summary-card summary-card-status">
                   <span>Status</span>
                   <StatusBadge
-                    tone={getStatusTone(eventItem.status, eventItem.completed)}
+                    tone={getStatusTone(isOverdueEvent(eventItem) ? 'Atrasado' : eventItem.status, eventItem.completed)}
                   >
-                    {eventItem.completed ? "Concluído" : eventItem.status}
+                    {eventItem.completed ? "Concluído" : isOverdueEvent(eventItem) ? "Atrasado" : eventItem.status}
                   </StatusBadge>
                 </article>
 
@@ -1302,11 +1324,11 @@ export function EventDetailPage() {
                   <div className="detail-badge-wrap">
                     <StatusBadge
                       tone={getStatusTone(
-                        eventItem.status,
+                        isOverdueEvent(eventItem) ? 'Atrasado' : eventItem.status,
                         eventItem.completed,
                       )}
                     >
-                      {eventItem.status}
+                      {isOverdueEvent(eventItem) ? "Atrasado" : eventItem.status}
                     </StatusBadge>
                   </div>
                 </article>
