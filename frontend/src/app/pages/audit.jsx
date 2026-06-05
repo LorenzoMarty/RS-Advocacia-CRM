@@ -141,98 +141,34 @@ export function AuditPage() {
       <PageChrome label="Auditoria" />
       <div className="audit-page">
 
-        <section className="surface section-card">
+        <section className="surface section-card audit-card">
           <div className="section-head">
             <div>
               <h1 className="intro-title">Auditoria do escritório</h1>
               <p className="section-note">Visão geral operacional</p>
             </div>
           </div>
-          <div className="productivity-metrics">
-            <article className="productivity-metric">
+          <div className="productivity-kpis audit-kpis">
+            <div className="productivity-kpi">
               <span>Processos ativos</span>
               <strong>{activeProcesses.length}</strong>
-            </article>
-            <article className="productivity-metric">
+            </div>
+            <div className="productivity-kpi">
               <span>Prazos vencidos</span>
-              <strong className={overdueDeadlines.length ? 'audit-danger-text' : ''}>
-                {overdueDeadlines.length}
-              </strong>
-            </article>
-            <article className="productivity-metric">
+              <strong className={overdueDeadlines.length ? 'audit-danger-text' : ''}>{overdueDeadlines.length}</strong>
+            </div>
+            <div className="productivity-kpi">
               <span>Timers rodando</span>
               <strong>{runningTimers.length}</strong>
-            </article>
-            <article className="productivity-metric">
-              <span>Clientes mensalistas</span>
+            </div>
+            <div className="productivity-kpi">
+              <span>Mensalistas</span>
               <strong>{mensalistaCount} / {clients.length}</strong>
-            </article>
+            </div>
           </div>
         </section>
 
-        <section className="surface section-card">
-          <div className="section-head">
-            <div>
-              <h2 className="section-title">Processos por responsável</h2>
-              <p className="section-note">Distribuição de carga</p>
-            </div>
-          </div>
-          {ownerGroups.length ? (
-            <div className="audit-bar-list">
-              {ownerGroups.map((item) => (
-                <div key={item.name} className="audit-bar-row">
-                  <strong>{item.name}</strong>
-                  <div className="productivity-bar">
-                    <span style={{ width: `${progressPercent(item.count, maxOwnerCount)}%` }} />
-                  </div>
-                  <span>{item.count} {item.count === 1 ? 'processo' : 'processos'}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="note-box">Sem processos cadastrados.</div>
-          )}
-        </section>
-
-        <div className="audit-grid-2">
-          <section className="surface section-card">
-            <div className="section-head">
-              <div>
-                <h2 className="section-title">Por status</h2>
-                <p className="section-note">Todos os processos</p>
-              </div>
-            </div>
-            <div className="audit-pill-grid">
-              {statusGroups.map((item) => (
-                <div key={item.status} className="audit-pill">
-                  <span>{item.status}</span>
-                  <strong>{item.count}</strong>
-                </div>
-              ))}
-              {!statusGroups.length ? <div className="note-box">Sem dados.</div> : null}
-            </div>
-          </section>
-
-          <section className="surface section-card">
-            <div className="section-head">
-              <div>
-                <h2 className="section-title">Por área jurídica</h2>
-                <p className="section-note">Todos os processos</p>
-              </div>
-            </div>
-            <div className="audit-pill-grid">
-              {areaGroups.map((item) => (
-                <div key={item.area} className="audit-pill">
-                  <span>{item.area}</span>
-                  <strong>{item.count}</strong>
-                </div>
-              ))}
-              {!areaGroups.length ? <div className="note-box">Sem dados.</div> : null}
-            </div>
-          </section>
-        </div>
-
-        <section className="surface section-card">
+        <section className="surface section-card audit-card">
           <div className="section-head">
             <div>
               <h2 className="section-title">Prazos críticos</h2>
@@ -267,80 +203,146 @@ export function AuditPage() {
           )}
         </section>
 
-        <section className="surface section-card">
-          <div className="section-head">
-            <div>
-              <h2 className="section-title">Acúmulo de prazos pendentes</h2>
-              <p className="section-note">Responsáveis com mais itens em aberto</p>
+        <div className="audit-grid-2">
+          <section className="surface section-card audit-card">
+            <div className="section-head">
+              <div>
+                <h2 className="section-title">Processos por responsável</h2>
+                <p className="section-note">Distribuição de carga</p>
+              </div>
             </div>
-          </div>
-          {responsiblePending.length ? (
-            <div className="audit-bar-list">
-              {responsiblePending.map((item) => (
-                <div key={item.name} className="audit-bar-row">
-                  <strong>{item.name}</strong>
-                  <div className="productivity-bar">
-                    <span style={{ width: `${progressPercent(item.count, maxResponsibleCount)}%` }} />
+            {ownerGroups.length ? (
+              <div className="audit-bar-list">
+                {ownerGroups.map((item) => (
+                  <div key={item.name} className="audit-bar-row">
+                    <strong>{item.name}</strong>
+                    <div className="productivity-bar">
+                      <span style={{ width: `${progressPercent(item.count, maxOwnerCount)}%` }} />
+                    </div>
+                    <span>{item.count}</span>
                   </div>
-                  <span>{item.count} {item.count === 1 ? 'prazo' : 'prazos'}</span>
+                ))}
+              </div>
+            ) : (
+              <div className="note-box">Sem processos cadastrados.</div>
+            )}
+          </section>
+
+          <section className="surface section-card audit-card">
+            <div className="section-head">
+              <div>
+                <h2 className="section-title">Prazos pendentes por responsável</h2>
+                <p className="section-note">Itens em aberto</p>
+              </div>
+            </div>
+            {responsiblePending.length ? (
+              <div className="audit-bar-list">
+                {responsiblePending.map((item) => (
+                  <div key={item.name} className="audit-bar-row">
+                    <strong>{item.name}</strong>
+                    <div className="productivity-bar">
+                      <span style={{ width: `${progressPercent(item.count, maxResponsibleCount)}%` }} />
+                    </div>
+                    <span>{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="note-box">Sem prazos pendentes.</div>
+            )}
+          </section>
+        </div>
+
+        <div className="audit-grid-2">
+          <section className="surface section-card audit-card">
+            <div className="section-head">
+              <div>
+                <h2 className="section-title">Processos por status</h2>
+                <p className="section-note">Todos os processos</p>
+              </div>
+            </div>
+            <div className="audit-pill-grid">
+              {statusGroups.map((item) => (
+                <div key={item.status} className="audit-pill">
+                  <span>{item.status}</span>
+                  <strong>{item.count}</strong>
                 </div>
               ))}
+              {!statusGroups.length ? <div className="note-box">Sem dados.</div> : null}
             </div>
-          ) : (
-            <div className="note-box">Sem prazos pendentes.</div>
-          )}
-        </section>
+          </section>
 
-        <section className="surface section-card">
-          <div className="section-head">
-            <div>
-              <h2 className="section-title">Clientes sem processo</h2>
-              <p className="section-note">{orphanClients.length} de {clients.length} cliente{clients.length !== 1 ? 's' : ''}</p>
+          <section className="surface section-card audit-card">
+            <div className="section-head">
+              <div>
+                <h2 className="section-title">Processos por área</h2>
+                <p className="section-note">Todos os processos</p>
+              </div>
             </div>
-            <Link className="btn btn-secondary" to="/clientes">Ver todos</Link>
-          </div>
-          {orphanClients.length ? (
-            <div className="audit-orphan-list">
-              {orphanClients.map((c) => (
-                <Link key={c.id} className="audit-orphan-item" to={`/clientes/${c.id}`}>
-                  <span className="audit-avatar">{c.name.slice(0, 1).toUpperCase()}</span>
-                  <div>
-                    <strong>{c.name}</strong>
-                    <span>{c.clientType === 'mensalista' ? 'Mensalista' : 'Esporádico'}</span>
-                  </div>
-                  <span className="audit-orphan-arrow">Ver →</span>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="note-box">Todos os clientes têm processos vinculados.</div>
-          )}
-        </section>
-
-        <section className="surface section-card">
-          <div className="section-head">
-            <div>
-              <h2 className="section-title">Produtividade — esta semana</h2>
-              <p className="section-note">Horas registradas por usuário</p>
-            </div>
-            <Link className="btn btn-secondary" to="/produtividade">Ver completo</Link>
-          </div>
-          {userWeekSeconds.length ? (
-            <div className="audit-bar-list">
-              {userWeekSeconds.map(({ user, seconds }) => (
-                <div key={user.id} className="audit-bar-row">
-                  <strong>{user.name}</strong>
-                  <div className="productivity-bar">
-                    <span style={{ width: `${progressPercent(seconds, maxUserSeconds)}%` }} />
-                  </div>
-                  <span>{formatHoursCompact(seconds)}</span>
+            <div className="audit-pill-grid">
+              {areaGroups.map((item) => (
+                <div key={item.area} className="audit-pill">
+                  <span>{item.area}</span>
+                  <strong>{item.count}</strong>
                 </div>
               ))}
+              {!areaGroups.length ? <div className="note-box">Sem dados.</div> : null}
             </div>
-          ) : (
-            <div className="note-box">Nenhum tempo registrado nesta semana.</div>
-          )}
-        </section>
+          </section>
+        </div>
+
+        <div className="audit-grid-2">
+          <section className="surface section-card audit-card">
+            <div className="section-head">
+              <div>
+                <h2 className="section-title">Clientes sem processo</h2>
+                <p className="section-note">{orphanClients.length} de {clients.length} cliente{clients.length !== 1 ? 's' : ''}</p>
+              </div>
+              <Link className="btn btn-secondary" to="/clientes">Ver todos</Link>
+            </div>
+            {orphanClients.length ? (
+              <div className="audit-orphan-list">
+                {orphanClients.map((c) => (
+                  <Link key={c.id} className="audit-orphan-item" to={`/clientes/${c.id}`}>
+                    <span className="audit-avatar">{c.name.slice(0, 1).toUpperCase()}</span>
+                    <div>
+                      <strong>{c.name}</strong>
+                      <span>{c.clientType === 'mensalista' ? 'Mensalista' : 'Esporádico'}</span>
+                    </div>
+                    <span className="audit-orphan-arrow">Ver →</span>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="note-box">Todos os clientes têm processos vinculados.</div>
+            )}
+          </section>
+
+          <section className="surface section-card audit-card">
+            <div className="section-head">
+              <div>
+                <h2 className="section-title">Horas na semana</h2>
+                <p className="section-note">Registradas por usuário</p>
+              </div>
+              <Link className="btn btn-secondary" to="/produtividade">Ver completo</Link>
+            </div>
+            {userWeekSeconds.length ? (
+              <div className="audit-bar-list">
+                {userWeekSeconds.map(({ user, seconds }) => (
+                  <div key={user.id} className="audit-bar-row">
+                    <strong>{user.name}</strong>
+                    <div className="productivity-bar">
+                      <span style={{ width: `${progressPercent(seconds, maxUserSeconds)}%` }} />
+                    </div>
+                    <span>{formatHoursCompact(seconds)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="note-box">Nenhum tempo registrado nesta semana.</div>
+            )}
+          </section>
+        </div>
 
       </div>
     </>
