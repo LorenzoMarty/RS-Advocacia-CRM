@@ -312,14 +312,35 @@ export function TaskTimer({ taskId, taskType, title, processId = '', processNumb
   );
 }
 
-function CountMetric({ label, value, note = '' }) {
+function ProductivityKpis({ items }) {
   return (
-    <article className="productivity-metric">
-      <span>{label}</span>
-      <strong>{value}</strong>
-      {note ? <small>{note}</small> : null}
-    </article>
+    <div className="productivity-kpis">
+      {items.map((item) => (
+        <div key={item.label} className="productivity-kpi">
+          <span>{item.label}</span>
+          <strong>{item.value}</strong>
+        </div>
+      ))}
+    </div>
   );
+}
+
+const BREAKDOWN_TABS = [
+  { key: 'task', label: 'Tarefa' },
+  { key: 'process', label: 'Processo' },
+  { key: 'type', label: 'Tipo' },
+];
+
+function breakdownItemMeta(breakdown, item) {
+  if (breakdown === 'task') {
+    return `${taskTypeLabel(item.taskType)} • ${formatHoursCompact(item.seconds)}${item.done ? ' • Realizado' : ''}`;
+  }
+
+  if (breakdown === 'type') {
+    return `${item.count} ${item.count === 1 ? 'entrada' : 'entradas'} • ${formatHoursCompact(item.seconds)}`;
+  }
+
+  return formatHoursCompact(item.seconds);
 }
 
 function activeEntrySort(left, right) {
@@ -342,6 +363,7 @@ function ProductivityUserContent({ user, readOnly = false }) {
   const [customStart, setCustomStart] = useState(dateInputValue(startOfWeek()));
   const [customEnd, setCustomEnd] = useState(dateInputValue(new Date()));
   const [page, setPage] = useState(1);
+  const [breakdown, setBreakdown] = useState('task');
   const canControlTimers = !readOnly && currentUser?.id === user.id;
   const userEntries = timeEntries.filter((entry) => entry.userId === user.id);
   const activeEntries = userEntries
@@ -429,6 +451,13 @@ function ProductivityUserContent({ user, readOnly = false }) {
   }, {})).sort((left, right) => right.seconds - left.seconds);
   const maxTypeSeconds = typeTotals[0]?.seconds || 0;
   const maxTaskSeconds = perTaskTotals[0]?.seconds || 0;
+  const breakdownViews = {
+    task: { items: perTaskTotals, max: maxTaskSeconds },
+    process: { items: processTotals, max: maxProcessSeconds },
+    type: { items: typeTotals, max: maxTypeSeconds },
+  };
+  const breakdownItems = breakdownViews[breakdown].items;
+  const breakdownMax = breakdownViews[breakdown].max;
 
   useEffect(() => {
     const hasRunning = userEntries.some((entry) => entry.status === 'running');
@@ -446,20 +475,16 @@ function ProductivityUserContent({ user, readOnly = false }) {
 
   return (
     <div className="productivity-section">
-      <div className="productivity-metrics">
-        <article className="productivity-metric">
-          <span>Tempo no período</span>
-          <strong>{formatHoursCompact(totalFilteredSeconds)}</strong>
-        </article>
-        <CountMetric label="Prazos realizados" value={doneDeadlines.length} />
-        <CountMetric label="Petições realizadas" value={donePetitions.length} />
-        <CountMetric label="Processos acompanhados" value={followedProcessIds.size} />
-        <CountMetric label="Compromissos" value={attendedEvents.length} />
-        <article className="productivity-metric">
-          <span>Média por tarefa (mês)</span>
-          <strong>{formatHoursCompact(averageTaskSeconds)}</strong>
-        </article>
-      </div>
+      <ProductivityKpis
+        items={[
+          { label: 'Tempo no período', value: formatHoursCompact(totalFilteredSeconds) },
+          { label: 'Prazos realizados', value: doneDeadlines.length },
+          { label: 'Petições realizadas', value: donePetitions.length },
+          { label: 'Processos acompanhados', value: followedProcessIds.size },
+          { label: 'Compromissos', value: attendedEvents.length },
+          { label: 'Média/tarefa (mês)', value: formatHoursCompact(averageTaskSeconds) },
+        ]}
+      />
 
       <section className="productivity-block">
         <div className="section-head">
@@ -497,8 +522,8 @@ function ProductivityUserContent({ user, readOnly = false }) {
       <section className="productivity-block">
         <div className="section-head">
           <div>
-            <h3 className="section-title">Tempo por prazo/petição</h3>
-            <p className="section-note">Quanto cada tarefa levou no período</p>
+            <h3 className="section-title">Distribuição do tempo</h3>
+            <p className="section-note">Agrupado no período selecionado</p>
           </div>
           <PeriodFilter
             period={period}
@@ -510,23 +535,36 @@ function ProductivityUserContent({ user, readOnly = false }) {
           />
         </div>
 
-        {perTaskTotals.length ? (
+        <div className="productivity-segmented" role="group" aria-label="Agrupar tempo por">
+          {BREAKDOWN_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              aria-pressed={breakdown === tab.key}
+              onClick={() => setBreakdown(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {breakdownItems.length ? (
           <div className="productivity-bars">
-            {perTaskTotals.map((item) => (
-              <article key={item.key} className="productivity-bar-row">
+            {breakdownItems.map((item) => (
+              <article key={item.key || item.type} className="productivity-bar-row">
                 <div>
                   <strong>
-                    <span className="productivity-type-icon">{taskTypeIcon(item.taskType)}</span>
+                    {breakdown === 'task' ? <span className="productivity-type-icon">{taskTypeIcon(item.taskType)}</span> : null}
                     {item.label}
                   </strong>
-                  <span>{taskTypeLabel(item.taskType)} • {formatHoursCompact(item.seconds)}{item.done ? ' • Realizado' : ''}</span>
+                  <span>{breakdownItemMeta(breakdown, item)}</span>
                 </div>
-                <div className="productivity-bar"><span style={{ width: `${progressPercent(item.seconds, maxTaskSeconds)}%` }} /></div>
+                <div className="productivity-bar"><span style={{ width: `${progressPercent(item.seconds, breakdownMax)}%` }} /></div>
               </article>
             ))}
           </div>
         ) : (
-          <div className="note-box">Sem tempo registrado por tarefa no período.</div>
+          <div className="note-box">Sem tempo registrado no período.</div>
         )}
       </section>
 
@@ -564,55 +602,6 @@ function ProductivityUserContent({ user, readOnly = false }) {
         )}
       </section>
 
-      <section className="productivity-block">
-        <div className="section-head">
-          <div>
-            <h3 className="section-title">Tempo por processo</h3>
-            <p className="section-note">Mesmo filtro do período</p>
-          </div>
-        </div>
-
-        {processTotals.length ? (
-          <div className="productivity-bars">
-            {processTotals.map((item) => (
-              <article key={item.key} className="productivity-bar-row">
-                <div>
-                  <strong>{item.label}</strong>
-                  <span>{formatHoursCompact(item.seconds)}</span>
-                </div>
-                <div className="productivity-bar"><span style={{ width: `${progressPercent(item.seconds, maxProcessSeconds)}%` }} /></div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="note-box">Sem tempo agrupado por processo.</div>
-        )}
-      </section>
-
-      <section className="productivity-block">
-        <div className="section-head">
-          <div>
-            <h3 className="section-title">Tempo por tipo de tarefa</h3>
-            <p className="section-note">Mesmo filtro do período</p>
-          </div>
-        </div>
-
-        {typeTotals.length ? (
-          <div className="productivity-bars">
-            {typeTotals.map((item) => (
-              <article key={item.type} className="productivity-bar-row">
-                <div>
-                  <strong>{item.label}</strong>
-                  <span>{item.count} {item.count === 1 ? 'entrada' : 'entradas'} • {formatHoursCompact(item.seconds)}</span>
-                </div>
-                <div className="productivity-bar"><span style={{ width: `${progressPercent(item.seconds, maxTypeSeconds)}%` }} /></div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="note-box">Sem tempo agrupado por tipo.</div>
-        )}
-      </section>
     </div>
   );
 }
@@ -741,17 +730,16 @@ export function OfficeProductivityPage() {
             />
           </div>
 
-          <div className="productivity-metrics">
-            <article className="productivity-metric">
-              <span>Total de horas</span>
-              <strong>{formatHoursCompact(totalSeconds)}</strong>
-            </article>
-            <CountMetric label="Prazos realizados" value={officeDoneDeadlines.length} />
-            <CountMetric label="Petições realizadas" value={officeDonePetitions.length} />
-            <CountMetric label="Compromissos" value={officeAttendedEvents.length} />
-            <CountMetric label="Processos acompanhados" value={officeProcessIds.size} />
-            <CountMetric label="Timers rodando agora" value={runningCount} />
-          </div>
+          <ProductivityKpis
+            items={[
+              { label: 'Total de horas', value: formatHoursCompact(totalSeconds) },
+              { label: 'Prazos realizados', value: officeDoneDeadlines.length },
+              { label: 'Petições realizadas', value: officeDonePetitions.length },
+              { label: 'Compromissos', value: officeAttendedEvents.length },
+              { label: 'Processos acompanhados', value: officeProcessIds.size },
+              { label: 'Timers rodando', value: runningCount },
+            ]}
+          />
         </section>
 
         <section className="surface section-card">
