@@ -326,7 +326,6 @@ function ProductivityKpis({ items }) {
 }
 
 const BREAKDOWN_TABS = [
-  { key: 'task', label: 'Tarefa' },
   { key: 'process', label: 'Processo' },
   { key: 'type', label: 'Tipo' },
 ];
@@ -363,7 +362,7 @@ function ProductivityUserContent({ user, readOnly = false }) {
   const [customStart, setCustomStart] = useState(dateInputValue(startOfWeek()));
   const [customEnd, setCustomEnd] = useState(dateInputValue(new Date()));
   const [page, setPage] = useState(1);
-  const [breakdown, setBreakdown] = useState('task');
+  const [breakdown, setBreakdown] = useState('process');
   const canControlTimers = !readOnly && currentUser?.id === user.id;
   const userEntries = timeEntries.filter((entry) => entry.userId === user.id);
   const activeEntries = userEntries
@@ -423,10 +422,16 @@ function ProductivityUserContent({ user, readOnly = false }) {
       taskId: entry.taskId,
       taskType: entry.taskType,
       label: entry.taskName || taskTypeLabel(entry.taskType),
+      processNumber: entry.processNumber || '',
       seconds: 0,
+      count: 0,
       done: isTaskDone(entry, deadlines, petitions),
     };
     groups[key].seconds += timeEntryElapsedSeconds(entry, now);
+    groups[key].count += 1;
+    if (!groups[key].processNumber && entry.processNumber) {
+      groups[key].processNumber = entry.processNumber;
+    }
     return groups;
   }, {})).sort((left, right) => right.seconds - left.seconds);
 
@@ -522,8 +527,8 @@ function ProductivityUserContent({ user, readOnly = false }) {
       <section className="productivity-block">
         <div className="section-head">
           <div>
-            <h3 className="section-title">Distribuição do tempo</h3>
-            <p className="section-note">Agrupado no período selecionado</p>
+            <h3 className="section-title">Tempo por tarefa</h3>
+            <p className="section-note">Quanto levou em cada prazo ou petição no período</p>
           </div>
           <PeriodFilter
             period={period}
@@ -533,6 +538,37 @@ function ProductivityUserContent({ user, readOnly = false }) {
             customEnd={customEnd}
             setCustomEnd={setCustomEnd}
           />
+        </div>
+
+        {perTaskTotals.length ? (
+          <div className="productivity-task-list">
+            {perTaskTotals.map((item) => (
+              <article key={item.key} className="productivity-task-item">
+                <span className="productivity-type-icon">{taskTypeIcon(item.taskType)}</span>
+                <div className="productivity-task-info">
+                  <strong>{item.label}</strong>
+                  <span>
+                    {taskTypeLabel(item.taskType)}
+                    {item.processNumber ? ` • ${item.processNumber}` : ''}
+                    {' • '}{item.count} {item.count === 1 ? 'sessão' : 'sessões'}
+                  </span>
+                </div>
+                <StatusBadge tone={item.done ? 'success' : 'muted'}>{item.done ? 'Realizado' : 'Em andamento'}</StatusBadge>
+                <strong className="productivity-task-time">{formatTimerSeconds(item.seconds)}</strong>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="note-box">Sem tarefas cronometradas no período.</div>
+        )}
+      </section>
+
+      <section className="productivity-block">
+        <div className="section-head">
+          <div>
+            <h3 className="section-title">Distribuição do tempo</h3>
+            <p className="section-note">Agrupado no período selecionado</p>
+          </div>
         </div>
 
         <div className="productivity-segmented" role="group" aria-label="Agrupar tempo por">
@@ -677,13 +713,6 @@ export function OfficeProductivityPage() {
     ].filter(Boolean),
   );
 
-  const ranking = users.map((user) => {
-    const seconds = filteredEntries
-      .filter((entry) => entry.userId === user.id)
-      .reduce((total, entry) => total + timeEntryElapsedSeconds(entry, now), 0);
-    return { user, seconds };
-  }).sort((left, right) => right.seconds - left.seconds);
-  const maxRankingSeconds = ranking[0]?.seconds || 0;
   const selectedUser = users.find((user) => user.id === selectedUserId) || null;
 
   useEffect(() => {
@@ -745,39 +774,32 @@ export function OfficeProductivityPage() {
         <section className="surface section-card">
           <div className="section-head">
             <div>
-              <h2 className="section-title">Ranking de usuários</h2>
-              <p className="section-note">Total de horas no período selecionado</p>
+              <h2 className="section-title">Detalhe por usuário</h2>
+              <p className="section-note">Tempo gasto em cada tarefa de cada pessoa</p>
             </div>
+            {users.length ? (
+              <select
+                className="productivity-user-select"
+                value={selectedUserId}
+                onChange={(event) => setSelectedUserId(event.target.value)}
+                aria-label="Selecionar usuário"
+              >
+                <option value="">Selecione um usuário</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>{user.name}</option>
+                ))}
+              </select>
+            ) : null}
           </div>
 
-          {ranking.length ? (
-            <div className="productivity-ranking">
-              {ranking.map(({ user, seconds }) => (
-                <button key={user.id} type="button" className="productivity-ranking-row" onClick={() => setSelectedUserId(user.id)}>
-                  <span className="productivity-avatar">{user.name.slice(0, 1).toUpperCase()}</span>
-                  <strong>{user.name}</strong>
-                  <div className="productivity-bar"><span style={{ width: `${progressPercent(seconds, maxRankingSeconds)}%` }} /></div>
-                  <span>{formatHoursCompact(seconds)}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
+          {!users.length ? (
             <EmptyState title="Sem usuários." copy="Cadastre usuários para acompanhar produtividade." actions={<Link className="btn" to="/usuarios/novo">Novo usuário</Link>} />
+          ) : selectedUser ? (
+            <ProductivityUserContent user={selectedUser} readOnly />
+          ) : (
+            <div className="note-box">Selecione um usuário para ver o tempo por tarefa.</div>
           )}
         </section>
-
-        {selectedUser ? (
-          <section className="surface section-card">
-            <div className="section-head">
-              <div>
-                <h2 className="section-title">{selectedUser.name}</h2>
-                <p className="section-note">Dados individuais somente leitura</p>
-              </div>
-              <button className="btn btn-secondary" type="button" onClick={() => setSelectedUserId('')}>Fechar painel</button>
-            </div>
-            <ProductivityUserContent user={selectedUser} readOnly />
-          </section>
-        ) : null}
       </div>
     </>
   );

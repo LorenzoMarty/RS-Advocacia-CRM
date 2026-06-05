@@ -148,7 +148,8 @@
 }
 
 .productivity-filters select,
-.productivity-filters input{
+.productivity-filters input,
+.productivity-user-select{
     min-height:36px;
     padding:0 10px;
     border-radius:11px;
@@ -157,18 +158,21 @@
     color:var(--text);
 }
 
+.productivity-user-select{
+    min-width:200px;
+}
+
 .productivity-active-list,
 .productivity-history,
 .productivity-bars,
-.productivity-ranking{
+.productivity-task-list{
     display:grid;
     gap:8px;
 }
 
 .productivity-active-item,
 .productivity-history-row,
-.productivity-bar-row,
-.productivity-ranking-row{
+.productivity-bar-row{
     display:grid;
     grid-template-columns:minmax(0,1fr) auto auto auto;
     gap:10px;
@@ -224,8 +228,7 @@
     grid-template-columns:auto minmax(0,1fr) minmax(120px,.4fr) auto;
 }
 
-.productivity-type-icon,
-.productivity-avatar{
+.productivity-type-icon{
     width:30px;
     height:30px;
     display:grid;
@@ -250,11 +253,37 @@
     grid-template-columns:minmax(0,.7fr) minmax(160px,1fr) auto;
 }
 
-.productivity-ranking-row{
-    width:100%;
-    grid-template-columns:auto minmax(150px,.6fr) minmax(160px,1fr) auto;
-    color:var(--text);
-    text-align:left;
+.productivity-task-item{
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr) auto auto;
+    gap:10px;
+    align-items:center;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid var(--line);
+    background:var(--ghost);
+}
+
+.productivity-task-info{
+    display:grid;
+    gap:3px;
+    min-width:0;
+}
+
+.productivity-task-info strong{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.productivity-task-info span{
+    color:var(--soft);
+    font-size:.74rem;
+}
+
+.productivity-task-time{
+    font-variant-numeric:tabular-nums;
+    letter-spacing:.02em;
 }
 
 html[data-theme="light"] .task-timer,
@@ -263,7 +292,7 @@ html[data-theme="light"] .productivity-segmented,
 html[data-theme="light"] .productivity-active-item,
 html[data-theme="light"] .productivity-history-row,
 html[data-theme="light"] .productivity-bar-row,
-html[data-theme="light"] .productivity-ranking-row{
+html[data-theme="light"] .productivity-task-item{
     background:rgba(24,30,42,.04);
     border-color:rgba(30,34,45,.1);
 }
@@ -284,9 +313,16 @@ html[data-theme="light"] .timer-btn-stop{
 
     .productivity-active-item,
     .productivity-history-row,
-    .productivity-ranking-row,
     .productivity-bar-row{
         grid-template-columns:1fr;
+    }
+
+    .productivity-task-item{
+        grid-template-columns:auto minmax(0,1fr) auto;
+    }
+
+    .productivity-task-time{
+        grid-column:2 / -1;
     }
 
     .productivity-filters{

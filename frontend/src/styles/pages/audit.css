@@ -1,27 +1,43 @@
-.audit-page{display:grid;gap:16px}
+.audit-page{display:grid;gap:12px}
 
 .audit-grid-2{
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:16px;
+    gap:12px;
+    align-items:start;
 }
 
+/* Compact headers + KPI strip for the audit screen */
+.audit-card .section-head{margin-bottom:12px}
+
+.audit-card .section-title{
+    font-family:inherit;
+    font-size:1.1rem;
+    font-weight:800;
+    letter-spacing:-.01em;
+}
+
+.audit-card .intro-title{font-size:1.45rem}
+.audit-card .section-note{font-size:.78rem}
+
+.audit-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+
 /* Bar rows (owner / responsible / productivity) */
-.audit-bar-list{display:grid;gap:10px}
+.audit-bar-list{display:grid;gap:8px}
 
 .audit-bar-row{
     display:grid;
-    grid-template-columns:minmax(140px,.7fr) minmax(160px,1fr) minmax(80px,auto);
+    grid-template-columns:minmax(110px,.7fr) minmax(120px,1fr) minmax(36px,auto);
     gap:10px;
     align-items:center;
-    padding:12px;
-    border-radius:16px;
+    padding:9px 12px;
+    border-radius:12px;
     border:1px solid var(--line);
     background:var(--ghost);
 }
 
-.audit-bar-row strong{font-size:.88rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.audit-bar-row>span{color:var(--soft);font-size:.76rem;white-space:nowrap;text-align:right}
+.audit-bar-row strong{font-size:.84rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-bar-row>span{color:var(--soft);font-size:.78rem;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
 
 /* Pill distribution grid (status / area) */
 .audit-pill-grid{display:flex;flex-wrap:wrap;gap:8px}
@@ -50,8 +66,8 @@
     grid-template-columns:minmax(0,1fr) auto auto;
     gap:10px;
     align-items:center;
-    padding:12px 16px;
-    border-radius:14px;
+    padding:9px 12px;
+    border-radius:12px;
     border:1px solid var(--line);
     background:var(--ghost);
     color:var(--text);
@@ -78,8 +94,8 @@
     grid-template-columns:auto minmax(0,1fr) auto;
     gap:10px;
     align-items:center;
-    padding:10px 14px;
-    border-radius:14px;
+    padding:8px 12px;
+    border-radius:12px;
     border:1px solid var(--line);
     background:var(--ghost);
     color:var(--text);
@@ -121,6 +137,10 @@ html[data-theme="light"] .audit-critical-item.is-soon{border-color:rgba(160,100,
     .audit-grid-2{grid-template-columns:1fr}
     .audit-bar-row{grid-template-columns:minmax(0,1fr) auto}
     .audit-bar-row .productivity-bar{display:none}
+}
+
+@media(max-width:560px){
+    .audit-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
 @media(max-width:640px){
