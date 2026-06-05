@@ -3,12 +3,17 @@ import { Link } from 'react-router-dom';
 
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, StatusBadge } from '../layout';
-import { formatTimerSeconds } from '../productivity-utils';
+import {
+  belongsToUser,
+  formatTimerSeconds,
+  isDeadlineDone,
+  isEventAttended,
+  isPetitionDone,
+} from '../productivity-utils';
 import { useAppState } from '../store';
-import { EmptyState, NotFoundState } from '../pages/common';
+import { EmptyState } from '../pages/common';
 
 const PAGE_SIZE = 20;
-const DEFAULT_GOAL = { dailyHours: 6, weeklyHours: 30 };
 
 function formatHoursCompact(totalSeconds) {
   const safeSeconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
@@ -99,12 +104,8 @@ function periodBounds(period, customStart, customEnd) {
   return { start: startOfWeek(), end: endOfWeek() };
 }
 
-function entryDate(entry) {
-  return new Date(entry.endedAt || entry.startedAt);
-}
-
-function isEntryInRange(entry, bounds) {
-  const date = entryDate(entry);
+function isDateInRange(value, bounds) {
+  const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return false;
@@ -119,6 +120,22 @@ function isEntryInRange(entry, bounds) {
   }
 
   return true;
+}
+
+function entryDate(entry) {
+  return new Date(entry.endedAt || entry.startedAt);
+}
+
+function isEntryInRange(entry, bounds) {
+  return isDateInRange(entryDate(entry), bounds);
+}
+
+function deadlineDoneDate(deadline) {
+  return deadline.atualizado_em || deadline.updatedAt || deadline.date || deadline.criado_em;
+}
+
+function petitionDoneDate(petition) {
+  return petition.updatedAt || petition.createdAt;
 }
 
 function taskKey(entry) {
@@ -149,14 +166,6 @@ function taskStatusLabel(status) {
   return 'Encerrado';
 }
 
-function goalForUser(goals, userId) {
-  return goals.find((goal) => goal.userId === userId) || {
-    userId,
-    ...DEFAULT_GOAL,
-    configured: false,
-  };
-}
-
 function progressPercent(value, target) {
   if (!target) {
     return 0;
@@ -168,6 +177,16 @@ function progressPercent(value, target) {
 function weekdayLabel(value) {
   return new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
     .format(new Date(value));
+}
+
+function isTaskDone(entry, deadlines, petitions) {
+  if (entry.taskType === 'prazo') {
+    const deadline = deadlines.find((item) => item.id === String(entry.taskId));
+    return deadline ? isDeadlineDone(deadline) : false;
+  }
+
+  const petition = petitions.find((item) => item.id === String(entry.taskId));
+  return petition ? isPetitionDone(petition) : false;
 }
 
 function PeriodFilter({ period, setPeriod, customStart, setCustomStart, customEnd, setCustomEnd }) {
@@ -293,21 +312,12 @@ export function TaskTimer({ taskId, taskType, title, processId = '', processNumb
   );
 }
 
-function ProductivityMetric({ label, value, target = 0, progress = null }) {
-  const percent = progress ?? progressPercent(value, target);
-
+function CountMetric({ label, value, note = '' }) {
   return (
     <article className="productivity-metric">
       <span>{label}</span>
-      <strong>{formatHoursCompact(value)}</strong>
-      {target ? (
-        <>
-          <div className="productivity-progress" aria-hidden="true">
-            <span style={{ width: `${percent}%` }} />
-          </div>
-          <small>{percent}% da meta</small>
-        </>
-      ) : null}
+      <strong>{value}</strong>
+      {note ? <small>{note}</small> : null}
     </article>
   );
 }
@@ -319,8 +329,10 @@ function activeEntrySort(left, right) {
 function ProductivityUserContent({ user, readOnly = false }) {
   const {
     currentUser,
+    deadlines,
+    events,
     pauseTimeEntry,
-    productivityGoals,
+    petitions,
     resumeTimeEntry,
     stopTimeEntry,
     timeEntries,
@@ -330,23 +342,18 @@ function ProductivityUserContent({ user, readOnly = false }) {
   const [customStart, setCustomStart] = useState(dateInputValue(startOfWeek()));
   const [customEnd, setCustomEnd] = useState(dateInputValue(new Date()));
   const [page, setPage] = useState(1);
-  const goal = goalForUser(productivityGoals, user.id);
   const canControlTimers = !readOnly && currentUser?.id === user.id;
   const userEntries = timeEntries.filter((entry) => entry.userId === user.id);
   const activeEntries = userEntries
     .filter((entry) => ['running', 'paused'].includes(entry.status))
     .sort(activeEntrySort);
   const stoppedEntries = userEntries.filter((entry) => entry.status === 'stopped');
-  const todayBounds = { start: startOfDay(), end: endOfDay() };
-  const weekBounds = { start: startOfWeek(), end: endOfWeek() };
   const monthBounds = { start: startOfMonth(), end: endOfMonth() };
   const filterBounds = periodBounds(period, customStart, customEnd);
   const secondsForEntries = (entries) => entries.reduce(
     (total, entry) => total + timeEntryElapsedSeconds(entry, now),
     0,
   );
-  const todaySeconds = secondsForEntries(userEntries.filter((entry) => isEntryInRange(entry, todayBounds)));
-  const weekSeconds = secondsForEntries(userEntries.filter((entry) => isEntryInRange(entry, weekBounds)));
   const monthEntries = userEntries.filter((entry) => isEntryInRange(entry, monthBounds));
   const monthTaskCount = new Set(monthEntries.map(taskKey)).size;
   const monthSeconds = secondsForEntries(monthEntries);
@@ -356,6 +363,51 @@ function ProductivityUserContent({ user, readOnly = false }) {
     .sort((left, right) => new Date(right.endedAt || right.startedAt) - new Date(left.endedAt || left.startedAt));
   const totalPages = Math.max(1, Math.ceil(filteredHistory.length / PAGE_SIZE));
   const pageItems = filteredHistory.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Entregas no período, atribuídas pelo nome do responsável.
+  const doneDeadlines = deadlines.filter((deadline) =>
+    belongsToUser(deadline.responsible, user)
+    && isDeadlineDone(deadline)
+    && isDateInRange(deadlineDoneDate(deadline), filterBounds),
+  );
+  const donePetitions = petitions.filter((petition) =>
+    belongsToUser(petition.responsible, user)
+    && isPetitionDone(petition)
+    && isDateInRange(petitionDoneDate(petition), filterBounds),
+  );
+  const attendedEvents = events.filter((event) =>
+    belongsToUser(event.responsible, user)
+    && isEventAttended(event, now)
+    && isDateInRange(event.start, filterBounds),
+  );
+  const followedProcessIds = new Set(
+    [
+      ...filteredHistory.map((entry) => entry.processId),
+      ...doneDeadlines.map((deadline) => deadline.processId),
+      ...donePetitions.map((petition) => petition.processId),
+      ...attendedEvents.map((event) => event.processId),
+    ].filter(Boolean),
+  );
+
+  const totalFilteredSeconds = filteredHistory.reduce(
+    (total, entry) => total + timeEntryElapsedSeconds(entry, now), 0,
+  );
+
+  // Tempo agregado por tarefa (prazo/petição) no período.
+  const perTaskTotals = Object.values(filteredHistory.reduce((groups, entry) => {
+    const key = taskKey(entry);
+    groups[key] ||= {
+      key,
+      taskId: entry.taskId,
+      taskType: entry.taskType,
+      label: entry.taskName || taskTypeLabel(entry.taskType),
+      seconds: 0,
+      done: isTaskDone(entry, deadlines, petitions),
+    };
+    groups[key].seconds += timeEntryElapsedSeconds(entry, now);
+    return groups;
+  }, {})).sort((left, right) => right.seconds - left.seconds);
+
   const processTotals = Object.values(filteredHistory.reduce((groups, entry) => {
     const key = entry.processId || entry.processNumber || 'sem-processo';
     groups[key] ||= {
@@ -376,10 +428,7 @@ function ProductivityUserContent({ user, readOnly = false }) {
     return groups;
   }, {})).sort((left, right) => right.seconds - left.seconds);
   const maxTypeSeconds = typeTotals[0]?.seconds || 0;
-  const totalFilteredSeconds = filteredHistory.reduce(
-    (total, entry) => total + timeEntryElapsedSeconds(entry, now), 0,
-  );
-  const uniqueTaskCount = new Set(filteredHistory.map(taskKey)).size;
+  const maxTaskSeconds = perTaskTotals[0]?.seconds || 0;
 
   useEffect(() => {
     const hasRunning = userEntries.some((entry) => entry.status === 'running');
@@ -398,22 +447,16 @@ function ProductivityUserContent({ user, readOnly = false }) {
   return (
     <div className="productivity-section">
       <div className="productivity-metrics">
-        <ProductivityMetric label="Horas hoje" value={todaySeconds} target={goal.dailyHours * 3600} />
-        <ProductivityMetric label="Horas na semana" value={weekSeconds} target={goal.weeklyHours * 3600} />
         <article className="productivity-metric">
-          <span>Total no período</span>
+          <span>Tempo no período</span>
           <strong>{formatHoursCompact(totalFilteredSeconds)}</strong>
         </article>
+        <CountMetric label="Prazos realizados" value={doneDeadlines.length} />
+        <CountMetric label="Petições realizadas" value={donePetitions.length} />
+        <CountMetric label="Processos acompanhados" value={followedProcessIds.size} />
+        <CountMetric label="Compromissos" value={attendedEvents.length} />
         <article className="productivity-metric">
-          <span>Tarefas no período</span>
-          <strong>{uniqueTaskCount}</strong>
-        </article>
-        <article className="productivity-metric">
-          <span>Tarefas no mês</span>
-          <strong>{monthTaskCount}</strong>
-        </article>
-        <article className="productivity-metric">
-          <span>Média por tarefa</span>
+          <span>Média por tarefa (mês)</span>
           <strong>{formatHoursCompact(averageTaskSeconds)}</strong>
         </article>
       </div>
@@ -454,8 +497,8 @@ function ProductivityUserContent({ user, readOnly = false }) {
       <section className="productivity-block">
         <div className="section-head">
           <div>
-            <h3 className="section-title">Histórico por tarefa</h3>
-            <p className="section-note">Entradas encerradas</p>
+            <h3 className="section-title">Tempo por prazo/petição</h3>
+            <p className="section-note">Quanto cada tarefa levou no período</p>
           </div>
           <PeriodFilter
             period={period}
@@ -465,6 +508,34 @@ function ProductivityUserContent({ user, readOnly = false }) {
             customEnd={customEnd}
             setCustomEnd={setCustomEnd}
           />
+        </div>
+
+        {perTaskTotals.length ? (
+          <div className="productivity-bars">
+            {perTaskTotals.map((item) => (
+              <article key={item.key} className="productivity-bar-row">
+                <div>
+                  <strong>
+                    <span className="productivity-type-icon">{taskTypeIcon(item.taskType)}</span>
+                    {item.label}
+                  </strong>
+                  <span>{taskTypeLabel(item.taskType)} • {formatHoursCompact(item.seconds)}{item.done ? ' • Realizado' : ''}</span>
+                </div>
+                <div className="productivity-bar"><span style={{ width: `${progressPercent(item.seconds, maxTaskSeconds)}%` }} /></div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="note-box">Sem tempo registrado por tarefa no período.</div>
+        )}
+      </section>
+
+      <section className="productivity-block">
+        <div className="section-head">
+          <div>
+            <h3 className="section-title">Histórico por tarefa</h3>
+            <p className="section-note">Entradas encerradas no período</p>
+          </div>
         </div>
 
         {pageItems.length ? (
@@ -497,7 +568,7 @@ function ProductivityUserContent({ user, readOnly = false }) {
         <div className="section-head">
           <div>
             <h3 className="section-title">Tempo por processo</h3>
-            <p className="section-note">Mesmo filtro do histórico</p>
+            <p className="section-note">Mesmo filtro do período</p>
           </div>
         </div>
 
@@ -522,7 +593,7 @@ function ProductivityUserContent({ user, readOnly = false }) {
         <div className="section-head">
           <div>
             <h3 className="section-title">Tempo por tipo de tarefa</h3>
-            <p className="section-note">Mesmo filtro do histórico</p>
+            <p className="section-note">Mesmo filtro do período</p>
           </div>
         </div>
 
@@ -569,7 +640,7 @@ export function UserProductivitySection({ user, isAdmin = false }) {
       <div className="section-head">
         <div>
           <h2 className="section-title">Produtividade</h2>
-          <p className="section-note">Horas, timers e histórico</p>
+          <p className="section-note">Entregas, tempo e timers</p>
         </div>
       </div>
       <ProductivityUserContent user={user} readOnly={isAdmin && currentUser?.id !== user.id} />
@@ -581,8 +652,9 @@ export function OfficeProductivityPage() {
   const {
     currentRole,
     currentUser,
-    productivityGoals,
-    saveProductivityGoals,
+    deadlines,
+    events,
+    petitions,
     timeEntries,
     users,
   } = useAppState();
@@ -592,25 +664,30 @@ export function OfficeProductivityPage() {
   const [customStart, setCustomStart] = useState(dateInputValue(startOfWeek()));
   const [customEnd, setCustomEnd] = useState(dateInputValue(new Date()));
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [globalGoal, setGlobalGoal] = useState({ dailyHours: 6, weeklyHours: 30 });
-  const [goalDrafts, setGoalDrafts] = useState({});
   const bounds = periodBounds(period, customStart, customEnd);
-  const todayBounds = { start: startOfDay(), end: endOfDay() };
-  const weekBounds = { start: startOfWeek(), end: endOfWeek() };
   const filteredEntries = timeEntries.filter((entry) => isEntryInRange(entry, bounds));
-  const todaySeconds = timeEntries
-    .filter((entry) => isEntryInRange(entry, todayBounds))
-    .reduce((total, entry) => total + timeEntryElapsedSeconds(entry, now), 0);
+  const totalSeconds = filteredEntries.reduce((total, entry) => total + timeEntryElapsedSeconds(entry, now), 0);
   const runningCount = timeEntries.filter((entry) => entry.status === 'running').length;
-  const weekSecondsByUser = users.map((user) => {
-    const seconds = timeEntries
-      .filter((entry) => entry.userId === user.id && isEntryInRange(entry, weekBounds))
-      .reduce((total, entry) => total + timeEntryElapsedSeconds(entry, now), 0);
-    return { user, seconds };
-  });
-  const averageWeeklySeconds = users.length
-    ? Math.round(weekSecondsByUser.reduce((total, item) => total + item.seconds, 0) / users.length)
-    : 0;
+
+  // Entregas do escritório no período (agregado, sem recorte por usuário).
+  const officeDoneDeadlines = deadlines.filter((deadline) =>
+    isDeadlineDone(deadline) && isDateInRange(deadlineDoneDate(deadline), bounds),
+  );
+  const officeDonePetitions = petitions.filter((petition) =>
+    isPetitionDone(petition) && isDateInRange(petitionDoneDate(petition), bounds),
+  );
+  const officeAttendedEvents = events.filter((event) =>
+    isEventAttended(event, now) && isDateInRange(event.start, bounds),
+  );
+  const officeProcessIds = new Set(
+    [
+      ...filteredEntries.map((entry) => entry.processId),
+      ...officeDoneDeadlines.map((deadline) => deadline.processId),
+      ...officeDonePetitions.map((petition) => petition.processId),
+      ...officeAttendedEvents.map((event) => event.processId),
+    ].filter(Boolean),
+  );
+
   const ranking = users.map((user) => {
     const seconds = filteredEntries
       .filter((entry) => entry.userId === user.id)
@@ -625,48 +702,6 @@ export function OfficeProductivityPage() {
     return () => window.clearInterval(intervalId);
   }, []);
 
-  function goalDraftForUser(user) {
-    const savedGoal = goalForUser(productivityGoals, user.id);
-    const draft = goalDrafts[user.id] || {};
-    return {
-      dailyHours: draft.dailyHours ?? savedGoal.dailyHours,
-      weeklyHours: draft.weeklyHours ?? savedGoal.weeklyHours,
-    };
-  }
-
-  async function handleApplyGlobal(event) {
-    event.preventDefault();
-    await saveProductivityGoals({
-      applyAll: true,
-      dailyHours: globalGoal.dailyHours,
-      weeklyHours: globalGoal.weeklyHours,
-    });
-  }
-
-  function updateGoalDraft(userId, field, value) {
-    setGoalDrafts((current) => ({
-      ...current,
-      [userId]: {
-        ...(current[userId] || {}),
-        [field]: value,
-      },
-    }));
-  }
-
-  async function handleSavePerUser(event) {
-    event.preventDefault();
-    await saveProductivityGoals({
-      goals: users.map((user) => {
-        const goal = goalDraftForUser(user);
-        return {
-          userId: user.id,
-          dailyHours: goal.dailyHours,
-          weeklyHours: goal.weeklyHours,
-        };
-      }),
-    });
-  }
-
   if (!isAdmin) {
     return (
       <>
@@ -676,7 +711,7 @@ export function OfficeProductivityPage() {
             <div className="section-head">
               <div>
                 <h1 className="intro-title">Minha produtividade</h1>
-                <p className="section-note">Horas, timers e histórico</p>
+                <p className="section-note">Entregas, tempo e timers</p>
               </div>
             </div>
             {currentUser ? <ProductivityUserContent user={currentUser} /> : null}
@@ -694,7 +729,7 @@ export function OfficeProductivityPage() {
           <div className="section-head">
             <div>
               <h1 className="intro-title">Produtividade do escritório</h1>
-              <p className="section-note">Horas, metas e timers em andamento</p>
+              <p className="section-note">Entregas e tempo no período</p>
             </div>
             <PeriodFilter
               period={period}
@@ -707,12 +742,15 @@ export function OfficeProductivityPage() {
           </div>
 
           <div className="productivity-metrics">
-            <ProductivityMetric label="Total hoje" value={todaySeconds} />
-            <ProductivityMetric label="Média semanal por pessoa" value={averageWeeklySeconds} />
             <article className="productivity-metric">
-              <span>Timers rodando agora</span>
-              <strong>{runningCount}</strong>
+              <span>Total de horas</span>
+              <strong>{formatHoursCompact(totalSeconds)}</strong>
             </article>
+            <CountMetric label="Prazos realizados" value={officeDoneDeadlines.length} />
+            <CountMetric label="Petições realizadas" value={officeDonePetitions.length} />
+            <CountMetric label="Compromissos" value={officeAttendedEvents.length} />
+            <CountMetric label="Processos acompanhados" value={officeProcessIds.size} />
+            <CountMetric label="Timers rodando agora" value={runningCount} />
           </div>
         </section>
 
@@ -720,7 +758,7 @@ export function OfficeProductivityPage() {
           <div className="section-head">
             <div>
               <h2 className="section-title">Ranking de usuários</h2>
-              <p className="section-note">Total no período selecionado</p>
+              <p className="section-note">Total de horas no período selecionado</p>
             </div>
           </div>
 
@@ -740,34 +778,6 @@ export function OfficeProductivityPage() {
           )}
         </section>
 
-        <section className="surface section-card">
-          <div className="section-head">
-            <div>
-              <h2 className="section-title">Progresso vs meta semanal</h2>
-              <p className="section-note">Verde atingiu, âmbar entre 50% e 99%, vermelho abaixo de 50%</p>
-            </div>
-          </div>
-
-          <div className="productivity-goal-list">
-            {weekSecondsByUser.map(({ user, seconds }) => {
-              const goal = goalForUser(productivityGoals, user.id);
-              const target = goal.weeklyHours * 3600;
-              const percent = progressPercent(seconds, target);
-              const tone = percent >= 100 ? 'success' : percent >= 50 ? 'warn' : 'danger';
-              return (
-                <article key={user.id} className={`productivity-goal-row is-${tone}`}>
-                  <div>
-                    <strong>{user.name}</strong>
-                    <span>{formatHoursCompact(seconds)} de {goal.weeklyHours}h</span>
-                  </div>
-                  <div className="productivity-bar"><span style={{ width: `${percent}%` }} /></div>
-                  <StatusBadge tone={tone}>{percent}%</StatusBadge>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
         {selectedUser ? (
           <section className="surface section-card">
             <div className="section-head">
@@ -780,59 +790,6 @@ export function OfficeProductivityPage() {
             <ProductivityUserContent user={selectedUser} readOnly />
           </section>
         ) : null}
-
-        <section className="surface section-card">
-          <div className="section-head">
-            <div>
-              <h2 className="section-title">Configuração de metas</h2>
-              <p className="section-note">Meta global ou sobrescrita por pessoa</p>
-            </div>
-          </div>
-
-          <form className="productivity-goal-form" onSubmit={handleApplyGlobal}>
-            <label>
-              <span>Meta diária global</span>
-              <input type="number" min="0" step="0.25" value={globalGoal.dailyHours} onChange={(event) => setGlobalGoal((current) => ({ ...current, dailyHours: event.target.value }))} />
-            </label>
-            <label>
-              <span>Meta semanal global</span>
-              <input type="number" min="0" step="0.25" value={globalGoal.weeklyHours} onChange={(event) => setGlobalGoal((current) => ({ ...current, weeklyHours: event.target.value }))} />
-            </label>
-            <button className="btn" type="submit">Aplicar a todos</button>
-          </form>
-
-          <form className="productivity-goal-table" onSubmit={handleSavePerUser}>
-            {users.map((user) => {
-              const goalDraft = goalDraftForUser(user);
-              return (
-                <div key={user.id} className="productivity-goal-input-row">
-                  <strong>{user.name}</strong>
-                  <label>
-                    <span>Diária</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.25"
-                      value={goalDraft.dailyHours}
-                      onChange={(event) => updateGoalDraft(user.id, 'dailyHours', event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>Semanal</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.25"
-                      value={goalDraft.weeklyHours}
-                      onChange={(event) => updateGoalDraft(user.id, 'weeklyHours', event.target.value)}
-                    />
-                  </label>
-                </div>
-              );
-            })}
-            <button className="btn" type="submit">Salvar metas por usuário</button>
-          </form>
-        </section>
       </div>
     </>
   );
