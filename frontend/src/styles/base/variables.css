@@ -61,5 +61,28 @@
     --sidebar-toggle-icon-color:rgba(203,213,225,.76);
     --ambient-light-gold:#D4AF37;
     --ambient-light-blue:#334155;
+
+    /* Escala de espaçamento (base 4px) */
+    --space-1:4px;
+    --space-2:8px;
+    --space-3:12px;
+    --space-4:16px;
+    --space-5:20px;
+    --space-6:24px;
+    --space-8:32px;
+
+    /* Paleta de gráficos (donut/barras) — adapta aos dois temas */
+    --chart-1:#D4AF37;
+    --chart-2:#73d3b1;
+    --chart-3:#7aa2ef;
+    --chart-4:#e8b25c;
+    --chart-5:#c58fef;
+    --chart-grid:rgba(148,163,184,.14);
+    --chart-track:rgba(148,163,184,.12);
+}
+
+html[data-theme="light"]{
+    --chart-grid:rgba(30,34,45,.1);
+    --chart-track:rgba(30,34,45,.08);
 }
 

@@ -43,7 +43,7 @@ import {
   RoleFormPage,
   RoleDetailPage,
 } from "./app/pages/roles";
-import { OfficeProductivityPage } from "./app/components/productivity";
+import { ProductivityPage } from "./app/pages/productivity/ProductivityPage";
 import { AuditPage } from "./app/pages/audit";
 import { ApiTestPage } from "./app/pages/api-test";
 import { MeetingsPage } from "./app/pages/meetings";
@@ -139,7 +139,7 @@ export default function App() {
             <Route path="/peticoes-contestacoes/:petitionId/editar" element={<PetitionFormRoute />} />
 
             <Route path="/reunioes" element={<MeetingsPage />} />
-            <Route path="/produtividade" element={<OfficeProductivityPage />} />
+            <Route path="/produtividade" element={<ProductivityPage />} />
             <Route path="/auditoria" element={<AuditPage />} />
 
             <Route path="/usuarios" element={<UsersListPage />} />

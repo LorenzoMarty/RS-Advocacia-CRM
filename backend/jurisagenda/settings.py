@@ -218,7 +218,14 @@ if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
 # Validação de senha
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = []
+# Usuários da aplicação autenticam via Google OAuth (set_unusable_password),
+# mas mantemos os validadores padrão para contas administrativas locais.
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
 
 
 # Internacionalização
@@ -356,14 +363,67 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
+# Cache: Redis quando REDIS_URL/CACHE_URL existir, senão memória local (dev/test).
+# KEY_PREFIX evita colisão com chaves do broker Celery na mesma instância Redis.
+_CACHE_URL = os.getenv("CACHE_URL", "").strip() or _REDIS_URL
+if _CACHE_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": _CACHE_URL,
+            "KEY_PREFIX": "juris",
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Endurecimento HTTPS — habilitado em produção, configurável por env para não
+# quebrar o desenvolvimento local em http.
+SECURE_SSL_REDIRECT = _env_flag("SECURE_SSL_REDIRECT", default=not DEBUG)
+SECURE_HSTS_SECONDS = int(
+    os.getenv("SECURE_HSTS_SECONDS", "").strip() or (0 if DEBUG else "31536000")
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_flag(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=not DEBUG
+)
+SECURE_HSTS_PRELOAD = _env_flag("SECURE_HSTS_PRELOAD", default=not DEBUG)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Logging: stdout é o canal correto em ambientes efêmeros/serverless (Vercel,
+# containers) — o coletor da plataforma captura. Nível dos apps via LOG_LEVEL.
+LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG" if DEBUG else "INFO").strip().upper()
+APP_LOGGERS = [
+    "agenda",
+    "clientes",
+    "core",
+    "integrations",
+    "meetings",
+    "peticoes",
+    "prazos",
+    "processos",
+    "productivity",
+    "usuarios",
+    "ai",
+]
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "%(asctime)s %(levelname)s %(name)s %(message)s",
+        },
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
     },
     "loggers": {
@@ -376,6 +436,14 @@ LOGGING = {
             "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
+        },
+        **{
+            name: {
+                "handlers": ["console"],
+                "level": LOG_LEVEL,
+                "propagate": False,
+            }
+            for name in APP_LOGGERS
         },
     },
 }

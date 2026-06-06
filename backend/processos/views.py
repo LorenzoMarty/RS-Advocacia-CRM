@@ -8,6 +8,7 @@ from core.utils import (
     metodo_nao_permitido,
     ler_corpo_json,
     resposta_sucesso,
+    isoformat_ou_nulo,
 )
 from processos.forms import ProcessoForm
 from processos.models import Processo
@@ -43,6 +44,7 @@ def serialize_processo(processo):
         "area_juridica": processo.area_juridica,
         "status": processo.status,
         "advogado_responsavel": processo.advogado_responsavel,
+        "data_ultima_movimentacao": isoformat_ou_nulo(processo.data_ultima_movimentacao),
     }
 
 

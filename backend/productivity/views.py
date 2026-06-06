@@ -1,3 +1,4 @@
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import AnonymousUser, User
@@ -178,6 +179,197 @@ def _goals_response(request, usuario: Usuario):
         serialize_productivity_goal(goals_by_user_id.get(item.pk), item)
         for item in usuarios
     ]
+
+
+# ---------------------------------------------------------------------------
+# Resumo agregado (dashboard de produtividade)
+# ---------------------------------------------------------------------------
+
+def _aware(dt):
+    """Garante datetime timezone-aware na timezone atual."""
+    if timezone.is_naive(dt):
+        return timezone.make_aware(dt, timezone.get_current_timezone())
+    return dt
+
+
+def _parse_iso_date(value):
+    """'YYYY-MM-DD' -> date, ou None se inválido."""
+    if not value:
+        return None
+    try:
+        return datetime.strptime(str(value)[:10], "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return None
+
+
+def _period_bounds(request, now=None):
+    """Retorna (inicio, fim, inicio_anterior, fim_anterior, periodo).
+
+    week  = semana corrente (segunda 00:00 -> agora)
+    month = mês corrente (dia 1 00:00 -> agora)
+    custom= inicio/fim (datas, dia inteiro)
+    O período anterior tem a mesma duração, imediatamente antes do início.
+    """
+    now = now or timezone.now()
+    periodo = (request.GET.get("periodo") or "week").strip().lower()
+
+    if periodo == "custom":
+        inicio_date = _parse_iso_date(request.GET.get("inicio"))
+        fim_date = _parse_iso_date(request.GET.get("fim"))
+        if inicio_date and fim_date and fim_date >= inicio_date:
+            inicio = _aware(datetime.combine(inicio_date, time.min))
+            fim = _aware(datetime.combine(fim_date, time.max))
+        else:
+            periodo = "week"
+
+    if periodo == "month":
+        inicio = _aware(datetime.combine(now.date().replace(day=1), time.min))
+        fim = now
+    elif periodo == "week":
+        local_now = timezone.localtime(now)
+        monday = local_now.date() - timedelta(days=local_now.weekday())
+        inicio = _aware(datetime.combine(monday, time.min))
+        fim = now
+
+    duracao = fim - inicio
+    fim_anterior = inicio
+    inicio_anterior = inicio - duracao
+    return inicio, fim, inicio_anterior, fim_anterior, periodo
+
+
+def _entry_reference_dt(entry):
+    """Data que posiciona a entrada num período: fim, senão início."""
+    return entry.ended_at or entry.started_at
+
+
+def _entries_in_range(entries, inicio, fim):
+    resultado = []
+    for entry in entries:
+        ref = _entry_reference_dt(entry)
+        if ref and inicio <= ref <= fim:
+            resultado.append(entry)
+    return resultado
+
+
+def _aggregate_resumo(entries, details, now):
+    """Agrega uma lista de entradas já filtradas por período."""
+    por_usuario = {}
+    por_tarefa = {}
+    por_processo = {}
+    por_tipo = {}
+    por_dia = {}
+    total = 0
+
+    for entry in entries:
+        seconds = _elapsed_seconds(entry, now=now)
+        total += seconds
+        task_details = details.get(entry.pk, {})
+
+        # por usuário
+        u = por_usuario.setdefault(
+            str(entry.user_id),
+            {"user_id": str(entry.user_id), "user_name": entry.user.nome if entry.user_id else "", "segundos": 0, "entradas": 0},
+        )
+        u["segundos"] += seconds
+        u["entradas"] += 1
+
+        # por tipo
+        t = por_tipo.setdefault(entry.task_type, {"task_type": entry.task_type, "segundos": 0, "entradas": 0})
+        t["segundos"] += seconds
+        t["entradas"] += 1
+
+        # por tarefa
+        task_key = f"{entry.task_type}:{entry.task_id}"
+        tk = por_tarefa.setdefault(
+            task_key,
+            {
+                "task_id": str(entry.task_id),
+                "task_type": entry.task_type,
+                "task_name": task_details.get("task_name", ""),
+                "process_id": task_details.get("process_id", ""),
+                "process_number": task_details.get("process_number", ""),
+                "segundos": 0,
+                "entradas": 0,
+            },
+        )
+        tk["segundos"] += seconds
+        tk["entradas"] += 1
+
+        # por processo
+        process_id = task_details.get("process_id", "")
+        process_number = task_details.get("process_number", "")
+        proc_key = process_id or "sem-processo"
+        p = por_processo.setdefault(
+            proc_key,
+            {"process_id": process_id, "process_number": process_number or "Sem processo", "segundos": 0},
+        )
+        p["segundos"] += seconds
+
+        # por dia (data local da referência)
+        ref = _entry_reference_dt(entry)
+        dia = timezone.localtime(ref).date().isoformat()
+        por_dia[dia] = por_dia.get(dia, 0) + seconds
+
+    return {
+        "tempo_total_segundos": total,
+        "por_usuario": sorted(por_usuario.values(), key=lambda x: x["segundos"], reverse=True),
+        "por_tarefa": sorted(por_tarefa.values(), key=lambda x: x["segundos"], reverse=True),
+        "por_processo": sorted(por_processo.values(), key=lambda x: x["segundos"], reverse=True),
+        "por_tipo": sorted(por_tipo.values(), key=lambda x: x["segundos"], reverse=True),
+        "por_dia": [{"data": dia, "segundos": seg} for dia, seg in sorted(por_dia.items())],
+    }
+
+
+@app_permissions_required("productivity.view_timeentry")
+def resumo(request):
+    if request.method != "GET":
+        return metodo_nao_permitido(["GET"])
+
+    usuario = _current_usuario(request)
+    if not usuario:
+        return resposta_erro({"usuario": ["Usuário atual não encontrado."]}, status=403)
+
+    now = timezone.now()
+    inicio, fim, inicio_anterior, fim_anterior, periodo = _period_bounds(request, now=now)
+
+    all_entries = list(_visible_time_entries(request, usuario))
+    details = _task_details(all_entries)
+
+    atuais = _entries_in_range(all_entries, inicio, fim)
+    anteriores = _entries_in_range(all_entries, inicio_anterior, fim_anterior)
+
+    resumo_atual = _aggregate_resumo(atuais, details, now)
+    total_anterior = sum(_elapsed_seconds(e, now=now) for e in anteriores)
+    total_atual = resumo_atual["tempo_total_segundos"]
+
+    if total_anterior > 0:
+        variacao = round((total_atual - total_anterior) / total_anterior * 100, 1)
+    else:
+        variacao = None  # sem base de comparação
+
+    timers_ativos = [
+        serialize_time_entry(entry, details=details, now=now)
+        for entry in all_entries
+        if entry.status in {TimeEntry.STATUS_RUNNING, TimeEntry.STATUS_PAUSED}
+    ]
+
+    return resposta_sucesso(
+        {
+            "periodo": periodo,
+            "inicio": inicio.isoformat(),
+            "fim": fim.isoformat(),
+            "tempo_total_segundos": total_atual,
+            "tempo_periodo_anterior_segundos": total_anterior,
+            "variacao_percentual": variacao,
+            "por_usuario": resumo_atual["por_usuario"],
+            "por_tarefa": resumo_atual["por_tarefa"],
+            "por_processo": resumo_atual["por_processo"],
+            "por_tipo": resumo_atual["por_tipo"],
+            "por_dia": resumo_atual["por_dia"],
+            "timers_ativos": timers_ativos,
+            "is_admin": _is_admin(request, usuario),
+        }
+    )
 
 
 @app_permissions_required("productivity.view_timeentry")
