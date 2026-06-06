@@ -1,14 +1,14 @@
 import { StatusBadge } from '../../layout';
 import { formatTimerSeconds, isTaskDone, taskTypeIcon, taskTypeLabel } from './productivity-data';
 
-const VISIBLE = 6;
+const VISIBLE = 8;
 
 // Tarefas que mais consumiram tempo no período.
 export function TaskTimeList({ byTask, deadlines, petitions }) {
   const top = byTask.slice(0, VISIBLE);
 
   return (
-    <section className="surface section-card pd-card">
+    <section className="surface section-card productivity-block">
       <div className="section-head">
         <div>
           <h2 className="section-title">Onde o tempo foi gasto</h2>
@@ -17,13 +17,13 @@ export function TaskTimeList({ byTask, deadlines, petitions }) {
       </div>
 
       {top.length ? (
-        <ul className="pd-task-list">
+        <div className="productivity-task-list">
           {top.map((item) => {
             const done = isTaskDone(item.taskType, item.taskId, deadlines, petitions);
             return (
-              <li key={item.key} className="pd-task-row">
-                <span className="pd-type-icon">{taskTypeIcon(item.taskType)}</span>
-                <div className="pd-task-info">
+              <article key={item.key} className="productivity-task-item">
+                <span className="productivity-type-icon">{taskTypeIcon(item.taskType)}</span>
+                <div className="productivity-task-info">
                   <strong title={item.label}>{item.label}</strong>
                   <span>
                     {taskTypeLabel(item.taskType)}
@@ -32,13 +32,13 @@ export function TaskTimeList({ byTask, deadlines, petitions }) {
                   </span>
                 </div>
                 <StatusBadge tone={done ? 'success' : 'muted'}>{done ? 'Realizado' : 'Em andamento'}</StatusBadge>
-                <strong className="pd-task-time">{formatTimerSeconds(item.seconds)}</strong>
-              </li>
+                <strong className="productivity-task-time">{formatTimerSeconds(item.seconds)}</strong>
+              </article>
             );
           })}
-        </ul>
+        </div>
       ) : (
-        <p className="pd-note">Sem tarefas cronometradas no período.</p>
+        <div className="note-box">Sem tarefas cronometradas no período.</div>
       )}
     </section>
   );

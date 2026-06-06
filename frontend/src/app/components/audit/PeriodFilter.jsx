@@ -5,16 +5,15 @@ const PERIOD_OPTIONS = [
 ];
 
 // Segmented control: horizonte de vencimento usado nos prazos/heatmap/prioridades.
+// Reusa o padrão .productivity-segmented (aria-pressed) do projeto.
 export function PeriodFilter({ value, onChange }) {
   return (
-    <div className="audit-period" role="tablist" aria-label="Período">
+    <div className="productivity-segmented" role="group" aria-label="Período">
       {PERIOD_OPTIONS.map((opt) => (
         <button
           key={opt.value}
           type="button"
-          role="tab"
-          aria-selected={value === opt.value}
-          className={`audit-period-btn${value === opt.value ? ' is-active' : ''}`}
+          aria-pressed={value === opt.value}
           onClick={() => onChange(opt.value)}
         >
           {opt.label}

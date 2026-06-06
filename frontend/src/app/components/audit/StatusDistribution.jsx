@@ -1,15 +1,13 @@
-import {
-  Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip,
-} from 'recharts';
+import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 
-import { colorAt, TOOLTIP_STYLE } from './chartTheme';
+import { colorAt } from './chartTheme';
 
-// Área C — donut de processos por status.
+// Área C — donut de processos por status, no padrão .pd-donut do projeto.
 export function StatusDistribution({ data }) {
   const total = data.reduce((sum, d) => sum + d.count, 0);
 
   return (
-    <section className="audit-card surface section-card">
+    <section className="surface section-card audit-card">
       <div className="section-head">
         <div>
           <h2 className="section-title">Processos por status</h2>
@@ -17,30 +15,40 @@ export function StatusDistribution({ data }) {
         </div>
       </div>
       {data.length ? (
-        <div className="audit-chart">
-          <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Pie
-                data={data}
-                dataKey="count"
-                nameKey="status"
-                innerRadius={62}
-                outerRadius={92}
-                paddingAngle={2}
-                stroke="none"
-              >
-                {data.map((entry, i) => (
-                  <Cell key={entry.status} fill={colorAt(i)} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={TOOLTIP_STYLE} />
-              <Legend
-                verticalAlign="bottom"
-                iconType="circle"
-                wrapperStyle={{ fontSize: 12 }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+        <div className="pd-donut">
+          <div className="pd-donut-chart" style={{ height: 200 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data}
+                  dataKey="count"
+                  nameKey="status"
+                  innerRadius="62%"
+                  outerRadius="92%"
+                  paddingAngle={data.length > 1 ? 2 : 0}
+                  stroke="none"
+                  isAnimationActive={false}
+                >
+                  {data.map((entry, i) => (
+                    <Cell key={entry.status} fill={colorAt(i)} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pd-donut-center">
+              <span>Processos</span>
+              <strong>{total}</strong>
+            </div>
+          </div>
+          <ul className="pd-donut-legend">
+            {data.map((entry, i) => (
+              <li key={entry.status}>
+                <span className="pd-dot" style={{ background: colorAt(i) }} />
+                <span className="pd-legend-label">{entry.status}</span>
+                <span className="pd-legend-value">{entry.count}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : (
         <div className="note-box">Sem processos cadastrados.</div>

@@ -1,17 +1,18 @@
 import { Link } from 'react-router-dom';
 
-// Compact KPI/alert card. `tone` controls accent: danger | warn | success | gold.
+// Métrica de alerta como célula da faixa .productivity-kpis do projeto.
+// `tone` colore só o valor: danger | warn | success | gold.
 export function AlertCard({ label, value, hint, tone = 'gold', to }) {
   const content = (
     <>
-      <span className="alert-card-label">{label}</span>
-      <strong className="alert-card-value">{value}</strong>
-      {hint ? <span className="alert-card-hint">{hint}</span> : null}
+      <span>{label}</span>
+      <strong className={`audit-kpi-value is-${tone}`}>{value}</strong>
+      {hint ? <em className="audit-kpi-hint">{hint}</em> : null}
     </>
   );
 
   if (to) {
-    return <Link className={`alert-card is-${tone}`} to={to}>{content}</Link>;
+    return <Link className="productivity-kpi audit-kpi" to={to}>{content}</Link>;
   }
-  return <div className={`alert-card is-${tone}`}>{content}</div>;
+  return <div className="productivity-kpi">{content}</div>;
 }

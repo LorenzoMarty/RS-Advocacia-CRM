@@ -1,50 +1,23 @@
 /* ============================================================
    Auditoria — painel de controle executivo
+   Reusa o chrome do projeto: .surface.section-card, .section-head,
+   .section-title (serif), .productivity-kpis, .productivity-segmented,
+   .pd-donut, .pd-hbar-*, .productivity-task-item, .note-box, EmptyState.
+   Aqui ficam só as peças exclusivas da auditoria (hero de risco,
+   prioridades, insights, heatmap).
    ============================================================ */
 
-.audit-page{display:grid;gap:20px}
+.audit-page{display:grid;gap:16px}
 
-/* Header + filtro de período */
-.audit-header{
-    display:flex;
-    align-items:flex-end;
-    justify-content:space-between;
-    gap:16px;
-    flex-wrap:wrap;
-}
-.audit-header .intro-title{font-size:1.5rem}
-.audit-header .section-note{font-size:.82rem;margin-top:2px}
-
-.audit-period{
-    display:inline-flex;
-    padding:3px;
-    gap:2px;
-    border-radius:12px;
-    border:1px solid var(--line);
-    background:var(--ghost);
-}
-.audit-period-btn{
-    border:0;
-    background:transparent;
-    color:var(--soft);
-    font-size:.8rem;
-    font-weight:600;
-    padding:6px 14px;
-    border-radius:9px;
-    cursor:pointer;
-    transition:background .15s ease,color .15s ease;
-}
-.audit-period-btn:hover{color:var(--text)}
-.audit-period-btn.is-active{
-    background:rgba(212,175,55,.14);
-    color:var(--gold-soft);
-}
+/* Tighter section heads inside the dense dashboard */
+.audit-card .section-head{margin-bottom:12px}
+.audit-card .section-note{font-size:.8rem}
 
 /* Rótulo divisor de área */
 .audit-section-label{
-    font-size:.78rem;
-    font-weight:700;
-    letter-spacing:.08em;
+    font-size:.6rem;
+    font-weight:800;
+    letter-spacing:.12em;
     text-transform:uppercase;
     color:var(--muted);
     margin:6px 2px -6px;
@@ -53,17 +26,41 @@
 /* ---------- Área A: hero de risco ---------- */
 .audit-risk-hero{
     display:grid;
-    grid-template-columns:minmax(260px,320px) minmax(0,1fr);
+    grid-template-columns:minmax(240px,300px) minmax(0,1fr);
     gap:16px;
     align-items:stretch;
 }
 
+/* Faixa de KPIs (override do .productivity-kpis para 5 colunas) */
+.audit-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+.audit-kpi{
+    text-decoration:none;
+    transition:background .15s ease;
+}
+.audit-kpi:hover{background:rgba(212,175,55,.06)}
+.audit-kpi-value{
+    font-size:1.05rem;
+    line-height:1.1;
+    letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;
+}
+.audit-kpi-value.is-danger{color:var(--danger)}
+.audit-kpi-value.is-warn{color:var(--warn)}
+.audit-kpi-value.is-success{color:var(--success)}
+.audit-kpi-value.is-gold{color:var(--gold-soft)}
+.audit-kpi-hint{
+    font-size:.62rem;
+    font-style:normal;
+    color:var(--muted);
+}
+
+/* Score card */
 .risk-score-card{
     display:flex;
     align-items:center;
     gap:18px;
-    padding:20px;
-    border-radius:18px;
+    padding:18px;
+    border-radius:14px;
     border:1px solid var(--line);
     background:var(--ghost);
 }
@@ -77,46 +74,21 @@
 }
 .risk-score-inner{
     width:80px;height:80px;border-radius:50%;
-    background:var(--bg,#14181f);
+    background:var(--bg,#020617);
     display:grid;place-items:center;text-align:center;line-height:1;
 }
 .risk-score-inner strong{font-size:1.7rem;letter-spacing:-.03em}
-.risk-score-inner span{font-size:.62rem;color:var(--muted)}
+.risk-score-inner span{font-size:.58rem;color:var(--muted)}
 
-.risk-score-body{display:grid;gap:4px;min-width:0}
-.risk-score-label{font-size:1.15rem;font-weight:800;letter-spacing:-.01em}
+.risk-score-body{display:grid;gap:2px;min-width:0}
+.risk-score-label{font-family:var(--serif);font-size:1.5rem;font-weight:400;line-height:1.1}
 .risk-score-drivers{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:5px}
 .risk-score-drivers li{
     display:flex;justify-content:space-between;gap:10px;
-    font-size:.8rem;color:var(--soft);
+    font-size:.78rem;color:var(--soft);
 }
 .risk-score-drivers li strong{color:var(--text);font-variant-numeric:tabular-nums}
-.risk-score-clean{font-size:.8rem;color:var(--soft);margin:6px 0 0}
-
-/* Cards de alerta */
-.audit-alert-grid{
-    display:grid;
-    grid-template-columns:repeat(5,minmax(0,1fr));
-    gap:12px;
-}
-.alert-card{
-    display:grid;gap:4px;align-content:start;
-    padding:16px;border-radius:16px;
-    border:1px solid var(--line);
-    background:var(--ghost);
-    color:var(--text);
-    border-left:3px solid var(--line);
-    transition:transform .15s ease,border-color .15s ease;
-}
-a.alert-card:hover{transform:translateY(-2px)}
-.alert-card-label{font-size:.76rem;color:var(--soft)}
-.alert-card-value{font-size:1.9rem;letter-spacing:-.03em;line-height:1.05}
-.alert-card-hint{font-size:.7rem;color:var(--muted)}
-.alert-card.is-danger{border-left-color:var(--danger)}
-.alert-card.is-danger .alert-card-value{color:var(--danger)}
-.alert-card.is-warn{border-left-color:var(--warn)}
-.alert-card.is-success{border-left-color:var(--success)}
-.alert-card.is-gold{border-left-color:var(--gold)}
+.risk-score-clean{font-size:.78rem;color:var(--soft);margin:6px 0 0}
 
 /* ---------- Área B: prioridade + insights ---------- */
 .audit-grid-focus{
@@ -128,21 +100,21 @@ a.alert-card:hover{transform:translateY(-2px)}
 
 .audit-priority-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .audit-priority-item{
-    position:relative;
     display:grid;
     grid-template-columns:4px minmax(0,1fr) auto;
     gap:12px;
     align-items:center;
-    padding:11px 14px 11px 0;
-    border-radius:12px;
+    padding:10px 14px 10px 0;
+    border-radius:14px;
     border:1px solid var(--line);
     background:var(--ghost);
     color:var(--text);
+    text-decoration:none;
     overflow:hidden;
     transition:border-color .15s ease;
 }
-.audit-priority-item:hover{border-color:rgba(255,255,255,.15)}
-.audit-priority-rail{align-self:stretch;width:4px;border-radius:0}
+.audit-priority-item:hover{border-color:rgba(212,175,55,.28)}
+.audit-priority-rail{align-self:stretch;width:4px}
 .audit-priority-item.is-danger .audit-priority-rail{background:var(--danger)}
 .audit-priority-item.is-warn .audit-priority-rail{background:var(--warn)}
 .audit-priority-item.is-gold .audit-priority-rail{background:var(--gold)}
@@ -165,27 +137,10 @@ a.alert-card:hover{transform:translateY(-2px)}
     align-items:start;
 }
 
-.audit-card .section-head{margin-bottom:12px}
-.audit-card .section-title{font-size:1.05rem;font-weight:800;letter-spacing:-.01em}
-.audit-card .section-note{font-size:.78rem}
-
-/* Bar rows (workload / horas) */
-.audit-bar-list{display:grid;gap:8px}
-.audit-bar-row{
-    display:grid;
-    grid-template-columns:minmax(110px,.7fr) minmax(120px,1fr) minmax(36px,auto);
-    gap:10px;align-items:center;
-    padding:9px 12px;border-radius:12px;
-    border:1px solid var(--line);background:var(--ghost);
-}
-.audit-bar-row.is-overloaded{border-color:rgba(232,178,92,.3);background:rgba(232,178,92,.05)}
-.audit-bar-row strong{font-size:.84rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.audit-bar-row>span{color:var(--soft);font-size:.78rem;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
-
-/* Heatmap */
+/* Heatmap responsável × urgência */
 .audit-heatmap-scroll{overflow-x:auto}
 .audit-heatmap{width:100%;border-collapse:separate;border-spacing:4px;font-size:.78rem}
-.audit-heatmap th{font-weight:600;color:var(--soft);text-align:center;padding:4px 6px;white-space:nowrap}
+.audit-heatmap th{font-weight:700;color:var(--soft);text-align:center;padding:4px 6px;white-space:nowrap}
 .audit-heatmap th[scope="row"]{text-align:left;color:var(--text);max-width:130px;overflow:hidden;text-overflow:ellipsis}
 .audit-heatmap thead th.is-danger{color:var(--danger)}
 .audit-heatmap thead th.is-warn{color:var(--warn)}
@@ -200,28 +155,11 @@ a.alert-card:hover{transform:translateY(-2px)}
 .audit-heat-cell.is-gold .audit-heat-fill{background:var(--gold)}
 .audit-heat-num{position:relative;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
 
-/* Charts (recharts) */
-.audit-chart{width:100%}
-
 /* ---------- Área D: monitoramento ---------- */
-.audit-orphan-list{display:grid;gap:8px}
-.audit-orphan-item{
-    display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;
-    padding:8px 12px;border-radius:12px;border:1px solid var(--line);
-    background:var(--ghost);color:var(--text);transition:border-color .15s ease;
-}
-.audit-orphan-item:hover{border-color:rgba(255,255,255,.12)}
-.audit-orphan-item>div{display:grid;gap:2px;min-width:0}
-.audit-orphan-item>div strong{font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.audit-orphan-item>div span,.audit-orphan-arrow{color:var(--muted);font-size:.76rem}
+.audit-row-arrow{color:var(--muted);font-size:.76rem;white-space:nowrap}
 .audit-orphan-more{
-    text-align:center;font-size:.8rem;color:var(--gold-soft);
-    padding:8px;border-radius:10px;border:1px dashed var(--line);
-}
-.audit-avatar{
-    width:34px;height:34px;display:grid;place-items:center;border-radius:11px;
-    border:1px solid rgba(212,175,55,.18);background:rgba(212,175,55,.08);
-    color:var(--gold-soft);font-size:.72rem;font-weight:900;flex-shrink:0;
+    text-align:center;font-size:.8rem;color:var(--gold-soft);text-decoration:none;
+    padding:9px;border-radius:12px;border:1px dashed var(--line);
 }
 
 /* ---------- Skeleton ---------- */
@@ -230,33 +168,27 @@ a.alert-card:hover{transform:translateY(-2px)}
     border-radius:16px;border:1px solid var(--line);background:var(--ghost);
     animation:audit-shimmer 1.3s ease-in-out infinite;
 }
-.audit-skel-hero{height:148px}
-.audit-skel-card{height:104px}
+.audit-skel-hero{height:172px}
 .audit-skel-block{height:220px}
 
 /* ---------- Light theme ---------- */
 html[data-theme="light"] .risk-score-inner{background:#fff}
-html[data-theme="light"] .audit-bar-row,
-html[data-theme="light"] .alert-card,
+html[data-theme="light"] .risk-score-card,
 html[data-theme="light"] .audit-priority-item,
-html[data-theme="light"] .audit-orphan-item,
-html[data-theme="light"] .audit-period{
+html[data-theme="light"] .audit-orphan-more{
     background:rgba(24,30,42,.04);border-color:rgba(30,34,45,.1);
 }
 
 /* ---------- Responsivo ---------- */
 @media(max-width:1080px){
     .audit-risk-hero{grid-template-columns:1fr}
-    .audit-alert-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .audit-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
     .audit-grid-focus{grid-template-columns:1fr}
 }
 @media(max-width:900px){
     .audit-grid-2{grid-template-columns:1fr}
 }
 @media(max-width:560px){
-    .audit-page{gap:16px}
-    .audit-alert-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .audit-bar-row{grid-template-columns:minmax(0,1fr) auto}
-    .audit-bar-row .productivity-bar{display:none}
+    .audit-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
     .risk-score-card{flex-direction:column;text-align:center}
 }

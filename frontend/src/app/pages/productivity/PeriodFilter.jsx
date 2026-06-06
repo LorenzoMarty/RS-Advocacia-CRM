@@ -1,7 +1,7 @@
 // Filtro de período (semana | mês | personalizado).
 export function PeriodFilter({ period, setPeriod, customStart, setCustomStart, customEnd, setCustomEnd }) {
   return (
-    <div className="pd-period-filter">
+    <div className="productivity-filters">
       <select value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Filtrar período">
         <option value="week">Esta semana</option>
         <option value="month">Este mês</option>

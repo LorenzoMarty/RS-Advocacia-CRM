@@ -1,259 +1,44 @@
-/* Dashboard de Produtividade — layout bento, gráficos e heatmap. */
+/* Complementos visuais do dashboard de Produtividade.
+   Reaproveita o chrome de productivity.css (.surface.section-card,
+   .section-head, .productivity-kpis, .productivity-task-*, etc.).
+   Aqui ficam apenas os gráficos (sparkline, donut, barras, heatmap). */
 
-.pd-page{
-    display:flex;
-    flex-direction:column;
-    gap:var(--space-6);
-}
-
-/* ---- Header sticky ---- */
-.pd-header{
-    position:sticky;
-    top:0;
-    z-index:5;
-    display:flex;
-    align-items:flex-end;
-    justify-content:space-between;
-    gap:var(--space-4);
-    flex-wrap:wrap;
-    padding:var(--space-3) 0;
-    backdrop-filter:blur(8px);
-}
-
-.pd-title{
-    font-family:var(--serif);
-    font-size:2.1rem;
-    line-height:1.05;
-    letter-spacing:-.01em;
-}
-
-.pd-subtitle{
-    color:var(--muted);
-    font-size:.86rem;
-    margin-top:2px;
-}
-
-.pd-header-controls{
-    display:flex;
-    gap:var(--space-2);
-    flex-wrap:wrap;
-    align-items:center;
-}
-
-.pd-period-filter{
-    display:flex;
-    gap:var(--space-2);
-    flex-wrap:wrap;
-}
-
-.pd-period-filter select,
-.pd-period-filter input,
-.pd-user-select{
-    min-height:38px;
-    padding:0 12px;
-    border-radius:11px;
-    border:1px solid var(--line);
-    background:var(--ghost);
-    color:var(--text);
-    font-size:.82rem;
-}
-
-.pd-user-select{ min-width:190px; }
-
-/* ---- Bento grid ---- */
-.pd-bento{
-    display:grid;
-    grid-template-columns:repeat(12,minmax(0,1fr));
-    gap:var(--space-4);
-}
-
-.pd-cell-hero{ grid-column:span 7; }
-.pd-cell-kpis{ grid-column:span 5; }
-.pd-cell-distribution{ grid-column:span 7; }
-.pd-cell-ranking{ grid-column:span 5; }
-.pd-cell-timeline{ grid-column:span 7; }
-.pd-cell-tasks{ grid-column:span 5; }
-.pd-cell-history{ grid-column:span 12; }
-
-/* quando não há ranking (visão individual), distribuição e timeline ocupam mais */
-.pd-bento:not(:has(.pd-cell-ranking)) .pd-cell-distribution{ grid-column:span 7; }
-.pd-bento:not(:has(.pd-cell-ranking)) .pd-cell-tasks{ grid-column:span 5; }
-
-.pd-card{ height:100%; }
-
-.pd-note{
-    color:var(--muted);
-    font-size:.84rem;
-    padding:var(--space-4) 0;
-    text-align:center;
-}
-
-/* ---- Hero ---- */
-.pd-hero{
-    height:100%;
+/* ---- Tendência (variação + sparkline) ---- */
+.productivity-trend{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:var(--space-5);
-    padding:var(--space-6);
-    border-radius:18px;
-    border:1px solid var(--line);
-    background:
-        radial-gradient(120% 140% at 0% 0%, rgba(212,175,55,.12), transparent 55%),
-        var(--panel);
-    box-shadow:var(--shadow);
+    gap:var(--space-4);
+    flex-wrap:wrap;
+    margin-top:var(--space-2);
 }
 
-.pd-hero-main{ display:flex; flex-direction:column; gap:var(--space-2); min-width:0; }
-
-.pd-eyebrow{
-    color:var(--muted);
-    font-size:.66rem;
-    font-weight:800;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-}
-
-.pd-hero-value{
-    font-family:var(--serif);
-    font-size:3rem;
-    line-height:.95;
-    letter-spacing:-.02em;
-    font-variant-numeric:tabular-nums;
-}
-
-.pd-delta{
+.productivity-delta{
     display:inline-flex;
     align-items:center;
     gap:6px;
-    font-size:.78rem;
+    font-size:.8rem;
     font-weight:700;
-    width:fit-content;
 }
+.productivity-delta.up{ color:var(--success); }
+.productivity-delta.down{ color:var(--danger); }
+.productivity-delta.muted{ color:var(--muted); font-weight:600; }
 
-.pd-delta-up{ color:var(--success); }
-.pd-delta-down{ color:var(--danger); }
-.pd-delta-flat{ color:var(--muted); font-weight:600; }
-
-.pd-hero-spark{
-    flex:0 0 42%;
-    max-width:260px;
-    align-self:stretch;
-    display:flex;
-    align-items:flex-end;
-}
-
-.pd-sparkline{ width:100%; }
-
-/* ---- KPIs secundários ---- */
-.pd-kpis{
-    height:100%;
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:var(--space-3);
-}
-
-.pd-kpi{
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    gap:6px;
-    padding:var(--space-4);
-    border-radius:16px;
-    border:1px solid var(--line);
-    background:var(--ghost);
-}
-
-.pd-kpi-accent{
-    border-color:rgba(212,175,55,.3);
-    background:rgba(212,175,55,.08);
-}
-
-.pd-kpi-label{
-    color:var(--muted);
-    font-size:.64rem;
-    font-weight:800;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-}
-
-.pd-kpi-value{
-    font-size:1.6rem;
-    line-height:1;
-    letter-spacing:-.02em;
-    font-variant-numeric:tabular-nums;
-}
-
-/* ---- Timers ativos ---- */
-.pd-active{
-    display:flex;
-    gap:var(--space-3);
-    flex-wrap:wrap;
-}
-
-.pd-active-pill{
-    display:flex;
-    align-items:center;
-    gap:var(--space-3);
-    padding:10px 14px;
-    border-radius:14px;
-    border:1px solid var(--line);
-    background:var(--panel);
-    min-width:240px;
-    flex:1 1 280px;
-}
-
-.pd-active-running{ border-color:rgba(115,211,177,.35); }
-.pd-active-paused{ border-color:var(--line); opacity:.85; }
-
-.pd-pulse{
-    width:9px; height:9px; border-radius:999px;
-    flex:0 0 auto;
-}
-.pd-pulse-running{ background:var(--success); box-shadow:0 0 0 0 rgba(115,211,177,.6); animation:pd-pulse 1.8s infinite; }
-.pd-pulse-paused{ background:var(--muted); }
-
-@keyframes pd-pulse{
-    0%{ box-shadow:0 0 0 0 rgba(115,211,177,.5); }
-    70%{ box-shadow:0 0 0 8px rgba(115,211,177,0); }
-    100%{ box-shadow:0 0 0 0 rgba(115,211,177,0); }
-}
-
-.pd-active-info{ display:grid; gap:2px; min-width:0; flex:1 1 auto; }
-.pd-active-info strong{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.9rem; }
-.pd-active-info span{ color:var(--muted); font-size:.72rem; }
-
-.pd-active-time{ font-variant-numeric:tabular-nums; font-weight:700; letter-spacing:.02em; }
-
-.pd-active-actions{ display:flex; gap:6px; }
-.pd-active-actions button,
-.pd-btn-stop{
-    min-height:30px;
-    padding:0 10px;
-    border-radius:9px;
-    border:1px solid rgba(212,175,55,.2);
-    background:rgba(212,175,55,.08);
-    color:var(--gold-soft);
-    font-size:.7rem;
-    font-weight:800;
-    cursor:pointer;
-}
-.pd-active-actions .pd-btn-stop{
-    border-color:rgba(239,122,122,.25);
-    background:rgba(239,122,122,.1);
-    color:#ffd5d5;
-}
+.pd-sparkline{ flex:1 1 220px; max-width:320px; }
 
 /* ---- Distribuição (donut + barras) ---- */
-.pd-distribution-grid{
+.productivity-distribution{
     display:grid;
-    grid-template-columns:minmax(180px,.8fr) minmax(0,1.2fr);
+    grid-template-columns:minmax(170px,.75fr) minmax(0,1.25fr);
     gap:var(--space-5);
     align-items:center;
 }
 
+.productivity-distribution-bars{ min-width:0; }
+
+/* Donut */
 .pd-donut{ display:flex; flex-direction:column; gap:var(--space-3); }
-.pd-donut-chart{ position:relative; }
+.pd-donut-chart{ position:relative; height:200px; }
 .pd-donut-center{
     position:absolute; inset:0;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -264,11 +49,11 @@
 
 .pd-donut-legend{ display:flex; flex-direction:column; gap:6px; }
 .pd-donut-legend li{ display:flex; align-items:center; gap:8px; font-size:.8rem; }
-.pd-legend-label{ color:var(--soft); }
+.pd-legend-label{ color:var(--soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pd-legend-value{ margin-left:auto; font-variant-numeric:tabular-nums; font-weight:700; }
 .pd-dot{ width:10px; height:10px; border-radius:3px; flex:0 0 auto; }
 
-/* ---- Barras horizontais (HBars / ranking) ---- */
+/* Barras horizontais */
 .pd-hbars{ display:flex; flex-direction:column; gap:var(--space-3); }
 .pd-hbar-row{ display:flex; flex-direction:column; gap:5px; }
 .pd-hbar-head{ display:flex; justify-content:space-between; gap:8px; font-size:.8rem; }
@@ -278,130 +63,30 @@
 .pd-hbar-track{ height:8px; border-radius:999px; background:var(--chart-track); overflow:hidden; }
 .pd-hbar-fill{ display:block; height:100%; border-radius:999px; transition:width .4s ease; }
 
-.pd-segmented{
-    display:inline-flex; gap:4px; padding:4px; margin-bottom:var(--space-3);
-    border-radius:11px; border:1px solid var(--line); background:var(--ghost); width:fit-content;
-}
-.pd-segmented button{
-    min-height:30px; padding:0 14px; border-radius:8px;
-    border:1px solid transparent; background:transparent; color:var(--soft);
-    font-size:.74rem; font-weight:800; cursor:pointer;
-}
-.pd-segmented button[aria-pressed="true"]{
-    background:rgba(212,175,55,.1); border-color:rgba(212,175,55,.22); color:var(--gold-soft);
-}
-
-/* ---- Ranking ---- */
-.pd-ranking{ display:flex; flex-direction:column; gap:var(--space-3); }
-.pd-rank-row{ display:flex; align-items:center; gap:var(--space-3); }
-.pd-rank-pos{ width:18px; color:var(--muted); font-weight:800; font-size:.8rem; flex:0 0 auto; }
-.pd-avatar{
-    width:34px; height:34px; border-radius:11px; flex:0 0 auto;
-    display:grid; place-items:center; color:#0b1020; font-weight:900; font-size:.74rem;
-}
-.pd-rank-body{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:5px; }
-.pd-rank-head{ display:flex; justify-content:space-between; gap:8px; font-size:.84rem; }
-.pd-rank-head strong{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.pd-rank-head span{ font-variant-numeric:tabular-nums; font-weight:700; flex:0 0 auto; }
-
-/* ---- Tarefas / tipo-icon ---- */
-.pd-type-icon{
-    width:30px; height:30px; flex:0 0 auto;
-    display:grid; place-items:center; border-radius:9px;
-    border:1px solid rgba(212,175,55,.18); background:rgba(212,175,55,.08);
-    color:var(--gold-soft); font-size:.7rem; font-weight:900;
-}
-
-.pd-task-list{ display:flex; flex-direction:column; gap:var(--space-2); }
-.pd-task-row{
-    display:grid; grid-template-columns:auto minmax(0,1fr) auto auto;
-    gap:var(--space-3); align-items:center;
-    padding:10px 12px; border-radius:14px; border:1px solid var(--line); background:var(--ghost);
-}
-.pd-task-info{ display:grid; gap:3px; min-width:0; }
-.pd-task-info strong{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.pd-task-info span{ color:var(--muted); font-size:.74rem; }
-.pd-task-time{ font-variant-numeric:tabular-nums; }
-
 /* ---- Heatmap ---- */
-.pd-heatmap{ display:flex; gap:var(--space-2); }
-.pd-heatmap-days{
+.productivity-heatmap{ display:flex; gap:var(--space-2); }
+.productivity-heatmap-days{
     display:grid; grid-template-rows:repeat(7,1fr); gap:4px;
     color:var(--muted); font-size:.6rem; font-weight:700;
 }
-.pd-heatmap-days span{ height:14px; display:flex; align-items:center; }
-.pd-heatmap-grid{
+.productivity-heatmap-days span{ height:14px; display:flex; align-items:center; }
+.productivity-heatmap-grid{
     display:grid; grid-template-rows:repeat(7,1fr); grid-auto-flow:column; grid-auto-columns:14px;
-    gap:4px; overflow-x:auto;
+    gap:4px; overflow-x:auto; padding-bottom:4px;
 }
-.pd-heat{ width:14px; height:14px; border-radius:4px; background:var(--chart-track); }
-.pd-heat-0{ background:var(--chart-track); }
-.pd-heat-1{ background:rgba(212,175,55,.28); }
-.pd-heat-2{ background:rgba(212,175,55,.5); }
-.pd-heat-3{ background:rgba(212,175,55,.72); }
-.pd-heat-4{ background:var(--chart-1); }
-
-.pd-heatmap-legend{
+.productivity-heat{ width:14px; height:14px; border-radius:4px; background:var(--chart-track); }
+.productivity-heat-0{ background:var(--chart-track); }
+.productivity-heat-1{ background:rgba(212,175,55,.28); }
+.productivity-heat-2{ background:rgba(212,175,55,.5); }
+.productivity-heat-3{ background:rgba(212,175,55,.72); }
+.productivity-heat-4{ background:var(--chart-1); }
+.productivity-heatmap-legend{
     display:flex; align-items:center; gap:5px; margin-top:var(--space-3);
     color:var(--muted); font-size:.68rem;
 }
 
-/* ---- Histórico (accordion) ---- */
-.pd-history{ padding:0; }
-.pd-history-summary{
-    display:flex; align-items:center; justify-content:space-between; gap:var(--space-3);
-    padding:var(--space-4) var(--space-5); cursor:pointer; list-style:none;
-}
-.pd-history-summary::-webkit-details-marker{ display:none; }
-.pd-history-summary::after{ content:'▾'; color:var(--muted); transition:transform .2s ease; }
-.pd-history[open] .pd-history-summary::after{ transform:rotate(180deg); }
-.pd-history-count{ color:var(--muted); font-size:.78rem; margin-left:auto; }
-.pd-history-list{ display:flex; flex-direction:column; gap:var(--space-2); padding:0 var(--space-5) var(--space-5); }
-.pd-history-row{
-    display:grid; grid-template-columns:auto minmax(0,1fr) auto auto;
-    gap:var(--space-3); align-items:center;
-    padding:8px 12px; border-radius:12px; border:1px solid var(--line); background:var(--ghost);
-}
-.pd-history-info{ display:grid; gap:2px; min-width:0; }
-.pd-history-info strong{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.86rem; }
-.pd-history-info span{ color:var(--muted); font-size:.72rem; }
-.pd-history-day{ color:var(--soft); font-size:.74rem; }
-.pd-history-time{ font-variant-numeric:tabular-nums; }
-
-/* ---- Light theme ---- */
-html[data-theme="light"] .pd-kpi,
-html[data-theme="light"] .pd-task-row,
-html[data-theme="light"] .pd-history-row,
-html[data-theme="light"] .pd-active-pill{
-    background:rgba(24,30,42,.04);
-    border-color:rgba(30,34,45,.1);
-}
-html[data-theme="light"] .pd-avatar{ color:#fff; }
-
 /* ---- Responsivo ---- */
-@media (max-width:1024px){
-    .pd-cell-hero,
-    .pd-cell-kpis,
-    .pd-cell-distribution,
-    .pd-cell-ranking,
-    .pd-cell-timeline,
-    .pd-cell-tasks{
-        grid-column:span 12;
-    }
-}
-
 @media (max-width:768px){
-    .pd-header{ position:static; }
-    .pd-title{ font-size:1.7rem; }
-    .pd-hero{ flex-direction:column; align-items:flex-start; padding:var(--space-5); }
-    .pd-hero-value{ font-size:2.4rem; }
-    .pd-hero-spark{ flex:1 1 auto; max-width:none; width:100%; }
-    .pd-distribution-grid{ grid-template-columns:1fr; }
-    .pd-active-pill{ flex:1 1 100%; }
-}
-
-@media (max-width:480px){
-    .pd-kpis{ grid-template-columns:1fr 1fr; }
-    .pd-task-row{ grid-template-columns:auto minmax(0,1fr) auto; }
-    .pd-task-row .pd-task-time{ grid-column:2 / -1; text-align:right; }
+    .productivity-distribution{ grid-template-columns:1fr; }
+    .pd-sparkline{ max-width:none; }
 }

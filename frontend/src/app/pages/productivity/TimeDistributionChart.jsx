@@ -26,10 +26,8 @@ export function TimeDistributionChart({ byType, byProcess, byTask }) {
     seconds: item.seconds,
   }));
 
-  const hasData = donutData.length > 0;
-
   return (
-    <section className="surface section-card pd-card pd-distribution">
+    <section className="surface section-card productivity-block">
       <div className="section-head">
         <div>
           <h2 className="section-title">Distribuição do tempo</h2>
@@ -37,11 +35,11 @@ export function TimeDistributionChart({ byType, byProcess, byTask }) {
         </div>
       </div>
 
-      {hasData ? (
-        <div className="pd-distribution-grid">
+      {donutData.length ? (
+        <div className="productivity-distribution">
           <Donut data={donutData} />
-          <div className="pd-distribution-bars">
-            <div className="pd-segmented" role="group" aria-label="Agrupar por">
+          <div className="productivity-distribution-bars">
+            <div className="productivity-segmented" role="group" aria-label="Agrupar por">
               {TABS.map((item) => (
                 <button
                   key={item.key}
@@ -53,15 +51,11 @@ export function TimeDistributionChart({ byType, byProcess, byTask }) {
                 </button>
               ))}
             </div>
-            {barsData.length ? (
-              <HBars data={barsData} />
-            ) : (
-              <p className="pd-note">Sem dados para esse agrupamento.</p>
-            )}
+            {barsData.length ? <HBars data={barsData} /> : <div className="note-box">Sem dados para esse agrupamento.</div>}
           </div>
         </div>
       ) : (
-        <p className="pd-note">Sem tempo registrado no período.</p>
+        <div className="note-box">Sem tempo registrado no período.</div>
       )}
     </section>
   );
