@@ -375,7 +375,7 @@ export function GuestLayout() {
 export function ProtectedLayout() {
   const { addFlash, currentUser, deadlines, events, isLoading, sair } = useAppState();
   const location = useLocation();
-  const [chrome, setChrome] = useState(PAGE_CHROME_DEFAULT);
+  const [, setChrome] = useState(PAGE_CHROME_DEFAULT);
   const { sidebarCollapsed, toggleSidebar } = useShellPreferences();
 
   useReminderToasts({ addFlash, currentUser, deadlines, events, isLoading });

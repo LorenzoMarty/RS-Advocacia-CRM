@@ -77,6 +77,7 @@ export function ClientsListPage() {
     ),
   ], [processes]);
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table exposes non-memoizable APIs by design.
   const table = useReactTable({
     data: typeFilteredClients,
     columns,
