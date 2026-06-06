@@ -3,38 +3,19 @@
    .section-head, .productivity-kpis, .productivity-task-*, etc.).
    Aqui ficam apenas os gráficos (sparkline, donut, barras, heatmap). */
 
-/* ---- Tendência (variação + sparkline) ---- */
-.productivity-trend{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:var(--space-4);
-    flex-wrap:wrap;
-    margin-top:var(--space-2);
-}
-
-.productivity-delta{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    font-size:.8rem;
-    font-weight:700;
-}
-.productivity-delta.up{ color:var(--success); }
-.productivity-delta.down{ color:var(--danger); }
-.productivity-delta.muted{ color:var(--muted); font-weight:600; }
-
-.pd-sparkline{ flex:1 1 220px; max-width:320px; }
-
-/* ---- Distribuição (donut + barras) ---- */
+/* ---- Distribuição (donut + lista) ---- */
 .productivity-distribution{
     display:grid;
-    grid-template-columns:minmax(170px,.75fr) minmax(0,1.25fr);
+    grid-template-columns:minmax(170px,.75fr) minmax(0,1.4fr);
     gap:var(--space-5);
-    align-items:center;
+    align-items:start;
 }
 
-.productivity-distribution-bars{ min-width:0; }
+.productivity-distribution-tasks{ min-width:0; display:flex; flex-direction:column; gap:var(--space-3); }
+.productivity-distribution-tasks .section-subtitle{
+    margin:0; font-size:.7rem; font-weight:800; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted);
+}
 
 /* Donut */
 .pd-donut{ display:flex; flex-direction:column; gap:var(--space-3); }
@@ -53,40 +34,7 @@
 .pd-legend-value{ margin-left:auto; font-variant-numeric:tabular-nums; font-weight:700; }
 .pd-dot{ width:10px; height:10px; border-radius:3px; flex:0 0 auto; }
 
-/* Barras horizontais */
-.pd-hbars{ display:flex; flex-direction:column; gap:var(--space-3); }
-.pd-hbar-row{ display:flex; flex-direction:column; gap:5px; }
-.pd-hbar-head{ display:flex; justify-content:space-between; gap:8px; font-size:.8rem; }
-.pd-hbar-label{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--soft); }
-.pd-hbar-value{ font-variant-numeric:tabular-nums; font-weight:700; flex:0 0 auto; }
-.pd-hbar-sub{ color:var(--muted); font-size:.7rem; }
-.pd-hbar-track{ height:8px; border-radius:999px; background:var(--chart-track); overflow:hidden; }
-.pd-hbar-fill{ display:block; height:100%; border-radius:999px; transition:width .4s ease; }
-
-/* ---- Heatmap ---- */
-.productivity-heatmap{ display:flex; gap:var(--space-2); }
-.productivity-heatmap-days{
-    display:grid; grid-template-rows:repeat(7,1fr); gap:4px;
-    color:var(--muted); font-size:.6rem; font-weight:700;
-}
-.productivity-heatmap-days span{ height:14px; display:flex; align-items:center; }
-.productivity-heatmap-grid{
-    display:grid; grid-template-rows:repeat(7,1fr); grid-auto-flow:column; grid-auto-columns:14px;
-    gap:4px; overflow-x:auto; padding-bottom:4px;
-}
-.productivity-heat{ width:14px; height:14px; border-radius:4px; background:var(--chart-track); }
-.productivity-heat-0{ background:var(--chart-track); }
-.productivity-heat-1{ background:rgba(212,175,55,.28); }
-.productivity-heat-2{ background:rgba(212,175,55,.5); }
-.productivity-heat-3{ background:rgba(212,175,55,.72); }
-.productivity-heat-4{ background:var(--chart-1); }
-.productivity-heatmap-legend{
-    display:flex; align-items:center; gap:5px; margin-top:var(--space-3);
-    color:var(--muted); font-size:.68rem;
-}
-
 /* ---- Responsivo ---- */
 @media (max-width:768px){
     .productivity-distribution{ grid-template-columns:1fr; }
-    .pd-sparkline{ max-width:none; }
 }

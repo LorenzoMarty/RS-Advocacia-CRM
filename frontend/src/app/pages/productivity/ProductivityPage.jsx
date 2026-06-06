@@ -5,26 +5,10 @@ import { PageChrome } from '../../layout';
 import { useAppState } from '../../store';
 import { EmptyState } from '../common';
 import { ActiveTimers } from './ActiveTimers';
-import { ActivityTimeline } from './ActivityTimeline';
-import { HistoryAccordion } from './HistoryAccordion';
 import { PeriodFilter } from './PeriodFilter';
-import { Sparkline } from './charts/Sparkline';
-import { TaskTimeList } from './TaskTimeList';
 import { TimeDistributionChart } from './TimeDistributionChart';
 import { dateInputValue, formatHoursCompact, startOfWeek } from './productivity-data';
 import { useProductivityData } from './use-productivity-data';
-
-function VariationNote({ variation }) {
-  if (variation == null) {
-    return <span className="productivity-delta muted">sem base anterior</span>;
-  }
-  const up = variation >= 0;
-  return (
-    <span className={`productivity-delta ${up ? 'up' : 'down'}`}>
-      {up ? '▲' : '▼'} {up ? '+' : ''}{variation}% vs período anterior
-    </span>
-  );
-}
 
 export function ProductivityPage() {
   const { currentUser, deadlines, petitions } = useAppState();
@@ -72,28 +56,18 @@ export function ProductivityPage() {
               </div>
             ))}
           </div>
-
-          {data.totalSeconds > 0 ? (
-            <div className="productivity-trend">
-              <VariationNote variation={data.variation} />
-              <Sparkline data={data.daySeries} height={48} />
-            </div>
-          ) : null}
         </section>
 
         {currentUser ? (
           <ActiveTimers entries={data.activeEntries} now={data.now} currentUserId={currentUser.id} />
         ) : null}
 
-        <TimeDistributionChart byType={data.byType} byProcess={data.byProcess} byTask={data.byTask} />
-
-        <TaskTimeList byTask={data.byTask} deadlines={deadlines} petitions={petitions} />
-
-        <ActivityTimeline daySeries={data.daySeries} />
-
-        {data.stoppedEntries.length ? (
-          <HistoryAccordion entries={data.stoppedEntries} />
-        ) : null}
+        <TimeDistributionChart
+          byType={data.byType}
+          byTask={data.byTask}
+          deadlines={deadlines}
+          petitions={petitions}
+        />
 
         {!data.totalSeconds && !data.activeEntries.length ? (
           <EmptyState
