@@ -197,6 +197,12 @@ export const api = {
   updatePetition: (id, payload) => petitionRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
   deletePetition: (id) => petitionRequest(`${id}/excluir/`, { method: 'DELETE' }),
   getProductivity: () => productivityRequest(),
+  getProductivityResumo: (params = {}) => {
+    const query = new URLSearchParams(
+      Object.entries(params).filter(([, value]) => value != null && value !== ''),
+    ).toString();
+    return productivityRequest(`resumo/${query ? `?${query}` : ''}`);
+  },
   startTimeEntry: (payload) => productivityRequest('time-entries/iniciar/', jsonOptions('POST', payload)),
   pauseTimeEntry: (id) => productivityRequest(`time-entries/${id}/pausar/`, jsonOptions('PATCH', {})),
   resumeTimeEntry: (id, payload = {}) => productivityRequest(`time-entries/${id}/retomar/`, jsonOptions('PATCH', payload)),

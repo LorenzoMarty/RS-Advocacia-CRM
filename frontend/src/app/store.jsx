@@ -209,6 +209,7 @@ function processFromApi(process) {
     area: process.area_juridica || '',
     status: process.status || '',
     owner: process.advogado_responsavel || '',
+    lastMovementAt: process.data_ultima_movimentacao || null,
   };
 }
 

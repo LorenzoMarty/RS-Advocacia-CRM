@@ -9,6 +9,11 @@ class Processo(models.Model):
     area_juridica = models.CharField(max_length=100)
     status = models.CharField(max_length=50)
     advogado_responsavel = models.CharField(max_length=100)
+    data_ultima_movimentacao = models.DateTimeField(auto_now=True)
+
+    def registrar_movimentacao(self):
+        """Bump data_ultima_movimentacao without touching other fields."""
+        self.save(update_fields=["data_ultima_movimentacao"])
 
     def __str__(self):
         return self.numero_processo

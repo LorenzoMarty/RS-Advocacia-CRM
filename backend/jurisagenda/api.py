@@ -8,7 +8,6 @@ api = NinjaAPI(
     version="2.0",
     description="API tipada com documentação automática. Acesse /api/v2/docs para explorar.",
     auth=django_auth,
-    csrf=True,
 )
 
 api.add_router("/clientes", clientes_router)

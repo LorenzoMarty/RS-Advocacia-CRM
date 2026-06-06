@@ -5,6 +5,7 @@ from productivity import views
 
 urlpatterns = [
     path("api/produtividade/", views.produtividade, name="produtividade"),
+    path("api/produtividade/resumo/", views.resumo, name="resumo_produtividade"),
     path("api/produtividade/time-entries/iniciar/", views.iniciar_timer, name="iniciar_timer"),
     path("api/produtividade/time-entries/<int:entry_id>/pausar/", views.pausar_timer, name="pausar_timer"),
     path("api/produtividade/time-entries/<int:entry_id>/retomar/", views.retomar_timer, name="retomar_timer"),
