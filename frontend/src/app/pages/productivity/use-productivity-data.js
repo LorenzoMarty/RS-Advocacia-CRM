@@ -12,16 +12,17 @@ import {
   variationPercent,
 } from './productivity-data';
 
-// Deriva todos os agregados do dashboard a partir das coleções já carregadas
-// no store (timeEntries, deadlines, petitions, events). Funciona igual em modo
-// demo e com API, pois o store carrega as entradas no boot. O endpoint
-// /api/produtividade/resumo/ existe para agregação server-side quando o volume
-// justificar — aqui evitamos um round-trip redundante.
-export function useProductivityData({ period, customStart, customEnd, selectedUserId, isAdmin }) {
-  const { timeEntries, deadlines, petitions, events, users, currentUser } = useAppState();
+// Deriva os agregados de produtividade do usuário logado a partir das coleções
+// já carregadas no store (timeEntries, deadlines, petitions, events). Funciona
+// igual em modo demo e com API. O endpoint /api/produtividade/resumo/ existe
+// para agregação server-side quando o volume justificar.
+export function useProductivityData({ period, customStart, customEnd }) {
+  const { timeEntries, deadlines, petitions, events, currentUser } = useAppState();
   const [now, setNow] = useState(() => Date.now());
 
-  const hasRunning = timeEntries.some((entry) => entry.status === 'running');
+  const hasRunning = timeEntries.some(
+    (entry) => entry.status === 'running' && entry.userId === currentUser?.id,
+  );
   useEffect(() => {
     if (!hasRunning) return undefined;
     const id = window.setInterval(() => setNow(Date.now()), 1000);
@@ -29,16 +30,8 @@ export function useProductivityData({ period, customStart, customEnd, selectedUs
   }, [hasRunning]);
 
   return useMemo(() => {
-    // Escopo: admin vê tudo ou um usuário selecionado; demais veem o próprio.
-    const scopedUser = isAdmin
-      ? (selectedUserId ? users.find((u) => u.id === selectedUserId) || null : null)
-      : currentUser;
-
-    const scopedEntries = timeEntries.filter((entry) => {
-      if (!isAdmin) return entry.userId === currentUser?.id;
-      if (selectedUserId) return entry.userId === selectedUserId;
-      return true;
-    });
+    const userId = currentUser?.id;
+    const scopedEntries = timeEntries.filter((entry) => entry.userId === userId);
 
     const bounds = periodBounds(period, customStart, customEnd);
     const prev = previousBounds(bounds);
@@ -58,7 +51,7 @@ export function useProductivityData({ period, customStart, customEnd, selectedUs
       .sort((a, b) => new Date(b.endedAt || b.startedAt) - new Date(a.endedAt || a.startedAt));
 
     const deliverables = computeDeliverables(bounds, {
-      deadlines, petitions, events, user: scopedUser, now,
+      deadlines, petitions, events, user: currentUser, now,
     });
 
     const processIds = new Set([
@@ -77,7 +70,6 @@ export function useProductivityData({ period, customStart, customEnd, selectedUs
       previousTotalSeconds: previousTotal,
       variation: variationPercent(agg.totalSeconds, previousTotal),
       daySeries: buildDaySeries(bounds, agg.byDay),
-      byUser: agg.byUser,
       byType: agg.byType,
       byProcess: agg.byProcess,
       byTask: agg.byTask,
@@ -89,8 +81,5 @@ export function useProductivityData({ period, customStart, customEnd, selectedUs
       runningCount: scopedEntries.filter((e) => e.status === 'running').length,
       now,
     };
-  }, [
-    timeEntries, deadlines, petitions, events, users, currentUser,
-    period, customStart, customEnd, selectedUserId, isAdmin, now,
-  ]);
+  }, [timeEntries, deadlines, petitions, events, currentUser, period, customStart, customEnd, now]);
 }

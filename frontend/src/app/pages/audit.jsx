@@ -4,7 +4,6 @@ import { PageChrome } from '../layout';
 import { useAppState } from '../store';
 import { NotFoundState } from './common';
 
-import { AuditHeader } from '../components/audit/AuditHeader';
 import { RiskSummary } from '../components/audit/RiskSummary';
 import { PriorityActions } from '../components/audit/PriorityActions';
 import { AuditInsightsPanel } from '../components/audit/AuditInsightsPanel';
@@ -73,9 +72,7 @@ function AuditDashboard({ clients, deadlines, processes, timeEntries, users }) {
 
   return (
     <div className="audit-page">
-      <AuditHeader period={period} onPeriodChange={setPeriod} />
-
-      <RiskSummary summary={summary} risk={risk} />
+      <RiskSummary summary={summary} risk={risk} period={period} onPeriodChange={setPeriod} />
 
       <div className="audit-grid-focus">
         <PriorityActions actions={priorityActions} />
