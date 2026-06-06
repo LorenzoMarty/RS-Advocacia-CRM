@@ -10,8 +10,8 @@ export function ActiveTimers({ entries, now, currentUserId }) {
     <section className="surface section-card productivity-block">
       <div className="section-head">
         <div>
-          <h2 className="section-title">Timers ativos</h2>
-          <p className="section-note">Rodando ou pausados</p>
+          <h2 className="section-title">Tarefas em produção</h2>
+          <p className="section-note">Rodando ou pausadas</p>
         </div>
       </div>
 

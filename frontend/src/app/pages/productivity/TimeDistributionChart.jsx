@@ -1,30 +1,18 @@
-import { useState } from 'react';
-
+import { StatusBadge } from '../../layout';
 import { Donut } from './charts/Donut';
-import { HBars } from './charts/HBars';
-import { taskTypeColor, taskTypeLabel } from './productivity-data';
+import { formatTimerSeconds, isTaskDone, taskTypeColor, taskTypeIcon, taskTypeLabel } from './productivity-data';
 
-const TABS = [
-  { key: 'process', label: 'Processo' },
-  { key: 'task', label: 'Tarefa' },
-];
+const VISIBLE = 8;
 
-// Distribuição do tempo: donut por tipo + barras por processo/tarefa.
-export function TimeDistributionChart({ byType, byProcess, byTask }) {
-  const [tab, setTab] = useState('process');
-
+// Distribuição do tempo: donut por tipo + lista "onde o tempo foi gasto" ao lado.
+export function TimeDistributionChart({ byType, byTask, deadlines, petitions }) {
   const donutData = byType.map((item) => ({
     name: taskTypeLabel(item.taskType),
     value: item.seconds,
     color: taskTypeColor(item.taskType),
   }));
 
-  const barsData = (tab === 'process' ? byProcess : byTask).slice(0, 6).map((item) => ({
-    key: item.key,
-    label: item.label,
-    sublabel: tab === 'task' ? `${item.count} ${item.count === 1 ? 'sessão' : 'sessões'}` : null,
-    seconds: item.seconds,
-  }));
+  const top = byTask.slice(0, VISIBLE);
 
   return (
     <section className="surface section-card productivity-block">
@@ -38,20 +26,32 @@ export function TimeDistributionChart({ byType, byProcess, byTask }) {
       {donutData.length ? (
         <div className="productivity-distribution">
           <Donut data={donutData} />
-          <div className="productivity-distribution-bars">
-            <div className="productivity-segmented" role="group" aria-label="Agrupar por">
-              {TABS.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  aria-pressed={tab === item.key}
-                  onClick={() => setTab(item.key)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            {barsData.length ? <HBars data={barsData} /> : <div className="note-box">Sem dados para esse agrupamento.</div>}
+          <div className="productivity-distribution-tasks">
+            <h3 className="section-subtitle">Onde o tempo foi gasto</h3>
+            {top.length ? (
+              <div className="productivity-task-list">
+                {top.map((item) => {
+                  const done = isTaskDone(item.taskType, item.taskId, deadlines, petitions);
+                  return (
+                    <article key={item.key} className="productivity-task-item">
+                      <span className="productivity-type-icon">{taskTypeIcon(item.taskType)}</span>
+                      <div className="productivity-task-info">
+                        <strong title={item.label}>{item.label}</strong>
+                        <span>
+                          {taskTypeLabel(item.taskType)}
+                          {item.processNumber ? ` • ${item.processNumber}` : ''}
+                          {` • ${item.count} ${item.count === 1 ? 'sessão' : 'sessões'}`}
+                        </span>
+                      </div>
+                      <StatusBadge tone={done ? 'success' : 'muted'}>{done ? 'Realizado' : 'Em andamento'}</StatusBadge>
+                      <strong className="productivity-task-time">{formatTimerSeconds(item.seconds)}</strong>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="note-box">Sem tarefas cronometradas no período.</div>
+            )}
           </div>
         </div>
       ) : (
