@@ -44,7 +44,14 @@ import {
   RoleDetailPage,
 } from "./app/pages/roles";
 import { ProductivityPage } from "./app/pages/productivity/ProductivityPage";
+import {
+  ProspectKanbanPage,
+  ProspectFormPage,
+  ProspectDetailPage,
+} from "./app/pages/prospeccao";
+import { FinanceiroPage, LancamentoFormPage } from "./app/pages/financeiro";
 import { AuditPage } from "./app/pages/audit";
+import { useAppState } from "./app/store";
 import { ApiTestPage } from "./app/pages/api-test";
 import { MeetingsPage } from "./app/pages/meetings";
 
@@ -86,6 +93,24 @@ function UserFormRoute() {
 function RoleFormRoute() {
   const { roleId } = useParams();
   return <RoleFormPage key={roleId || "role-new"} />;
+}
+
+function ProspectFormRoute() {
+  const { prospectId } = useParams();
+  return <ProspectFormPage key={prospectId || "prospect-new"} />;
+}
+
+function LancamentoFormRoute() {
+  const { lancamentoId } = useParams();
+  return <LancamentoFormPage key={lancamentoId || "lancamento-new"} />;
+}
+
+function RequireFinanceiro({ children }) {
+  const { hasPermission } = useAppState();
+  if (!hasPermission("financeiro.view_lancamento")) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
 }
 
 export default function App() {
@@ -140,6 +165,37 @@ export default function App() {
 
             <Route path="/reunioes" element={<MeetingsPage />} />
             <Route path="/produtividade" element={<ProductivityPage />} />
+
+            <Route path="/prospeccao" element={<ProspectKanbanPage />} />
+            <Route path="/prospeccao/novo" element={<ProspectFormRoute />} />
+            <Route path="/prospeccao/:prospectId" element={<ProspectDetailPage />} />
+            <Route path="/prospeccao/:prospectId/editar" element={<ProspectFormRoute />} />
+
+            <Route
+              path="/financeiro"
+              element={
+                <RequireFinanceiro>
+                  <FinanceiroPage />
+                </RequireFinanceiro>
+              }
+            />
+            <Route
+              path="/financeiro/novo"
+              element={
+                <RequireFinanceiro>
+                  <LancamentoFormRoute />
+                </RequireFinanceiro>
+              }
+            />
+            <Route
+              path="/financeiro/:lancamentoId/editar"
+              element={
+                <RequireFinanceiro>
+                  <LancamentoFormRoute />
+                </RequireFinanceiro>
+              }
+            />
+
             <Route path="/auditoria" element={<AuditPage />} />
 
             <Route path="/usuarios" element={<UsersListPage />} />

@@ -25,16 +25,8 @@
 @import "./styles/pages/api-test.css";
 
 #root {
-  width: calc(100% / var(--app-scale));
-  min-height: calc(100vh / var(--app-scale));
-  transform-origin: top left;
-  zoom: var(--app-scale);
-}
-
-@supports not (zoom: 1) {
-  #root {
-    transform: scale(var(--app-scale));
-  }
+  width: 100%;
+  min-height: 100vh;
 }
 
 body {

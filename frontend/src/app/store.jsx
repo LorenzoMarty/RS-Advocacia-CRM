@@ -113,6 +113,26 @@ function petitionFromResponse(payload) {
   return petitionFromApi(itemFromResponse(payload, 'peticao'));
 }
 
+function prospectsFromResponse(payload) {
+  return collectionFromResponse(payload, 'prospects').map(prospectFromApi).filter(Boolean);
+}
+
+function prospectFromResponse(payload) {
+  return prospectFromApi(itemFromResponse(payload, 'prospect'));
+}
+
+function interactionFromResponse(payload) {
+  return interactionFromApi(itemFromResponse(payload, 'interacao'));
+}
+
+function lancamentosFromResponse(payload) {
+  return collectionFromResponse(payload, 'lancamentos').map(lancamentoFromApi).filter(Boolean);
+}
+
+function lancamentoFromResponse(payload) {
+  return lancamentoFromApi(itemFromResponse(payload, 'lancamento'));
+}
+
 function timeEntriesFromResponse(payload) {
   return collectionFromResponse(payload, 'time_entries').map(timeEntryFromApi).filter(Boolean);
 }
@@ -331,6 +351,121 @@ function petitionFromApi(petition) {
     createdBy: petition.criado_por || '',
     createdAt: petition.criado_em || '',
     updatedAt: petition.atualizado_em || '',
+  };
+}
+
+function prospectFromApi(prospect) {
+  if (!prospect) {
+    return null;
+  }
+
+  return {
+    ...prospect,
+    id: String(prospect.id || prospect.pk),
+    name: prospect.nome || '',
+    phone: prospect.telefone || '',
+    email: prospect.email || '',
+    origin: prospect.origem_contato || '',
+    demandType: prospect.tipo_demanda_juridica || '',
+    caseDescription: prospect.descricao_caso || '',
+    responsibleId: String(prospect.responsavel_id || ''),
+    responsibleName: prospect.responsavel_nome || '',
+    status: prospect.status_prospeccao || 'Novo',
+    priority: prospect.prioridade || 'Media',
+    nextAction: prospect.proxima_acao || '',
+    notes: prospect.observacoes || '',
+    lastContact: prospect.data_ultimo_contato || '',
+    convertedClientId: String(prospect.cliente_convertido_id || ''),
+    convertedAt: prospect.convertido_em || '',
+    interactionsCount: Number(prospect.total_interacoes || 0),
+    createdAt: prospect.data_criacao || '',
+    interactions: Array.isArray(prospect.interacoes)
+      ? prospect.interacoes.map(interactionFromApi).filter(Boolean)
+      : (prospect.interactions || []),
+  };
+}
+
+function interactionFromApi(interaction) {
+  if (!interaction) {
+    return null;
+  }
+
+  return {
+    ...interaction,
+    id: String(interaction.id || interaction.pk),
+    prospectId: String(interaction.prospect_id || interaction.prospectId || ''),
+    type: interaction.tipo || interaction.type || 'anotacao',
+    description: interaction.descricao || interaction.description || '',
+    date: interaction.data || interaction.date || '',
+    userId: String(interaction.usuario_id || interaction.userId || ''),
+    userName: interaction.usuario_nome || interaction.userName || '',
+  };
+}
+
+function prospectToPayload(prospect) {
+  return {
+    nome: prospect.name,
+    telefone: prospect.phone,
+    email: prospect.email,
+    origem_contato: prospect.origin,
+    tipo_demanda_juridica: prospect.demandType,
+    descricao_caso: prospect.caseDescription,
+    responsavel_interno: prospect.responsibleId || null,
+    status_prospeccao: prospect.status,
+    prioridade: prospect.priority,
+    proxima_acao: prospect.nextAction,
+    observacoes: prospect.notes,
+    data_ultimo_contato: prospect.lastContact || null,
+  };
+}
+
+function interactionToPayload(interaction) {
+  return {
+    tipo: interaction.type,
+    descricao: interaction.description,
+    ...(interaction.date ? { data: interaction.date } : {}),
+    ...(interaction.userId ? { usuario: interaction.userId } : {}),
+  };
+}
+
+function lancamentoFromApi(lancamento) {
+  if (!lancamento) {
+    return null;
+  }
+
+  return {
+    ...lancamento,
+    id: String(lancamento.id || lancamento.pk),
+    description: lancamento.descricao || '',
+    type: lancamento.tipo || 'receita',
+    category: lancamento.categoria || '',
+    value: Number(lancamento.valor || 0),
+    dueDate: lancamento.data_vencimento || '',
+    paymentDate: lancamento.data_pagamento || '',
+    status: lancamento.status || 'Pendente',
+    displayStatus: lancamento.status_exibicao || lancamento.status || 'Pendente',
+    overdue: Boolean(lancamento.atrasado),
+    clientId: String(lancamento.cliente_id || ''),
+    clientName: lancamento.cliente_nome || '',
+    caseId: String(lancamento.caso_id || ''),
+    caseNumber: lancamento.caso_numero || '',
+    notes: lancamento.observacoes || '',
+    createdAt: lancamento.criado_em || '',
+  };
+}
+
+function lancamentoToPayload(lancamento) {
+  return {
+    descricao: lancamento.description,
+    tipo: lancamento.type,
+    categoria: lancamento.category,
+    valor: lancamento.value,
+    data_vencimento: lancamento.dueDate,
+    data_pagamento: lancamento.paymentDate || null,
+    status: lancamento.status,
+    cliente_relacionado: lancamento.clientId || null,
+    caso_relacionado: lancamento.caseId || null,
+    observacoes: lancamento.notes,
   };
 }
 
@@ -729,6 +864,100 @@ function createDemoState() {
     },
   ];
 
+  const prospects = [
+    {
+      id: 'demo-prospect-carla',
+      name: 'Carla Nogueira',
+      phone: '(11) 98123-4567',
+      email: 'carla.nogueira@email.demo',
+      origin: 'Indicação',
+      demandType: 'Trabalhista',
+      caseDescription: 'Rescisão indireta com verbas atrasadas.',
+      responsibleId: 'demo-user-mariana',
+      responsibleName: 'Mariana Souza',
+      status: 'Em contato',
+      priority: 'Alta',
+      nextAction: 'Enviar proposta de honorários',
+      notes: '',
+      lastContact: today,
+      convertedClientId: '',
+      convertedAt: '',
+      interactionsCount: 1,
+      createdAt: `${today}T09:00:00`,
+      interactions: [
+        {
+          id: 'demo-interacao-carla-1',
+          prospectId: 'demo-prospect-carla',
+          type: 'ligacao',
+          description: 'Primeiro contato. Cliente interessada.',
+          date: `${today}T09:00:00`,
+          userId: 'demo-user-mariana',
+          userName: 'Mariana Souza',
+        },
+      ],
+    },
+    {
+      id: 'demo-prospect-pedro',
+      name: 'Pedro Antunes',
+      phone: '(11) 97654-3210',
+      email: 'pedro.antunes@email.demo',
+      origin: 'Site',
+      demandType: 'Cível',
+      caseDescription: 'Ação indenizatória por danos morais.',
+      responsibleId: 'demo-user-renata',
+      responsibleName: 'Renata Sampaio',
+      status: 'Novo',
+      priority: 'Media',
+      nextAction: 'Agendar reunião inicial',
+      notes: '',
+      lastContact: '',
+      convertedClientId: '',
+      convertedAt: '',
+      interactionsCount: 0,
+      createdAt: `${today}T11:30:00`,
+      interactions: [],
+    },
+  ];
+
+  const lancamentos = [
+    {
+      id: 'demo-lancamento-honorarios',
+      description: 'Honorários iniciais - Bruno Lima',
+      type: 'receita',
+      category: 'Honorários',
+      value: 3500,
+      dueDate: nextWeek,
+      paymentDate: '',
+      status: 'Pendente',
+      displayStatus: 'Pendente',
+      overdue: false,
+      clientId: 'demo-client-bruno',
+      clientName: 'Bruno Lima',
+      caseId: 'demo-process-bruno',
+      caseNumber: '1000002-20.2026.8.26.0100',
+      notes: '',
+      createdAt: `${today}T08:00:00`,
+    },
+    {
+      id: 'demo-lancamento-software',
+      description: 'Assinatura sistema jurídico',
+      type: 'despesa',
+      category: 'Software',
+      value: 240,
+      dueDate: today,
+      paymentDate: today,
+      status: 'Pago',
+      displayStatus: 'Pago',
+      overdue: false,
+      clientId: '',
+      clientName: '',
+      caseId: '',
+      caseNumber: '',
+      notes: '',
+      createdAt: `${today}T08:10:00`,
+    },
+  ];
+
   return {
     permissionGroups: [],
     roles,
@@ -738,6 +967,8 @@ function createDemoState() {
     events,
     deadlines,
     petitions,
+    prospects,
+    lancamentos,
     timeEntries: [],
     productivityGoals: users.map((user) => ({
       id: `demo-goal-${user.id}`,
@@ -799,6 +1030,8 @@ export function AppStateProvider({ children }) {
   const [events, setEvents] = useState([]);
   const [deadlines, setDeadlines] = useState([]);
   const [petitions, setPetitions] = useState([]);
+  const [prospects, setProspects] = useState([]);
+  const [lancamentos, setLancamentos] = useState([]);
   const [timeEntries, setTimeEntries] = useState([]);
   const [productivityGoals, setProductivityGoals] = useState([]);
   const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled);
@@ -825,6 +1058,8 @@ export function AppStateProvider({ children }) {
     setEvents(demoState.events);
     setDeadlines(demoState.deadlines);
     setPetitions(demoState.petitions);
+    setProspects(demoState.prospects);
+    setLancamentos(demoState.lancamentos);
     setTimeEntries(demoState.timeEntries);
     setProductivityGoals(demoState.productivityGoals);
     setCurrentSessionUser(demoState.currentUser);
@@ -865,6 +1100,12 @@ export function AppStateProvider({ children }) {
     setEvents(eventsFromResponse(payload));
     setDeadlines(deadlinesFromResponse(payload));
     setPetitions(petitionsFromResponse(payload));
+    if (Object.prototype.hasOwnProperty.call(payload, 'prospects')) {
+      setProspects(prospectsFromResponse(payload));
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, 'lancamentos')) {
+      setLancamentos(lancamentosFromResponse(payload));
+    }
     if (Object.prototype.hasOwnProperty.call(payload, 'time_entries')) {
       setTimeEntries(timeEntriesFromResponse(payload));
     }
@@ -1029,6 +1270,8 @@ export function AppStateProvider({ children }) {
     setEvents([]);
     setDeadlines([]);
     setPetitions([]);
+    setProspects([]);
+    setLancamentos([]);
     setTimeEntries([]);
     setProductivityGoals([]);
     addFlash('Sessão encerrada.', 'info');
@@ -1776,8 +2019,295 @@ export function AppStateProvider({ children }) {
     return productivityGoals;
   }
 
+  async function saveProspect(payload) {
+    if (canUseApi) {
+      try {
+        const response = payload.id
+          ? await api.updateProspect(payload.id, prospectToPayload(payload))
+          : await api.createProspect(prospectToPayload(payload));
+        const savedProspect = prospectFromResponse(response);
+        if (!savedProspect) {
+          throw new Error('Resposta inválida da API de prospecção.');
+        }
+        setProspects((current) => replaceById(current, savedProspect));
+        addFlash(payload.id ? 'Prospect atualizado.' : 'Prospect salvo.', 'success');
+        return savedProspect;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    if (payload.id) {
+      let saved = null;
+      setProspects((current) =>
+        current.map((item) => {
+          if (item.id !== payload.id) return item;
+          saved = { ...item, ...payload };
+          return saved;
+        }),
+      );
+      addFlash('Prospect atualizado.', 'success');
+      return saved || payload;
+    }
+
+    const nextProspect = { ...payload, id: nextId('prospect'), interactions: [], interactionsCount: 0 };
+    setProspects((current) => [nextProspect, ...current]);
+    addFlash('Prospect salvo.', 'success');
+    return nextProspect;
+  }
+
+  async function deleteProspect(prospectId) {
+    if (canUseApi) {
+      try {
+        await api.deleteProspect(prospectId);
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return false;
+      }
+    }
+
+    setProspects((current) => current.filter((item) => item.id !== prospectId));
+    addFlash('Prospect deletado.', 'success');
+    return true;
+  }
+
+  async function addInteracao(prospectId, payload) {
+    if (canUseApi) {
+      try {
+        const response = await api.createInteracao(prospectId, interactionToPayload(payload));
+        const savedInteraction = interactionFromResponse(response);
+        setProspects((current) =>
+          current.map((item) => {
+            if (item.id !== prospectId) return item;
+            return {
+              ...item,
+              lastContact: (savedInteraction?.date || '').slice(0, 10) || item.lastContact,
+              interactionsCount: (item.interactionsCount || 0) + 1,
+              interactions: [savedInteraction, ...(item.interactions || [])],
+            };
+          }),
+        );
+        addFlash('Interação registrada.', 'success');
+        return savedInteraction;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    const nextInteraction = {
+      ...payload,
+      id: nextId('interacao'),
+      prospectId,
+      date: payload.date || new Date().toISOString(),
+    };
+    setProspects((current) =>
+      current.map((item) => {
+        if (item.id !== prospectId) return item;
+        return {
+          ...item,
+          lastContact: nextInteraction.date.slice(0, 10),
+          interactionsCount: (item.interactionsCount || 0) + 1,
+          interactions: [nextInteraction, ...(item.interactions || [])],
+        };
+      }),
+    );
+    addFlash('Interação registrada.', 'success');
+    return nextInteraction;
+  }
+
+  async function convertProspect(prospectId, payload = {}) {
+    if (canUseApi) {
+      try {
+        const response = await api.convertProspect(prospectId, payload);
+        const savedProspect = prospectFromResponse(response);
+        const savedClient = clientFromResponse(response);
+        if (savedProspect) {
+          setProspects((current) => replaceById(current, savedProspect));
+        }
+        if (savedClient) {
+          setClients((current) => sortByName(replaceById(current, savedClient)));
+        }
+        addFlash('Prospect convertido em cliente.', 'success');
+        return { prospect: savedProspect, client: savedClient };
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    const prospect = prospects.find((item) => item.id === prospectId) || null;
+    if (!prospect) return null;
+    if (prospect.convertedClientId) {
+      addFlash('Este prospect já foi convertido.', 'error');
+      return null;
+    }
+
+    let client = payload.cliente_id ? clients.find((item) => item.id === String(payload.cliente_id)) : null;
+    if (!client) {
+      client = {
+        id: nextId('client'),
+        name: payload.nome || prospect.name,
+        email: payload.email || prospect.email,
+        phone: payload.telefone || prospect.phone,
+        document: payload.cpf || '',
+        clientType: payload.tipo_cliente || 'esporadico',
+        notes: prospect.caseDescription || '',
+      };
+      setClients((current) => sortByName([...current, client]));
+    }
+
+    const updatedProspect = {
+      ...prospect,
+      convertedClientId: client.id,
+      convertedAt: new Date().toISOString(),
+      status: 'Convertido',
+    };
+    setProspects((current) => replaceById(current, updatedProspect));
+    addFlash('Prospect convertido em cliente.', 'success');
+    return { prospect: updatedProspect, client };
+  }
+
+  async function saveLancamento(payload) {
+    if (canUseApi) {
+      try {
+        const response = payload.id
+          ? await api.updateLancamento(payload.id, lancamentoToPayload(payload))
+          : await api.createLancamento(lancamentoToPayload(payload));
+        const saved = lancamentoFromResponse(response);
+        if (!saved) {
+          throw new Error('Resposta inválida da API financeira.');
+        }
+        setLancamentos((current) => replaceById(current, saved));
+        addFlash(payload.id ? 'Lançamento atualizado.' : 'Lançamento salvo.', 'success');
+        return saved;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    if (payload.id) {
+      let saved = null;
+      setLancamentos((current) =>
+        current.map((item) => {
+          if (item.id !== payload.id) return item;
+          saved = { ...item, ...payload };
+          return saved;
+        }),
+      );
+      addFlash('Lançamento atualizado.', 'success');
+      return saved || payload;
+    }
+
+    const nextLancamento = { ...payload, id: nextId('lancamento') };
+    setLancamentos((current) => [nextLancamento, ...current]);
+    addFlash('Lançamento salvo.', 'success');
+    return nextLancamento;
+  }
+
+  async function deleteLancamento(lancamentoId) {
+    if (canUseApi) {
+      try {
+        await api.deleteLancamento(lancamentoId);
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return false;
+      }
+    }
+
+    setLancamentos((current) => current.filter((item) => item.id !== lancamentoId));
+    addFlash('Lançamento deletado.', 'success');
+    return true;
+  }
+
+  async function marcarLancamentoPago(lancamentoId, paymentDate) {
+    if (canUseApi) {
+      try {
+        const response = await api.marcarLancamentoPago(lancamentoId, { data_pagamento: paymentDate });
+        const saved = lancamentoFromResponse(response);
+        if (saved) {
+          setLancamentos((current) => replaceById(current, saved));
+        }
+        addFlash('Lançamento marcado como pago.', 'success');
+        return saved;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    let saved = null;
+    setLancamentos((current) =>
+      current.map((item) => {
+        if (item.id !== lancamentoId) return item;
+        saved = { ...item, status: 'Pago', displayStatus: 'Pago', overdue: false, paymentDate };
+        return saved;
+      }),
+    );
+    addFlash('Lançamento marcado como pago.', 'success');
+    return saved;
+  }
+
+  async function cancelarLancamento(lancamentoId) {
+    if (canUseApi) {
+      try {
+        const response = await api.cancelarLancamento(lancamentoId);
+        const saved = lancamentoFromResponse(response);
+        if (saved) {
+          setLancamentos((current) => replaceById(current, saved));
+        }
+        addFlash('Lançamento cancelado.', 'info');
+        return saved;
+      } catch (error) {
+        addFlash(errorMessage(error), 'error');
+        return null;
+      }
+    }
+
+    let saved = null;
+    setLancamentos((current) =>
+      current.map((item) => {
+        if (item.id !== lancamentoId) return item;
+        saved = { ...item, status: 'Cancelado', displayStatus: 'Cancelado', overdue: false, paymentDate: '' };
+        return saved;
+      }),
+    );
+    addFlash('Lançamento cancelado.', 'info');
+    return saved;
+  }
+
   const currentUser = users.find((user) => user.id === currentUserId) || currentSessionUser;
   const currentRole = roles.find((role) => role.id === currentUser?.roleId) || null;
+
+  const currentPermissionPaths = (() => {
+    if (!currentRole || !permissionGroups.length) {
+      return null;
+    }
+    const idToPath = new Map();
+    permissionGroups.forEach((group) => {
+      (group.permissions || []).forEach((permission) => {
+        idToPath.set(String(permission.id), permission.path);
+      });
+    });
+    const paths = new Set();
+    (currentRole.permissionIds || []).forEach((id) => {
+      const path = idToPath.get(String(id));
+      if (path) paths.add(path);
+    });
+    return paths;
+  })();
+
+  function hasPermission(path) {
+    if (isDemoMode) {
+      return true;
+    }
+    if (currentPermissionPaths === null) {
+      return false;
+    }
+    return currentPermissionPaths.has(path);
+  }
 
   const value = {
     permissionGroups,
@@ -1788,10 +2318,13 @@ export function AppStateProvider({ children }) {
     events,
     deadlines,
     petitions,
+    prospects,
+    lancamentos,
     timeEntries,
     productivityGoals,
     currentUser,
     currentRole,
+    hasPermission,
     isApiEnabled,
     isLoading,
     isEventsLoading,
@@ -1820,6 +2353,14 @@ export function AppStateProvider({ children }) {
     deletePetition,
     deleteUser,
     deleteRole,
+    saveProspect,
+    deleteProspect,
+    addInteracao,
+    convertProspect,
+    saveLancamento,
+    deleteLancamento,
+    marcarLancamentoPago,
+    cancelarLancamento,
     startTimeEntry,
     pauseTimeEntry,
     resumeTimeEntry,

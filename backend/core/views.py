@@ -17,6 +17,10 @@ from peticoes.models import Peticao
 from peticoes.views import serialize_peticao
 from prazos.models import Prazo
 from prazos.views import serialize_prazo
+from prospeccao.models import Prospect
+from prospeccao.views import serialize_prospect
+from financeiro.models import Lancamento
+from financeiro.views import serialize_lancamento
 from productivity.models import TimeEntry
 from productivity.views import (
     _is_admin,
@@ -139,6 +143,16 @@ def inicializacao(request):
 
     if usuario_atual and user_has_permission(request, "productivity.view_productivitygoal"):
         data["productivity_goals"] = _goals_response(request, usuario_atual)
+
+    if user_has_permission(request, "prospeccao.view_prospect"):
+        prospects = Prospect.objects.select_related("responsavel_interno", "cliente_convertido").all()
+        data["prospects"] = [serialize_prospect(prospect) for prospect in prospects]
+
+    if user_has_permission(request, "financeiro.view_lancamento"):
+        lancamentos = Lancamento.objects.select_related(
+            "cliente_relacionado", "caso_relacionado"
+        ).all()
+        data["lancamentos"] = [serialize_lancamento(lancamento) for lancamento in lancamentos]
 
     return resposta_sucesso(data)
 

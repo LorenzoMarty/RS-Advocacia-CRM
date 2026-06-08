@@ -94,6 +94,23 @@ function NavigationIcon({ icon }) {
           <polyline points="12 6 12 12 16 14" />
         </svg>
       );
+    case 'prospeccao':
+      return (
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 3v18h18" />
+          <path d="m7 14 4-4 3 3 5-6" />
+          <path d="M19 7h-3" />
+          <path d="M19 7v3" />
+        </svg>
+      );
+    case 'financeiro':
+      return (
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="2" />
+          <path d="M2 10h20" />
+          <circle cx="12" cy="14" r="2" />
+        </svg>
+      );
     case 'auditoria':
       return (
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -184,10 +201,16 @@ function LoadingScreen() {
   );
 }
 
+function useVisibleNavItems() {
+  const { hasPermission } = useAppState();
+  return NAV_ITEMS.filter((item) => !item.permission || hasPermission(item.permission));
+}
+
 function SidebarNavigation() {
+  const navItems = useVisibleNavItems();
   return (
     <nav className="nav" aria-label="Áreas do sistema">
-      {NAV_ITEMS.map((item) => (
+      {navItems.map((item) => (
         <NavLink
           key={item.key}
           to={item.to}
@@ -207,11 +230,12 @@ function SidebarNavigation() {
 }
 
 function BottomNavigation() {
+  const navItems = useVisibleNavItems();
   return (
     <div className="bottom-nav-shell" aria-hidden="false">
       <nav className="bottom-nav" aria-label="Navegação principal">
         <div className="bottom-nav-track">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.key}
               to={item.to}
