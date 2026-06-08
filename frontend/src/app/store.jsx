@@ -591,7 +591,7 @@ function createDemoState() {
   const roles = [
     { id: 'demo-role-admin', name: 'Administrador', permissionIds: [] },
     { id: 'demo-role-lawyer', name: 'Advogado', permissionIds: [] },
-    { id: 'demo-role-assistant', name: 'Assistente juridico', permissionIds: [] },
+    { id: 'demo-role-assistant', name: 'Estagiário', permissionIds: [] },
   ];
 
   const users = [
