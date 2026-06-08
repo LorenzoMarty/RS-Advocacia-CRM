@@ -159,6 +159,20 @@ function productivityRequest(path = '', options = {}) {
   });
 }
 
+function prospeccaoRequest(path = '', options = {}) {
+  return apiRequest(`/api/prospeccao/${path}`, options, {
+    baseUrl: apiBaseUrl,
+    requireConfiguredApi: false,
+  });
+}
+
+function financeiroRequest(path = '', options = {}) {
+  return apiRequest(`/api/financeiro/${path}`, options, {
+    baseUrl: apiBaseUrl,
+    requireConfiguredApi: false,
+  });
+}
+
 export const api = {
   carregarInicializacao: () => apiRequest('/api/inicializacao/'),
   obterUsuarioAtual: () => apiRequest('/api/usuarios/atual/'),
@@ -216,4 +230,19 @@ export const api = {
   createRole: (payload) => apiRequest('/api/cargos/criar/', jsonOptions('POST', payload)),
   updateRole: (id, payload) => apiRequest(`/api/cargos/${id}/editar/`, jsonOptions('PUT', payload)),
   deleteRole: (id) => apiRequest(`/api/cargos/${id}/excluir/`, { method: 'DELETE' }),
+  listProspects: () => prospeccaoRequest(),
+  getProspect: (id) => prospeccaoRequest(`${id}/`),
+  createProspect: (payload) => prospeccaoRequest('criar/', jsonOptions('POST', payload)),
+  updateProspect: (id, payload) => prospeccaoRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
+  deleteProspect: (id) => prospeccaoRequest(`${id}/excluir/`, { method: 'DELETE' }),
+  createInteracao: (id, payload) => prospeccaoRequest(`${id}/interacoes/criar/`, jsonOptions('POST', payload)),
+  convertProspect: (id, payload) => prospeccaoRequest(`${id}/converter/`, jsonOptions('POST', payload)),
+  listLancamentos: (query = '') => financeiroRequest(query ? `?${query}` : ''),
+  getLancamento: (id) => financeiroRequest(`${id}/`),
+  createLancamento: (payload) => financeiroRequest('criar/', jsonOptions('POST', payload)),
+  updateLancamento: (id, payload) => financeiroRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
+  deleteLancamento: (id) => financeiroRequest(`${id}/excluir/`, { method: 'DELETE' }),
+  marcarLancamentoPago: (id, payload) => financeiroRequest(`${id}/marcar-pago/`, jsonOptions('POST', payload)),
+  cancelarLancamento: (id) => financeiroRequest(`${id}/cancelar/`, jsonOptions('POST', {})),
+  dashboardFinanceiro: () => financeiroRequest('dashboard/'),
 };

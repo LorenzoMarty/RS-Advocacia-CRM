@@ -156,6 +156,8 @@ INSTALLED_APPS = [
     "prazos",
     "peticoes",
     "productivity",
+    "prospeccao",
+    "financeiro",
     "core",
     "usuarios",
     "integrations",
