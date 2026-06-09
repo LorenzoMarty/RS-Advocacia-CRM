@@ -1,5 +1,12 @@
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;color-scheme:dark}
+html{
+    scroll-behavior:smooth;
+    color-scheme:dark;
+    /* Escala mestra: toda tipografia em rem cascateia daqui.
+       --font-base (15px) entrega o baseline reduzido; --ui-scale e --font-scale
+       são as preferências do usuário. */
+    font-size:calc(var(--font-base, 15px) * var(--ui-scale, 1) * var(--font-scale, 1));
+}
 html[data-theme="light"]{color-scheme:light}
 body{
     margin:0;

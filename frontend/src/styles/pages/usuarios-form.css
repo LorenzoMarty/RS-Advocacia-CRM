@@ -1,6 +1,6 @@
 .create-page{
         display:grid;
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .intro-grid{
@@ -22,7 +22,7 @@
 
     .create-intro,
     .form-panel{
-        padding:22px;
+        padding:var(--pad-card);
     }
 
     .intro-title{
@@ -83,7 +83,7 @@
 
     .user-form{
         display:grid;
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .form-grid{

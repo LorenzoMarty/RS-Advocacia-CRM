@@ -1,5 +1,5 @@
-.agenda-page{display:grid;gap:18px}
-    .agenda-intro,.calendar-panel,.rail-panel{padding:22px}
+.agenda-page{display:grid;gap:var(--gap-page)}
+    .agenda-intro,.calendar-panel,.rail-panel{padding:var(--pad-card)}
     .intro-title{margin:0;font-family:var(--serif);font-size:clamp(2.35rem,4vw,3.2rem);line-height:.96;font-weight:400;letter-spacing:-.06em}
     .agenda-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:end}
     .toolbar-main{display:grid;gap:12px}
@@ -48,7 +48,7 @@
         background:#fbf6ef;
         color:#16181f;
     }
-    .agenda-layout{display:grid;grid-template-columns:minmax(0,1.38fr) minmax(320px,.82fr);gap:18px}
+    .agenda-layout{display:grid;grid-template-columns:minmax(0,1.38fr) minmax(320px,.82fr);gap:var(--gap-page)}
     .calendar-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}
     .calendar-controls{display:flex;align-items:center;gap:10px}
     .calendar-month{min-width:170px;text-align:center;font-size:.88rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
@@ -204,8 +204,8 @@
         text-transform:uppercase;
     }
     .calendar-empty{margin-top:16px}
-    .agenda-rail{display:grid;gap:18px}
-    .rail-sections{display:grid;gap:18px}
+    .agenda-rail{display:grid;gap:var(--gap-page)}
+    .rail-sections{display:grid;gap:var(--gap-page)}
     .rail-block + .rail-block{padding-top:18px;border-top:1px solid var(--line)}
     .side-list{display:grid;gap:10px}
     .side-item{position:relative;display:grid;gap:10px;padding:14px;border-radius:18px;border:1px solid var(--line);background:var(--ghost);cursor:pointer;transition:border-color .2s ease,background .2s ease,transform .2s ease}

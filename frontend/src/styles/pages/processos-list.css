@@ -1,11 +1,11 @@
 .process-page{
         display:grid;
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .process-intro,
     .process-panel{
-        padding:22px;
+        padding:var(--pad-card);
     }
 
     .intro-title{
@@ -275,5 +275,5 @@
     .status-badge{min-height:30px;padding:0 10px;font-size:.64rem}
     .action-link{min-height:36px;padding:0 12px;font-size:.78rem}
     .empty-state{padding:30px 16px}
-    .empty-state .empty{padding:22px}
+    .empty-state .empty{padding:var(--pad-card)}
 }

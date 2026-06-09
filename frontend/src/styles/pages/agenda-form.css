@@ -1,11 +1,11 @@
 .event-create-page{
         display:grid;
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .event-intro,
     .event-form-panel{
-        padding:22px;
+        padding:var(--pad-card);
     }
 
     .intro-grid{
@@ -265,7 +265,7 @@
 
     .event-form,
     .form-section{
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .field{

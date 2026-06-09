@@ -2,8 +2,10 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
+import { AppearancePanel, AppearanceTrigger } from './components/appearance-panel';
 import { NAV_ITEMS } from './data';
 import { useAppState } from './store';
+import { useAppearanceState } from './use-appearance';
 import { formatTime, normalizeText } from './utils';
 
 const PageChromeContext = createContext(() => {});
@@ -401,6 +403,7 @@ export function ProtectedLayout() {
   const location = useLocation();
   const [, setChrome] = useState(PAGE_CHROME_DEFAULT);
   const { sidebarCollapsed, toggleSidebar } = useShellPreferences();
+  const appearance = useAppearanceState();
 
   useReminderToasts({ addFlash, currentUser, deadlines, events, isLoading });
 
@@ -472,6 +475,12 @@ export function ProtectedLayout() {
                 </div>
               </div>
 
+              <AppearanceTrigger
+                className="nav-link sidebar-appearance"
+                label="Aparência"
+                onOpen={() => appearance.setOpen(true)}
+              />
+
               <button className="nav-link sidebar-logout" type="button" aria-label="Sair" title="Sair" onClick={sair}>
                 <span className="nav-icon" aria-hidden="true">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -493,6 +502,20 @@ export function ProtectedLayout() {
           </div>
         </div>
       </div>
+
+      <AppearanceTrigger
+        className="appearance-fab"
+        label="Aparência"
+        onOpen={() => appearance.setOpen(true)}
+      />
+
+      <AppearancePanel
+        appearance={appearance.appearance}
+        setOption={appearance.setOption}
+        reset={appearance.reset}
+        open={appearance.open}
+        onClose={() => appearance.setOpen(false)}
+      />
 
       <BottomNavigation />
       <Toaster

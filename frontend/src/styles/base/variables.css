@@ -1,4 +1,15 @@
 :root{
+    /* Escala de interface controlada pelo usuário (ver app/preferences.js).
+       --ui-scale: escala geral (fonte raiz + tokens de chrome).
+       --font-scale: multiplicador extra só de texto.
+       --space-scale: multiplicador de espaçamento dos contêineres.
+       Os valores reais são injetados em <html> pelo script inline do index.html
+       e por applyAppearance(); aqui ficam só os defaults de fallback. */
+    --font-base:15px;
+    --ui-scale:1;
+    --font-scale:1;
+    --space-scale:1;
+
     --bg:#020617;
     --panel:rgba(15,23,42,.86);
     --line:rgba(148,163,184,.13);
@@ -12,10 +23,18 @@
     --warn:#e8b25c;
     --danger:#ef7a7a;
     --shadow:0 24px 60px rgba(0,0,0,.28);
-    --sidebar:272px;
-    --sidebar-collapsed:104px;
+    --sidebar:calc(272px * var(--ui-scale));
+    --sidebar-collapsed:calc(104px * var(--ui-scale));
     --page-max-width:1480px;
-    --layout-gutter:14px;
+    --layout-gutter:calc(14px * var(--ui-scale) * var(--space-scale));
+
+    /* Espaçamento "vivo" dos contêineres — escala com a preferência do usuário.
+       Aplicado nas páginas principais (cards full-bleed + gaps de seção). */
+    --pad-card:calc(22px * var(--space-scale));
+    --pad-card-mobile:calc(16px * var(--space-scale));
+    --gap-page:calc(18px * var(--space-scale));
+    --gap-grid:calc(16px * var(--space-scale));
+    --gap-list:calc(10px * var(--space-scale));
     --bottom-nav-height:88px;
     --bottom-nav-offset:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 18px);
     --serif:"Instrument Serif",serif;

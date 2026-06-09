@@ -1,6 +1,6 @@
 .cargo-form-page{
     display:grid;
-    gap:18px;
+    gap:var(--gap-page);
 }
 
 .intro-grid{
@@ -22,7 +22,7 @@
 
 .cargo-intro,
 .cargo-panel{
-    padding:22px;
+    padding:var(--pad-card);
 }
 
 .intro-title{
@@ -44,7 +44,7 @@
 
 .cargo-form{
     display:grid;
-    gap:18px;
+    gap:var(--gap-page);
 }
 
 .field{

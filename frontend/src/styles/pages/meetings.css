@@ -1,8 +1,8 @@
-.meetings-page{display:grid;gap:18px}
-.meetings-intro,.meetings-form-panel,.meetings-workspace{padding:22px}
+.meetings-page{display:grid;gap:var(--gap-page)}
+.meetings-intro,.meetings-form-panel,.meetings-workspace{padding:var(--pad-card)}
 .meetings-title{margin:8px 0 10px;font-family:var(--serif);font-size:clamp(2.2rem,4vw,3.1rem);line-height:.98;font-weight:400;letter-spacing:-.055em}
 .meetings-copy{max-width:650px;margin:0;color:var(--soft);line-height:1.65}
-.meetings-layout{display:grid;grid-template-columns:minmax(280px,.75fr) minmax(420px,1.35fr);gap:18px;align-items:start}
+.meetings-layout{display:grid;grid-template-columns:minmax(280px,.75fr) minmax(420px,1.35fr);gap:var(--gap-page);align-items:start}
 .meeting-form{display:grid;gap:14px}
 .meeting-form label{display:grid;gap:8px;color:var(--soft);font-size:.82rem;font-weight:600}
 .meeting-form input,.meeting-form select,.meeting-form textarea{width:100%;border:1px solid var(--line);border-radius:13px;background:var(--ghost);color:var(--text);padding:12px 13px;font:inherit;outline:0}
@@ -18,7 +18,7 @@
 .meeting-option.active{border-color:rgba(212,175,55,.3);background:rgba(212,175,55,.1)}
 .meeting-editor{display:grid;gap:14px;margin-bottom:18px;padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--ghost)}
 .meeting-form-actions{display:flex;gap:10px;flex-wrap:wrap}
-.meeting-detail{display:grid;gap:18px;padding-top:0}
+.meeting-detail{display:grid;gap:var(--gap-page);padding-top:0}
 .meeting-context{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
 .meeting-context h2{margin:0 0 6px;font-size:1.25rem}
 .meeting-context p{margin:0;color:var(--muted);font-size:.88rem}
