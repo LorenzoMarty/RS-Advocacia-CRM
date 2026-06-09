@@ -2,7 +2,6 @@ from django.urls import path
 
 from core import health, views
 
-
 urlpatterns = [
     path("api/painel/", views.painel, name="painel"),
     path("api/inicializacao/", views.inicializacao, name="inicializacao"),

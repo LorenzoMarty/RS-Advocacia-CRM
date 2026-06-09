@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-
 TIPO_RECEITA = "receita"
 TIPO_DESPESA = "despesa"
 
@@ -79,7 +78,9 @@ class Lancamento(models.Model):
 
         if self.status == STATUS_PAGO and not self.data_pagamento:
             raise ValidationError(
-                {"data_pagamento": "Informe a data de pagamento para lançamentos pagos."}
+                {
+                    "data_pagamento": "Informe a data de pagamento para lançamentos pagos."
+                }
             )
 
         if self.status != STATUS_PAGO:
@@ -87,7 +88,10 @@ class Lancamento(models.Model):
 
     @property
     def atrasado(self):
-        return self.status == STATUS_PENDENTE and self.data_vencimento < timezone.localdate()
+        return (
+            self.status == STATUS_PENDENTE
+            and self.data_vencimento < timezone.localdate()
+        )
 
     @property
     def status_exibicao(self):

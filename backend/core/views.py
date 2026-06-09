@@ -8,33 +8,33 @@ from agenda.views import serialize_evento
 from clientes.models import Cliente
 from clientes.views import serialize_cliente
 from core.demo_data import ensure_demo_data
-from core.permissions import app_permissions_required
 from core.permission_utils import user_has_any_permissions, user_has_permission
+from core.permissions import app_permissions_required
 from core.utils import metodo_nao_permitido, resposta_sucesso
-from processos.models import Processo
-from processos.views import serialize_processo
+from financeiro.models import Lancamento
+from financeiro.views import serialize_lancamento
 from peticoes.models import Peticao
 from peticoes.views import serialize_peticao
 from prazos.models import Prazo
 from prazos.views import serialize_prazo
-from prospeccao.models import Prospect
-from prospeccao.views import serialize_prospect
-from financeiro.models import Lancamento
-from financeiro.views import serialize_lancamento
+from processos.models import Processo
+from processos.views import serialize_processo
 from productivity.models import TimeEntry
 from productivity.views import (
-    _is_admin,
-    _goals_response,
-    _time_entries_response,
     _current_usuario,
+    _goals_response,
+    _is_admin,
+    _time_entries_response,
 )
+from prospeccao.models import Prospect
+from prospeccao.views import serialize_prospect
 from usuarios.models import Usuario
 from usuarios.views import (
     CARGO_LIST_PERMISSIONS,
+    _get_cargos,
     serialize_cargo,
     serialize_permission_groups,
     serialize_usuarios,
-    _get_cargos,
 )
 
 
@@ -57,7 +57,9 @@ def painel(request):
         .filter(data_inicio__date=hoje)
         .select_related("cliente", "processo")
     )
-    prazos_hoje = Prazo.objects.filter(data_limite=hoje).select_related("processo__cliente")
+    prazos_hoje = Prazo.objects.filter(data_limite=hoje).select_related(
+        "processo__cliente"
+    )
     proximos_eventos = (
         Evento.objects.exclude(tipo_evento__icontains="prazo")
         .filter(data_inicio__date__gte=hoje)
@@ -74,7 +76,9 @@ def painel(request):
         {
             "eventos_hoje": [serialize_evento(evento) for evento in eventos_hoje],
             "prazos_hoje": [serialize_prazo(prazo) for prazo in prazos_hoje],
-            "proximos_eventos": [serialize_evento(evento) for evento in proximos_eventos],
+            "proximos_eventos": [
+                serialize_evento(evento) for evento in proximos_eventos
+            ],
             "proximos_prazos": [serialize_prazo(prazo) for prazo in proximos_prazos],
             "total_clientes": Cliente.objects.count(),
             "total_processos": Processo.objects.count(),
@@ -141,18 +145,24 @@ def inicializacao(request):
             time_entries = time_entries.filter(user=usuario_atual)
         data["time_entries"] = _time_entries_response(time_entries)
 
-    if usuario_atual and user_has_permission(request, "productivity.view_productivitygoal"):
+    if usuario_atual and user_has_permission(
+        request, "productivity.view_productivitygoal"
+    ):
         data["productivity_goals"] = _goals_response(request, usuario_atual)
 
     if user_has_permission(request, "prospeccao.view_prospect"):
-        prospects = Prospect.objects.select_related("responsavel_interno", "cliente_convertido").all()
+        prospects = Prospect.objects.select_related(
+            "responsavel_interno", "cliente_convertido"
+        ).all()
         data["prospects"] = [serialize_prospect(prospect) for prospect in prospects]
 
     if user_has_permission(request, "financeiro.view_lancamento"):
         lancamentos = Lancamento.objects.select_related(
             "cliente_relacionado", "caso_relacionado"
         ).all()
-        data["lancamentos"] = [serialize_lancamento(lancamento) for lancamento in lancamentos]
+        data["lancamentos"] = [
+            serialize_lancamento(lancamento) for lancamento in lancamentos
+        ]
 
     return resposta_sucesso(data)
 
@@ -162,4 +172,6 @@ def csrf_token(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    return resposta_sucesso({"csrf_token": get_token(request)}, mensagem="Token CSRF definido.")
+    return resposta_sucesso(
+        {"csrf_token": get_token(request)}, mensagem="Token CSRF definido."
+    )

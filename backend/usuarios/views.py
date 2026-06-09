@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any, Iterable, cast
 
 from django.contrib.auth import logout as encerrar_sessao_django
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
@@ -8,23 +8,22 @@ from django.shortcuts import get_object_or_404
 
 from core.permissions import app_any_permissions_required, app_permissions_required
 from core.utils import (
-    resposta_erro,
     erros_formulario,
-    metodo_nao_permitido,
     ler_corpo_json,
+    metodo_nao_permitido,
+    resposta_erro,
     resposta_sucesso,
 )
+from integrations.google.calendar import calendar_label
+from integrations.models import GoogleAccount
 from usuarios.forms import (
-    CargoForm,
     PERMISSION_APP_LABELS,
+    CargoForm,
     UsuarioForm,
     _format_permission_name,
     normalize_cargo_name,
 )
 from usuarios.models import Cargo, Usuario, cargo_lookup_values
-from integrations.google.calendar import calendar_label
-from integrations.models import GoogleAccount
-
 
 ESTAGIARIO_CARGO_NAME = dict(Usuario.TIPOS).get("estagiario", "Estagiario")
 
@@ -313,7 +312,10 @@ def _cargo_map_for_usuarios(usuarios: list[Usuario]) -> dict[str, Cargo]:
         for usuario in usuarios
         if (cargo_name := normalize_cargo_name(usuario.cargo))
     }
-    return {cargo.name: cargo for cargo in Cargo.objects.filter(name__in=cargo_names)}
+    return cast(
+        "dict[str, Cargo]",
+        {cargo.name: cargo for cargo in Cargo.objects.filter(name__in=cargo_names)},
+    )
 
 
 def serialize_usuario(
@@ -340,7 +342,7 @@ def serialize_usuario(
     }
 
 
-def serialize_usuarios(usuarios):
+def serialize_usuarios(usuarios: Iterable[Usuario]):
     usuarios = list(usuarios)
     cargos_by_name = _cargo_map_for_usuarios(usuarios)
     return [
@@ -516,7 +518,9 @@ def excluir_usuario(request, usuario_id):
     if auth_user is not None:
         auth_user.delete()
     usuario.delete()
-    return resposta_sucesso({"id": deleted_id}, mensagem="Usuário excluído com sucesso.")
+    return resposta_sucesso(
+        {"id": deleted_id}, mensagem="Usuário excluído com sucesso."
+    )
 
 
 @app_any_permissions_required(*CARGO_LIST_PERMISSIONS)
@@ -582,9 +586,9 @@ def editar_cargo(request, cargo_id):
     if form.is_valid():
         cargo = form.save()
         if previous_name != cargo.name:
-            Usuario.objects.filter(
-                cargo__in=cargo_lookup_values(previous_name)
-            ).update(cargo=cargo.name)
+            Usuario.objects.filter(cargo__in=cargo_lookup_values(previous_name)).update(
+                cargo=cargo.name
+            )
         return resposta_sucesso(
             _cargo_response(cargo),
             mensagem="Cargo atualizado com sucesso.",

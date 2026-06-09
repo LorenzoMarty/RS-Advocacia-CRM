@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('usuarios', '0005_remove_manual_password_fields'),
+        ("usuarios", "0005_remove_manual_password_fields"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='usuario',
-            name='google_refresh_token',
-            field=models.TextField(blank=True, default=''),
+            model_name="usuario",
+            name="google_refresh_token",
+            field=models.TextField(blank=True, default=""),
         ),
         migrations.AddField(
-            model_name='usuario',
-            name='google_token',
-            field=models.TextField(blank=True, default=''),
+            model_name="usuario",
+            name="google_token",
+            field=models.TextField(blank=True, default=""),
         ),
         migrations.AddField(
-            model_name='usuario',
-            name='google_token_expiry',
+            model_name="usuario",
+            name="google_token_expiry",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

@@ -3,10 +3,10 @@ from django import forms
 from usuarios.models import Usuario
 
 from .models import (
-    InteracaoProspect,
     PRIORIDADES,
-    Prospect,
     STATUS_PROSPECCAO,
+    InteracaoProspect,
+    Prospect,
 )
 
 
@@ -54,7 +54,9 @@ class ProspectForm(forms.ModelForm):
         widgets = {
             "descricao_caso": forms.Textarea(attrs={"rows": 4}),
             "observacoes": forms.Textarea(attrs={"rows": 4}),
-            "data_ultimo_contato": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+            "data_ultimo_contato": forms.DateInput(
+                format="%Y-%m-%d", attrs={"type": "date"}
+            ),
         }
 
     def __init__(self, *args, **kwargs):

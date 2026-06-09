@@ -3,7 +3,6 @@ from django import forms
 from processos.models import Processo
 from usuarios.models import Usuario
 
-
 AREA_JURIDICA_CHOICES = (
     "Cível",
     "Trabalhista",
@@ -88,7 +87,9 @@ class ProcessoForm(forms.ModelForm):
 
         existing_varas = Processo.objects.values_list("vara", flat=True)
         existing_statuses = Processo.objects.values_list("status", flat=True)
-        existing_responsaveis = Processo.objects.values_list("advogado_responsavel", flat=True)
+        existing_responsaveis = Processo.objects.values_list(
+            "advogado_responsavel", flat=True
+        )
         usuarios = Usuario.objects.values_list("nome", flat=True)
 
         cliente_field = self.fields["cliente"]

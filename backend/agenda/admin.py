@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from agenda.models import Evento
 
+
 # Register your models here.
 @admin.register(Evento)
 class EventoAdmin(admin.ModelAdmin):

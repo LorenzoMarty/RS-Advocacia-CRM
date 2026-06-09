@@ -33,7 +33,9 @@ class ProcessoFormTests(TestCase):
             email="cliente@example.com",
             obs="",
         )
-        Usuario.objects.create(nome="Dra. Ana", email="ana@example.com", cargo="Advogado")
+        Usuario.objects.create(
+            nome="Dra. Ana", email="ana@example.com", cargo="Advogado"
+        )
 
     def test_form_valido(self):
         form = ProcessoForm(_payload_valido(self.cliente))
@@ -62,7 +64,9 @@ class ProcessoApiTests(TestCase):
             email="api@example.com",
             obs="",
         )
-        Usuario.objects.create(nome="Dra. Ana", email="ana@example.com", cargo="Advogado")
+        Usuario.objects.create(
+            nome="Dra. Ana", email="ana@example.com", cargo="Advogado"
+        )
         self.user = get_user_model().objects.create_user(
             username="proc-user", password="secret123"
         )

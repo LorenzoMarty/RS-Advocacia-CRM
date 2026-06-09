@@ -1,9 +1,10 @@
 from django.db import models
 
+
 # Modelos de processos.
 class Processo(models.Model):
     numero_processo = models.CharField(max_length=30)
-    cliente = models.ForeignKey('clientes.Cliente', on_delete=models.CASCADE)
+    cliente = models.ForeignKey("clientes.Cliente", on_delete=models.CASCADE)
     descricao = models.TextField(blank=True)
     vara = models.CharField(max_length=100)
     area_juridica = models.CharField(max_length=100)

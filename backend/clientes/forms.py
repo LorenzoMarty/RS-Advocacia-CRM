@@ -1,7 +1,9 @@
-from django import forms
 import re
 
+from django import forms
+
 from .models import Cliente
+
 
 class ClienteForm(forms.ModelForm):
     cpf = forms.CharField(
@@ -27,6 +29,8 @@ class ClienteForm(forms.ModelForm):
         cpf = re.sub(r"\D", "", self.cleaned_data.get("cpf", ""))
 
         if len(cpf) not in {11, 14}:
-            raise forms.ValidationError("Informe um CPF com 11 dígitos ou um CNPJ com 14 dígitos.")
+            raise forms.ValidationError(
+                "Informe um CPF com 11 dígitos ou um CNPJ com 14 dígitos."
+            )
 
         return cpf

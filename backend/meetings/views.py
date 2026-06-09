@@ -129,16 +129,21 @@ def _extensao_arquivo_audio(arquivo):
         return extension
 
     content_type = (getattr(arquivo, "content_type", "") or "").split(";")[0].lower()
-    guessed = MIME_EXTENSION_FALLBACKS.get(content_type) or mimetypes.guess_extension(content_type)
+    guessed = MIME_EXTENSION_FALLBACKS.get(content_type) or mimetypes.guess_extension(
+        content_type
+    )
     return (guessed or "").lower()
 
 
 def _mime_audio_suportado(arquivo):
     content_type = (getattr(arquivo, "content_type", "") or "").split(";")[0].lower()
-    return content_type.startswith(SUPPORTED_AUDIO_MIME_PREFIXES) or content_type in SUPPORTED_AUDIO_MIME_TYPES
+    return (
+        content_type.startswith(SUPPORTED_AUDIO_MIME_PREFIXES)
+        or content_type in SUPPORTED_AUDIO_MIME_TYPES
+    )
 
 
-def serialize_gravacao(gravacao):
+def serialize_gravacao(gravacao: Gravacao):
     return {
         "id": str(gravacao.pk),
         "pk": gravacao.pk,
@@ -158,8 +163,8 @@ def serialize_gravacao(gravacao):
     }
 
 
-def serialize_reuniao(reuniao):
-    cliente_nome = reuniao.cliente.nome if reuniao.cliente_id else ""
+def serialize_reuniao(reuniao: Reuniao):
+    cliente_nome = reuniao.cliente.nome if reuniao.cliente else ""
     return {
         "id": str(reuniao.pk),
         "pk": reuniao.pk,
@@ -201,11 +206,11 @@ def listar_reunioes(request):
         return metodo_nao_permitido(["GET"])
 
     reunioes = (
-        Reuniao.objects.select_related("cliente")
-        .prefetch_related("gravacoes")
-        .all()
+        Reuniao.objects.select_related("cliente").prefetch_related("gravacoes").all()
     )
-    return resposta_sucesso({"reunioes": [serialize_reuniao(item) for item in reunioes]})
+    return resposta_sucesso(
+        {"reunioes": [serialize_reuniao(item) for item in reunioes]}
+    )
 
 
 @app_permissions_required("meetings.add_reuniao")
@@ -266,12 +271,16 @@ def excluir_reuniao(request, reuniao_id):
     if request.method != "DELETE":
         return metodo_nao_permitido(["DELETE"])
 
-    reuniao = get_object_or_404(Reuniao.objects.prefetch_related("gravacoes"), pk=reuniao_id)
+    reuniao = get_object_or_404(
+        Reuniao.objects.prefetch_related("gravacoes"), pk=reuniao_id
+    )
     deleted_id = str(reuniao.pk)
     for gravacao in reuniao.gravacoes.all():
         _apagar_arquivo_gravacao(gravacao)
     reuniao.delete()
-    return resposta_sucesso({"id": deleted_id}, mensagem="Reuniao excluida com sucesso.")
+    return resposta_sucesso(
+        {"id": deleted_id}, mensagem="Reuniao excluida com sucesso."
+    )
 
 
 @app_permissions_required("meetings.view_reuniao")
@@ -309,7 +318,9 @@ def editar_gravacao(request, gravacao_id):
 
     update_fields = []
     if "transcricao" in payload or "transcript" in payload:
-        gravacao.transcricao = str(payload.get("transcricao", payload.get("transcript", ""))).strip()
+        gravacao.transcricao = str(
+            payload.get("transcricao", payload.get("transcript", ""))
+        ).strip()
         update_fields.append("transcricao")
     if "resumo" in payload or "summary" in payload:
         gravacao.resumo = str(payload.get("resumo", payload.get("summary", ""))).strip()
@@ -337,7 +348,9 @@ def excluir_gravacao(request, gravacao_id):
     deleted_id = str(gravacao.pk)
     _apagar_arquivo_gravacao(gravacao)
     gravacao.delete()
-    return resposta_sucesso({"id": deleted_id}, mensagem="Gravacao excluida com sucesso.")
+    return resposta_sucesso(
+        {"id": deleted_id}, mensagem="Gravacao excluida com sucesso."
+    )
 
 
 @app_permissions_required("meetings.add_gravacao", "meetings.view_reuniao")
@@ -362,7 +375,9 @@ def enviar_gravacao(request, reuniao_id):
         return resposta_erro({"audio": ["Envie um arquivo de áudio."]}, status=400)
 
     extension = _extensao_arquivo_audio(arquivo)
-    if extension not in SUPPORTED_AUDIO_EXTENSIONS and not _mime_audio_suportado(arquivo):
+    if extension not in SUPPORTED_AUDIO_EXTENSIONS and not _mime_audio_suportado(
+        arquivo
+    ):
         logger.warning(
             "Formato de gravacao rejeitado. name=%s content_type=%s size=%s extension=%s",
             arquivo.name,
@@ -370,8 +385,12 @@ def enviar_gravacao(request, reuniao_id):
             arquivo.size,
             extension,
         )
-        formatos = ", ".join(sorted(ext.removeprefix(".") for ext in SUPPORTED_AUDIO_EXTENSIONS))
-        return resposta_erro({"audio": [f"Formato inválido. Use: {formatos}."]}, status=400)
+        formatos = ", ".join(
+            sorted(ext.removeprefix(".") for ext in SUPPORTED_AUDIO_EXTENSIONS)
+        )
+        return resposta_erro(
+            {"audio": [f"Formato inválido. Use: {formatos}."]}, status=400
+        )
 
     max_bytes = settings.MEETINGS_MAX_AUDIO_SIZE_MB * 1024 * 1024
     if arquivo.size > max_bytes:
@@ -382,7 +401,11 @@ def enviar_gravacao(request, reuniao_id):
             max_bytes,
         )
         return resposta_erro(
-            {"audio": [f"O arquivo deve ter no máximo {settings.MEETINGS_MAX_AUDIO_SIZE_MB} MB."]},
+            {
+                "audio": [
+                    f"O arquivo deve ter no máximo {settings.MEETINGS_MAX_AUDIO_SIZE_MB} MB."
+                ]
+            },
             status=400,
         )
 

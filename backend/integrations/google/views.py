@@ -6,8 +6,17 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from core.permissions import app_permissions_required
-from core.utils import ler_corpo_json, metodo_nao_permitido, resposta_erro, resposta_sucesso
-from integrations.google.calendar import configure_calendars, list_available_calendars, sync_agenda
+from core.utils import (
+    ler_corpo_json,
+    metodo_nao_permitido,
+    resposta_erro,
+    resposta_sucesso,
+)
+from integrations.google.calendar import (
+    configure_calendars,
+    list_available_calendars,
+    sync_agenda,
+)
 from integrations.google.exceptions import (
     GoogleAuthorizationRequired,
     GoogleConfigurationError,
@@ -80,7 +89,9 @@ def calendars(request: HttpRequest):
         return resposta_erro(str(exc), status=401)
     except Exception:
         logger.exception("Erro ao listar calendarios Google.")
-        return resposta_erro("Nao foi possivel listar os calendarios Google.", status=502)
+        return resposta_erro(
+            "Nao foi possivel listar os calendarios Google.", status=502
+        )
 
 
 @app_permissions_required("agenda.change_evento")
@@ -102,7 +113,9 @@ def calendar_selection(request: HttpRequest):
         return resposta_erro(str(exc), status=401)
     except Exception:
         logger.exception("Erro ao configurar calendarios Google.")
-        return resposta_erro("Nao foi possivel configurar os calendarios Google.", status=502)
+        return resposta_erro(
+            "Nao foi possivel configurar os calendarios Google.", status=502
+        )
     return resposta_sucesso({"calendarios": configured})
 
 
@@ -114,7 +127,9 @@ def google_calendar_webhook(request: HttpRequest):
         result = handle_notification(request.headers)
     except Exception:
         logger.exception("Erro ao processar webhook Google Calendar.")
-        return resposta_erro("Nao foi possivel processar notificacao Google.", status=202)
+        return resposta_erro(
+            "Nao foi possivel processar notificacao Google.", status=202
+        )
     return resposta_sucesso(result)
 
 
@@ -149,6 +164,10 @@ def disconnect(request: HttpRequest):
     account.refresh_token_ciphertext = ""
     account.revoked_at = timezone.now()
     account.save(
-        update_fields=["access_token_ciphertext", "refresh_token_ciphertext", "revoked_at"]
+        update_fields=[
+            "access_token_ciphertext",
+            "refresh_token_ciphertext",
+            "revoked_at",
+        ]
     )
     return resposta_sucesso(mensagem="Conta Google desconectada.")

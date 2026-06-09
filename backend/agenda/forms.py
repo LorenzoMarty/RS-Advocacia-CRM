@@ -5,7 +5,6 @@ from usuarios.models import Usuario
 
 from .models import Evento
 
-
 STATUS_CHOICES = (
     "Agendado",
     "Confirmado",
@@ -40,10 +39,16 @@ def _build_choices(placeholder, *groups):
 
 
 class ProcessoSelect(forms.Select):
-    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
-        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+    def create_option(
+        self, name, value, label, selected, index, subindex=None, attrs=None
+    ):
+        option = super().create_option(
+            name, value, label, selected, index, subindex=subindex, attrs=attrs
+        )
 
-        if isinstance(value, ModelChoiceIteratorValue) and getattr(value, "instance", None):
+        if isinstance(value, ModelChoiceIteratorValue) and getattr(
+            value, "instance", None
+        ):
             option["attrs"]["data-client-id"] = str(value.instance.cliente_id)
 
         return option
@@ -74,9 +79,15 @@ class EventoForm(forms.ModelForm):
         widgets = {
             "descricao": forms.Textarea(attrs={"rows": 4}),
             "observacoes": forms.Textarea(attrs={"rows": 4}),
-            "data_inicio": forms.DateTimeInput(format="%Y-%m-%dT%H:%M", attrs={"type": "datetime-local"}),
-            "data_fim": forms.DateTimeInput(format="%Y-%m-%dT%H:%M", attrs={"type": "datetime-local"}),
-            "lembrete_em": forms.DateTimeInput(format="%Y-%m-%dT%H:%M", attrs={"type": "datetime-local"}),
+            "data_inicio": forms.DateTimeInput(
+                format="%Y-%m-%dT%H:%M", attrs={"type": "datetime-local"}
+            ),
+            "data_fim": forms.DateTimeInput(
+                format="%Y-%m-%dT%H:%M", attrs={"type": "datetime-local"}
+            ),
+            "lembrete_em": forms.DateTimeInput(
+                format="%Y-%m-%dT%H:%M", attrs={"type": "datetime-local"}
+            ),
             "concluido": forms.CheckboxInput(),
             "processo": ProcessoSelect(),
         }
@@ -115,7 +126,9 @@ class EventoForm(forms.ModelForm):
 
         if isinstance(processo_field, forms.ModelChoiceField):
             processo_field.empty_label = "Selecione o processo"
-            processo_field.queryset = processo_field.queryset.select_related("cliente").order_by("numero_processo")
+            processo_field.queryset = processo_field.queryset.select_related(
+                "cliente"
+            ).order_by("numero_processo")
 
         self.fields["responsavel"].choices = _build_choices(
             "Selecione o responsável",

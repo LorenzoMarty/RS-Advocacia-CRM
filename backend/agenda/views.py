@@ -6,15 +6,19 @@ from agenda.forms import EventoForm
 from agenda.models import Evento
 from core.permissions import app_permissions_required
 from core.utils import (
-    resposta_erro,
+    converter_campos_datahora,
     erros_formulario,
     isoformat_ou_nulo,
-    metodo_nao_permitido,
     ler_corpo_json,
-    converter_campos_datahora,
+    metodo_nao_permitido,
+    resposta_erro,
     resposta_sucesso,
 )
-from integrations.google.calendar import delete_remote_event, sync_agenda, sync_local_event
+from integrations.google.calendar import (
+    delete_remote_event,
+    sync_agenda,
+    sync_local_event,
+)
 from integrations.google.exceptions import GoogleAuthorizationRequired
 from integrations.google.oauth import current_usuario
 
@@ -63,7 +67,7 @@ def _sincronizar_evento_se_conectado(request, evento):
         return {"status": "pendente"}
 
 
-def serialize_evento(evento):
+def serialize_evento(evento: Evento):
     cliente_nome = evento.cliente.nome if evento.cliente_id else ""
     processo_numero = evento.processo.numero_processo if evento.processo_id else ""
     return {
@@ -99,7 +103,9 @@ def listar_eventos(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    eventos = _eventos_compromisso_queryset().select_related("cliente", "processo").all()
+    eventos = (
+        _eventos_compromisso_queryset().select_related("cliente", "processo").all()
+    )
     serialized = [serialize_evento(evento) for evento in eventos]
     return resposta_sucesso({"eventos": serialized})
 
@@ -140,7 +146,8 @@ def detalhes_evento(request, evento_id):
         return metodo_nao_permitido(["GET"])
 
     evento = get_object_or_404(
-        _eventos_compromisso_queryset().select_related("cliente", "processo"), pk=evento_id
+        _eventos_compromisso_queryset().select_related("cliente", "processo"),
+        pk=evento_id,
     )
     serialized = serialize_evento(evento)
     return resposta_sucesso({"evento": serialized})
@@ -232,7 +239,9 @@ def sincronizar_google_calendar(request):
             status=502,
         )
 
-    eventos = _eventos_compromisso_queryset().select_related("cliente", "processo").all()
+    eventos = (
+        _eventos_compromisso_queryset().select_related("cliente", "processo").all()
+    )
     serialized = [serialize_evento(evento) for evento in eventos]
     return resposta_sucesso(
         {

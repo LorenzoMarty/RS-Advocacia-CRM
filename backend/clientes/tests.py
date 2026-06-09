@@ -57,7 +57,9 @@ class ClienteFormTests(TestCase):
 class ClienteListViewTests(TestCase):
     def setUp(self):
         user_model = get_user_model()
-        self.user = user_model.objects.create_user(username="cliente-viewer", password="secret123")
+        self.user = user_model.objects.create_user(
+            username="cliente-viewer", password="secret123"
+        )
         permission = Permission.objects.get(codename="view_cliente")
         self.user.user_permissions.add(permission)
         self.client.force_login(self.user)

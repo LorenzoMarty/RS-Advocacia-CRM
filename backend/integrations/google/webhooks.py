@@ -1,5 +1,6 @@
 import logging
-from datetime import timedelta, timezone as datetime_timezone
+from datetime import timedelta
+from datetime import timezone as datetime_timezone
 from secrets import token_urlsafe
 from uuid import uuid4
 
@@ -27,7 +28,9 @@ def _expiration_from_google(value):
     if not value:
         return None
     try:
-        return timezone.datetime.fromtimestamp(int(value) / 1000, tz=datetime_timezone.utc)
+        return timezone.datetime.fromtimestamp(
+            int(value) / 1000, tz=datetime_timezone.utc
+        )
     except (TypeError, ValueError, OSError):
         return None
 
@@ -116,13 +119,21 @@ def handle_notification(headers) -> dict:
         "x-goog-resource-state"
     )
 
-    calendar = GoogleCalendar.objects.select_related("account__usuario").filter(
-        watch_channel_id=channel_id,
-        watch_token=channel_token,
-    ).first()
+    calendar = (
+        GoogleCalendar.objects.select_related("account__usuario")
+        .filter(
+            watch_channel_id=channel_id,
+            watch_token=channel_token,
+        )
+        .first()
+    )
     if calendar is None:
         return {"status": "ignorado"}
-    if resource_id and calendar.watch_resource_id and resource_id != calendar.watch_resource_id:
+    if (
+        resource_id
+        and calendar.watch_resource_id
+        and resource_id != calendar.watch_resource_id
+    ):
         return {"status": "ignorado"}
 
     calendar.last_notification_at = timezone.now()

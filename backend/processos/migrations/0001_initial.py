@@ -9,21 +9,35 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('clientes', '0001_initial'),
+        ("clientes", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Processo',
+            name="Processo",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('numero_processo', models.CharField(max_length=20)),
-                ('descricao', models.TextField(blank=True)),
-                ('vara', models.CharField(max_length=100)),
-                ('area_juridica', models.CharField(max_length=100)),
-                ('status', models.CharField(max_length=50)),
-                ('advogado_responsavel', models.CharField(max_length=100)),
-                ('cliente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='clientes.cliente')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("numero_processo", models.CharField(max_length=20)),
+                ("descricao", models.TextField(blank=True)),
+                ("vara", models.CharField(max_length=100)),
+                ("area_juridica", models.CharField(max_length=100)),
+                ("status", models.CharField(max_length=50)),
+                ("advogado_responsavel", models.CharField(max_length=100)),
+                (
+                    "cliente",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="clientes.cliente",
+                    ),
+                ),
             ],
         ),
     ]

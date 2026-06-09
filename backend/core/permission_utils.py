@@ -12,8 +12,14 @@ def resolve_user(subject: Any):
 
 def normalize_permissions(permissions: str | Iterable[str]) -> tuple[str, ...]:
     if isinstance(permissions, str):
-        return tuple(permission.strip() for permission in permissions.split(",") if permission.strip())
-    return tuple(str(permission).strip() for permission in permissions if str(permission).strip())
+        return tuple(
+            permission.strip()
+            for permission in permissions.split(",")
+            if permission.strip()
+        )
+    return tuple(
+        str(permission).strip() for permission in permissions if str(permission).strip()
+    )
 
 
 def user_has_permission(subject: Any, permission: str) -> bool:
@@ -30,4 +36,6 @@ def user_has_any_permissions(subject: Any, permissions: str | Iterable[str]) -> 
 
 def user_has_all_permissions(subject: Any, permissions: str | Iterable[str]) -> bool:
     normalized = normalize_permissions(permissions)
-    return bool(normalized) and all(user_has_permission(subject, permission) for permission in normalized)
+    return bool(normalized) and all(
+        user_has_permission(subject, permission) for permission in normalized
+    )

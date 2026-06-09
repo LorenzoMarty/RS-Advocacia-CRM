@@ -15,7 +15,9 @@ from ai.providers.openai_provider import OpenAIProvider
 class OpenAIProviderTests(SimpleTestCase):
     def test_transcribe_uses_configured_audio_model(self):
         client = MagicMock()
-        client.audio.transcriptions.create.return_value = SimpleNamespace(text=" texto ")
+        client.audio.transcriptions.create.return_value = SimpleNamespace(
+            text=" texto "
+        )
         provider = OpenAIProvider(client=client)
 
         text = provider.transcribe(
@@ -41,4 +43,3 @@ class OpenAIProviderTests(SimpleTestCase):
         kwargs = client.responses.create.call_args.kwargs
         self.assertEqual(kwargs["model"], "gpt-4.1-mini")
         self.assertFalse(kwargs["store"])
-

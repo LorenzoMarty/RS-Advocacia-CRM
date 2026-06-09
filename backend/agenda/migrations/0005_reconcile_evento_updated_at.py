@@ -6,12 +6,10 @@ def reconcile_evento_updated_at(apps, schema_editor):
         return
 
     with schema_editor.connection.cursor() as cursor:
-        cursor.execute(
-            """
+        cursor.execute("""
             ALTER TABLE agenda_evento
                 ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone NOT NULL DEFAULT now();
-            """
-        )
+            """)
 
 
 class Migration(migrations.Migration):

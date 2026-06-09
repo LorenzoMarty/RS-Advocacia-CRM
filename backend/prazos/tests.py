@@ -96,7 +96,9 @@ class PrazosViewsTests(TestCase):
 
         response = self.client.patch(
             reverse("atualizar_timer_prazo", args=[prazo.pk]),
-            data=json.dumps({"tempo_decorrido_segundos": 120, "timer_iniciado_em": None}),
+            data=json.dumps(
+                {"tempo_decorrido_segundos": 120, "timer_iniciado_em": None}
+            ),
             content_type="application/json",
         )
 

@@ -1,8 +1,8 @@
 from datetime import timedelta
-import requests
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlsplit
 
+import requests
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -10,7 +10,11 @@ from django.utils import timezone
 
 from agenda.models import Evento
 from clientes.models import Cliente
-from integrations.google.calendar import delete_remote_event, list_available_calendars, sync_agenda
+from integrations.google.calendar import (
+    delete_remote_event,
+    list_available_calendars,
+    sync_agenda,
+)
 from integrations.google.client import credentials_for_usuario
 from integrations.google.exceptions import GoogleAuthorizationRequired
 from integrations.google.oauth import verify_identity_token
@@ -39,7 +43,9 @@ class GoogleOAuthTests(TestCase):
         query = parse_qs(urlsplit(response["Location"]).query)
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn("https://www.googleapis.com/auth/calendar.events", query["scope"][0])
+        self.assertIn(
+            "https://www.googleapis.com/auth/calendar.events", query["scope"][0]
+        )
         self.assertEqual(query["access_type"], ["offline"])
         self.assertEqual(query["include_granted_scopes"], ["true"])
         self.assertEqual(query["prompt"], ["consent select_account"])
@@ -73,7 +79,11 @@ class GoogleOAuthTests(TestCase):
         verify_token,
     ):
         session = self.client.session
-        session["google_oauth_state"] = {"value": "state", "usuario_id": None, "next": "/"}
+        session["google_oauth_state"] = {
+            "value": "state",
+            "usuario_id": None,
+            "next": "/",
+        }
         session.save()
         post.return_value.status_code = 200
         post.return_value.json.return_value = {
@@ -207,9 +217,7 @@ class GoogleCalendarSyncTests(TestCase):
 
         list_available_calendars(self.usuario)
 
-        self.assertFalse(
-            GoogleCalendar.objects.get(calendar_id="secondary").enabled
-        )
+        self.assertFalse(GoogleCalendar.objects.get(calendar_id="secondary").enabled)
 
     @patch("integrations.google.calendar.calendar_service")
     def test_primeiro_sync_vincula_evento_identico_sem_duplicar(self, calendar_service):
@@ -256,7 +264,9 @@ class GoogleCalendarSyncTests(TestCase):
         self.assertFalse(Evento.objects.filter(pk=self.evento.pk).exists())
 
     @patch("integrations.google.client.Credentials")
-    def test_access_token_expirado_e_renovado_com_refresh_token(self, credentials_class):
+    def test_access_token_expirado_e_renovado_com_refresh_token(
+        self, credentials_class
+    ):
         self.account.token_expiry = timezone.now()
         self.account.save(update_fields=["token_expiry"])
 

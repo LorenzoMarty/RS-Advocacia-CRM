@@ -19,7 +19,7 @@ from .forms import InteracaoForm, ProspectForm
 from .models import InteracaoProspect, Prospect
 
 
-def serialize_interacao(interacao):
+def serialize_interacao(interacao: InteracaoProspect):
     return {
         "id": str(interacao.pk),
         "pk": interacao.pk,
@@ -28,12 +28,12 @@ def serialize_interacao(interacao):
         "descricao": interacao.descricao,
         "data": isoformat_ou_nulo(interacao.data),
         "usuario_id": str(interacao.usuario_id) if interacao.usuario_id else "",
-        "usuario_nome": interacao.usuario.nome if interacao.usuario_id else "",
+        "usuario_nome": interacao.usuario.nome if interacao.usuario else "",
         "criado_em": isoformat_ou_nulo(interacao.criado_em),
     }
 
 
-def serialize_prospect(prospect, incluir_interacoes=False):
+def serialize_prospect(prospect: Prospect, incluir_interacoes: bool = False):
     responsavel = prospect.responsavel_interno
     dados = {
         "id": str(prospect.pk),
@@ -50,12 +50,16 @@ def serialize_prospect(prospect, incluir_interacoes=False):
         "prioridade": prospect.prioridade,
         "proxima_acao": prospect.proxima_acao,
         "observacoes": prospect.observacoes,
-        "data_ultimo_contato": prospect.data_ultimo_contato.isoformat()
-        if prospect.data_ultimo_contato
-        else "",
-        "cliente_convertido_id": str(prospect.cliente_convertido_id)
-        if prospect.cliente_convertido_id
-        else "",
+        "data_ultimo_contato": (
+            prospect.data_ultimo_contato.isoformat()
+            if prospect.data_ultimo_contato
+            else ""
+        ),
+        "cliente_convertido_id": (
+            str(prospect.cliente_convertido_id)
+            if prospect.cliente_convertido_id
+            else ""
+        ),
         "convertido_em": isoformat_ou_nulo(prospect.convertido_em),
         "total_interacoes": prospect.interacoes.count(),
         "data_criacao": isoformat_ou_nulo(prospect.data_criacao),
@@ -63,7 +67,8 @@ def serialize_prospect(prospect, incluir_interacoes=False):
     }
     if incluir_interacoes:
         dados["interacoes"] = [
-            serialize_interacao(interacao) for interacao in prospect.interacoes.select_related("usuario").all()
+            serialize_interacao(interacao)
+            for interacao in prospect.interacoes.select_related("usuario").all()
         ]
     return dados
 
@@ -176,7 +181,9 @@ def excluir_prospect(request, prospect_id):
     prospect = get_object_or_404(Prospect, pk=prospect_id)
     deleted_id = str(prospect.pk)
     prospect.delete()
-    return resposta_sucesso({"id": deleted_id}, mensagem="Prospect excluído com sucesso.")
+    return resposta_sucesso(
+        {"id": deleted_id}, mensagem="Prospect excluído com sucesso."
+    )
 
 
 @app_permissions_required("prospeccao.view_prospect")
@@ -215,7 +222,9 @@ def criar_interacao(request, prospect_id):
         interacao = form.save()
         prospect.data_ultimo_contato = timezone.localdate()
         prospect.save(update_fields=["data_ultimo_contato", "atualizado_em"])
-        interacao = InteracaoProspect.objects.select_related("usuario").get(pk=interacao.pk)
+        interacao = InteracaoProspect.objects.select_related("usuario").get(
+            pk=interacao.pk
+        )
         return resposta_sucesso(
             {"interacao": serialize_interacao(interacao)},
             mensagem="Interação registrada.",

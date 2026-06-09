@@ -10,7 +10,8 @@ def _fernet() -> Fernet:
     if configured_key:
         return Fernet(configured_key.encode("ascii"))
 
-    digest = hashlib.sha256(settings.SECRET_KEY.encode("utf-8")).digest()
+    secret = settings.SECRET_KEY or ""
+    digest = hashlib.sha256(secret.encode("utf-8")).digest()
     return Fernet(base64.urlsafe_b64encode(digest))
 
 

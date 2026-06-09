@@ -5,7 +5,13 @@ from prospeccao.models import InteracaoProspect, Prospect
 
 @admin.register(Prospect)
 class ProspectAdmin(admin.ModelAdmin):
-    list_display = ("nome", "status_prospeccao", "prioridade", "responsavel_interno", "data_criacao")
+    list_display = (
+        "nome",
+        "status_prospeccao",
+        "prioridade",
+        "responsavel_interno",
+        "data_criacao",
+    )
     search_fields = ("nome", "email", "telefone", "tipo_demanda_juridica")
     list_filter = ("status_prospeccao", "prioridade", "origem_contato")
 

@@ -58,7 +58,9 @@ class PeticaoForm(forms.ModelForm):
         current_responsavel = getattr(instance, "responsavel_acao", "")
         current_area = getattr(instance, "area_juridica", "")
         usuarios = Usuario.objects.values_list("nome", flat=True)
-        existing_responsaveis = Peticao.objects.values_list("responsavel_acao", flat=True)
+        existing_responsaveis = Peticao.objects.values_list(
+            "responsavel_acao", flat=True
+        )
         existing_areas = Peticao.objects.values_list("area_juridica", flat=True)
 
         cliente_field = self.fields.get("cliente")
@@ -69,7 +71,9 @@ class PeticaoForm(forms.ModelForm):
         processo_field = self.fields.get("processo")
         if isinstance(processo_field, forms.ModelChoiceField):
             processo_field.empty_label = "Selecione o processo"
-            processo_field.queryset = Processo.objects.select_related("cliente").order_by("numero_processo")
+            processo_field.queryset = Processo.objects.select_related(
+                "cliente"
+            ).order_by("numero_processo")
 
         self.fields["responsavel_acao"].choices = _build_choices(
             "Selecione o responsavel",
@@ -90,6 +94,8 @@ class PeticaoForm(forms.ModelForm):
         processo = cleaned_data.get("processo")
 
         if cliente and processo and processo.cliente_id != cliente.pk:
-            self.add_error("processo", "O processo selecionado nao pertence ao cliente.")
+            self.add_error(
+                "processo", "O processo selecionado nao pertence ao cliente."
+            )
 
         return cleaned_data

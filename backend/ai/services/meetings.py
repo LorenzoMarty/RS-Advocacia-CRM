@@ -16,4 +16,3 @@ def transcribe_recording(recording) -> str:
 
 def summarize_transcript(transcript: str) -> str:
     return get_provider().summarize(transcript)
-

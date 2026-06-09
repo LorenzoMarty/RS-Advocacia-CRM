@@ -27,7 +27,9 @@ class Prazo(models.Model):
 
     def clean(self):
         if self.processo_id and self.processo.cliente_id is None:
-            raise ValidationError("O prazo deve estar vinculado a um processo com cliente.")
+            raise ValidationError(
+                "O prazo deve estar vinculado a um processo com cliente."
+            )
 
     def __str__(self):
         return f"{self.processo.numero_processo} - {self.data_limite:%Y-%m-%d}"

@@ -7,31 +7,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('auth', '0012_alter_user_first_name_max_length'),
-        ('usuarios', '0002_cleanup_legacy_usuario_columns'),
+        ("auth", "0012_alter_user_first_name_max_length"),
+        ("usuarios", "0002_cleanup_legacy_usuario_columns"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Cargo',
-            fields=[
-            ],
+            name="Cargo",
+            fields=[],
             options={
-                'verbose_name': 'Cargo',
-                'verbose_name_plural': 'Cargos',
-                'proxy': True,
-                'default_permissions': (),
-                'indexes': [],
-                'constraints': [],
+                "verbose_name": "Cargo",
+                "verbose_name_plural": "Cargos",
+                "proxy": True,
+                "default_permissions": (),
+                "indexes": [],
+                "constraints": [],
             },
-            bases=('auth.group',),
+            bases=("auth.group",),
             managers=[
-                ('objects', django.contrib.auth.models.GroupManager()),
+                ("objects", django.contrib.auth.models.GroupManager()),
             ],
         ),
         migrations.AlterField(
-            model_name='usuario',
-            name='cargo',
+            model_name="usuario",
+            name="cargo",
             field=models.CharField(max_length=150),
         ),
     ]
