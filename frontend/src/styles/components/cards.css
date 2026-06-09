@@ -48,7 +48,7 @@
 .badge.warn{color:var(--warn)}
 .badge.danger{color:var(--danger)}
 
-.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:var(--gap-page, 18px)}
 .section-title{
     margin:0;
     font-family:var(--serif);

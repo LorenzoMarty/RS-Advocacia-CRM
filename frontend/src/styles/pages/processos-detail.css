@@ -1,17 +1,17 @@
 .process-page{
         display:grid;
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .process-hero,
     .section-card{
-        padding:22px;
+        padding:var(--pad-card);
     }
 
     .process-hero-grid{
         display:grid;
         grid-template-columns:minmax(0, 1fr);
-        gap:18px;
+        gap:var(--gap-page);
         align-items:stretch;
     }
 
@@ -161,12 +161,12 @@
     .process-layout{
         display:grid;
         grid-template-columns:minmax(0, 1.08fr) minmax(320px, .92fr);
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .stack{
         display:grid;
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .detail-grid{

@@ -1,5 +1,5 @@
     .hero{
-        padding:30px;
+        padding:calc(30px * var(--space-scale));
         background:
             radial-gradient(circle at top right, rgba(212,175,55,.12), transparent 28%),
             linear-gradient(135deg, rgba(15,23,42,.96), rgba(2,6,23,.92));
@@ -15,7 +15,7 @@
     .hero-copy{
         display:grid;
         align-content:start;
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .hero-title{
@@ -45,11 +45,11 @@
     .metric-row{
         display:grid;
         grid-template-columns:repeat(4, minmax(0, 1fr));
-        gap:10px;
+        gap:var(--gap-list);
     }
 
     .metric{
-        padding:16px;
+        padding:calc(16px * var(--space-scale));
         border-radius:18px;
         border:1px solid var(--line);
         background:rgba(15,23,42,.58);
@@ -76,7 +76,7 @@
         display:grid;
         align-content:start;
         gap:14px;
-        padding:22px;
+        padding:var(--pad-card);
         border-radius:22px;
         border:1px solid var(--line);
         background:rgba(15,23,42,.62);
@@ -146,22 +146,22 @@
     .dashboard-grid{
         display:grid;
         grid-template-columns:minmax(0, 1.3fr) minmax(280px, .78fr);
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .stack{
         display:grid;
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .panel,
     .rail{
-        padding:22px;
+        padding:var(--pad-card);
     }
 
     .list{
         display:grid;
-        gap:10px;
+        gap:var(--gap-list);
     }
 
     .item{
@@ -169,7 +169,7 @@
         grid-template-columns:68px minmax(0, 1fr) auto;
         gap:14px;
         align-items:center;
-        padding:14px;
+        padding:calc(14px * var(--space-scale));
         border-radius:18px;
         border:1px solid var(--line);
         background:var(--ghost);

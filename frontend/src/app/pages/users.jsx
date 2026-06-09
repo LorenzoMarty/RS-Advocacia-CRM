@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
-import { UserProductivitySection } from '../components/productivity';
 import { PageChrome, PageSearch } from '../layout';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, normalizeText } from '../utils';
@@ -238,7 +237,7 @@ export function UserFormPage() {
 
 export function UserDetailPage() {
   const params = useParams();
-  const { currentRole, events, processes, roles, users } = useAppState();
+  const { events, processes, roles, users } = useAppState();
   const user = users.find((item) => item.id === params.userId) || null;
 
   if (!user) {
@@ -248,7 +247,6 @@ export function UserDetailPage() {
   const relatedProcesses = processes.filter((process) => normalizeText(process.owner) === normalizeText(user.name));
   const relatedEvents = events.filter((event) => normalizeText(event.responsible) === normalizeText(user.name));
   const linkedRole = roles.find((role) => role.id === user.roleId) || null;
-  const isAdmin = currentRole?.name === 'Administrador';
 
   return (
     <>
@@ -384,7 +382,6 @@ export function UserDetailPage() {
               )}
             </section>
 
-            <UserProductivitySection user={user} isAdmin={isAdmin} />
           </div>
         </div>
       </div>

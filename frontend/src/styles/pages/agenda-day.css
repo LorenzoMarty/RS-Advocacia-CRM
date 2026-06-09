@@ -1,5 +1,5 @@
-.agenda-day-page{display:grid;gap:18px}
-.agenda-day-intro{padding:22px}
+.agenda-day-page{display:grid;gap:var(--gap-page)}
+.agenda-day-intro{padding:var(--pad-card)}
 .day-intro-head{display:grid;gap:14px;margin-top:14px}
 .day-nav-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .day-nav-controls{display:flex;align-items:center;gap:12px;flex:1;min-width:0}

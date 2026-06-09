@@ -9,6 +9,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <title>juri-react</title>
+    <script>
+      // Apply saved appearance preferences before first paint (anti-flash).
+      // Mirrors the value tables in src/app/preferences.js — keep in sync.
+      (function () {
+        try {
+          var GROUPS = {
+            scale: { key: 'rs-advocacia-ui-scale', cssVar: '--ui-scale', attr: 'data-scale', def: 'default', vals: { compact: 0.9, default: 1, wide: 1.08 } },
+            font: { key: 'rs-advocacia-font-scale', cssVar: '--font-scale', attr: 'data-font', def: 'md', vals: { sm: 0.92, md: 1, lg: 1.12 } },
+            space: { key: 'rs-advocacia-space-scale', cssVar: '--space-scale', attr: 'data-space', def: 'default', vals: { tight: 0.85, default: 1, comfy: 1.2 } },
+          };
+          var root = document.documentElement;
+          Object.keys(GROUPS).forEach(function (group) {
+            var cfg = GROUPS[group];
+            var id = localStorage.getItem(cfg.key);
+            if (!id || !(id in cfg.vals)) id = cfg.def;
+            root.style.setProperty(cfg.cssVar, String(cfg.vals[id]));
+            root.setAttribute(cfg.attr, id);
+          });
+        } catch (e) {
+          /* ignore — CSS :root defaults apply */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -58,7 +58,7 @@
 .risk-score-card{
     display:flex;
     align-items:center;
-    gap:18px;
+    gap:var(--gap-page);
     padding:18px;
     border-radius:14px;
     border:1px solid var(--line);

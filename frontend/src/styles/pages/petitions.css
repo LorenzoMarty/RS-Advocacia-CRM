@@ -1,9 +1,9 @@
-.petitions-page{display:grid;gap:18px}
-.petition-form-page{display:grid;gap:18px}
-.petitions-intro,.petition-form-intro,.petition-form-panel{padding:22px}
+.petitions-page{display:grid;gap:var(--gap-page)}
+.petition-form-page{display:grid;gap:var(--gap-page)}
+.petitions-intro,.petition-form-intro,.petition-form-panel{padding:var(--pad-card)}
 .petitions-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 .petitions-toolbar{display:grid;grid-template-columns:minmax(260px,1fr) minmax(220px,.36fr);gap:10px}
-.petition-form{display:grid;gap:18px}
+.petition-form{display:grid;gap:var(--gap-page)}
 .petition-form .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .petition-form .span-2{grid-column:1/-1}
 .petitions-board{

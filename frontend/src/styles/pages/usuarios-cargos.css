@@ -1,11 +1,11 @@
 .cargos-page{
     display:grid;
-    gap:18px;
+    gap:var(--gap-page);
 }
 
 .cargos-intro,
 .cargos-panel{
-    padding:22px;
+    padding:var(--pad-card);
 }
 
 .intro-title{

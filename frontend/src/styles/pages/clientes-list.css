@@ -1,11 +1,11 @@
 .clients-page{
         display:grid;
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .clients-intro,
     .clients-panel{
-        padding:22px;
+        padding:var(--pad-card);
     }
 
     .clients-intro-toolbar{
@@ -54,7 +54,7 @@
 
     .clients-list{
         display:grid;
-        gap:10px;
+        gap:var(--gap-list);
     }
 
     .client-row{
@@ -298,7 +298,7 @@
 @media (max-width:640px){
     .clients-intro,
     .clients-panel{
-        padding:16px;
+        padding:var(--pad-card-mobile);
     }
 
     .clients-filters{
@@ -360,5 +360,5 @@
     .volume-label{font-size:.68rem}
     .action-link{min-height:36px;padding:0 12px;font-size:.78rem}
     .empty-state{padding:30px 16px}
-    .empty-state .empty{padding:22px}
+    .empty-state .empty{padding:var(--pad-card)}
 }

@@ -1,17 +1,17 @@
 .event-page{
         display:grid;
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .event-hero,
     .section-card{
-        padding:22px;
+        padding:var(--pad-card);
     }
 
     .event-hero-grid{
         display:grid;
         grid-template-columns:minmax(0, 1fr);
-        gap:18px;
+        gap:var(--gap-page);
         align-items:stretch;
     }
 
@@ -178,12 +178,12 @@
     .event-layout{
         display:grid;
         grid-template-columns:minmax(0, 1.04fr) minmax(320px, .96fr);
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .stack{
         display:grid;
-        gap:18px;
+        gap:var(--gap-page);
     }
 
     .detail-grid{
