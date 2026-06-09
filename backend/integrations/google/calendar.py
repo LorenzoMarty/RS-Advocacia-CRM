@@ -42,8 +42,10 @@ def calendar_label(usuario=None) -> str:
             enabled = usuario.google_account.calendars.filter(enabled=True).first()
             if enabled:
                 return enabled.summary or enabled.calendar_id
-        except Exception:
-            pass
+        except (
+            Exception
+        ):  # noqa: BLE001 - best-effort label lookup, fall back to default
+            logger.debug("Could not resolve calendar label for user.", exc_info=True)
     return getattr(settings, "GOOGLE_CALENDAR_ID", "primary") or "primary"
 
 
@@ -134,7 +136,7 @@ def configure_calendars(usuario, calendar_ids: list[str]) -> list[dict]:
         stop_watch(service, calendar)
     account.calendars.update(
         enabled=False,
-        sync_token_ciphertext="",
+        sync_token_ciphertext="",  # nosec B106 - clearing stored token, not a credential literal
         watch_channel_id="",
         watch_resource_id="",
         watch_token="",

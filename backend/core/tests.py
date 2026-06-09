@@ -14,7 +14,14 @@ class HealthEndpointTests(TestCase):
         response = self.client.post(reverse("health"))
         self.assertEqual(response.status_code, 405)
 
-    @override_settings(CELERY_BROKER_URL="")
+    @override_settings(
+        CELERY_BROKER_URL="",
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            }
+        },
+    )
     def test_ready_ok_quando_db_e_cache_saudaveis(self):
         response = self.client.get(reverse("ready"))
         self.assertEqual(response.status_code, 200)

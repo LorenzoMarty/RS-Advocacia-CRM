@@ -20,7 +20,9 @@ from integrations.models import GoogleAccount, GoogleCalendar
 from usuarios.models import Usuario
 
 AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth"
-TOKEN_URL = "https://oauth2.googleapis.com/token"
+TOKEN_URL = (
+    "https://oauth2.googleapis.com/token"  # nosec B105 - public OAuth endpoint URL
+)
 STATE_SESSION_KEY = "google_oauth_state"
 CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events"
 SCOPES = ("openid", "email", "profile", CALENDAR_SCOPE)

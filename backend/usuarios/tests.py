@@ -1,7 +1,9 @@
 import json
+from io import StringIO
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
@@ -109,3 +111,40 @@ class UsuariosTests(TestCase):
         response = self.client.get(reverse("admin:usuarios_usuario_add"))
 
         self.assertEqual(response.status_code, 403)
+
+    def test_sync_cargos_dry_run_nao_persiste_alteracoes(self):
+        usuario = Usuario.objects.create(
+            nome="Estagio",
+            email="estagio@example.com",
+            cargo="estagiario",
+        )
+        auth_user = get_user_model().objects.create_user(
+            username=usuario.email,
+            email=usuario.email,
+        )
+
+        call_command("sync_cargos", stdout=StringIO())
+
+        usuario.refresh_from_db()
+        auth_user.refresh_from_db()
+        self.assertEqual(usuario.cargo, "estagiario")
+        self.assertFalse(auth_user.groups.exists())
+
+    def test_sync_cargos_write_normaliza_cargo_e_grupo_do_auth_user(self):
+        usuario = Usuario.objects.create(
+            nome="Estagio",
+            email="estagio-write@example.com",
+            cargo="estagiario",
+        )
+        auth_user = get_user_model().objects.create_user(
+            username=usuario.email,
+            email=usuario.email,
+        )
+        cargo_label = dict(Usuario.TIPOS)["estagiario"]
+
+        call_command("sync_cargos", "--write", stdout=StringIO())
+
+        usuario.refresh_from_db()
+        auth_user.refresh_from_db()
+        self.assertEqual(usuario.cargo, cargo_label)
+        self.assertTrue(auth_user.groups.filter(name=cargo_label).exists())

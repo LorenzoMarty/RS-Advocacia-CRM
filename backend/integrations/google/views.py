@@ -160,8 +160,10 @@ def disconnect(request: HttpRequest):
                 "Nao foi possivel revogar o acesso Google agora. Tente novamente.",
                 status=502,
             )
-    account.access_token_ciphertext = ""
-    account.refresh_token_ciphertext = ""
+    account.access_token_ciphertext = ""  # nosec B105 - clearing stored token on revoke
+    account.refresh_token_ciphertext = (
+        ""  # nosec B105 - clearing stored token on revoke
+    )
     account.revoked_at = timezone.now()
     account.save(
         update_fields=[
