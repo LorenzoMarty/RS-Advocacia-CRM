@@ -335,7 +335,7 @@ GOOGLE_WATCH_RENEWAL_HOURS = int(
     os.getenv("GOOGLE_WATCH_RENEWAL_HOURS", "").strip() or "24"
 )
 
-DEMO_DATA_ENABLED = _env_flag("DEMO_DATA_ENABLED", default="test" not in sys.argv)
+DEMO_DATA_ENABLED = _env_flag("DEMO_DATA_ENABLED", default=False)
 
 AI_PROVIDER = os.getenv("AI_PROVIDER", "openai").strip() or "openai"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()

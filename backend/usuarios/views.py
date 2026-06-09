@@ -131,8 +131,14 @@ def _authenticated_user(request: HttpRequest) -> User | None:
 
 def _ensure_default_cargos() -> list[Group]:
     cargos = []
+    should_create_missing = not Cargo.objects.exists()
+
     for _legacy_value, cargo_label in Usuario.TIPOS:
-        cargo, _ = Cargo.objects.get_or_create(name=cargo_label)
+        cargo = Cargo.objects.filter(name=cargo_label).first()
+        if cargo is None:
+            if not should_create_missing:
+                continue
+            cargo = Cargo.objects.create(name=cargo_label)
         _apply_default_cargo_permissions(cargo)
         cargos.append(cargo)
     return cargos

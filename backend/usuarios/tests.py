@@ -35,6 +35,29 @@ class UsuariosTests(TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertTrue(Group.objects.filter(pk=cargo.pk).exists())
 
+    def test_listar_cargos_semeia_padroes_em_base_sem_cargos(self):
+        response = self.client.get(reverse("listar_cargos"))
+
+        self.assertEqual(response.status_code, 200)
+        nomes = {
+            cargo["nome"] for cargo in response.json()["dados"]["cargos"]
+        }
+        self.assertTrue(set(dict(Usuario.TIPOS).values()).issubset(nomes))
+
+    def test_listar_cargos_nao_recria_padrao_removido_em_base_inicializada(self):
+        admin = Group.objects.create(name="Administrador")
+        Group.objects.create(name="Operacional")
+        admin.delete()
+
+        response = self.client.get(reverse("listar_cargos"))
+
+        self.assertEqual(response.status_code, 200)
+        nomes = {
+            cargo["nome"] for cargo in response.json()["dados"]["cargos"]
+        }
+        self.assertNotIn("Administrador", nomes)
+        self.assertIn("Operacional", nomes)
+
     def test_usuario_atual_sincroniza_permissoes_do_cargo(self):
         usuario = Usuario.objects.create(
             nome="Admin Front",
