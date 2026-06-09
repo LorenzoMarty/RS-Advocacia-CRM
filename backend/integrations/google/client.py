@@ -30,7 +30,7 @@ def credentials_for_usuario(usuario) -> Credentials:
     credentials = Credentials(
         token=account.access_token or None,
         refresh_token=account.refresh_token or None,
-        token_uri="https://oauth2.googleapis.com/token",
+        token_uri="https://oauth2.googleapis.com/token",  # nosec B106 - public OAuth endpoint URL
         client_id=settings.GOOGLE_CLIENT_ID,
         client_secret=settings.GOOGLE_CLIENT_SECRET,
         expiry=expiry,

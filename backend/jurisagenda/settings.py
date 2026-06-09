@@ -116,7 +116,7 @@ else:
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     if DEBUG:
-        SECRET_KEY = (
+        SECRET_KEY = (  # nosec B105 - dev-only fallback; prod raises ImproperlyConfigured below
             "django-insecure-+g)herdbhyeh+jva+k)qugqi$v1qa^%(4p756636ltfzx_i6ll"
         )
     else:
@@ -254,12 +254,11 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
-MEDIA_ROOT = Path(
-    os.getenv(
-        "MEDIA_ROOT",
-        "/tmp/media" if os.getenv("VERCEL") else str(BASE_DIR / "media"),
-    )
+_VERCEL_MEDIA_ROOT = (
+    "/tmp/media"  # nosec B108 - Vercel serverless only allows writes under /tmp
 )
+_media_default = _VERCEL_MEDIA_ROOT if os.getenv("VERCEL") else str(BASE_DIR / "media")
+MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", _media_default))
 
 WHITENOISE_USE_FINDERS = DEBUG
 
