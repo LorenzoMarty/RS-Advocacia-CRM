@@ -6,25 +6,25 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('usuarios', '0006_usuario_google_refresh_token_usuario_google_token_and_more'),
-        ('integrations', '0001_initial'),
+        ("usuarios", "0006_usuario_google_refresh_token_usuario_google_token_and_more"),
+        ("integrations", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='usuario',
-            name='google_refresh_token',
+            model_name="usuario",
+            name="google_refresh_token",
         ),
         migrations.RemoveField(
-            model_name='usuario',
-            name='google_sub',
+            model_name="usuario",
+            name="google_sub",
         ),
         migrations.RemoveField(
-            model_name='usuario',
-            name='google_token',
+            model_name="usuario",
+            name="google_token",
         ),
         migrations.RemoveField(
-            model_name='usuario',
-            name='google_token_expiry',
+            model_name="usuario",
+            name="google_token_expiry",
         ),
     ]

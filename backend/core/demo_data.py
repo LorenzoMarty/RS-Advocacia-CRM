@@ -13,7 +13,6 @@ from prazos.models import Prazo
 from processos.models import Processo
 from usuarios.models import Usuario
 
-
 DEMO_EMAIL = "renata@rsadvocacia.demo"
 
 
@@ -378,7 +377,9 @@ def ensure_demo_data():
         "Administrador",
         admin_group,
     )
-    _ensure_usuario("Mariana Souza", "mariana@rsadvocacia.demo", "Advogado", lawyer_group)
+    _ensure_usuario(
+        "Mariana Souza", "mariana@rsadvocacia.demo", "Advogado", lawyer_group
+    )
     _ensure_usuario(
         "Lorenzo dos Reis",
         "lorenzo@rsadvocacia.demo",

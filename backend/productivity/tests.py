@@ -1,6 +1,5 @@
-from datetime import datetime
-
 import json
+from datetime import datetime
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -16,7 +15,9 @@ from usuarios.models import Usuario
 
 
 def _aware(year, month, day, hour=10):
-    return timezone.make_aware(datetime(year, month, day, hour, 0), timezone.get_current_timezone())
+    return timezone.make_aware(
+        datetime(year, month, day, hour, 0), timezone.get_current_timezone()
+    )
 
 
 class ResumoProdutividadeTests(TestCase):
@@ -65,7 +66,15 @@ class ResumoProdutividadeTests(TestCase):
             responsavel=self.usuario.nome,
         )
 
-    def _entry(self, user, total_seconds, ended, task_type=TimeEntry.TASK_PRAZO, task_id=None, status=TimeEntry.STATUS_STOPPED):
+    def _entry(
+        self,
+        user,
+        total_seconds,
+        ended,
+        task_type=TimeEntry.TASK_PRAZO,
+        task_id=None,
+        status=TimeEntry.STATUS_STOPPED,
+    ):
         return TimeEntry.objects.create(
             user=user,
             task_id=task_id if task_id is not None else str(self.prazo.pk),
@@ -127,7 +136,9 @@ class ResumoProdutividadeTests(TestCase):
 
         # processo resolvido via Prazo -> número do processo
         self.assertEqual(len(dados["por_processo"]), 1)
-        self.assertEqual(dados["por_processo"][0]["process_number"], self.processo.numero_processo)
+        self.assertEqual(
+            dados["por_processo"][0]["process_number"], self.processo.numero_processo
+        )
         self.assertEqual(dados["por_processo"][0]["segundos"], 6000)
 
     def test_admin_filtra_por_user_id(self):
@@ -155,7 +166,9 @@ class ResumoProdutividadeTests(TestCase):
         self.assertEqual(statuses, {"running", "paused"})
 
     def test_periodo_week_padrao(self):
-        response = self.client.get(reverse("resumo_produtividade"), data={"periodo": "week"})
+        response = self.client.get(
+            reverse("resumo_produtividade"), data={"periodo": "week"}
+        )
         self.assertEqual(response.status_code, 200, response.json())
         dados = response.json()["dados"]
         self.assertEqual(dados["periodo"], "week")

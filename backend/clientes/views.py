@@ -7,10 +7,10 @@ from clientes.forms import ClienteForm
 from clientes.models import Cliente
 from core.permissions import app_permissions_required
 from core.utils import (
-    resposta_erro,
     erros_formulario,
-    metodo_nao_permitido,
     ler_corpo_json,
+    metodo_nao_permitido,
+    resposta_erro,
     resposta_sucesso,
 )
 
@@ -42,7 +42,7 @@ def _filtrar_clientes(request):
     return clientes, busca, tipo_cliente
 
 
-def serialize_cliente(cliente):
+def serialize_cliente(cliente: Cliente):
     return {
         "id": str(cliente.pk),
         "pk": cliente.pk,
@@ -141,4 +141,6 @@ def excluir_cliente(request, cliente_id):
     cliente = get_object_or_404(Cliente, pk=cliente_id)
     deleted_id = str(cliente.pk)
     cliente.delete()
-    return resposta_sucesso({"id": deleted_id}, mensagem="Cliente excluído com sucesso.")
+    return resposta_sucesso(
+        {"id": deleted_id}, mensagem="Cliente excluído com sucesso."
+    )

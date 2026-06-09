@@ -3,12 +3,12 @@ from django.shortcuts import get_object_or_404
 
 from core.permissions import app_permissions_required
 from core.utils import (
-    resposta_erro,
     erros_formulario,
-    metodo_nao_permitido,
-    ler_corpo_json,
-    resposta_sucesso,
     isoformat_ou_nulo,
+    ler_corpo_json,
+    metodo_nao_permitido,
+    resposta_erro,
+    resposta_sucesso,
 )
 from processos.forms import ProcessoForm
 from processos.models import Processo
@@ -31,7 +31,7 @@ def _filtrar_processos(request):
     return processos, busca
 
 
-def serialize_processo(processo):
+def serialize_processo(processo: Processo):
     cliente_nome = processo.cliente.nome if processo.cliente_id else ""
     return {
         "id": str(processo.pk),
@@ -44,7 +44,9 @@ def serialize_processo(processo):
         "area_juridica": processo.area_juridica,
         "status": processo.status,
         "advogado_responsavel": processo.advogado_responsavel,
-        "data_ultima_movimentacao": isoformat_ou_nulo(processo.data_ultima_movimentacao),
+        "data_ultima_movimentacao": isoformat_ou_nulo(
+            processo.data_ultima_movimentacao
+        ),
     }
 
 
@@ -92,7 +94,9 @@ def detalhes_processo(request, processo_id):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    processo = get_object_or_404(Processo.objects.select_related("cliente"), pk=processo_id)
+    processo = get_object_or_404(
+        Processo.objects.select_related("cliente"), pk=processo_id
+    )
     serialized = serialize_processo(processo)
     return resposta_sucesso({"processo": serialized})
 
@@ -130,4 +134,6 @@ def excluir_processo(request, processo_id):
     processo = get_object_or_404(Processo, pk=processo_id)
     deleted_id = str(processo.pk)
     processo.delete()
-    return resposta_sucesso({"id": deleted_id}, mensagem="Processo excluído com sucesso.")
+    return resposta_sucesso(
+        {"id": deleted_id}, mensagem="Processo excluído com sucesso."
+    )

@@ -2,13 +2,24 @@ from django.urls import path
 
 from meetings import views
 
-
 urlpatterns = [
     path("api/reunioes/", views.listar_reunioes, name="listar_reunioes"),
     path("api/reunioes/criar/", views.criar_reuniao, name="criar_reuniao"),
-    path("api/reunioes/<int:reuniao_id>/", views.detalhes_reuniao, name="detalhes_reuniao"),
-    path("api/reunioes/<int:reuniao_id>/editar/", views.editar_reuniao, name="editar_reuniao"),
-    path("api/reunioes/<int:reuniao_id>/excluir/", views.excluir_reuniao, name="excluir_reuniao"),
+    path(
+        "api/reunioes/<int:reuniao_id>/",
+        views.detalhes_reuniao,
+        name="detalhes_reuniao",
+    ),
+    path(
+        "api/reunioes/<int:reuniao_id>/editar/",
+        views.editar_reuniao,
+        name="editar_reuniao",
+    ),
+    path(
+        "api/reunioes/<int:reuniao_id>/excluir/",
+        views.excluir_reuniao,
+        name="excluir_reuniao",
+    ),
     path(
         "api/reunioes/<int:reuniao_id>/gravacoes/",
         views.enviar_gravacao,

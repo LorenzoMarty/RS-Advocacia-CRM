@@ -65,9 +65,15 @@ class PeticoesViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 201, response.json())
         self.assertEqual(Peticao.objects.count(), 1)
-        self.assertEqual(response.json()["dados"]["peticao"]["adverso"], "Empresa adversa")
-        self.assertEqual(response.json()["dados"]["peticao"]["tipo"], Peticao.TIPO_CONTESTACAO)
-        self.assertEqual(response.json()["dados"]["peticao"]["processo_id"], str(self.processo.pk))
+        self.assertEqual(
+            response.json()["dados"]["peticao"]["adverso"], "Empresa adversa"
+        )
+        self.assertEqual(
+            response.json()["dados"]["peticao"]["tipo"], Peticao.TIPO_CONTESTACAO
+        )
+        self.assertEqual(
+            response.json()["dados"]["peticao"]["processo_id"], str(self.processo.pk)
+        )
 
     def test_pendente_nao_exige_motivo(self):
         payload = self.payload()

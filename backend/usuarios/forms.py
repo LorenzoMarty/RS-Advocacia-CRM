@@ -103,10 +103,13 @@ class UsuarioForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        current_value = self.instance.cargo if self.instance and self.instance.pk else None
+        current_value = (
+            self.instance.cargo if self.instance and self.instance.pk else None
+        )
         self.fields["cargo"].choices = get_available_cargo_choices(current_value)
         if current_value:
             self.initial["cargo"] = normalize_cargo_name(current_value)
+
 
 class CargoForm(forms.ModelForm):
     permissions = forms.ModelMultipleChoiceField(
@@ -132,4 +135,6 @@ class CargoForm(forms.ModelForm):
                 "autocomplete": "off",
             }
         )
-        self.permission_sections = cargo_permissions_for_display(self.fields["permissions"].queryset)
+        self.permission_sections = cargo_permissions_for_display(
+            self.fields["permissions"].queryset
+        )

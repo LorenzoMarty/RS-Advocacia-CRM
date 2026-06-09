@@ -54,8 +54,14 @@ def ensure_default_calendar(usuario) -> GoogleCalendar:
         account=account,
         calendar_id=calendar_id,
         defaults={
-            "summary": "Agenda principal do Google" if calendar_id == "primary" else calendar_id,
-            "timezone": getattr(settings, "GOOGLE_CALENDAR_TIMEZONE", settings.TIME_ZONE),
+            "summary": (
+                "Agenda principal do Google"
+                if calendar_id == "primary"
+                else calendar_id
+            ),
+            "timezone": getattr(
+                settings, "GOOGLE_CALENDAR_TIMEZONE", settings.TIME_ZONE
+            ),
             "primary": calendar_id == "primary",
             "enabled": True,
         },
@@ -156,8 +162,11 @@ def _item_updated_at(item: dict):
 
 
 def _item_sequence(item: dict):
+    value = item.get("sequence")
+    if value is None:
+        return None
     try:
-        return int(item.get("sequence"))
+        return int(value)
     except (TypeError, ValueError):
         return None
 
@@ -177,11 +186,15 @@ def event_payload(evento) -> dict:
         "location": evento.local or "",
         "start": {
             "dateTime": _aware(evento.data_inicio).isoformat(),
-            "timeZone": getattr(settings, "GOOGLE_CALENDAR_TIMEZONE", settings.TIME_ZONE),
+            "timeZone": getattr(
+                settings, "GOOGLE_CALENDAR_TIMEZONE", settings.TIME_ZONE
+            ),
         },
         "end": {
             "dateTime": _aware(evento.data_fim).isoformat(),
-            "timeZone": getattr(settings, "GOOGLE_CALENDAR_TIMEZONE", settings.TIME_ZONE),
+            "timeZone": getattr(
+                settings, "GOOGLE_CALENDAR_TIMEZONE", settings.TIME_ZONE
+            ),
         },
     }
 
@@ -240,7 +253,9 @@ def _technical_process(usuario) -> Processo:
             vara="Google Calendar",
             area_juridica="Administrativo",
             status="Ativo",
-            advogado_responsavel=(getattr(usuario, "nome", "") or "Google Calendar")[:100],
+            advogado_responsavel=(getattr(usuario, "nome", "") or "Google Calendar")[
+                :100
+            ],
         )
     return processo
 
@@ -315,7 +330,9 @@ def _save_link(
 
 
 def _google_error_status(exc: GoogleApiError):
-    return getattr(getattr(getattr(exc, "__cause__", None), "resp", None), "status", None)
+    return getattr(
+        getattr(getattr(exc, "__cause__", None), "resp", None), "status", None
+    )
 
 
 def _matching_local_event(calendar: GoogleCalendar, item: dict) -> Evento | None:
@@ -365,7 +382,9 @@ def sync_local_event(usuario, evento: Evento) -> int:
                 )
             else:
                 item = _execute(
-                    lambda: service.events().insert(calendarId=calendar.calendar_id, body=payload),
+                    lambda: service.events().insert(
+                        calendarId=calendar.calendar_id, body=payload
+                    ),
                     "Nao foi possivel criar o evento no Google.",
                 )
         except GoogleApiError as exc:
@@ -373,7 +392,9 @@ def sync_local_event(usuario, evento: Evento) -> int:
                 raise
             link.delete()
             item = _execute(
-                lambda: service.events().insert(calendarId=calendar.calendar_id, body=payload),
+                lambda: service.events().insert(
+                    calendarId=calendar.calendar_id, body=payload
+                ),
                 "Nao foi possivel recriar o evento no Google.",
             )
         _save_link(
@@ -391,9 +412,9 @@ def delete_remote_event(usuario, evento: Evento) -> int:
     if account is None:
         return 0
     links = list(
-        GoogleEventLink.objects.filter(calendar__account=account, evento=evento).select_related(
-            "calendar"
-        )
+        GoogleEventLink.objects.filter(
+            calendar__account=account, evento=evento
+        ).select_related("calendar")
     )
     if not links:
         return 0
@@ -447,14 +468,19 @@ def _pull_remote_events(service, calendar: GoogleCalendar) -> tuple[list[dict], 
         return _pull_page(service, calendar)
     except GoogleApiError as exc:
         cause = getattr(exc, "__cause__", None)
-        if getattr(getattr(cause, "resp", None), "status", None) != 410 or not calendar.sync_token:
+        if (
+            getattr(getattr(cause, "resp", None), "status", None) != 410
+            or not calendar.sync_token
+        ):
             raise
         calendar.set_sync_token(None)
         calendar.save(update_fields=["sync_token_ciphertext"])
         return _pull_page(service, calendar)
 
 
-def _delete_remote_copies_for_remote_deletion(service, deleted_link: GoogleEventLink) -> None:
+def _delete_remote_copies_for_remote_deletion(
+    service, deleted_link: GoogleEventLink
+) -> None:
     other_links = (
         GoogleEventLink.objects.filter(evento=deleted_link.evento)
         .exclude(pk=deleted_link.pk)
@@ -487,9 +513,11 @@ def sync_calendar(usuario, calendar: GoogleCalendar, service) -> dict:
         google_id = str(item.get("id") or "").strip()
         if not google_id:
             continue
-        link = GoogleEventLink.objects.filter(
-            calendar=calendar, google_event_id=google_id
-        ).select_related("evento").first()
+        link = (
+            GoogleEventLink.objects.filter(calendar=calendar, google_event_id=google_id)
+            .select_related("evento")
+            .first()
+        )
         if item.get("status") == "cancelled":
             if link:
                 with transaction.atomic():
@@ -514,27 +542,29 @@ def sync_calendar(usuario, calendar: GoogleCalendar, service) -> dict:
                 summary["conflitos"] += 1
             continue
 
-        evento = _matching_local_event(calendar, item)
-        if evento:
+        local_event = _matching_local_event(calendar, item)
+        if local_event:
             _save_link(
                 calendar,
-                evento,
+                local_event,
                 item,
                 source_of_truth=GoogleEventLink.SOURCE_GOOGLE,
             )
             summary["vinculados"] += 1
             continue
-        evento = _create_imported_event(usuario, item)
-        if evento:
+        imported_event = _create_imported_event(usuario, item)
+        if imported_event:
             _save_link(
                 calendar,
-                evento,
+                imported_event,
                 item,
                 source_of_truth=GoogleEventLink.SOURCE_GOOGLE,
             )
             summary["importados"] += 1
 
-    threshold = timezone.now() - timedelta(days=getattr(settings, "GOOGLE_SYNC_PAST_DAYS", 180))
+    threshold = timezone.now() - timedelta(
+        days=getattr(settings, "GOOGLE_SYNC_PAST_DAYS", 180)
+    )
     local_events = (
         Evento.objects.exclude(tipo_evento__icontains="prazo")
         .filter(data_inicio__gte=threshold)
@@ -561,12 +591,16 @@ def sync_calendar(usuario, calendar: GoogleCalendar, service) -> dict:
                     raise
                 link.delete()
                 item = _execute(
-                    lambda: service.events().insert(calendarId=calendar.calendar_id, body=payload),
+                    lambda: service.events().insert(
+                        calendarId=calendar.calendar_id, body=payload
+                    ),
                     "Nao foi possivel recriar evento local no Google.",
                 )
         else:
             item = _execute(
-                lambda: service.events().insert(calendarId=calendar.calendar_id, body=payload),
+                lambda: service.events().insert(
+                    calendarId=calendar.calendar_id, body=payload
+                ),
                 "Nao foi possivel exportar evento local para o Google.",
             )
         _save_link(
@@ -596,7 +630,14 @@ def sync_agenda(usuario) -> dict:
     }
     for calendar in enabled_calendars(usuario):
         result = sync_calendar(usuario, calendar, service)
-        for key in ("importados", "atualizados", "exportados", "removidos", "vinculados", "conflitos"):
+        for key in (
+            "importados",
+            "atualizados",
+            "exportados",
+            "removidos",
+            "vinculados",
+            "conflitos",
+        ):
             total[key] += result.get(key, 0)
     return total
 

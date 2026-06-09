@@ -100,12 +100,20 @@ class FinanceiroAdminViewsTests(TestCase):
 
     def test_filtro_por_tipo(self):
         Lancamento.objects.create(
-            descricao="Receita", tipo="receita", categoria="Honorários",
-            valor="100.00", data_vencimento="2026-06-30", status="Pendente",
+            descricao="Receita",
+            tipo="receita",
+            categoria="Honorários",
+            valor="100.00",
+            data_vencimento="2026-06-30",
+            status="Pendente",
         )
         Lancamento.objects.create(
-            descricao="Despesa", tipo="despesa", categoria="Software",
-            valor="50.00", data_vencimento="2026-06-30", status="Pendente",
+            descricao="Despesa",
+            tipo="despesa",
+            categoria="Software",
+            valor="50.00",
+            data_vencimento="2026-06-30",
+            status="Pendente",
         )
         response = self.client.get(reverse("listar_lancamentos"), {"tipo": "despesa"})
         dados = response.json()["dados"]

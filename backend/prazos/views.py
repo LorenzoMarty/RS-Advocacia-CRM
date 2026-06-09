@@ -35,7 +35,7 @@ def _resolver_criador_prazo(request):
     return "Interno"
 
 
-def serialize_prazo(prazo):
+def serialize_prazo(prazo: Prazo):
     cliente = prazo.processo.cliente if prazo.processo_id else None
     return {
         "id": str(prazo.pk),
@@ -111,7 +111,9 @@ def detalhes_prazo(request, prazo_id):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    prazo = get_object_or_404(Prazo.objects.select_related("processo__cliente"), pk=prazo_id)
+    prazo = get_object_or_404(
+        Prazo.objects.select_related("processo__cliente"), pk=prazo_id
+    )
     return resposta_sucesso({"prazo": serialize_prazo(prazo)})
 
 
@@ -144,7 +146,9 @@ def atualizar_timer_prazo(request, prazo_id):
     if request.method not in {"PUT", "PATCH"}:
         return metodo_nao_permitido(["PUT", "PATCH"])
 
-    prazo = get_object_or_404(Prazo.objects.select_related("processo__cliente"), pk=prazo_id)
+    prazo = get_object_or_404(
+        Prazo.objects.select_related("processo__cliente"), pk=prazo_id
+    )
 
     try:
         payload = ler_corpo_json(request)
@@ -191,7 +195,9 @@ def atualizar_timer_prazo(request, prazo_id):
         update_fields.append("timer_iniciado_em")
 
     prazo.save(update_fields=update_fields)
-    return resposta_sucesso({"prazo": serialize_prazo(prazo)}, mensagem="Timer atualizado.")
+    return resposta_sucesso(
+        {"prazo": serialize_prazo(prazo)}, mensagem="Timer atualizado."
+    )
 
 
 @app_permissions_required("prazos.delete_prazo")

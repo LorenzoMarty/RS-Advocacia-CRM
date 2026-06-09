@@ -6,9 +6,13 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from core.permission_utils import user_has_permission
 from core.permissions import app_permissions_required
-from core.utils import ler_corpo_json, metodo_nao_permitido, resposta_erro, resposta_sucesso
+from core.utils import (
+    ler_corpo_json,
+    metodo_nao_permitido,
+    resposta_erro,
+    resposta_sucesso,
+)
 from peticoes.models import Peticao
 from prazos.models import Prazo
 from productivity.models import ProductivityGoal, TimeEntry
@@ -77,7 +81,9 @@ def _decimal_hours(value) -> float:
 
 
 def _task_details(entries):
-    prazo_ids = [entry.task_id for entry in entries if entry.task_type == TimeEntry.TASK_PRAZO]
+    prazo_ids = [
+        entry.task_id for entry in entries if entry.task_type == TimeEntry.TASK_PRAZO
+    ]
     peticao_ids = [
         entry.task_id
         for entry in entries
@@ -86,11 +92,15 @@ def _task_details(entries):
 
     prazos = {
         str(prazo.pk): prazo
-        for prazo in Prazo.objects.select_related("processo__cliente").filter(pk__in=prazo_ids)
+        for prazo in Prazo.objects.select_related("processo__cliente").filter(
+            pk__in=prazo_ids
+        )
     }
     peticoes = {
         str(peticao.pk): peticao
-        for peticao in Peticao.objects.select_related("cliente", "processo").filter(pk__in=peticao_ids)
+        for peticao in Peticao.objects.select_related("cliente", "processo").filter(
+            pk__in=peticao_ids
+        )
     }
 
     details = {}
@@ -101,7 +111,9 @@ def _task_details(entries):
                 details[entry.pk] = {
                     "task_name": prazo.titulo,
                     "process_id": str(prazo.processo_id) if prazo.processo_id else "",
-                    "process_number": prazo.processo.numero_processo if prazo.processo_id else "",
+                    "process_number": (
+                        prazo.processo.numero_processo if prazo.processo_id else ""
+                    ),
                 }
             continue
 
@@ -110,7 +122,9 @@ def _task_details(entries):
             details[entry.pk] = {
                 "task_name": peticao.adverso,
                 "process_id": str(peticao.processo_id) if peticao.processo_id else "",
-                "process_number": peticao.processo.numero_processo if peticao.processo_id else "",
+                "process_number": (
+                    peticao.processo.numero_processo if peticao.processo_id else ""
+                ),
             }
 
     return details
@@ -143,8 +157,12 @@ def serialize_productivity_goal(goal: ProductivityGoal | None, usuario: Usuario)
     return {
         "id": str(goal.pk) if goal else "",
         "user_id": str(usuario.pk),
-        "daily_hours": _decimal_hours(goal.daily_hours if goal else DEFAULT_DAILY_HOURS),
-        "weekly_hours": _decimal_hours(goal.weekly_hours if goal else DEFAULT_WEEKLY_HOURS),
+        "daily_hours": _decimal_hours(
+            goal.daily_hours if goal else DEFAULT_DAILY_HOURS
+        ),
+        "weekly_hours": _decimal_hours(
+            goal.weekly_hours if goal else DEFAULT_WEEKLY_HOURS
+        ),
         "configured": bool(goal),
     }
 
@@ -184,6 +202,7 @@ def _goals_response(request, usuario: Usuario):
 # ---------------------------------------------------------------------------
 # Resumo agregado (dashboard de produtividade)
 # ---------------------------------------------------------------------------
+
 
 def _aware(dt):
     """Garante datetime timezone-aware na timezone atual."""
@@ -268,13 +287,21 @@ def _aggregate_resumo(entries, details, now):
         # por usuário
         u = por_usuario.setdefault(
             str(entry.user_id),
-            {"user_id": str(entry.user_id), "user_name": entry.user.nome if entry.user_id else "", "segundos": 0, "entradas": 0},
+            {
+                "user_id": str(entry.user_id),
+                "user_name": entry.user.nome if entry.user_id else "",
+                "segundos": 0,
+                "entradas": 0,
+            },
         )
         u["segundos"] += seconds
         u["entradas"] += 1
 
         # por tipo
-        t = por_tipo.setdefault(entry.task_type, {"task_type": entry.task_type, "segundos": 0, "entradas": 0})
+        t = por_tipo.setdefault(
+            entry.task_type,
+            {"task_type": entry.task_type, "segundos": 0, "entradas": 0},
+        )
         t["segundos"] += seconds
         t["entradas"] += 1
 
@@ -301,7 +328,11 @@ def _aggregate_resumo(entries, details, now):
         proc_key = process_id or "sem-processo"
         p = por_processo.setdefault(
             proc_key,
-            {"process_id": process_id, "process_number": process_number or "Sem processo", "segundos": 0},
+            {
+                "process_id": process_id,
+                "process_number": process_number or "Sem processo",
+                "segundos": 0,
+            },
         )
         p["segundos"] += seconds
 
@@ -312,11 +343,21 @@ def _aggregate_resumo(entries, details, now):
 
     return {
         "tempo_total_segundos": total,
-        "por_usuario": sorted(por_usuario.values(), key=lambda x: x["segundos"], reverse=True),
-        "por_tarefa": sorted(por_tarefa.values(), key=lambda x: x["segundos"], reverse=True),
-        "por_processo": sorted(por_processo.values(), key=lambda x: x["segundos"], reverse=True),
-        "por_tipo": sorted(por_tipo.values(), key=lambda x: x["segundos"], reverse=True),
-        "por_dia": [{"data": dia, "segundos": seg} for dia, seg in sorted(por_dia.items())],
+        "por_usuario": sorted(
+            por_usuario.values(), key=lambda x: x["segundos"], reverse=True
+        ),
+        "por_tarefa": sorted(
+            por_tarefa.values(), key=lambda x: x["segundos"], reverse=True
+        ),
+        "por_processo": sorted(
+            por_processo.values(), key=lambda x: x["segundos"], reverse=True
+        ),
+        "por_tipo": sorted(
+            por_tipo.values(), key=lambda x: x["segundos"], reverse=True
+        ),
+        "por_dia": [
+            {"data": dia, "segundos": seg} for dia, seg in sorted(por_dia.items())
+        ],
     }
 
 
@@ -330,7 +371,9 @@ def resumo(request):
         return resposta_erro({"usuario": ["Usuário atual não encontrado."]}, status=403)
 
     now = timezone.now()
-    inicio, fim, inicio_anterior, fim_anterior, periodo = _period_bounds(request, now=now)
+    inicio, fim, inicio_anterior, fim_anterior, periodo = _period_bounds(
+        request, now=now
+    )
 
     all_entries = list(_visible_time_entries(request, usuario))
     details = _task_details(all_entries)
@@ -414,10 +457,14 @@ def iniciar_timer(request):
     if task_type not in dict(TimeEntry.TASK_CHOICES):
         return resposta_erro({"task_type": ["Tipo de tarefa inválido."]}, status=400)
 
-    running_entry = TimeEntry.objects.select_related("user").filter(
-        user=usuario,
-        status=TimeEntry.STATUS_RUNNING,
-    ).first()
+    running_entry = (
+        TimeEntry.objects.select_related("user")
+        .filter(
+            user=usuario,
+            status=TimeEntry.STATUS_RUNNING,
+        )
+        .first()
+    )
     now = timezone.now()
 
     if running_entry and not (
@@ -428,7 +475,9 @@ def iniciar_timer(request):
             return resposta_erro(
                 {
                     "timer_ativo": ["Já existe um timer ativo."],
-                    "active_entry": serialize_time_entry(running_entry, details=details, now=now),
+                    "active_entry": serialize_time_entry(
+                        running_entry, details=details, now=now
+                    ),
                 },
                 status=409,
             )
@@ -438,7 +487,11 @@ def iniciar_timer(request):
         running_entry.status = TimeEntry.STATUS_PAUSED
         running_entry.save(update_fields=["total_seconds", "paused_at", "status"])
 
-    if running_entry and running_entry.task_id == task_id and running_entry.task_type == task_type:
+    if (
+        running_entry
+        and running_entry.task_id == task_id
+        and running_entry.task_type == task_type
+    ):
         entry = running_entry
     else:
         entry = TimeEntry.objects.create(
@@ -451,7 +504,11 @@ def iniciar_timer(request):
 
     entry = TimeEntry.objects.select_related("user").get(pk=entry.pk)
     return resposta_sucesso(
-        {"time_entry": serialize_time_entry(entry, details=_task_details([entry]), now=now)},
+        {
+            "time_entry": serialize_time_entry(
+                entry, details=_task_details([entry]), now=now
+            )
+        },
         mensagem="Timer iniciado.",
         status=201,
     )
@@ -460,11 +517,15 @@ def iniciar_timer(request):
 def _get_entry_for_action(request, entry_id):
     usuario = _current_usuario(request)
     if not usuario:
-        return None, resposta_erro({"usuario": ["Usuário atual não encontrado."]}, status=403)
+        return None, resposta_erro(
+            {"usuario": ["Usuário atual não encontrado."]}, status=403
+        )
 
     entry = get_object_or_404(TimeEntry.objects.select_related("user"), pk=entry_id)
     if entry.user_id != usuario.pk and not _is_admin(request, usuario):
-        return None, resposta_erro({"permissao": ["Você só pode alterar seus próprios timers."]}, status=403)
+        return None, resposta_erro(
+            {"permissao": ["Você só pode alterar seus próprios timers."]}, status=403
+        )
     return entry, None
 
 
@@ -485,7 +546,11 @@ def pausar_timer(request, entry_id):
         entry.save(update_fields=["total_seconds", "paused_at", "status"])
 
     return resposta_sucesso(
-        {"time_entry": serialize_time_entry(entry, details=_task_details([entry]), now=now)},
+        {
+            "time_entry": serialize_time_entry(
+                entry, details=_task_details([entry]), now=now
+            )
+        },
         mensagem="Timer pausado.",
     )
 
@@ -505,10 +570,15 @@ def retomar_timer(request, entry_id):
         return resposta_erro(str(exc), status=400)
 
     now = timezone.now()
-    running_entry = TimeEntry.objects.select_related("user").filter(
-        user=entry.user,
-        status=TimeEntry.STATUS_RUNNING,
-    ).exclude(pk=entry.pk).first()
+    running_entry = (
+        TimeEntry.objects.select_related("user")
+        .filter(
+            user=entry.user,
+            status=TimeEntry.STATUS_RUNNING,
+        )
+        .exclude(pk=entry.pk)
+        .first()
+    )
 
     if running_entry:
         if not payload.get("pause_existing"):
@@ -516,7 +586,9 @@ def retomar_timer(request, entry_id):
             return resposta_erro(
                 {
                     "timer_ativo": ["Já existe um timer ativo."],
-                    "active_entry": serialize_time_entry(running_entry, details=details, now=now),
+                    "active_entry": serialize_time_entry(
+                        running_entry, details=details, now=now
+                    ),
                 },
                 status=409,
             )
@@ -531,7 +603,11 @@ def retomar_timer(request, entry_id):
         entry.save(update_fields=["resumed_at", "status"])
 
     return resposta_sucesso(
-        {"time_entry": serialize_time_entry(entry, details=_task_details([entry]), now=now)},
+        {
+            "time_entry": serialize_time_entry(
+                entry, details=_task_details([entry]), now=now
+            )
+        },
         mensagem="Timer retomado.",
     )
 
@@ -553,7 +629,11 @@ def encerrar_timer(request, entry_id):
         entry.save(update_fields=["total_seconds", "ended_at", "status"])
 
     return resposta_sucesso(
-        {"time_entry": serialize_time_entry(entry, details=_task_details([entry]), now=now)},
+        {
+            "time_entry": serialize_time_entry(
+                entry, details=_task_details([entry]), now=now
+            )
+        },
         mensagem="Timer encerrado.",
     )
 
@@ -577,7 +657,9 @@ def salvar_metas(request):
 
     usuario = _current_usuario(request)
     if not usuario or not _is_admin(request, usuario):
-        return resposta_erro({"permissao": ["Apenas administradores alteram metas."]}, status=403)
+        return resposta_erro(
+            {"permissao": ["Apenas administradores alteram metas."]}, status=403
+        )
 
     try:
         payload = ler_corpo_json(request)
@@ -599,9 +681,13 @@ def salvar_metas(request):
         for goal_user in usuarios:
             goal, _ = ProductivityGoal.objects.get_or_create(user=goal_user)
             if "daily_hours" in item:
-                goal.daily_hours = Decimal(str(item.get("daily_hours") or DEFAULT_DAILY_HOURS))
+                goal.daily_hours = Decimal(
+                    str(item.get("daily_hours") or DEFAULT_DAILY_HOURS)
+                )
             if "weekly_hours" in item:
-                goal.weekly_hours = Decimal(str(item.get("weekly_hours") or DEFAULT_WEEKLY_HOURS))
+                goal.weekly_hours = Decimal(
+                    str(item.get("weekly_hours") or DEFAULT_WEEKLY_HOURS)
+                )
             goal.save()
             updated_goals.append(goal)
 

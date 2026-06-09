@@ -125,9 +125,13 @@ class AgendaIntegrationViewsTests(TestCase):
 
     @patch(
         "agenda.views.delete_remote_event",
-        side_effect=GoogleAuthorizationRequired("Autorize novamente o Google Calendar."),
+        side_effect=GoogleAuthorizationRequired(
+            "Autorize novamente o Google Calendar."
+        ),
     )
-    def test_exclusao_com_token_revogado_preserva_evento_local(self, delete_remote_event):
+    def test_exclusao_com_token_revogado_preserva_evento_local(
+        self, delete_remote_event
+    ):
         evento = Evento.objects.create(
             titulo="Evento",
             descricao="",
@@ -149,7 +153,9 @@ class AgendaIntegrationViewsTests(TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertTrue(Evento.objects.filter(pk=evento.pk).exists())
 
-    @patch("agenda.views.sync_agenda", return_value={"conectado": True, "importados": 0})
+    @patch(
+        "agenda.views.sync_agenda", return_value={"conectado": True, "importados": 0}
+    )
     def test_sincronizacao_google_e_explicita_por_post(self, sync_agenda):
         response = self.client.post(reverse("sincronizar_google_calendar"))
 

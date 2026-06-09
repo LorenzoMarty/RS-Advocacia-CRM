@@ -34,7 +34,9 @@ class TimeEntry(models.Model):
     resumed_at = models.DateTimeField(blank=True, null=True)
     ended_at = models.DateTimeField(blank=True, null=True)
     total_seconds = models.PositiveIntegerField(default=0)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_RUNNING, db_index=True)
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_RUNNING, db_index=True
+    )
 
     class Meta:
         ordering = ("-started_at", "-id")

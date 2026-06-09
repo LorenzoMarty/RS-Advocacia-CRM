@@ -12,10 +12,14 @@ def app_permissions_required(*permissions: str):
         def wrapped_view(request, *args: Any, **kwargs: Any):
             user = getattr(request, "user", None)
             if user is None or not getattr(user, "is_authenticated", False):
-                return resposta_erro({"autenticacao": ["Autenticação necessária."]}, status=401)
+                return resposta_erro(
+                    {"autenticacao": ["Autenticação necessária."]}, status=401
+                )
 
             if permissions and not user_has_all_permissions(request, permissions):
-                return resposta_erro({"permissao": ["Permissão insuficiente."]}, status=403)
+                return resposta_erro(
+                    {"permissao": ["Permissão insuficiente."]}, status=403
+                )
 
             return view_func(request, *args, **kwargs)
 
@@ -30,10 +34,14 @@ def app_any_permissions_required(*permissions: str):
         def wrapped_view(request, *args: Any, **kwargs: Any):
             user = getattr(request, "user", None)
             if user is None or not getattr(user, "is_authenticated", False):
-                return resposta_erro({"autenticacao": ["Autenticação necessária."]}, status=401)
+                return resposta_erro(
+                    {"autenticacao": ["Autenticação necessária."]}, status=401
+                )
 
             if permissions and not user_has_any_permissions(request, permissions):
-                return resposta_erro({"permissao": ["Permissão insuficiente."]}, status=403)
+                return resposta_erro(
+                    {"permissao": ["Permissão insuficiente."]}, status=403
+                )
 
             return view_func(request, *args, **kwargs)
 

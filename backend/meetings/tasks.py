@@ -51,4 +51,3 @@ def processar_gravacao(gravacao_id: int) -> None:
             processada_em=timezone.now(),
         )
         raise
-

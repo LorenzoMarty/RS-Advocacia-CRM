@@ -6,8 +6,7 @@ def reconcile_google_schema(apps, schema_editor):
         return
 
     with schema_editor.connection.cursor() as cursor:
-        cursor.execute(
-            """
+        cursor.execute("""
             DO $$
             BEGIN
                 IF EXISTS (
@@ -40,8 +39,7 @@ def reconcile_google_schema(apps, schema_editor):
                 ADD COLUMN IF NOT EXISTS remote_updated_at timestamp with time zone NULL,
                 ADD COLUMN IF NOT EXISTS remote_sequence integer NULL,
                 ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone NOT NULL DEFAULT now();
-            """
-        )
+            """)
 
 
 class Migration(migrations.Migration):

@@ -11,7 +11,9 @@ class OpenAIProvider:
     def __init__(self, client=None):
         api_key = getattr(settings, "OPENAI_API_KEY", "")
         if client is None and not api_key:
-            raise ImproperlyConfigured("Defina OPENAI_API_KEY para processar gravações.")
+            raise ImproperlyConfigured(
+                "Defina OPENAI_API_KEY para processar gravações."
+            )
 
         self.client = client or OpenAI(api_key=api_key)
         self.transcription_model = settings.OPENAI_TRANSCRIPTION_MODEL

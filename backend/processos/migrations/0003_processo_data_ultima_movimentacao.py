@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processos', '0002_alter_processo_numero_processo_length'),
+        ("processos", "0002_alter_processo_numero_processo_length"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='processo',
-            name='data_ultima_movimentacao',
+            model_name="processo",
+            name="data_ultima_movimentacao",
             field=models.DateTimeField(auto_now=True),
         ),
     ]

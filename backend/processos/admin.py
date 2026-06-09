@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from processos.models import Processo
 
+
 # Register your models here.
 @admin.register(Processo)
 class ProcessoAdmin(admin.ModelAdmin):

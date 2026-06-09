@@ -10,49 +10,99 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('clientes', '0001_initial'),
-        ('usuarios', '0007_remove_usuario_google_refresh_token_and_more'),
+        ("clientes", "0001_initial"),
+        ("usuarios", "0007_remove_usuario_google_refresh_token_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Prospect',
+            name="Prospect",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome', models.CharField(max_length=200)),
-                ('telefone', models.CharField(blank=True, max_length=20)),
-                ('email', models.EmailField(blank=True, max_length=254)),
-                ('origem_contato', models.CharField(blank=True, max_length=100)),
-                ('tipo_demanda_juridica', models.CharField(blank=True, max_length=120)),
-                ('descricao_caso', models.TextField(blank=True)),
-                ('status_prospeccao', models.CharField(default='Novo', max_length=50)),
-                ('prioridade', models.CharField(default='Media', max_length=20)),
-                ('proxima_acao', models.CharField(blank=True, max_length=200)),
-                ('observacoes', models.TextField(blank=True)),
-                ('data_ultimo_contato', models.DateField(blank=True, null=True)),
-                ('convertido_em', models.DateTimeField(blank=True, null=True)),
-                ('data_criacao', models.DateTimeField(auto_now_add=True)),
-                ('atualizado_em', models.DateTimeField(auto_now=True)),
-                ('cliente_convertido', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='prospect_origem', to='clientes.cliente')),
-                ('responsavel_interno', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='prospects', to='usuarios.usuario')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nome", models.CharField(max_length=200)),
+                ("telefone", models.CharField(blank=True, max_length=20)),
+                ("email", models.EmailField(blank=True, max_length=254)),
+                ("origem_contato", models.CharField(blank=True, max_length=100)),
+                ("tipo_demanda_juridica", models.CharField(blank=True, max_length=120)),
+                ("descricao_caso", models.TextField(blank=True)),
+                ("status_prospeccao", models.CharField(default="Novo", max_length=50)),
+                ("prioridade", models.CharField(default="Media", max_length=20)),
+                ("proxima_acao", models.CharField(blank=True, max_length=200)),
+                ("observacoes", models.TextField(blank=True)),
+                ("data_ultimo_contato", models.DateField(blank=True, null=True)),
+                ("convertido_em", models.DateTimeField(blank=True, null=True)),
+                ("data_criacao", models.DateTimeField(auto_now_add=True)),
+                ("atualizado_em", models.DateTimeField(auto_now=True)),
+                (
+                    "cliente_convertido",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="prospect_origem",
+                        to="clientes.cliente",
+                    ),
+                ),
+                (
+                    "responsavel_interno",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="prospects",
+                        to="usuarios.usuario",
+                    ),
+                ),
             ],
             options={
-                'ordering': ('-data_criacao', 'id'),
+                "ordering": ("-data_criacao", "id"),
             },
         ),
         migrations.CreateModel(
-            name='InteracaoProspect',
+            name="InteracaoProspect",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('tipo', models.CharField(max_length=20)),
-                ('descricao', models.TextField()),
-                ('data', models.DateTimeField(default=django.utils.timezone.now)),
-                ('criado_em', models.DateTimeField(auto_now_add=True)),
-                ('usuario', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='interacoes_prospect', to='usuarios.usuario')),
-                ('prospect', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='interacoes', to='prospeccao.prospect')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("tipo", models.CharField(max_length=20)),
+                ("descricao", models.TextField()),
+                ("data", models.DateTimeField(default=django.utils.timezone.now)),
+                ("criado_em", models.DateTimeField(auto_now_add=True)),
+                (
+                    "usuario",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="interacoes_prospect",
+                        to="usuarios.usuario",
+                    ),
+                ),
+                (
+                    "prospect",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="interacoes",
+                        to="prospeccao.prospect",
+                    ),
+                ),
             ],
             options={
-                'ordering': ('-data', '-id'),
+                "ordering": ("-data", "-id"),
             },
         ),
     ]

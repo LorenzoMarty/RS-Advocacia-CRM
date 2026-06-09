@@ -7,19 +7,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('agenda', '0003_alter_evento_google_event_id'),
-        ('integrations', '0001_initial'),
+        ("agenda", "0003_alter_evento_google_event_id"),
+        ("integrations", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='evento',
-            name='google_event_id',
+            model_name="evento",
+            name="google_event_id",
         ),
         migrations.AddField(
-            model_name='evento',
-            name='updated_at',
-            field=models.DateTimeField(auto_now=True, default=django.utils.timezone.now),
+            model_name="evento",
+            name="updated_at",
+            field=models.DateTimeField(
+                auto_now=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
         ),
     ]

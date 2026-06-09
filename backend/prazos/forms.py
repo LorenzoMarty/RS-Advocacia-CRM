@@ -5,7 +5,6 @@ from usuarios.models import Usuario
 
 from .models import Prazo
 
-
 STATUS_CHOICES = (
     "Pendente",
     "A fazer",
@@ -70,14 +69,18 @@ class PrazoForm(forms.ModelForm):
         current_responsavel = getattr(instance, "responsavel", "")
         current_status = getattr(instance, "status", "")
         usuarios = Usuario.objects.values_list("nome", flat=True)
-        responsaveis_processos = Processo.objects.values_list("advogado_responsavel", flat=True)
+        responsaveis_processos = Processo.objects.values_list(
+            "advogado_responsavel", flat=True
+        )
         existing_responsaveis = Prazo.objects.values_list("responsavel", flat=True)
         existing_statuses = Prazo.objects.values_list("status", flat=True)
 
         processo_field = self.fields.get("processo")
         if isinstance(processo_field, forms.ModelChoiceField):
             processo_field.empty_label = "Selecione o processo"
-            processo_field.queryset = processo_field.queryset.select_related("cliente").order_by("numero_processo")
+            processo_field.queryset = processo_field.queryset.select_related(
+                "cliente"
+            ).order_by("numero_processo")
 
         self.fields["responsavel"].choices = _build_choices(
             "Selecione o responsavel",

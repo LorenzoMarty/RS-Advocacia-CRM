@@ -4,7 +4,8 @@ from urllib.parse import urlencode, urlsplit
 
 import requests
 from django.conf import settings
-from django.contrib.auth import login as django_login, logout as django_logout
+from django.contrib.auth import login as django_login
+from django.contrib.auth import logout as django_logout
 from django.http import HttpRequest, HttpResponseRedirect
 from django.urls import Resolver404, resolve, reverse
 from django.utils import timezone
@@ -46,7 +47,9 @@ def redirect_uri(request: HttpRequest) -> str:
         return default_uri
 
     candidate_path = (
-        configured_uri if configured_uri.startswith("/") else urlsplit(configured_uri).path
+        configured_uri
+        if configured_uri.startswith("/")
+        else urlsplit(configured_uri).path
     )
     try:
         resolve(candidate_path)
@@ -190,6 +193,8 @@ def verify_identity_token(credential: str) -> dict:
 
 def _token_expiry(payload: dict):
     expires_in = payload.get("expires_in")
+    if expires_in is None:
+        return None
     try:
         return timezone.now() + timedelta(seconds=max(int(expires_in), 0))
     except (TypeError, ValueError):
@@ -206,9 +211,11 @@ def _resolve_usuario(claims: dict, initiating_user_id: int | None) -> Usuario:
     if not sub or not email:
         raise ValueError("Resposta invalida do Google.")
 
-    existing_account = GoogleAccount.objects.select_related("usuario").filter(
-        google_user_id=sub
-    ).first()
+    existing_account = (
+        GoogleAccount.objects.select_related("usuario")
+        .filter(google_user_id=sub)
+        .first()
+    )
     if initiating_user_id:
         initiating_user = Usuario.objects.filter(pk=initiating_user_id).first()
         if initiating_user is None:
@@ -221,11 +228,16 @@ def _resolve_usuario(claims: dict, initiating_user_id: int | None) -> Usuario:
     elif existing_account:
         usuario = existing_account.usuario
     else:
-        usuario = Usuario.objects.filter(email__iexact=email).first()
-        if usuario is None:
+        found = Usuario.objects.filter(email__iexact=email).first()
+        if found is None:
             _ensure_default_cargos()
-            cargo = getattr(settings, "GOOGLE_DEFAULT_CARGO", "").strip() or ESTAGIARIO_CARGO_NAME
+            cargo = (
+                getattr(settings, "GOOGLE_DEFAULT_CARGO", "").strip()
+                or ESTAGIARIO_CARGO_NAME
+            )
             usuario = Usuario.objects.create(nome=name, email=email, cargo=cargo)
+        else:
+            usuario = found
 
     update_fields = []
     if usuario.nome != name:
@@ -239,7 +251,9 @@ def _resolve_usuario(claims: dict, initiating_user_id: int | None) -> Usuario:
     return usuario
 
 
-def complete_authorization(request: HttpRequest, code: str, received_state: str) -> tuple[Usuario, str]:
+def complete_authorization(
+    request: HttpRequest, code: str, received_state: str
+) -> tuple[Usuario, str]:
     from usuarios.views import _remember_usuario_session, _sync_usuario_auth
 
     state_data = consume_state(request, received_state)
@@ -276,7 +290,9 @@ def complete_authorization(request: HttpRequest, code: str, received_state: str)
         calendar_id=getattr(settings, "GOOGLE_CALENDAR_ID", "primary") or "primary",
         defaults={
             "summary": "Agenda principal do Google",
-            "timezone": getattr(settings, "GOOGLE_CALENDAR_TIMEZONE", settings.TIME_ZONE),
+            "timezone": getattr(
+                settings, "GOOGLE_CALENDAR_TIMEZONE", settings.TIME_ZONE
+            ),
             "primary": getattr(settings, "GOOGLE_CALENDAR_ID", "primary") == "primary",
         },
     )
@@ -284,6 +300,8 @@ def complete_authorization(request: HttpRequest, code: str, received_state: str)
     if getattr(request.user, "is_authenticated", False):
         django_logout(request)
     auth_user = _sync_usuario_auth(usuario)
-    django_login(request, auth_user, backend="django.contrib.auth.backends.ModelBackend")
+    django_login(
+        request, auth_user, backend="django.contrib.auth.backends.ModelBackend"
+    )
     _remember_usuario_session(request, usuario)
     return usuario, str(state_data.get("next") or "/")

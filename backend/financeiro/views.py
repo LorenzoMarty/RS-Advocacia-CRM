@@ -20,14 +20,13 @@ from .forms import LancamentoForm
 from .models import (
     CATEGORIAS_DESPESA,
     CATEGORIAS_RECEITA,
-    Lancamento,
     STATUS_CANCELADO,
     STATUS_PAGO,
     STATUS_PENDENTE,
     TIPO_DESPESA,
     TIPO_RECEITA,
+    Lancamento,
 )
-
 
 ORDENACOES_PERMITIDAS = {
     "data_vencimento": "data_vencimento",
@@ -39,7 +38,7 @@ ORDENACOES_PERMITIDAS = {
 }
 
 
-def serialize_lancamento(lancamento):
+def serialize_lancamento(lancamento: Lancamento):
     cliente = lancamento.cliente_relacionado
     caso = lancamento.caso_relacionado
     return {
@@ -49,12 +48,12 @@ def serialize_lancamento(lancamento):
         "tipo": lancamento.tipo,
         "categoria": lancamento.categoria,
         "valor": str(lancamento.valor),
-        "data_vencimento": lancamento.data_vencimento.isoformat()
-        if lancamento.data_vencimento
-        else "",
-        "data_pagamento": lancamento.data_pagamento.isoformat()
-        if lancamento.data_pagamento
-        else "",
+        "data_vencimento": (
+            lancamento.data_vencimento.isoformat() if lancamento.data_vencimento else ""
+        ),
+        "data_pagamento": (
+            lancamento.data_pagamento.isoformat() if lancamento.data_pagamento else ""
+        ),
         "status": lancamento.status,
         "status_exibicao": lancamento.status_exibicao,
         "atrasado": lancamento.atrasado,
@@ -115,12 +114,16 @@ def listar_lancamentos(request):
     status = request.GET.get("status", "").strip()
     hoje = timezone.localdate()
     if status == "Atrasado":
-        lancamentos = lancamentos.filter(status=STATUS_PENDENTE, data_vencimento__lt=hoje)
+        lancamentos = lancamentos.filter(
+            status=STATUS_PENDENTE, data_vencimento__lt=hoje
+        )
     elif status:
         lancamentos = lancamentos.filter(status=status)
 
     ordenar = request.GET.get("ordenar", "-data_vencimento").strip()
-    lancamentos = lancamentos.order_by(ORDENACOES_PERMITIDAS.get(ordenar, "-data_vencimento"), "id")
+    lancamentos = lancamentos.order_by(
+        ORDENACOES_PERMITIDAS.get(ordenar, "-data_vencimento"), "id"
+    )
 
     try:
         page = int(request.GET.get("page", 1))
@@ -137,7 +140,9 @@ def listar_lancamentos(request):
 
     return resposta_sucesso(
         {
-            "lancamentos": [serialize_lancamento(item) for item in page_obj.object_list],
+            "lancamentos": [
+                serialize_lancamento(item) for item in page_obj.object_list
+            ],
             "total": paginator.count,
             "page": page_obj.number,
             "page_size": page_size,
@@ -223,7 +228,9 @@ def excluir_lancamento(request, lancamento_id):
     lancamento = get_object_or_404(Lancamento, pk=lancamento_id)
     deleted_id = str(lancamento.pk)
     lancamento.delete()
-    return resposta_sucesso({"id": deleted_id}, mensagem="Lançamento excluído com sucesso.")
+    return resposta_sucesso(
+        {"id": deleted_id}, mensagem="Lançamento excluído com sucesso."
+    )
 
 
 @app_permissions_required("financeiro.change_lancamento")
@@ -277,11 +284,12 @@ def _soma(queryset):
 
 def _por_categoria(queryset):
     linhas = (
-        queryset.values("categoria")
-        .annotate(total=Sum("valor"))
-        .order_by("-total")
+        queryset.values("categoria").annotate(total=Sum("valor")).order_by("-total")
     )
-    return [{"categoria": linha["categoria"], "total": str(linha["total"] or 0)} for linha in linhas]
+    return [
+        {"categoria": linha["categoria"], "total": str(linha["total"] or 0)}
+        for linha in linhas
+    ]
 
 
 @app_permissions_required("financeiro.view_lancamento")
@@ -297,15 +305,17 @@ def dashboard_financeiro(request):
     despesas = ativos.filter(tipo=TIPO_DESPESA)
 
     recebido_mes = _soma(
-        receitas.filter(status=STATUS_PAGO, data_pagamento__gte=inicio_mes, data_pagamento__lte=hoje)
+        receitas.filter(
+            status=STATUS_PAGO, data_pagamento__gte=inicio_mes, data_pagamento__lte=hoje
+        )
     )
     despesas_mes = _soma(
-        despesas.filter(status=STATUS_PAGO, data_pagamento__gte=inicio_mes, data_pagamento__lte=hoje)
+        despesas.filter(
+            status=STATUS_PAGO, data_pagamento__gte=inicio_mes, data_pagamento__lte=hoje
+        )
     )
     pendente = _soma(receitas.filter(status=STATUS_PENDENTE))
-    atrasado = _soma(
-        receitas.filter(status=STATUS_PENDENTE, data_vencimento__lt=hoje)
-    )
+    atrasado = _soma(receitas.filter(status=STATUS_PENDENTE, data_vencimento__lt=hoje))
     saldo_estimado = (_soma(receitas) or 0) - (_soma(despesas) or 0)
 
     return resposta_sucesso(

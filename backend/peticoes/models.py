@@ -40,7 +40,9 @@ class Peticao(models.Model):
     link_drive = models.URLField(max_length=500, blank=True)
     motivo_pendente = models.TextField(blank=True)
     area_juridica = models.CharField(max_length=100)
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default=STATUS_PENDENTE)
+    status = models.CharField(
+        max_length=50, choices=STATUS_CHOICES, default=STATUS_PENDENTE
+    )
     criado_por = models.CharField(max_length=100, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)

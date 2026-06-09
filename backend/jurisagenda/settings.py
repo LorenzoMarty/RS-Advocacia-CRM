@@ -116,9 +116,13 @@ else:
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     if DEBUG:
-        SECRET_KEY = "django-insecure-+g)herdbhyeh+jva+k)qugqi$v1qa^%(4p756636ltfzx_i6ll"
+        SECRET_KEY = (
+            "django-insecure-+g)herdbhyeh+jva+k)qugqi$v1qa^%(4p756636ltfzx_i6ll"
+        )
     else:
-        raise ImproperlyConfigured("Defina SECRET_KEY nas variaveis de ambiente da Vercel.")
+        raise ImproperlyConfigured(
+            "Defina SECRET_KEY nas variaveis de ambiente da Vercel."
+        )
 
 ALLOWED_HOSTS = sorted(
     {
@@ -223,7 +227,9 @@ if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
 # Usuários da aplicação autenticam via Google OAuth (set_unusable_password),
 # mas mantemos os validadores padrão para contas administrativas locais.
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -264,7 +270,7 @@ if not DEBUG:
         },
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
-        }
+        },
     }
 
 # CORS/CSRF para a interface React. Mantenha esta lista explícita em produção.
@@ -339,8 +345,7 @@ OPENAI_TRANSCRIPTION_MODEL = (
     or "gpt-4o-transcribe"
 )
 OPENAI_SUMMARY_MODEL = (
-    os.getenv("OPENAI_SUMMARY_MODEL", "gpt-4.1-mini").strip()
-    or "gpt-4.1-mini"
+    os.getenv("OPENAI_SUMMARY_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
 )
 MEETINGS_MAX_AUDIO_SIZE_MB = int(
     os.getenv("MEETINGS_MAX_AUDIO_SIZE_MB", "").strip() or "25"
