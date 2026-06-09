@@ -186,6 +186,10 @@ function linkedUsers(users, roleId) {
   return users.filter((user) => user.roleId === roleId);
 }
 
+function roleUsersCount(role, users) {
+  return role.usersCount ?? linkedUsers(users, role.id).length;
+}
+
 function validateRoleForm(form) {
   const nextErrors = {};
 
@@ -199,9 +203,7 @@ export function RolesListPage() {
   const { confirm, confirmPopup } = useConfirmPopup();
 
   async function handleDeleteRole(role) {
-    const roleUsers = linkedUsers(users, role.id);
-
-    if (roleUsers.length) {
+    if (roleUsersCount(role, users)) {
       addFlash('Realoque os usuários vinculados antes de deletar este cargo.', 'warning');
       return;
     }
@@ -254,7 +256,7 @@ export function RolesListPage() {
 
               <div className="cargos-list">
                 {roles.map((role) => {
-                  const roleUsers = linkedUsers(users, role.id);
+                  const usersCount = roleUsersCount(role, users);
                   const areas = roleAreas(role, permissionGroups);
                   return (
                     <article key={role.id} className="cargo-row">
@@ -267,7 +269,7 @@ export function RolesListPage() {
                       </div>
 
                       <div className="cargo-stat cargo-users-stat">
-                        <strong>{roleUsers.length}</strong>
+                        <strong>{usersCount}</strong>
                         <span>usuários</span>
                       </div>
 
@@ -366,9 +368,7 @@ export function RoleFormPage() {
       return;
     }
 
-    const roleUsers = linkedUsers(users, role.id);
-
-    if (roleUsers.length) {
+    if (roleUsersCount(role, users)) {
       addFlash('Realoque os usuários vinculados antes de deletar este cargo.', 'warning');
       return;
     }
@@ -515,6 +515,7 @@ export function RoleDetailPage() {
   }
 
   const roleUsers = linkedUsers(users, role.id);
+  const usersCount = roleUsersCount(role, users);
   const sections = selectedPermissionSections(role, permissionGroups);
 
   return (
@@ -540,7 +541,7 @@ export function RoleDetailPage() {
               <aside className="hero-summary">
                 <article className="summary-card">
                   <span>Usuários</span>
-                  <strong>{roleUsers.length}</strong>
+                  <strong>{usersCount}</strong>
                 </article>
                 <article className="summary-card">
                   <span>Acessos</span>

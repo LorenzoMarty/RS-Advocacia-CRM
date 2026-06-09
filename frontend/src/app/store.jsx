@@ -170,12 +170,15 @@ function roleFromApi(role) {
     return null;
   }
 
+  const usersCount = role.usuarios_total == null ? undefined : Number(role.usuarios_total);
+
   return {
     ...role,
     id: String(role.id || role.pk || role.nome),
     name: role.nome || '',
     permissionIds: (role.permissoes || [])
       .map(String),
+    usersCount: Number.isFinite(usersCount) ? usersCount : undefined,
   };
 }
 
