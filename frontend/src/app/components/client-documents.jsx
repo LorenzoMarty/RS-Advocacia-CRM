@@ -34,8 +34,15 @@ export function ClientDocuments({ client }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [adding, setAdding] = useState(false);
   const [category, setCategory] = useState(DOCUMENT_CATEGORIES[1].value);
   const [file, setFile] = useState(null);
+
+  function closeAdd() {
+    setAdding(false);
+    setFile(null);
+    if (inputRef.current) inputRef.current.value = '';
+  }
 
   useEffect(() => {
     if (!isApiEnabled) {
@@ -70,8 +77,7 @@ export function ClientDocuments({ client }) {
     try {
       const saved = await uploadClientDocument(client.id, { file, category });
       setDocuments((current) => [saved, ...current.filter((doc) => doc.id !== saved.id)]);
-      setFile(null);
-      if (inputRef.current) inputRef.current.value = '';
+      closeAdd();
       addFlash('Documento enviado ao Google Drive.', 'success');
     } catch (err) {
       addFlash(errorText(err), 'error');
@@ -104,30 +110,46 @@ export function ClientDocuments({ client }) {
           <h2 className="section-title">Documentos</h2>
           <p className="section-note">Arquivos no Google Drive</p>
         </div>
+        {!adding ? (
+          <button type="button" className="btn" onClick={() => setAdding(true)}>
+            Adicionar documento
+          </button>
+        ) : null}
       </div>
 
-      <form className="document-upload" onSubmit={handleUpload}>
-        <select
-          className="document-category"
-          value={category}
-          onChange={(event) => setCategory(event.target.value)}
-          disabled={uploading}
-        >
-          {DOCUMENT_CATEGORIES.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </select>
-        <input
-          ref={inputRef}
-          type="file"
-          className="document-file"
-          onChange={(event) => setFile(event.target.files?.[0] || null)}
-          disabled={uploading}
-        />
-        <button type="submit" className="btn" disabled={!file || uploading}>
-          {uploading ? 'Enviando…' : 'Enviar'}
-        </button>
-      </form>
+      {adding ? (
+        <form className="document-upload" onSubmit={handleUpload}>
+          <select
+            className="document-category"
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            disabled={uploading}
+            aria-label="Categoria do documento"
+          >
+            {DOCUMENT_CATEGORIES.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+          <input
+            ref={inputRef}
+            type="file"
+            className="document-file"
+            onChange={(event) => setFile(event.target.files?.[0] || null)}
+            disabled={uploading}
+          />
+          <button type="submit" className="btn" disabled={!file || uploading}>
+            {uploading ? 'Enviando…' : 'Enviar'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={closeAdd}
+            disabled={uploading}
+          >
+            Cancelar
+          </button>
+        </form>
+      ) : null}
 
       {error ? <p className="document-error">{error}</p> : null}
 
