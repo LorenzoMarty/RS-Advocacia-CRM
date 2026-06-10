@@ -8,7 +8,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 from integrations.google.exceptions import GoogleAuthorizationRequired
-from integrations.google.oauth import CALENDAR_SCOPE
+from integrations.google.oauth import CALENDAR_SCOPE, DRIVE_SCOPE
 from integrations.models import GoogleAccount
 
 
@@ -34,7 +34,7 @@ def credentials_for_usuario(usuario) -> Credentials:
         client_id=settings.GOOGLE_CLIENT_ID,
         client_secret=settings.GOOGLE_CLIENT_SECRET,
         expiry=expiry,
-        scopes=[CALENDAR_SCOPE],
+        scopes=[CALENDAR_SCOPE, DRIVE_SCOPE],
     )
     try:
         if not credentials.valid:
@@ -58,6 +58,15 @@ def credentials_for_usuario(usuario) -> Credentials:
 def calendar_service(usuario):
     return build(
         "calendar",
+        "v3",
+        credentials=credentials_for_usuario(usuario),
+        cache_discovery=False,
+    )
+
+
+def drive_service(usuario):
+    return build(
+        "drive",
         "v3",
         credentials=credentials_for_usuario(usuario),
         cache_discovery=False,

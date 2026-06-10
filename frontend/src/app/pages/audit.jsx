@@ -7,32 +7,22 @@ import { NotFoundState } from './common';
 import { RiskSummary } from '../components/audit/RiskSummary';
 import { PriorityActions } from '../components/audit/PriorityActions';
 import { AuditInsightsPanel } from '../components/audit/AuditInsightsPanel';
-import { ResponsibleWorkload } from '../components/audit/ResponsibleWorkload';
-import { DeadlineHeatmap } from '../components/audit/DeadlineHeatmap';
 import { StatusDistribution } from '../components/audit/StatusDistribution';
-import { AreaDistribution } from '../components/audit/AreaDistribution';
-import { ClientWithoutProcessList } from '../components/audit/ClientWithoutProcessList';
-import { WeeklyHoursSummary } from '../components/audit/WeeklyHoursSummary';
 import { LoadingSkeleton } from '../components/audit/LoadingSkeleton';
 import { ErrorState } from '../components/audit/ErrorState';
 import {
   buildRiskSummary,
   computeRiskScore,
   buildPriorityActions,
-  deadlineHeatmap,
   statusDistribution,
-  areaDistribution,
-  weeklyHoursByUser,
-  clientsWithoutProcess,
   buildInsights,
-  rankByCount,
   classifyDeadline,
   deadlineDate,
   daysUntil,
   startOfToday,
 } from '../lib/auditSelectors';
 
-function AuditDashboard({ clients, deadlines, processes, timeEntries, users }) {
+function AuditDashboard({ clients, deadlines, processes, timeEntries }) {
   const [period, setPeriod] = useState(7);
   const today = useMemo(() => startOfToday(), []);
 
@@ -55,19 +45,10 @@ function AuditDashboard({ clients, deadlines, processes, timeEntries, users }) {
     [horizonDeadlines, processes, today],
   );
 
-  const workload = useMemo(() => {
-    const pending = deadlines.filter((d) => !d.completed && d.status !== 'protocolado');
-    return rankByCount(pending, (d) => d.responsible);
-  }, [deadlines]);
-
-  const heatmap = useMemo(() => deadlineHeatmap(horizonDeadlines, today), [horizonDeadlines, today]);
   const statusData = useMemo(() => statusDistribution(processes), [processes]);
-  const areaData = useMemo(() => areaDistribution(processes), [processes]);
-  const weeklyHours = useMemo(() => weeklyHoursByUser(users, timeEntries), [users, timeEntries]);
-  const orphanClients = useMemo(() => clientsWithoutProcess(clients, processes), [clients, processes]);
   const insights = useMemo(
-    () => buildInsights(summary, workload, heatmap),
-    [summary, workload, heatmap],
+    () => buildInsights(summary, deadlines, today),
+    [summary, deadlines, today],
   );
 
   return (
@@ -79,28 +60,14 @@ function AuditDashboard({ clients, deadlines, processes, timeEntries, users }) {
         <AuditInsightsPanel insights={insights} />
       </div>
 
-      <h2 className="audit-section-label">Gargalos operacionais</h2>
-      <div className="audit-grid-2">
-        <ResponsibleWorkload workload={workload} />
-        <DeadlineHeatmap heatmap={heatmap} />
-      </div>
-      <div className="audit-grid-2">
-        <StatusDistribution data={statusData} />
-        <AreaDistribution rows={areaData.rows} statuses={areaData.statuses} />
-      </div>
-
-      <h2 className="audit-section-label">Monitoramento</h2>
-      <div className="audit-grid-2">
-        <ClientWithoutProcessList clients={orphanClients} totalClients={clients.length} />
-        <WeeklyHoursSummary data={weeklyHours} />
-      </div>
+      <StatusDistribution data={statusData} />
     </div>
   );
 }
 
 export function AuditPage() {
   const {
-    clients, currentRole, deadlines, processes, timeEntries, users, isLoading,
+    clients, currentRole, deadlines, processes, timeEntries, isLoading,
   } = useAppState();
   const isAdmin = currentRole?.name === 'Administrador';
 
@@ -125,7 +92,6 @@ export function AuditPage() {
             deadlines={deadlines}
             processes={processes}
             timeEntries={timeEntries}
-            users={users}
           />
         </AuditBoundary>
       )}

@@ -167,6 +167,7 @@ INSTALLED_APPS = [
     "integrations",
     "ai",
     "meetings",
+    "documentos",
 ]
 
 MIDDLEWARE = [
@@ -334,6 +335,8 @@ GOOGLE_CALENDAR_WEBHOOK_URL = os.getenv("GOOGLE_CALENDAR_WEBHOOK_URL", "").strip
 GOOGLE_WATCH_RENEWAL_HOURS = int(
     os.getenv("GOOGLE_WATCH_RENEWAL_HOURS", "").strip() or "24"
 )
+GOOGLE_DRIVE_ROOT_FOLDER_ID = os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
+DRIVE_MAX_FILE_SIZE_MB = int(os.getenv("DRIVE_MAX_FILE_SIZE_MB", "").strip() or "25")
 
 DEMO_DATA_ENABLED = _env_flag("DEMO_DATA_ENABLED", default=False)
 
@@ -408,6 +411,7 @@ APP_LOGGERS = [
     "agenda",
     "clientes",
     "core",
+    "documentos",
     "integrations",
     "meetings",
     "peticoes",

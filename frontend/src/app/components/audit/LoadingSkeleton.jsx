@@ -7,10 +7,7 @@ export function LoadingSkeleton() {
         <div className="audit-skel audit-skel-block" />
         <div className="audit-skel audit-skel-block" />
       </div>
-      <div className="audit-grid-2">
-        <div className="audit-skel audit-skel-block" />
-        <div className="audit-skel audit-skel-block" />
-      </div>
+      <div className="audit-skel audit-skel-block" />
     </div>
   );
 }

@@ -11,26 +11,6 @@ export function startOfToday() {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-export function startOfWeek() {
-  const d = startOfToday();
-  const day = d.getDay() || 7;
-  d.setDate(d.getDate() - day + 1);
-  return d;
-}
-
-export function progressPercent(value, max) {
-  if (!max) return 0;
-  return Math.min(100, Math.round((value / max) * 100));
-}
-
-export function formatHoursCompact(totalSeconds) {
-  const s = Math.max(0, Math.floor(Number(totalSeconds) || 0));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  if (!h && !m) return '0h';
-  return `${h ? `${h}h` : ''}${h && m ? ' ' : ''}${m ? `${m}m` : ''}`;
-}
-
 export function groupByKey(items, keyFn) {
   return items.reduce((acc, item) => {
     const k = keyFn(item);
@@ -51,15 +31,6 @@ export function daysUntil(date, from = startOfToday()) {
   if (!date) return null;
   return Math.round((date.getTime() - from.getTime()) / DAY_MS);
 }
-
-// Buckets used by the heatmap and severity scoring.
-export const DEADLINE_BUCKETS = [
-  { key: 'overdue', label: 'Vencido', tone: 'danger' },
-  { key: 'today', label: 'Hoje', tone: 'danger' },
-  { key: 'soon3', label: 'Até 3d', tone: 'warn' },
-  { key: 'soon7', label: 'Até 7d', tone: 'warn' },
-  { key: 'later', label: '+7d', tone: 'gold' },
-];
 
 export function classifyDeadline(deadline, today = startOfToday()) {
   if (deadline.completed) return null;
@@ -217,70 +188,14 @@ export function statusDistribution(processes) {
     .map(({ name, count }) => ({ status: name, count }));
 }
 
-export function areaDistribution(processes) {
-  // Stacked-by-status counts per area for the bar chart.
-  const byArea = groupByKey(processes, (p) => p.area || 'Sem área');
-  const statuses = Array.from(new Set(processes.map((p) => p.status || 'Sem status')));
-  const rows = Object.entries(byArea).map(([area, group]) => {
-    const row = { area, total: group.length };
-    statuses.forEach((s) => { row[s] = 0; });
-    group.forEach((p) => {
-      const s = p.status || 'Sem status';
-      row[s] += 1;
-    });
-    return row;
-  }).sort((a, b) => b.total - a.total);
-  return { rows, statuses };
-}
-
-// Heatmap: responsible (rows) x deadline bucket (cols), counts per cell.
-export function deadlineHeatmap(deadlines, today = startOfToday(), limit = 8) {
-  const rowsMap = new Map();
-  deadlines.forEach((d) => {
-    const bucket = classifyDeadline(d, today);
-    if (!bucket) return;
-    const name = d.responsible || 'Sem responsável';
-    if (!rowsMap.has(name)) {
-      rowsMap.set(name, { name, total: 0, overdue: 0, today: 0, soon3: 0, soon7: 0, later: 0 });
-    }
-    const row = rowsMap.get(name);
-    row[bucket] += 1;
-    row.total += 1;
-  });
-  const rows = Array.from(rowsMap.values()).sort((a, b) => b.total - a.total).slice(0, limit);
-  const maxCell = rows.reduce(
-    (max, row) => DEADLINE_BUCKETS.reduce((m, b) => Math.max(m, row[b.key]), max),
-    0,
-  );
-  return { rows, maxCell };
-}
-
-export function weeklyHoursByUser(users, timeEntries, weekStart = startOfWeek(), limit = 7) {
-  const weekEntries = timeEntries.filter((e) => {
-    const date = new Date(e.endedAt || e.startedAt);
-    return !Number.isNaN(date.getTime()) && date >= weekStart;
-  });
-  return users
-    .map((u) => ({
-      user: u,
-      seconds: weekEntries
-        .filter((e) => e.userId === u.id)
-        .reduce((sum, e) => sum + Math.max(0, Math.floor(Number(e.totalSeconds) || 0)), 0),
-    }))
-    .filter((u) => u.seconds > 0)
-    .sort((a, b) => b.seconds - a.seconds)
-    .slice(0, limit);
-}
-
-export function clientsWithoutProcess(clients, processes) {
-  const processClientIds = new Set(processes.map((p) => p.clientId));
-  return clients.filter((c) => !processClientIds.has(c.id));
-}
-
 // --- Auto insights ----------------------------------------------------------
 
-export function buildInsights(summary, workload, heatmap) {
+// Lightweight textual reading of the office state. Derives overload/unassigned
+// straight from the pending deadlines so it stays useful without the heavier
+// workload/heatmap panels.
+export function buildInsights(summary, deadlines, today = startOfToday()) {
   const insights = [];
+  const pending = deadlines.filter((d) => classifyDeadline(d, today));
 
   if (summary.overdue > 0) {
     insights.push({
@@ -294,18 +209,18 @@ export function buildInsights(summary, workload, heatmap) {
       text: `${summary.stale} processo${summary.stale !== 1 ? 's' : ''} sem movimentação há +30 dias.`,
     });
   }
-  const top = workload[0];
-  if (top && top.count >= 5) {
+  const top = rankByCount(pending, (d) => d.responsible)[0];
+  if (top && top.name !== 'Sem responsável' && top.count >= 5) {
     insights.push({
       tone: 'warn',
       text: `${top.name} concentra ${top.count} pendências — possível sobrecarga.`,
     });
   }
-  const unassigned = heatmap.rows.find((r) => r.name === 'Sem responsável');
-  if (unassigned) {
+  const unassigned = pending.filter((d) => !d.responsible).length;
+  if (unassigned > 0) {
     insights.push({
       tone: 'warn',
-      text: `${unassigned.total} prazo${unassigned.total !== 1 ? 's' : ''} sem responsável atribuído.`,
+      text: `${unassigned} prazo${unassigned !== 1 ? 's' : ''} sem responsável atribuído.`,
     });
   }
   if (summary.clientsWithoutProcess > 0) {
