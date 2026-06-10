@@ -28,6 +28,7 @@ import {
   stripDocument,
 } from '../utils';
 import { EmptyState, Field, NotFoundState } from './common';
+import { ClientDocuments } from '../components/client-documents';
 
 const columnHelper = createColumnHelper();
 
@@ -524,6 +525,8 @@ export function ClientDetailPage() {
             </section>
           </div>
         </div>
+
+        <ClientDocuments client={client} />
       </div>
     </>
   );
