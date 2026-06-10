@@ -13,16 +13,6 @@
 .audit-card .section-head{margin-bottom:12px}
 .audit-card .section-note{font-size:.8rem}
 
-/* Rótulo divisor de área */
-.audit-section-label{
-    font-size:.6rem;
-    font-weight:800;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    color:var(--muted);
-    margin:6px 2px -6px;
-}
-
 /* ---------- Área A: hero de risco ---------- */
 .audit-risk-hero{
     display:grid;
@@ -129,39 +119,6 @@
 .audit-insight.is-warn .audit-insight-dot{background:var(--warn)}
 .audit-insight.is-success .audit-insight-dot{background:var(--success)}
 
-/* ---------- Área C: gargalos ---------- */
-.audit-grid-2{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:16px;
-    align-items:start;
-}
-
-/* Heatmap responsável × urgência */
-.audit-heatmap-scroll{overflow-x:auto}
-.audit-heatmap{width:100%;border-collapse:separate;border-spacing:4px;font-size:.78rem}
-.audit-heatmap th{font-weight:700;color:var(--soft);text-align:center;padding:4px 6px;white-space:nowrap}
-.audit-heatmap th[scope="row"]{text-align:left;color:var(--text);max-width:130px;overflow:hidden;text-overflow:ellipsis}
-.audit-heatmap thead th.is-danger{color:var(--danger)}
-.audit-heatmap thead th.is-warn{color:var(--warn)}
-.audit-heat-cell{
-    position:relative;width:54px;height:34px;
-    border-radius:9px;border:1px solid var(--line);
-    text-align:center;vertical-align:middle;
-}
-.audit-heat-fill{position:absolute;inset:0;border-radius:8px}
-.audit-heat-cell.is-danger .audit-heat-fill{background:var(--danger)}
-.audit-heat-cell.is-warn .audit-heat-fill{background:var(--warn)}
-.audit-heat-cell.is-gold .audit-heat-fill{background:var(--gold)}
-.audit-heat-num{position:relative;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
-
-/* ---------- Área D: monitoramento ---------- */
-.audit-row-arrow{color:var(--muted);font-size:.76rem;white-space:nowrap}
-.audit-orphan-more{
-    text-align:center;font-size:.8rem;color:var(--gold-soft);text-decoration:none;
-    padding:9px;border-radius:12px;border:1px dashed var(--line);
-}
-
 /* ---------- Skeleton ---------- */
 @keyframes audit-shimmer{0%{opacity:.5}50%{opacity:.85}100%{opacity:.5}}
 .audit-skel{
@@ -174,8 +131,7 @@
 /* ---------- Light theme ---------- */
 html[data-theme="light"] .risk-score-inner{background:#fff}
 html[data-theme="light"] .risk-score-card,
-html[data-theme="light"] .audit-priority-item,
-html[data-theme="light"] .audit-orphan-more{
+html[data-theme="light"] .audit-priority-item{
     background:rgba(24,30,42,.04);border-color:rgba(30,34,45,.1);
 }
 
@@ -184,9 +140,6 @@ html[data-theme="light"] .audit-orphan-more{
     .audit-risk-hero{grid-template-columns:1fr}
     .audit-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
     .audit-grid-focus{grid-template-columns:1fr}
-}
-@media(max-width:900px){
-    .audit-grid-2{grid-template-columns:1fr}
 }
 @media(max-width:560px){
     .audit-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}

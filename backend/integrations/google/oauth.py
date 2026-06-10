@@ -25,7 +25,8 @@ TOKEN_URL = (
 )
 STATE_SESSION_KEY = "google_oauth_state"
 CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events"
-SCOPES = ("openid", "email", "profile", CALENDAR_SCOPE)
+DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file"
+SCOPES = ("openid", "email", "profile", CALENDAR_SCOPE, DRIVE_SCOPE)
 
 
 def client_id() -> str:

@@ -1,0 +1,175 @@
+from unittest.mock import patch
+
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
+from django.urls import reverse
+
+from clientes.models import Cliente
+from documentos.models import ClienteDrive, DocumentoCliente
+from usuarios.models import Usuario
+
+ROOT = "root-folder-id"
+
+
+def _cliente(nome="João Silva"):
+    return Cliente.objects.create(
+        nome=nome,
+        email="c@example.com",
+        telefone="11999999999",
+        cpf="12345678901",
+        tipo_cliente="esporadico",
+    )
+
+
+def _clientedrive(cliente):
+    return ClienteDrive.objects.create(
+        cliente=cliente,
+        pasta_cliente_id="c",
+        pasta_peticoes_id="peticoes-folder",
+        pasta_documentos_id="documentos-folder",
+        pasta_outros_id="outros-folder",
+    )
+
+
+@override_settings(GOOGLE_DRIVE_ROOT_FOLDER_ID=ROOT)
+class DocumentoViewsTests(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Advogada", email="adv@example.com", cargo="Administrador"
+        )
+        auth_user = get_user_model().objects.create_superuser(
+            username=self.usuario.email, email=self.usuario.email
+        )
+        self.client.force_login(auth_user)
+        session = self.client.session
+        session["usuario_id"] = self.usuario.pk
+        session.save()
+
+        self.cliente = _cliente()
+        _clientedrive(self.cliente)
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_upload_creates_document(self, mock_drive, mock_service):
+        mock_drive.upload_file.return_value = {
+            "id": "file-1",
+            "webViewLink": "http://view/1",
+        }
+        upload = SimpleUploadedFile(
+            "rg.pdf", b"conteudo", content_type="application/pdf"
+        )
+        response = self.client.post(
+            reverse("upload_documento", args=[self.cliente.pk]),
+            {"categoria": DocumentoCliente.CATEGORIA_DOCUMENTO, "arquivo": upload},
+        )
+        self.assertEqual(response.status_code, 201, response.json())
+        self.assertEqual(DocumentoCliente.objects.count(), 1)
+        doc = response.json()["dados"]["documento"]
+        self.assertEqual(doc["drive_file_id"], "file-1")
+        self.assertEqual(doc["nome"], "rg.pdf")
+
+    def test_upload_rejects_invalid_extension(self):
+        upload = SimpleUploadedFile(
+            "malware.exe", b"x", content_type="application/octet-stream"
+        )
+        response = self.client.post(
+            reverse("upload_documento", args=[self.cliente.pk]),
+            {"categoria": DocumentoCliente.CATEGORIA_DOCUMENTO, "arquivo": upload},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["sucesso"])
+        self.assertEqual(DocumentoCliente.objects.count(), 0)
+
+    @override_settings(DRIVE_MAX_FILE_SIZE_MB=0)
+    def test_upload_rejects_too_large(self):
+        upload = SimpleUploadedFile("rg.pdf", b"x", content_type="application/pdf")
+        response = self.client.post(
+            reverse("upload_documento", args=[self.cliente.pk]),
+            {"categoria": DocumentoCliente.CATEGORIA_DOCUMENTO, "arquivo": upload},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(DocumentoCliente.objects.count(), 0)
+
+    def test_list_returns_documents(self):
+        DocumentoCliente.objects.create(
+            cliente=self.cliente,
+            categoria=DocumentoCliente.CATEGORIA_PETICAO,
+            nome="p1.docx",
+            drive_file_id="f-1",
+            drive_folder_id="peticoes-folder",
+        )
+        response = self.client.get(reverse("listar_documentos", args=[self.cliente.pk]))
+        self.assertEqual(response.status_code, 200)
+        docs = response.json()["dados"]["documentos"]
+        self.assertEqual(len(docs), 1)
+        self.assertEqual(docs[0]["nome"], "p1.docx")
+
+    def test_list_filters_by_category(self):
+        DocumentoCliente.objects.create(
+            cliente=self.cliente,
+            categoria=DocumentoCliente.CATEGORIA_PETICAO,
+            nome="p1.docx",
+            drive_file_id="f-1",
+            drive_folder_id="pf",
+        )
+        DocumentoCliente.objects.create(
+            cliente=self.cliente,
+            categoria=DocumentoCliente.CATEGORIA_DOCUMENTO,
+            nome="d1.pdf",
+            drive_file_id="f-2",
+            drive_folder_id="df",
+        )
+        response = self.client.get(
+            reverse("listar_documentos", args=[self.cliente.pk]),
+            {"categoria": DocumentoCliente.CATEGORIA_PETICAO},
+        )
+        docs = response.json()["dados"]["documentos"]
+        self.assertEqual(len(docs), 1)
+        self.assertEqual(docs[0]["categoria"], DocumentoCliente.CATEGORIA_PETICAO)
+
+    def test_estrutura_returns_folder_ids(self):
+        response = self.client.get(reverse("estrutura_drive", args=[self.cliente.pk]))
+        self.assertEqual(response.status_code, 200)
+        estrutura = response.json()["dados"]["estrutura"]
+        self.assertEqual(estrutura["pasta_peticoes_id"], "peticoes-folder")
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_download_blocks_cross_client_access(self, mock_drive, mock_service):
+        outro = _cliente("Cliente B")
+        doc_outro = DocumentoCliente.objects.create(
+            cliente=outro,
+            categoria=DocumentoCliente.CATEGORIA_DOCUMENTO,
+            nome="segredo.pdf",
+            drive_file_id="f-b-1",
+            drive_folder_id="df",
+        )
+        # requesting client B's document under client A's URL must 404
+        response = self.client.get(
+            reverse("download_documento", args=[self.cliente.pk, doc_outro.pk])
+        )
+        self.assertEqual(response.status_code, 404)
+        mock_drive.download_file.assert_not_called()
+
+
+@override_settings(GOOGLE_DRIVE_ROOT_FOLDER_ID=ROOT)
+class DocumentoPermissionTests(TestCase):
+    def setUp(self):
+        self.cliente = _cliente()
+
+    def test_requires_permission(self):
+        # authenticated user without documentos permissions
+        user = get_user_model().objects.create_user(
+            username="semperm", password="secret123"
+        )
+        user.user_permissions.add(Permission.objects.get(codename="view_cliente"))
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("listar_documentos", args=[self.cliente.pk]))
+        self.assertEqual(response.status_code, 403)
+
+    def test_requires_authentication(self):
+        response = self.client.get(reverse("listar_documentos", args=[self.cliente.pk]))
+        self.assertEqual(response.status_code, 401)

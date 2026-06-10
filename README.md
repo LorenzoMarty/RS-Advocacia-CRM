@@ -86,7 +86,7 @@ audios curtos, mas pode estourar o limite de tempo da Vercel em gravacoes longas
 
 ## OAuth Google
 
-- O login Google e a autorizacao Calendar usam um unico fluxo backend com `openid email profile` e `https://www.googleapis.com/auth/calendar.events`.
+- O login Google e a autorizacao Calendar/Drive usam um unico fluxo backend com `openid email profile`, `https://www.googleapis.com/auth/calendar.events` e `https://www.googleapis.com/auth/drive.file`.
 - O backend armazena access/refresh tokens criptografados em `integrations.GoogleAccount`; o React nunca recebe tokens Google.
 - `access_type=offline` e `prompt=consent` sao enviados no fluxo backend para obter e manter refresh token de forma previsivel.
 - Os compromissos sao enviados para os calendarios habilitados na integracao, iniciando por `GOOGLE_CALENDAR_ID`.
@@ -101,6 +101,15 @@ audios curtos, mas pode estourar o limite de tempo da Vercel em gravacoes longas
   `https://agenda-juri-orcin.vercel.app`
 - O mesmo `GOOGLE_CLIENT_ID` deve ser usado no backend que inicia o OAuth e no projeto do Google Cloud onde os test users foram cadastrados.
 - `GOOGLE_ALLOWED_HOSTED_DOMAIN` e opcional e aceita somente dominio do Google Workspace, como `empresa.com`. Para contas Gmail ou contas especificas, use `GOOGLE_ALLOWED_EMAILS`, separado por virgula.
+
+### Google Drive (documentos por cliente)
+
+- O scope `drive.file` foi adicionado ao fluxo OAuth. **Usuarios ja conectados antes dessa mudanca precisam reconectar a conta Google** (`/api/autenticacao/google?force_consent=1`); sem o re-consent as chamadas ao Drive retornam 401.
+- Defina `GOOGLE_DRIVE_ROOT_FOLDER_ID` com o ID da pasta `Clientes` no Drive (Shared Drive do escritorio ou pasta compartilhada). A pasta precisa estar compartilhada com a conta Google que grava. Sem essa variavel, os endpoints de documentos retornam 503.
+- `DRIVE_MAX_FILE_SIZE_MB` (default 25) limita o tamanho de upload.
+- Estrutura criada sob demanda: `Clientes/<Nome do Cliente>/{Peticoes,Documentos,Outros}`. Os metadados ficam espelhados no banco (`documentos.DocumentoCliente`); o Drive guarda o binario.
+- Reenviar um arquivo com o mesmo nome/categoria do cliente substitui o conteudo via `files.update` (nova revisao, mesmo arquivo) em vez de duplicar.
+- Endpoints: `GET/POST /api/clientes/<id>/documentos/...`, `GET /api/clientes/<id>/drive/estrutura/`. Detalhes em `claude/docs/2026-06-09-integracao-google-drive.md`.
 
 ### Deploy do OAuth
 

@@ -5,7 +5,7 @@
        --space-scale: multiplicador de espaçamento dos contêineres.
        Os valores reais são injetados em <html> pelo script inline do index.html
        e por applyAppearance(); aqui ficam só os defaults de fallback. */
-    --font-base:15px;
+    --font-base:14px;
     --ui-scale:1;
     --font-scale:1;
     --space-scale:1;
