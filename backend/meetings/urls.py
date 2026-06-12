@@ -26,6 +26,16 @@ urlpatterns = [
         name="enviar_gravacao",
     ),
     path(
+        "api/reunioes/<int:reuniao_id>/gravacoes/sessao-upload/",
+        views.criar_sessao_upload_gravacao,
+        name="criar_sessao_upload_gravacao",
+    ),
+    path(
+        "api/reunioes/<int:reuniao_id>/gravacoes/confirmar/",
+        views.confirmar_gravacao,
+        name="confirmar_gravacao",
+    ),
+    path(
         "api/reunioes/gravacoes/<int:gravacao_id>/",
         views.detalhes_gravacao,
         name="detalhes_gravacao",

@@ -521,13 +521,13 @@ export function MeetingsPage() {
     }
   }
 
-  async function handleUpload(recording) {
+  async function handleUpload(recording, { onProgress } = {}) {
     if (!selectedMeeting) {
       return false;
     }
 
     try {
-      const savedRecording = await uploadRecording(selectedMeeting.id, recording);
+      const savedRecording = await uploadRecording(selectedMeeting.id, recording, { onProgress });
       setMeetings((current) => current.map((meeting) => (
         meeting.id === selectedMeeting.id
           ? { ...meeting, recordings: [savedRecording, ...meeting.recordings] }

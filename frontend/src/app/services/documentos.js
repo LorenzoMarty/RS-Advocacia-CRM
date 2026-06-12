@@ -43,3 +43,60 @@ export async function uploadClientDocument(clientId, { file, category, name }) {
   });
   return documentFromApi(payload.documento);
 }
+
+// --- Folder explorer (Drive-live) -------------------------------------------
+
+function folderFromApi(folder) {
+  return {
+    id: String(folder.id || ''),
+    name: folder.nome || '',
+  };
+}
+
+function driveFileFromApi(file) {
+  return {
+    id: String(file.id || ''),
+    name: file.nome || '',
+    mimeType: file.mime_type || '',
+    link: file.link || '',
+    size: Number(file.tamanho_bytes || 0),
+    updatedAt: file.modificado_em || '',
+  };
+}
+
+export async function listClientDrive(clientId, folderId) {
+  const query = folderId ? `?folder_id=${encodeURIComponent(folderId)}` : '';
+  const payload = await apiRequest(`/api/clientes/${clientId}/drive/listar/${query}`);
+  return {
+    folderId: String(payload.folder_id || ''),
+    rootId: String(payload.raiz_id || ''),
+    folders: (payload.pastas || []).map(folderFromApi),
+    files: (payload.arquivos || []).map(driveFileFromApi),
+  };
+}
+
+export async function createDriveFolder(clientId, { name, parentId }) {
+  const payload = await apiRequest(`/api/clientes/${clientId}/drive/pastas/`, {
+    method: 'POST',
+    body: JSON.stringify({ nome: name, parent_id: parentId }),
+  });
+  return folderFromApi(payload.pasta);
+}
+
+export async function deleteDriveFolder(clientId, folderId) {
+  await apiRequest(`/api/clientes/${clientId}/drive/pastas/${encodeURIComponent(folderId)}/`, {
+    method: 'DELETE',
+  });
+  return folderId;
+}
+
+export async function uploadToDriveFolder(clientId, { file, folderId }) {
+  const data = new FormData();
+  data.append('arquivo', file, file.name);
+  data.append('folder_id', folderId);
+  const payload = await apiRequest(`/api/clientes/${clientId}/drive/upload/`, {
+    method: 'POST',
+    body: data,
+  });
+  return driveFileFromApi(payload.arquivo);
+}

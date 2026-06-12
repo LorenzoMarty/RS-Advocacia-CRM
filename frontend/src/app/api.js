@@ -111,12 +111,16 @@ export async function apiRequest(path, options = {}, { baseUrl = apiBaseUrl, req
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(errorMessageFromPayload(payload, response.status));
+    const error = new Error(errorMessageFromPayload(payload, response.status));
+    error.status = response.status;
+    throw error;
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, 'sucesso')) {
     if (!payload.sucesso) {
-      throw new Error(errorMessageFromPayload(payload, response.status));
+      const error = new Error(errorMessageFromPayload(payload, response.status));
+      error.status = response.status;
+      throw error;
     }
     return payload.dados || {};
   }

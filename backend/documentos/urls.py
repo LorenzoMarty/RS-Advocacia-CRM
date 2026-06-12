@@ -23,4 +23,24 @@ urlpatterns = [
         views.estrutura_drive_view,
         name="estrutura_drive",
     ),
+    path(
+        "api/clientes/<int:cliente_id>/drive/listar/",
+        views.listar_drive_view,
+        name="listar_drive",
+    ),
+    path(
+        "api/clientes/<int:cliente_id>/drive/pastas/",
+        views.criar_pasta_view,
+        name="criar_pasta_drive",
+    ),
+    path(
+        "api/clientes/<int:cliente_id>/drive/pastas/<str:folder_id>/",
+        views.excluir_pasta_view,
+        name="excluir_pasta_drive",
+    ),
+    path(
+        "api/clientes/<int:cliente_id>/drive/upload/",
+        views.upload_drive_view,
+        name="upload_drive",
+    ),
 ]

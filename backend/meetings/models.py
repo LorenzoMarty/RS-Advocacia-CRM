@@ -43,7 +43,17 @@ class Gravacao(models.Model):
         on_delete=models.CASCADE,
         related_name="gravacoes",
     )
-    arquivo_audio = models.FileField(upload_to=recording_upload_path)
+    # Legacy/dev path: file stored in MEDIA_ROOT. New uploads go straight to
+    # Google Drive and only fill drive_file_id (MEDIA_ROOT is ephemeral on Vercel).
+    arquivo_audio = models.FileField(upload_to=recording_upload_path, blank=True)
+    drive_file_id = models.CharField(max_length=128, blank=True, default="")
+    enviada_por = models.ForeignKey(
+        "usuarios.Usuario",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="gravacoes_enviadas",
+    )
     nome_original = models.CharField(max_length=255)
     mime_type = models.CharField(max_length=100, blank=True)
     tamanho_bytes = models.PositiveBigIntegerField(default=0)

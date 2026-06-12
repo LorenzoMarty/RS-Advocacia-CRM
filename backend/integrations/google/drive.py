@@ -13,13 +13,20 @@ Drive SDK directly.
 from __future__ import annotations
 
 import io
+import json
 import time as time_module
 from typing import Any
 
+from google.auth.transport.requests import AuthorizedSession
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
 from integrations.google.exceptions import GoogleApiError
+
+RESUMABLE_UPLOAD_URL = (
+    "https://www.googleapis.com/upload/drive/v3/files"
+    "?uploadType=resumable&supportsAllDrives=true"
+)
 
 FOLDER_MIME_TYPE = "application/vnd.google-apps.folder"
 
@@ -171,6 +178,128 @@ def list_files(service, parent_id: str) -> list[dict[str, Any]]:
         if not page_token:
             break
     return files
+
+
+def list_folders(service, parent_id: str) -> list[dict[str, Any]]:
+    """List non-trashed folders directly under ``parent_id`` (id and name)."""
+    query = (
+        f"'{_escape_query_value(parent_id)}' in parents "
+        f"and mimeType = '{FOLDER_MIME_TYPE}' "
+        f"and trashed = false"
+    )
+    folders: list[dict[str, Any]] = []
+    page_token: str | None = None
+    while True:
+        response = _execute(
+            lambda token=page_token: service.files().list(
+                q=query,
+                spaces="drive",
+                fields="nextPageToken, files(id, name)",
+                orderBy="name",
+                pageSize=100,
+                pageToken=token,
+                includeItemsFromAllDrives=True,
+                supportsAllDrives=True,
+            ),
+            "Nao foi possivel listar as pastas do Google Drive.",
+        )
+        folders.extend(response.get("files", []) if response else [])
+        page_token = response.get("nextPageToken") if response else None
+        if not page_token:
+            break
+    return folders
+
+
+def delete_folder(service, folder_id: str) -> None:
+    """Permanently delete folder ``folder_id`` and its contents (404 = success)."""
+    try:
+        _execute(
+            lambda: service.files().delete(
+                fileId=folder_id,
+                supportsAllDrives=True,
+            ),
+            "Nao foi possivel excluir a pasta do Google Drive.",
+        )
+    except GoogleApiError as exc:
+        cause = exc.__cause__
+        status = getattr(getattr(cause, "resp", None), "status", None)
+        if status != 404:
+            raise
+
+
+def get_file(service, file_id: str) -> dict[str, Any]:
+    """Return metadata (``FILE_FIELDS``) of ``file_id``."""
+    return _execute(
+        lambda: service.files().get(
+            fileId=file_id,
+            fields=FILE_FIELDS,
+            supportsAllDrives=True,
+        ),
+        "Nao foi possivel consultar o arquivo no Google Drive.",
+    )
+
+
+def delete_file(service, file_id: str) -> None:
+    """Permanently delete ``file_id``; a missing file (404) counts as success."""
+    try:
+        _execute(
+            lambda: service.files().delete(
+                fileId=file_id,
+                supportsAllDrives=True,
+            ),
+            "Nao foi possivel excluir o arquivo do Google Drive.",
+        )
+    except GoogleApiError as exc:
+        cause = exc.__cause__
+        status = getattr(getattr(cause, "resp", None), "status", None)
+        if status != 404:
+            raise
+
+
+def create_resumable_upload_session(
+    credentials,
+    *,
+    name: str,
+    parent_id: str,
+    mime_type: str,
+    size_bytes: int,
+    origin: str,
+) -> str:
+    """Open a resumable upload session and return its session URI.
+
+    The browser then PUTs the bytes straight to Google (no Authorization
+    header needed on the PUT). ``origin`` must match the page's origin so the
+    CORS headers of the session allow the browser request. The file only
+    exists in Drive after the upload completes.
+
+    The googleapiclient SDK does not expose the session URI, so this is the
+    one raw HTTP call of the module, authenticated via ``AuthorizedSession``
+    (google-auth), which also refreshes the access token when needed.
+    """
+    session = AuthorizedSession(credentials)
+    headers = {
+        "Content-Type": "application/json; charset=UTF-8",
+        "X-Upload-Content-Type": mime_type or "application/octet-stream",
+        "X-Upload-Content-Length": str(size_bytes),
+    }
+    if origin:
+        headers["Origin"] = origin
+    body = {"name": name, "parents": [parent_id]}
+    try:
+        response = session.post(
+            RESUMABLE_UPLOAD_URL,
+            headers=headers,
+            data=json.dumps(body),
+            timeout=30,
+        )
+    except Exception as exc:
+        raise GoogleApiError(
+            "Nao foi possivel iniciar o upload para o Google Drive."
+        ) from exc
+    session_url = response.headers.get("Location", "")
+    if response.status_code != 200 or not session_url:
+        raise GoogleApiError("Nao foi possivel iniciar o upload para o Google Drive.")
+    return session_url
 
 
 def download_file(service, file_id: str) -> bytes:

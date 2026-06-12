@@ -510,3 +510,85 @@ html[data-theme="light"] .client-documents .document-item{
         align-items:flex-start;
     }
 }
+
+.client-documents .drive-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:var(--gap-list);
+}
+
+.client-documents .drive-breadcrumb{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:4px;
+    margin-bottom:var(--gap-page);
+    font-size:.88rem;
+}
+
+.client-documents .drive-crumb{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+}
+
+.client-documents .drive-crumb-link{
+    border:0;
+    background:none;
+    padding:2px 4px;
+    color:var(--gold-soft);
+    cursor:pointer;
+    font:inherit;
+}
+
+.client-documents .drive-crumb-link:disabled{
+    color:var(--text);
+    cursor:default;
+}
+
+.client-documents .drive-crumb-sep{
+    color:var(--soft);
+}
+
+.client-documents .drive-dropzone{
+    display:grid;
+    gap:var(--gap-page);
+    border:1px dashed transparent;
+    border-radius:18px;
+    transition:border-color .15s ease, background .15s ease;
+}
+
+.client-documents .drive-dropzone.is-dragover{
+    border-color:var(--gold-soft);
+    background:var(--ghost);
+    padding:var(--pad-card);
+}
+
+.client-documents .drive-folder-list,
+.client-documents .drive-file-list{
+    display:grid;
+    gap:var(--gap-list);
+}
+
+.client-documents .folder-item .folder-open{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+    border:0;
+    background:none;
+    color:var(--text);
+    cursor:pointer;
+    font:inherit;
+    text-align:left;
+}
+
+.client-documents .folder-item .folder-icon{
+    font-size:1.1rem;
+}
+
+.client-documents .drive-drophint{
+    margin:0;
+    color:var(--soft);
+    font-size:.82rem;
+}

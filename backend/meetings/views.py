@@ -1,5 +1,4 @@
 import logging
-import mimetypes
 from pathlib import Path
 
 from django.conf import settings
@@ -15,39 +14,26 @@ from core.utils import (
     resposta_erro,
     resposta_sucesso,
 )
+from integrations.google.exceptions import (
+    GoogleApiError,
+    GoogleAuthorizationRequired,
+    GoogleConfigurationError,
+)
+from integrations.google.oauth import current_usuario
+from meetings import services
+from meetings.audio import (
+    SUPPORTED_AUDIO_EXTENSIONS,
+    extensao_audio,
+    formatos_suportados,
+    mime_audio_suportado,
+    validar_audio_declarado,
+)
 from meetings.forms import ReuniaoForm
 from meetings.models import Gravacao, Reuniao
 from meetings.tasks import processar_gravacao
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_AUDIO_EXTENSIONS = {
-    ".flac",
-    ".mp3",
-    ".mp4",
-    ".mpeg",
-    ".mpga",
-    ".m4a",
-    ".ogg",
-    ".wav",
-    ".webm",
-}
-SUPPORTED_AUDIO_MIME_PREFIXES = ("audio/",)
-SUPPORTED_AUDIO_MIME_TYPES = {
-    "application/ogg",
-    "video/mp4",
-    "video/webm",
-}
-MIME_EXTENSION_FALLBACKS = {
-    "audio/mp4": ".mp4",
-    "audio/mpeg": ".mp3",
-    "audio/ogg": ".ogg",
-    "audio/wav": ".wav",
-    "audio/webm": ".webm",
-    "application/ogg": ".ogg",
-    "video/mp4": ".mp4",
-    "video/webm": ".webm",
-}
 PROCESSING_MODES = {"celery", "inline"}
 
 
@@ -124,29 +110,34 @@ def _primeiro_arquivo_audio(request):
 
 
 def _extensao_arquivo_audio(arquivo):
-    extension = Path(arquivo.name or "").suffix.lower()
-    if extension:
-        return extension
-
-    content_type = (getattr(arquivo, "content_type", "") or "").split(";")[0].lower()
-    guessed = MIME_EXTENSION_FALLBACKS.get(content_type) or mimetypes.guess_extension(
-        content_type
+    return extensao_audio(
+        arquivo.name or "", getattr(arquivo, "content_type", "") or ""
     )
-    return (guessed or "").lower()
 
 
 def _mime_audio_suportado(arquivo):
-    content_type = (getattr(arquivo, "content_type", "") or "").split(";")[0].lower()
-    return (
-        content_type.startswith(SUPPORTED_AUDIO_MIME_PREFIXES)
-        or content_type in SUPPORTED_AUDIO_MIME_TYPES
-    )
+    return mime_audio_suportado(getattr(arquivo, "content_type", "") or "")
+
+
+def _mapear_erro_google(exc):
+    """Translate Drive/auth exceptions into the JSON envelope (no stack leak)."""
+    if isinstance(exc, GoogleConfigurationError):
+        return resposta_erro(str(exc), status=503)
+    if isinstance(exc, GoogleAuthorizationRequired):
+        return resposta_erro(str(exc), status=401)
+    if isinstance(exc, GoogleApiError):
+        logger.warning("Erro da API Google Drive: %s", exc)
+        return resposta_erro(
+            "Nao foi possivel concluir a operacao no Google Drive.", status=502
+        )
+    return None
 
 
 def serialize_gravacao(gravacao: Gravacao):
     return {
         "id": str(gravacao.pk),
         "pk": gravacao.pk,
+        "drive_file_id": gravacao.drive_file_id,
         "nome_original": gravacao.nome_original,
         "mime_type": gravacao.mime_type,
         "tamanho_bytes": gravacao.tamanho_bytes,
@@ -190,7 +181,11 @@ def _reuniao_api_payload(request):
     return data
 
 
-def _apagar_arquivo_gravacao(gravacao):
+def _apagar_audio_gravacao(gravacao):
+    """Best-effort removal of the recording's audio (Drive or legacy file)."""
+    if gravacao.drive_file_id:
+        services.excluir_audio_drive(gravacao)
+
     if not gravacao.arquivo_audio:
         return
 
@@ -276,7 +271,7 @@ def excluir_reuniao(request, reuniao_id):
     )
     deleted_id = str(reuniao.pk)
     for gravacao in reuniao.gravacoes.all():
-        _apagar_arquivo_gravacao(gravacao)
+        _apagar_audio_gravacao(gravacao)
     reuniao.delete()
     return resposta_sucesso(
         {"id": deleted_id}, mensagem="Reuniao excluida com sucesso."
@@ -346,7 +341,7 @@ def excluir_gravacao(request, gravacao_id):
 
     gravacao = get_object_or_404(Gravacao, pk=gravacao_id)
     deleted_id = str(gravacao.pk)
-    _apagar_arquivo_gravacao(gravacao)
+    _apagar_audio_gravacao(gravacao)
     gravacao.delete()
     return resposta_sucesso(
         {"id": deleted_id}, mensagem="Gravacao excluida com sucesso."
@@ -385,11 +380,8 @@ def enviar_gravacao(request, reuniao_id):
             arquivo.size,
             extension,
         )
-        formatos = ", ".join(
-            sorted(ext.removeprefix(".") for ext in SUPPORTED_AUDIO_EXTENSIONS)
-        )
         return resposta_erro(
-            {"audio": [f"Formato inválido. Use: {formatos}."]}, status=400
+            {"audio": [f"Formato inválido. Use: {formatos_suportados()}."]}, status=400
         )
 
     max_bytes = settings.MEETINGS_MAX_AUDIO_SIZE_MB * 1024 * 1024
@@ -420,6 +412,11 @@ def enviar_gravacao(request, reuniao_id):
         tamanho_bytes=arquivo.size,
     )
 
+    return _processar_ou_enfileirar(gravacao)
+
+
+def _processar_ou_enfileirar(gravacao):
+    """Run the processing inline or enqueue it, returning the JSON response."""
     modo = _modo_processamento()
     try:
         if modo == "inline":
@@ -451,3 +448,108 @@ def enviar_gravacao(request, reuniao_id):
         mensagem="Gravação recebida e enviada para processamento.",
         status=202,
     )
+
+
+@app_permissions_required("meetings.add_gravacao", "meetings.view_reuniao")
+def criar_sessao_upload_gravacao(request, reuniao_id):
+    """Open a Drive resumable session so the browser uploads straight to Google.
+
+    Vercel functions cap request bodies at ~4.5 MB, so real recordings cannot
+    travel through the backend; only this session handshake does.
+    """
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    erros_configuracao = _erros_configuracao_processamento()
+    if erros_configuracao:
+        return resposta_erro(erros_configuracao, status=503)
+
+    reuniao = get_object_or_404(
+        Reuniao.objects.select_related("cliente"), pk=reuniao_id
+    )
+
+    try:
+        payload = ler_corpo_json(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    nome = str(payload.get("nome_arquivo") or "").strip()
+    mime_type = str(payload.get("mime_type") or "").strip()
+    try:
+        tamanho_bytes = int(payload.get("tamanho_bytes") or 0)
+    except (TypeError, ValueError):
+        tamanho_bytes = 0
+
+    erros = validar_audio_declarado(nome, mime_type, tamanho_bytes)
+    if erros:
+        return resposta_erro(erros, status=400)
+
+    usuario = current_usuario(request)
+    if usuario is None:
+        return resposta_erro("Sessao expirada. Entre novamente.", status=401)
+
+    try:
+        sessao = services.criar_sessao_upload(
+            usuario,
+            reuniao,
+            nome=nome,
+            mime_type=mime_type,
+            tamanho_bytes=tamanho_bytes,
+        )
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+
+    return resposta_sucesso(sessao)
+
+
+@app_permissions_required("meetings.add_gravacao", "meetings.view_reuniao")
+def confirmar_gravacao(request, reuniao_id):
+    """Register a recording the browser finished uploading to Drive."""
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    erros_configuracao = _erros_configuracao_processamento()
+    if erros_configuracao:
+        return resposta_erro(erros_configuracao, status=503)
+
+    reuniao = get_object_or_404(
+        Reuniao.objects.select_related("cliente"), pk=reuniao_id
+    )
+
+    try:
+        payload = ler_corpo_json(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    drive_file_id = str(payload.get("drive_file_id") or "").strip()
+    if not drive_file_id:
+        return resposta_erro(
+            {"drive_file_id": ["Informe o arquivo enviado."]}, status=400
+        )
+
+    usuario = current_usuario(request)
+    if usuario is None:
+        return resposta_erro("Sessao expirada. Entre novamente.", status=401)
+
+    try:
+        gravacao = services.confirmar_upload(
+            usuario,
+            reuniao,
+            drive_file_id=drive_file_id,
+            nome_original=str(payload.get("nome_original") or "").strip(),
+            mime_type=str(payload.get("mime_type") or "").strip(),
+        )
+    except ValueError as exc:
+        return resposta_erro({"audio": [str(exc)]}, status=400)
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+
+    return _processar_ou_enfileirar(gravacao)

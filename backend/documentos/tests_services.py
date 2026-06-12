@@ -6,6 +6,7 @@ from clientes.models import Cliente
 from documentos import services
 from documentos.models import ClienteDrive, DocumentoCliente
 from integrations.google.exceptions import GoogleConfigurationError
+from processos.models import Processo
 
 ROOT = "root-folder-id"
 
@@ -17,6 +18,18 @@ def _cliente(nome="João Silva"):
         telefone="11999999999",
         cpf="12345678901",
         tipo_cliente="esporadico",
+    )
+
+
+def _processo(cliente, *, area="Cível", numero="0001234-56.2026"):
+    return Processo.objects.create(
+        numero_processo=numero,
+        cliente=cliente,
+        descricao="",
+        vara="1ª Vara",
+        area_juridica=area,
+        status="ativo",
+        advogado_responsavel="Dra. X",
     )
 
 
@@ -198,3 +211,106 @@ class ListTests(TestCase):
         # client B's documents never leak into client A's listing
         a_ids = {d.drive_file_id for d in services.list_client_files(a)}
         self.assertNotIn("f-b-1", a_ids)
+
+
+@override_settings(GOOGLE_DRIVE_ROOT_FOLDER_ID=ROOT)
+class TemplateTests(TestCase):
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_creates_template_and_caches_root(self, mock_drive, mock_service):
+        mock_drive.ensure_folder.side_effect = lambda _s, name, _parent: f"id-{name}"
+        cliente = _cliente()
+
+        root_id = services.ensure_client_template("user", cliente)
+
+        self.assertEqual(root_id, "id-João Silva")
+        names = [c.args[1] for c in mock_drive.ensure_folder.call_args_list]
+        # client root + the three fixed template folders
+        self.assertEqual(names[0], "João Silva")
+        for fixed in services.TEMPLATE_FOLDERS:
+            self.assertIn(fixed, names)
+        # root id cached for reuse
+        registro = ClienteDrive.objects.get(cliente=cliente)
+        self.assertEqual(registro.pasta_cliente_id, "id-João Silva")
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_per_process_folders_with_subfolders(self, mock_drive, mock_service):
+        mock_drive.ensure_folder.side_effect = lambda _s, name, _parent: f"id-{name}"
+        cliente = _cliente()
+        _processo(cliente, area="Cível", numero="123")
+
+        services.ensure_client_template("user", cliente)
+
+        names = [c.args[1] for c in mock_drive.ensure_folder.call_args_list]
+        self.assertIn("Cível - 123", names)
+        for subpasta in services.PROCESSO_SUBPASTAS:
+            self.assertIn(subpasta, names)
+        # process subfolders are created under the process folder
+        sub_call = next(
+            c
+            for c in mock_drive.ensure_folder.call_args_list
+            if c.args[1] == services.PROCESSO_SUBPASTAS[0]
+        )
+        self.assertEqual(sub_call.args[2], "id-Cível - 123")
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_reuses_legacy_clientedrive_root(self, mock_drive, mock_service):
+        mock_drive.ensure_folder.side_effect = lambda _s, name, _parent: f"id-{name}"
+        cliente = _cliente()
+        ClienteDrive.objects.create(
+            cliente=cliente,
+            pasta_cliente_id="legacy-root",
+            pasta_peticoes_id="p",
+            pasta_documentos_id="d",
+            pasta_outros_id="o",
+        )
+
+        root_id = services.ensure_client_template("user", cliente)
+
+        self.assertEqual(root_id, "legacy-root")
+        # template folders created under the existing root, no new client folder
+        names = [c.args[1] for c in mock_drive.ensure_folder.call_args_list]
+        self.assertNotIn("João Silva", names)
+        self.assertEqual(ClienteDrive.objects.filter(cliente=cliente).count(), 1)
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_listar_conteudo_root_ensures_template(self, mock_drive, mock_service):
+        mock_drive.ensure_folder.side_effect = lambda _s, name, _parent: f"id-{name}"
+        mock_drive.list_folders.return_value = [{"id": "f1", "name": "1. DOCUMENTOS"}]
+        mock_drive.list_files.return_value = [
+            {"id": "a1", "name": "rg.pdf", "mimeType": "application/pdf"}
+        ]
+        cliente = _cliente()
+
+        conteudo = services.listar_conteudo_pasta("user", cliente, None)
+
+        self.assertEqual(conteudo["folder_id"], "id-João Silva")
+        self.assertEqual(conteudo["raiz_id"], "id-João Silva")
+        self.assertEqual(conteudo["pastas"][0]["id"], "f1")
+        self.assertEqual(conteudo["arquivos"][0]["id"], "a1")
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_listar_conteudo_subfolder_skips_template(self, mock_drive, mock_service):
+        mock_drive.list_folders.return_value = []
+        mock_drive.list_files.return_value = []
+        cliente = _cliente()
+        ClienteDrive.objects.create(
+            cliente=cliente,
+            pasta_cliente_id="root-x",
+            pasta_peticoes_id="",
+            pasta_documentos_id="",
+            pasta_outros_id="",
+        )
+
+        conteudo = services.listar_conteudo_pasta("user", cliente, "sub-folder")
+
+        self.assertEqual(conteudo["folder_id"], "sub-folder")
+        self.assertEqual(conteudo["raiz_id"], "root-x")
+        mock_drive.ensure_folder.assert_not_called()
+        mock_drive.list_folders.assert_called_once_with(
+            mock_service.return_value, "sub-folder"
+        )

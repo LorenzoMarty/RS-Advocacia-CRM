@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { isApiEnabled } from '../api';
 import { useAppState } from '../store';
 import {
-  DOCUMENT_CATEGORIES,
-  listClientDocuments,
-  uploadClientDocument,
+  createDriveFolder,
+  deleteDriveFolder,
+  listClientDrive,
+  uploadToDriveFolder,
 } from '../services/documentos';
 import { EmptyState } from '../pages/common';
 
@@ -30,60 +31,126 @@ function errorText(error) {
 export function ClientDocuments({ client }) {
   const { addFlash } = useAppState();
   const inputRef = useRef(null);
-  const [documents, setDocuments] = useState([]);
+  // path: trail of { id, name } from the client root to the current folder.
+  const [path, setPath] = useState([]);
+  const [rootId, setRootId] = useState('');
+  const [folders, setFolders] = useState([]);
+  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [category, setCategory] = useState(DOCUMENT_CATEGORIES[1].value);
-  const [file, setFile] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [folderName, setFolderName] = useState('');
+  const [dragOver, setDragOver] = useState(false);
 
-  function closeAdd() {
-    setAdding(false);
-    setFile(null);
-    if (inputRef.current) inputRef.current.value = '';
-  }
+  const currentFolderId = path.length ? path[path.length - 1].id : rootId;
+
+  const load = useCallback(
+    async (folderId, trail) => {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await listClientDrive(client.id, folderId);
+        setRootId(data.rootId);
+        setFolders(data.folders);
+        setFiles(data.files);
+        if (trail) {
+          setPath(trail);
+        } else if (!folderId) {
+          setPath([{ id: data.folderId, name: 'Início' }]);
+        }
+      } catch (err) {
+        setError(errorText(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [client.id],
+  );
 
   useEffect(() => {
     if (!isApiEnabled) {
       setLoading(false);
-      return undefined;
+      return;
     }
+    setPath([]);
+    load(undefined);
+  }, [client.id, load]);
 
-    let active = true;
-    setLoading(true);
-    setError('');
-    listClientDocuments(client.id)
-      .then((items) => {
-        if (active) setDocuments(items);
-      })
-      .catch((err) => {
-        if (active) setError(errorText(err));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+  function enterFolder(folder) {
+    load(folder.id, [...path, { id: folder.id, name: folder.name }]);
+  }
 
-    return () => {
-      active = false;
-    };
-  }, [client.id]);
+  function goToCrumb(index) {
+    const trail = path.slice(0, index + 1);
+    load(trail[trail.length - 1].id, trail);
+  }
 
-  async function handleUpload(event) {
+  async function handleCreateFolder(event) {
     event.preventDefault();
-    if (!file || uploading) return;
-
-    setUploading(true);
+    const name = folderName.trim();
+    if (!name || busy) return;
+    setBusy(true);
     try {
-      const saved = await uploadClientDocument(client.id, { file, category });
-      setDocuments((current) => [saved, ...current.filter((doc) => doc.id !== saved.id)]);
-      closeAdd();
-      addFlash('Documento enviado ao Google Drive.', 'success');
+      await createDriveFolder(client.id, { name, parentId: currentFolderId });
+      setFolderName('');
+      setCreating(false);
+      await load(currentFolderId, path);
+      addFlash('Pasta criada no Google Drive.', 'success');
     } catch (err) {
       addFlash(errorText(err), 'error');
     } finally {
-      setUploading(false);
+      setBusy(false);
     }
+  }
+
+  async function handleDeleteFolder(folder) {
+    if (busy) return;
+    const ok = window.confirm(
+      `Excluir a pasta "${folder.name}" e todo o seu conteúdo? Esta ação não pode ser desfeita.`,
+    );
+    if (!ok) return;
+    setBusy(true);
+    try {
+      await deleteDriveFolder(client.id, folder.id);
+      await load(currentFolderId, path);
+      addFlash('Pasta excluída do Google Drive.', 'success');
+    } catch (err) {
+      addFlash(errorText(err), 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const uploadFiles = useCallback(
+    async (fileList) => {
+      const selected = Array.from(fileList || []);
+      if (!selected.length || busy) return;
+      setBusy(true);
+      try {
+        for (const file of selected) {
+          // Sequential: keeps Drive rate use modest and error messages clear.
+          await uploadToDriveFolder(client.id, { file, folderId: currentFolderId });
+        }
+        await load(currentFolderId, path);
+        addFlash(
+          selected.length > 1 ? 'Arquivos enviados ao Google Drive.' : 'Arquivo enviado ao Google Drive.',
+          'success',
+        );
+      } catch (err) {
+        addFlash(errorText(err), 'error');
+      } finally {
+        setBusy(false);
+        if (inputRef.current) inputRef.current.value = '';
+      }
+    },
+    [busy, client.id, currentFolderId, path, load, addFlash],
+  );
+
+  function handleDrop(event) {
+    event.preventDefault();
+    setDragOver(false);
+    uploadFiles(event.dataTransfer?.files);
   }
 
   if (!isApiEnabled) {
@@ -108,43 +175,75 @@ export function ClientDocuments({ client }) {
       <div className="section-head">
         <div>
           <h2 className="section-title">Documentos</h2>
-          <p className="section-note">Arquivos no Google Drive</p>
+          <p className="section-note">Pastas no Google Drive</p>
         </div>
-        {!adding ? (
-          <button type="button" className="btn" onClick={() => setAdding(true)}>
-            Adicionar documento
-          </button>
-        ) : null}
-      </div>
-
-      {adding ? (
-        <form className="document-upload" onSubmit={handleUpload}>
-          <select
-            className="document-category"
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
-            disabled={uploading}
-            aria-label="Categoria do documento"
+        <div className="drive-actions">
+          {!creating ? (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setCreating(true)}
+              disabled={busy || loading}
+            >
+              Nova pasta
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="btn"
+            onClick={() => inputRef.current?.click()}
+            disabled={busy || loading}
           >
-            {DOCUMENT_CATEGORIES.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+            Enviar arquivo
+          </button>
           <input
             ref={inputRef}
             type="file"
-            className="document-file"
-            onChange={(event) => setFile(event.target.files?.[0] || null)}
-            disabled={uploading}
+            multiple
+            hidden
+            onChange={(event) => uploadFiles(event.target.files)}
           />
-          <button type="submit" className="btn" disabled={!file || uploading}>
-            {uploading ? 'Enviando…' : 'Enviar'}
+        </div>
+      </div>
+
+      <nav className="drive-breadcrumb" aria-label="Navegação de pastas">
+        {path.map((crumb, index) => (
+          <span key={crumb.id} className="drive-crumb">
+            <button
+              type="button"
+              className="drive-crumb-link"
+              onClick={() => goToCrumb(index)}
+              disabled={index === path.length - 1}
+            >
+              {crumb.name}
+            </button>
+            {index < path.length - 1 ? <span className="drive-crumb-sep">/</span> : null}
+          </span>
+        ))}
+      </nav>
+
+      {creating ? (
+        <form className="document-upload" onSubmit={handleCreateFolder}>
+          <input
+            type="text"
+            className="document-file"
+            placeholder="Nome da pasta"
+            value={folderName}
+            onChange={(event) => setFolderName(event.target.value)}
+            disabled={busy}
+            autoFocus
+          />
+          <button type="submit" className="btn" disabled={!folderName.trim() || busy}>
+            {busy ? 'Criando…' : 'Criar'}
           </button>
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={closeAdd}
-            disabled={uploading}
+            onClick={() => {
+              setCreating(false);
+              setFolderName('');
+            }}
+            disabled={busy}
           >
             Cancelar
           </button>
@@ -154,44 +253,76 @@ export function ClientDocuments({ client }) {
       {error ? <p className="document-error">{error}</p> : null}
 
       {loading ? (
-        <p className="document-loading">Carregando documentos…</p>
+        <p className="document-loading">Carregando…</p>
       ) : (
-        <div className="document-groups">
-          {DOCUMENT_CATEGORIES.map((group) => {
-            const items = documents.filter((doc) => doc.category === group.value);
-            return (
-              <div key={group.value} className="document-group">
-                <h3 className="document-group-title">{group.label}</h3>
-                {items.length ? (
-                  <div className="list">
-                    {items.map((doc) => (
-                      <article key={doc.id} className="document-item">
-                        <div className="document-meta">
-                          <h4 className="list-title">{doc.name}</h4>
-                          <p className="list-subtitle">
-                            {formatSize(doc.size)}
-                            {doc.updatedAt ? ` · ${formatDateTime(doc.updatedAt)}` : ''}
-                          </p>
-                        </div>
-                        {doc.link ? (
-                          <a
-                            className="btn btn-secondary"
-                            href={doc.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Abrir no Drive
-                          </a>
-                        ) : null}
-                      </article>
-                    ))}
+        <div
+          className={`drive-dropzone${dragOver ? ' is-dragover' : ''}`}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+        >
+          {folders.length ? (
+            <div className="list drive-folder-list">
+              {folders.map((folder) => (
+                <article key={folder.id} className="document-item folder-item">
+                  <button
+                    type="button"
+                    className="folder-open"
+                    onClick={() => enterFolder(folder)}
+                  >
+                    <span className="folder-icon" aria-hidden="true">📁</span>
+                    <span className="list-title">{folder.name}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleDeleteFolder(folder)}
+                    disabled={busy}
+                  >
+                    Excluir
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : null}
+
+          {files.length ? (
+            <div className="list drive-file-list">
+              {files.map((file) => (
+                <article key={file.id} className="document-item">
+                  <div className="document-meta">
+                    <h4 className="list-title">{file.name}</h4>
+                    <p className="list-subtitle">
+                      {formatSize(file.size)}
+                      {file.updatedAt ? ` · ${formatDateTime(file.updatedAt)}` : ''}
+                    </p>
                   </div>
-                ) : (
-                  <EmptyState title="Sem arquivos." copy="Envie um documento nesta categoria." />
-                )}
-              </div>
-            );
-          })}
+                  {file.link ? (
+                    <a
+                      className="btn btn-secondary"
+                      href={file.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Abrir no Drive
+                    </a>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          ) : null}
+
+          {!folders.length && !files.length ? (
+            <EmptyState
+              title="Pasta vazia."
+              copy="Arraste arquivos aqui ou use “Enviar arquivo” e “Nova pasta”."
+            />
+          ) : (
+            <p className="drive-drophint">Arraste arquivos para esta pasta para enviá-los.</p>
+          )}
         </div>
       )}
     </section>
