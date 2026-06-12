@@ -8,7 +8,7 @@ import {
   createMeeting,
   deleteMeeting,
   deleteRecording,
-  getRecording,
+  getMeeting,
   listMeetings,
   updateMeeting,
   updateRecording,
@@ -432,17 +432,30 @@ export function MeetingsPage() {
   const selectedMeeting = meetings.find((meeting) => meeting.id === selectedId) || null;
   const isMeetingFormOpen = formMode !== 'idle';
   const isEditingMeeting = formMode === 'edit';
-  const refreshRecording = useCallback(async (recordingId) => {
-    const updatedRecording = await getRecording(recordingId);
-    setMeetings((current) => current.map((meeting) => ({
-      ...meeting,
-      recordings: meeting.recordings.map((recording) => (
-        recording.id === updatedRecording.id ? updatedRecording : recording
-      )),
-    })));
+  const meetingRefreshRef = useRef(false);
+  // Segments refine a single meeting-level summary, so polling refreshes the
+  // whole meeting (summary + transcript + segment statuses), not one recording.
+  const refreshMeetingById = useCallback(async (meetingId) => {
+    if (!meetingId || meetingRefreshRef.current) {
+      return;
+    }
+    meetingRefreshRef.current = true;
+    try {
+      const updated = await getMeeting(meetingId);
+      if (updated) {
+        setMeetings((current) => current.map((meeting) => (
+          meeting.id === updated.id ? updated : meeting
+        )));
+      }
+    } finally {
+      meetingRefreshRef.current = false;
+    }
   }, []);
 
-  useRecordingPolling(selectedMeeting?.recordings || [], refreshRecording);
+  useRecordingPolling(
+    selectedMeeting?.recordings || [],
+    () => refreshMeetingById(selectedMeeting?.id),
+  );
 
   function openCreateForm() {
     setForm(EMPTY_FORM);
@@ -527,13 +540,10 @@ export function MeetingsPage() {
     }
 
     try {
-      const savedRecording = await uploadRecording(selectedMeeting.id, recording, { onProgress });
-      setMeetings((current) => current.map((meeting) => (
-        meeting.id === selectedMeeting.id
-          ? { ...meeting, recordings: [savedRecording, ...meeting.recordings] }
-          : meeting
-      )));
-      addFlashRef.current('Áudio enviado para transcrição e resumo.', 'success');
+      await uploadRecording(selectedMeeting.id, recording, { onProgress });
+      // Repull the meeting so the running summary, transcript and segment
+      // statuses reflect this upload (in inline mode they are ready at once).
+      await refreshMeetingById(selectedMeeting.id);
       return true;
     } catch (error) {
       addFlashRef.current(errorText(error), 'error');
@@ -734,16 +744,38 @@ export function MeetingsPage() {
                   </button>
                 </div>
                 <AudioRecorder onUpload={handleUpload} />
+
+                {selectedMeeting.summary ? (
+                  <div className="ai-output meeting-report">
+                    <h3>Resumo da reunião</h3>
+                    <MeetingSummary value={selectedMeeting.summary} />
+                  </div>
+                ) : null}
+
+                {selectedMeeting.transcript ? (
+                  <div className="transcript-panel meeting-transcript">
+                    <div className="transcript-head">
+                      <h3>Transcrição completa</h3>
+                    </div>
+                    <p className="meeting-transcript-text">{selectedMeeting.transcript}</p>
+                  </div>
+                ) : null}
+
                 <div className="recording-results">
                   {selectedMeeting.recordings.length ? (
-                    selectedMeeting.recordings.map((recording) => (
-                      <RecordingResult
-                        key={recording.id}
-                        onDelete={handleDeleteRecording}
-                        onSaveTranscript={handleSaveTranscript}
-                        recording={recording}
-                      />
-                    ))
+                    <>
+                      <h3 className="recording-results-title">
+                        Trechos ({selectedMeeting.recordings.length})
+                      </h3>
+                      {selectedMeeting.recordings.map((recording) => (
+                        <RecordingResult
+                          key={recording.id}
+                          onDelete={handleDeleteRecording}
+                          onSaveTranscript={handleSaveTranscript}
+                          recording={recording}
+                        />
+                      ))}
+                    </>
                   ) : (
                     <div className="empty">
                       <strong>Nenhuma gravação nesta reunião.</strong>

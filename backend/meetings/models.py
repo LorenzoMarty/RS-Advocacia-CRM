@@ -20,6 +20,10 @@ class Reuniao(models.Model):
         related_name="reunioes",
     )
     criado_por = models.CharField(max_length=100, blank=True)
+    # Running summary refined incrementally as each recording segment is
+    # transcribed (see meetings.tasks.processar_gravacao). The full transcript
+    # is derived from the ordered segments, so it is not stored here.
+    resumo = models.TextField(blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 
@@ -43,6 +47,10 @@ class Gravacao(models.Model):
         on_delete=models.CASCADE,
         related_name="gravacoes",
     )
+    # Segment index within the meeting. A meeting recorded in 5-minute chunks
+    # produces one Gravacao per chunk; ordem keeps them in capture order and
+    # lets transcription seed the next chunk with the tail of the previous one.
+    ordem = models.PositiveIntegerField(default=0)
     # Legacy/dev path: file stored in MEDIA_ROOT. New uploads go straight to
     # Google Drive and only fill drive_file_id (MEDIA_ROOT is ephemeral on Vercel).
     arquivo_audio = models.FileField(upload_to=recording_upload_path, blank=True)

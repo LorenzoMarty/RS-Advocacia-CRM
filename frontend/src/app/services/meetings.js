@@ -101,6 +101,7 @@ export function recordingFromApi(recording) {
 
   return {
     id: String(recording.id || recording.pk),
+    ordem: Number(recording.ordem || 0),
     driveFileId: recording.drive_file_id || '',
     filename: recording.nome_original || '',
     contentType: recording.mime_type || '',
@@ -131,6 +132,10 @@ function meetingFromApi(meeting) {
     clientName: meeting.cliente_nome || '',
     createdBy: meeting.criado_por || '',
     createdAt: meeting.criado_em || '',
+    // Meeting-level running summary + concatenated transcript (segments are
+    // refined into one report; see backend meetings.tasks).
+    summary: meeting.resumo || '',
+    transcript: meeting.transcricao || '',
     recordings: (meeting.gravacoes || []).map(recordingFromApi).filter(Boolean),
   };
 }
@@ -274,13 +279,14 @@ export function uploadBlobToDrive(uploadUrl, blob, { onProgress } = {}) {
   });
 }
 
-export async function confirmRecording(meetingId, { driveFileId, filename, contentType }) {
+export async function confirmRecording(meetingId, { driveFileId, filename, contentType, ordem = 0 }) {
   const payload = await apiRequest(`/api/reunioes/${meetingId}/gravacoes/confirmar/`, {
     method: 'POST',
     body: JSON.stringify({
       drive_file_id: driveFileId,
       nome_original: filename,
       mime_type: contentType,
+      ordem,
     }),
   });
   return recordingFromApi(payload.gravacao);
@@ -303,12 +309,14 @@ async function uploadRecordingViaDrive(meetingId, recording, { onProgress } = {}
     driveFileId: driveFile.id,
     filename: recording.filename,
     contentType,
+    ordem: recording.ordem || 0,
   });
 }
 
 async function uploadRecordingMultipart(meetingId, recording) {
   const data = new FormData();
   data.append('audio', recording.blob, recording.filename);
+  data.append('ordem', String(recording.ordem || 0));
 
   const payload = await apiRequest(`/api/reunioes/${meetingId}/gravacoes/`, {
     method: 'POST',
@@ -378,6 +386,16 @@ export async function getRecording(recordingId) {
 
   const payload = await apiRequest(`/api/reunioes/gravacoes/${recordingId}/`);
   return recordingFromApi(payload.gravacao);
+}
+
+export async function getMeeting(meetingId) {
+  if (isUsingDemoMeetings) {
+    const meeting = demoMeetings.find((item) => item.id === meetingId);
+    return meeting ? cloneMeeting(meeting) : null;
+  }
+
+  const payload = await apiRequest(`/api/reunioes/${meetingId}/`);
+  return meetingFromApi(payload.reuniao);
 }
 
 export async function updateRecording(recordingId, recording) {

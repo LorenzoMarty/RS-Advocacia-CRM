@@ -33,6 +33,9 @@
 .recording-preview audio{width:100%}
 .recording-ready span{flex:1;min-width:150px;color:var(--soft);font-size:.82rem;overflow:hidden;text-overflow:ellipsis}
 .recording-results{display:grid;gap:12px}
+.recording-results-title{margin:0;color:var(--gold-soft);font-size:.82rem;text-transform:uppercase;letter-spacing:.12em}
+.meeting-report,.meeting-transcript{margin-top:6px}
+.meeting-transcript-text{max-height:320px;overflow:auto}
 .recording-result{display:grid;gap:14px;padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--ghost)}
 .recording-result-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .recording-result-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}

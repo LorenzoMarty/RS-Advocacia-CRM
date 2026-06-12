@@ -100,6 +100,14 @@ def _resolver_criador(request):
     return (full_name or getattr(user, "username", "")).strip()
 
 
+def _ordem_int(valor) -> int:
+    """Parse a segment index from request data; clamps to >= 0."""
+    try:
+        return max(0, int(valor))
+    except (TypeError, ValueError):
+        return 0
+
+
 def _primeiro_arquivo_audio(request):
     arquivo = request.FILES.get("audio")
     if arquivo is not None:
@@ -137,6 +145,7 @@ def serialize_gravacao(gravacao: Gravacao):
     return {
         "id": str(gravacao.pk),
         "pk": gravacao.pk,
+        "ordem": gravacao.ordem,
         "drive_file_id": gravacao.drive_file_id,
         "nome_original": gravacao.nome_original,
         "mime_type": gravacao.mime_type,
@@ -156,6 +165,9 @@ def serialize_gravacao(gravacao: Gravacao):
 
 def serialize_reuniao(reuniao: Reuniao):
     cliente_nome = reuniao.cliente.nome if reuniao.cliente else ""
+    # Segments in capture order; the full transcript is their concatenation.
+    gravacoes = sorted(reuniao.gravacoes.all(), key=lambda g: (g.ordem, g.pk))
+    transcricao = "\n\n".join(g.transcricao for g in gravacoes if g.transcricao)
     return {
         "id": str(reuniao.pk),
         "pk": reuniao.pk,
@@ -165,7 +177,9 @@ def serialize_reuniao(reuniao: Reuniao):
         "cliente_nome": cliente_nome,
         "criado_por": reuniao.criado_por,
         "criado_em": isoformat_ou_nulo(reuniao.criado_em),
-        "gravacoes": [serialize_gravacao(item) for item in reuniao.gravacoes.all()],
+        "resumo": reuniao.resumo,
+        "transcricao": transcricao,
+        "gravacoes": [serialize_gravacao(item) for item in gravacoes],
     }
 
 
@@ -410,6 +424,7 @@ def enviar_gravacao(request, reuniao_id):
         nome_original=arquivo.name[:255],
         mime_type=arquivo.content_type or "",
         tamanho_bytes=arquivo.size,
+        ordem=_ordem_int(request.POST.get("ordem")),
     )
 
     return _processar_ou_enfileirar(gravacao)
@@ -542,6 +557,7 @@ def confirmar_gravacao(request, reuniao_id):
             drive_file_id=drive_file_id,
             nome_original=str(payload.get("nome_original") or "").strip(),
             mime_type=str(payload.get("mime_type") or "").strip(),
+            ordem=_ordem_int(payload.get("ordem")),
         )
     except ValueError as exc:
         return resposta_erro({"audio": [str(exc)]}, status=400)

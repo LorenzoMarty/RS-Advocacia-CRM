@@ -87,6 +87,7 @@ def confirmar_upload(
     drive_file_id: str,
     nome_original: str,
     mime_type: str,
+    ordem: int = 0,
 ) -> Gravacao:
     """Verify the uploaded Drive file and create the Gravacao row for it.
 
@@ -115,6 +116,7 @@ def confirmar_upload(
         nome_original=(nome_original or meta.get("name") or "gravacao")[:255],
         mime_type=mime_type or meta.get("mimeType") or "",
         tamanho_bytes=tamanho,
+        ordem=ordem,
     )
 
 

@@ -8,6 +8,9 @@ class AIProvider(Protocol):
         audio_file: BinaryIO,
         filename: str,
         content_type: str,
+        contexto_anterior: str = "",
     ) -> str: ...
 
     def summarize(self, transcript: str) -> str: ...
+
+    def refine_summary(self, resumo_atual: str, novo_trecho: str) -> str: ...
