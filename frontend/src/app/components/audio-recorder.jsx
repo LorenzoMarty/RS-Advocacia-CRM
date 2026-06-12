@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
 import {
-  formatRemaining,
+  formatElapsed,
   isTabCaptureSupported,
   useMeetingRecorder,
 } from '../hooks/use-meeting-recorder';
@@ -11,6 +11,9 @@ export function AudioRecorder({ onUpload }) {
   const inputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [segmentsSent, setSegmentsSent] = useState(0);
+  const segmentQueueRef = useRef([]);
+  const drainingRef = useRef(false);
   const {
     clearRecording,
     error,
@@ -22,9 +25,30 @@ export function AudioRecorder({ onUpload }) {
     stopRecording,
   } = useAudioRecorder();
 
+  // Meeting segments upload one at a time: keeps Drive uploads ordered and the
+  // server's incremental summary free of concurrent updates.
+  async function drainSegmentQueue() {
+    if (drainingRef.current) {
+      return;
+    }
+    drainingRef.current = true;
+    while (segmentQueueRef.current.length) {
+      const segment = segmentQueueRef.current.shift();
+      const ok = await onUpload(segment);
+      if (ok) {
+        setSegmentsSent((current) => current + 1);
+      }
+    }
+    drainingRef.current = false;
+  }
+
   const meetingRecorder = useMeetingRecorder({
-    onRecording: ({ blob, filename }) => {
-      selectFile(new File([blob], filename, { type: blob.type }));
+    onSegment: (segment) => {
+      if (segmentQueueRef.current.length === 0 && !drainingRef.current) {
+        setSegmentsSent(0);
+      }
+      segmentQueueRef.current.push(segment);
+      drainSegmentQueue();
     },
   });
   const tabCaptureSupported = isTabCaptureSupported();
@@ -62,7 +86,7 @@ export function AudioRecorder({ onUpload }) {
         )}
         {meetingRecorder.isRecording ? (
           <button className="btn btn-danger" type="button" onClick={meetingRecorder.stopMeetingRecording}>
-            Encerrar reunião ({formatRemaining(meetingRecorder.remainingMs)})
+            Encerrar reunião ({formatElapsed(meetingRecorder.elapsedMs)})
           </button>
         ) : (
           <button
@@ -94,7 +118,16 @@ export function AudioRecorder({ onUpload }) {
       {isRecording ? <p className="recording-live">Gravando. Fale normalmente e encerre ao finalizar.</p> : null}
       {meetingRecorder.isRecording ? (
         <p className="recording-live">
-          Gravando a reunião (aba + microfone). Encerra sozinha em {formatRemaining(meetingRecorder.remainingMs)}.
+          Gravando a reunião (aba + microfone) há {formatElapsed(meetingRecorder.elapsedMs)}. Cada
+          5 min vira um trecho transcrito automaticamente — pode durar o quanto precisar.
+          {meetingRecorder.segmentCount > 0
+            ? ` Trechos capturados: ${meetingRecorder.segmentCount}.`
+            : ''}
+        </p>
+      ) : null}
+      {!meetingRecorder.isRecording && segmentsSent > 0 ? (
+        <p className="recording-live">
+          {segmentsSent} trecho(s) enviado(s) para transcrição.
         </p>
       ) : null}
 

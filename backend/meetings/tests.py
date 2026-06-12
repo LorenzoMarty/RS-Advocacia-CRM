@@ -295,9 +295,9 @@ class MeetingTaskTests(TemporaryMediaTestCase):
             mime_type="audio/webm",
         )
 
-    @patch("meetings.tasks.summarize_transcript", return_value="Resumo")
+    @patch("meetings.tasks.refine_summary", return_value="Resumo")
     @patch("meetings.tasks.transcribe_audio", return_value="Transcricao")
-    def test_processamento_persiste_transcricao_e_resumo(self, _transcribe, _summarize):
+    def test_processamento_persiste_transcricao_e_resumo(self, _transcribe, _refine):
         from meetings.tasks import processar_gravacao
 
         processar_gravacao(self.gravacao.pk)
@@ -305,4 +305,6 @@ class MeetingTaskTests(TemporaryMediaTestCase):
         self.gravacao.refresh_from_db()
         self.assertEqual(self.gravacao.status, Gravacao.Status.CONCLUIDA)
         self.assertEqual(self.gravacao.transcricao, "Transcricao")
-        self.assertEqual(self.gravacao.resumo, "Resumo")
+        # Summary is meeting-level (refined per segment), not on the recording.
+        self.gravacao.reuniao.refresh_from_db()
+        self.assertEqual(self.gravacao.reuniao.resumo, "Resumo")

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import time as time_module
 from typing import Any
 
@@ -22,6 +23,8 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
 from integrations.google.exceptions import GoogleApiError
+
+logger = logging.getLogger(__name__)
 
 RESUMABLE_UPLOAD_URL = (
     "https://www.googleapis.com/upload/drive/v3/files"
@@ -46,6 +49,17 @@ def _execute(factory, error_message: str):
         except HttpError as exc:
             status = getattr(exc.resp, "status", None)
             if status not in RETRYABLE_STATUSES or attempt == 2:
+                # Log the real Google reason (status + body); the message that
+                # reaches the client is intentionally generic.
+                detalhe = getattr(exc, "content", b"") or b""
+                if isinstance(detalhe, bytes):
+                    detalhe = detalhe.decode("utf-8", "replace")
+                logger.warning(
+                    "Drive API falhou (status=%s): %s | %s",
+                    status,
+                    error_message,
+                    detalhe[:500],
+                )
                 raise GoogleApiError(error_message) from exc
             time_module.sleep(0.35 * (attempt + 1))
 

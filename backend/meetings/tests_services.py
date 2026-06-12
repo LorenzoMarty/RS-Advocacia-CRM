@@ -331,10 +331,10 @@ class GravacaoDriveTaskTests(TestCase):
             tamanho_bytes=1000,
         )
 
-    @patch("meetings.tasks.summarize_transcript", return_value="Resumo")
+    @patch("meetings.tasks.refine_summary", return_value="Resumo")
     @patch("meetings.tasks.transcribe_audio", return_value="Transcricao")
     @patch("meetings.tasks.baixar_audio_drive", return_value=b"audio-bytes")
-    def test_processa_gravacao_via_drive(self, _baixar, mock_transcribe, _summarize):
+    def test_processa_gravacao_via_drive(self, _baixar, mock_transcribe, _refine):
         from meetings.tasks import processar_gravacao
 
         processar_gravacao(self.gravacao.pk)
@@ -342,7 +342,8 @@ class GravacaoDriveTaskTests(TestCase):
         self.gravacao.refresh_from_db()
         self.assertEqual(self.gravacao.status, Gravacao.Status.CONCLUIDA)
         self.assertEqual(self.gravacao.transcricao, "Transcricao")
-        self.assertEqual(self.gravacao.resumo, "Resumo")
+        self.gravacao.reuniao.refresh_from_db()
+        self.assertEqual(self.gravacao.reuniao.resumo, "Resumo")
         self.assertEqual(mock_transcribe.call_args.kwargs["filename"], "reuniao.webm")
 
     @patch(
@@ -371,3 +372,54 @@ class GravacaoDriveTaskTests(TestCase):
 
         self.gravacao.refresh_from_db()
         self.assertEqual(self.gravacao.status, Gravacao.Status.FALHOU)
+
+
+class SegmentacaoTaskTests(TestCase):
+    """A meeting recorded in chunks: rolling transcription + incremental summary."""
+
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Advogada", email="adv@example.com", cargo="Administrador"
+        )
+        self.reuniao = Reuniao.objects.create(titulo="Reuniao", cliente=_cliente())
+
+    def _segmento(self, ordem):
+        return Gravacao.objects.create(
+            reuniao=self.reuniao,
+            drive_file_id=f"file-{ordem}",
+            enviada_por=self.usuario,
+            nome_original=f"trecho-{ordem}.webm",
+            mime_type="audio/webm",
+            tamanho_bytes=1000,
+            ordem=ordem,
+        )
+
+    @patch("meetings.tasks.refine_summary")
+    @patch("meetings.tasks.transcribe_audio")
+    @patch("meetings.tasks.baixar_audio_drive", return_value=b"audio")
+    def test_segundo_segmento_usa_cauda_e_resumo_incremental(
+        self, _baixar, mock_transcribe, mock_refine
+    ):
+        from meetings.tasks import processar_gravacao
+
+        mock_transcribe.side_effect = ["Trecho zero.", "Trecho um."]
+        # Accumulate so the running summary carries forward.
+        mock_refine.side_effect = lambda atual, novo: f"{atual}|{novo}".strip("|")
+
+        seg0 = self._segmento(0)
+        seg1 = self._segmento(1)
+        processar_gravacao(seg0.pk)
+        processar_gravacao(seg1.pk)
+
+        # Second transcription is seeded with the first segment's transcript.
+        self.assertEqual(
+            mock_transcribe.call_args_list[1].kwargs["contexto_anterior"],
+            "Trecho zero.",
+        )
+        # Summary refined per segment into the meeting, carrying the prior report.
+        self.assertEqual(mock_refine.call_args_list[0].args, ("", "Trecho zero."))
+        self.assertEqual(
+            mock_refine.call_args_list[1].args, ("Trecho zero.", "Trecho um.")
+        )
+        self.reuniao.refresh_from_db()
+        self.assertEqual(self.reuniao.resumo, "Trecho zero.|Trecho um.")

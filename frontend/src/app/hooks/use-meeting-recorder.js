@@ -6,9 +6,12 @@ const AUDIO_FORMATS = [
   { mimeType: 'audio/mp4', extension: 'mp4' },
 ];
 
-// 20 minutes: product cap agreed for meeting recordings; at 64 kbps opus the
-// blob stays around 10 MB, well under the 25 MB transcription limit.
-export const MAX_MEETING_RECORDING_MS = 20 * 60 * 1000;
+// The meeting is recorded in 5-minute segments. Each segment is a self-contained
+// file, uploaded and transcribed on its own, so the whole meeting never travels
+// through a single request (which Vercel would time out). Meeting length is
+// effectively unlimited; SAFETY_MAX just stops a forgotten recording.
+export const SEGMENT_DURATION_MS = 5 * 60 * 1000;
+export const SAFETY_MAX_RECORDING_MS = 4 * 60 * 60 * 1000;
 export const MAX_RECORDING_BYTES = 25 * 1024 * 1024;
 const MEETING_AUDIO_BITS_PER_SECOND = 64000;
 
@@ -41,38 +44,49 @@ export function formatRemaining(ms) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
+export function formatElapsed(ms) {
+  return formatRemaining(ms);
+}
+
 /**
- * Records a Google Meet (or any browser tab) mixed with the microphone.
+ * Records a Google Meet (or any browser tab) mixed with the microphone, cutting
+ * the audio into SEGMENT_DURATION_MS chunks.
  *
- * Flow: getDisplayMedia (tab + "share tab audio") + getUserMedia (mic), both
- * piped through an AudioContext into a single stream for MediaRecorder.
- * Auto-stops at MAX_MEETING_RECORDING_MS or when the user ends the share.
- * The finished blob is handed to `onRecording({ blob, filename })`.
+ * The capture streams (tab + mic) and the AudioContext stay alive for the whole
+ * meeting; only the MediaRecorder is recreated per segment so each chunk is an
+ * independently decodable file. Every finished segment is handed to
+ * `onSegment({ blob, filename, ordem })` while recording continues, so the page
+ * can upload + transcribe each chunk in parallel with the meeting.
  */
-export function useMeetingRecorder({ onRecording }) {
+export function useMeetingRecorder({ onSegment }) {
   const recorderRef = useRef(null);
   const streamsRef = useRef([]);
   const audioContextRef = useRef(null);
+  const destinationRef = useRef(null);
   const chunksRef = useRef([]);
-  const timeoutRef = useRef(null);
-  const intervalRef = useRef(null);
-  const onRecordingRef = useRef(onRecording);
+  const formatRef = useRef(null);
+  const segmentIndexRef = useRef(0);
+  const stoppingRef = useRef(false);
+  const segmentTimerRef = useRef(null);
+  const elapsedTimerRef = useRef(null);
+  const onSegmentRef = useRef(onSegment);
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState('');
-  const [remainingMs, setRemainingMs] = useState(MAX_MEETING_RECORDING_MS);
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [segmentCount, setSegmentCount] = useState(0);
 
   useEffect(() => {
-    onRecordingRef.current = onRecording;
+    onSegmentRef.current = onSegment;
   });
 
   function cleanup() {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+    if (segmentTimerRef.current) {
+      clearTimeout(segmentTimerRef.current);
+      segmentTimerRef.current = null;
     }
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (elapsedTimerRef.current) {
+      clearInterval(elapsedTimerRef.current);
+      elapsedTimerRef.current = null;
     }
     streamsRef.current.forEach((stream) => {
       stream.getTracks().forEach((track) => track.stop());
@@ -80,10 +94,65 @@ export function useMeetingRecorder({ onRecording }) {
     streamsRef.current = [];
     audioContextRef.current?.close().catch(() => undefined);
     audioContextRef.current = null;
+    destinationRef.current = null;
     recorderRef.current = null;
   }
 
   useEffect(() => () => cleanup(), []);
+
+  function emitSegment(blob) {
+    if (!blob.size) {
+      return;
+    }
+    const ordem = segmentIndexRef.current;
+    segmentIndexRef.current += 1;
+    setSegmentCount(segmentIndexRef.current);
+    const { extension } = formatRef.current;
+    onSegmentRef.current?.({
+      blob,
+      filename: `reuniao-meet-${Date.now()}-parte-${ordem + 1}.${extension}`,
+      ordem,
+    });
+  }
+
+  function startSegmentRecorder() {
+    const destination = destinationRef.current;
+    if (!destination) {
+      return;
+    }
+    const recorder = new MediaRecorder(destination.stream, {
+      mimeType: formatRef.current.mimeType,
+      audioBitsPerSecond: MEETING_AUDIO_BITS_PER_SECOND,
+    });
+    recorderRef.current = recorder;
+    chunksRef.current = [];
+
+    recorder.ondataavailable = (event) => {
+      if (event.data.size) {
+        chunksRef.current.push(event.data);
+      }
+    };
+    recorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: formatRef.current.mimeType });
+      emitSegment(blob);
+      if (stoppingRef.current) {
+        cleanup();
+        setIsRecording(false);
+        return;
+      }
+      // Timed rollover: keep recording the next segment seamlessly.
+      startSegmentRecorder();
+      segmentTimerRef.current = setTimeout(rolloverSegment, SEGMENT_DURATION_MS);
+    };
+
+    recorder.start();
+  }
+
+  function rolloverSegment() {
+    if (recorderRef.current?.state === 'recording') {
+      recorderRef.current.stop();
+    }
+  }
 
   async function startMeetingRecording() {
     const format = pickSupportedFormat();
@@ -124,51 +193,39 @@ export function useMeetingRecorder({ onRecording }) {
     audioContext.createMediaStreamSource(displayStream).connect(destination);
     audioContext.createMediaStreamSource(micStream).connect(destination);
 
-    const recorder = new MediaRecorder(destination.stream, {
-      mimeType: format.mimeType,
-      audioBitsPerSecond: MEETING_AUDIO_BITS_PER_SECOND,
-    });
-
     streamsRef.current = [displayStream, micStream];
     audioContextRef.current = audioContext;
-    recorderRef.current = recorder;
-    chunksRef.current = [];
-
-    recorder.ondataavailable = (event) => {
-      if (event.data.size) {
-        chunksRef.current.push(event.data);
-      }
-    };
-    recorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: format.mimeType });
-      cleanup();
-      setIsRecording(false);
-
-      const sizeError = validateRecordingSize(blob);
-      if (sizeError) {
-        setError(sizeError);
-        return;
-      }
-      onRecordingRef.current?.({
-        blob,
-        filename: `reuniao-meet-${Date.now()}.${format.extension}`,
-      });
-    };
+    destinationRef.current = destination;
+    formatRef.current = format;
+    segmentIndexRef.current = 0;
+    stoppingRef.current = false;
+    setSegmentCount(0);
+    setElapsedMs(0);
 
     // User clicked the browser's "stop sharing" → finish gracefully.
     displayStream.getAudioTracks()[0].onended = () => stopMeetingRecording();
 
-    setRemainingMs(MAX_MEETING_RECORDING_MS);
-    timeoutRef.current = setTimeout(() => stopMeetingRecording(), MAX_MEETING_RECORDING_MS);
-    intervalRef.current = setInterval(() => {
-      setRemainingMs((current) => Math.max(0, current - 1000));
+    startSegmentRecorder();
+    segmentTimerRef.current = setTimeout(rolloverSegment, SEGMENT_DURATION_MS);
+    elapsedTimerRef.current = setInterval(() => {
+      setElapsedMs((current) => {
+        const next = current + 1000;
+        if (next >= SAFETY_MAX_RECORDING_MS) {
+          stopMeetingRecording();
+        }
+        return next;
+      });
     }, 1000);
 
-    recorder.start();
     setIsRecording(true);
   }
 
   function stopMeetingRecording() {
+    stoppingRef.current = true;
+    if (segmentTimerRef.current) {
+      clearTimeout(segmentTimerRef.current);
+      segmentTimerRef.current = null;
+    }
     if (recorderRef.current?.state === 'recording') {
       recorderRef.current.stop();
       return;
@@ -180,7 +237,8 @@ export function useMeetingRecorder({ onRecording }) {
   return {
     error,
     isRecording,
-    remainingMs,
+    elapsedMs,
+    segmentCount,
     startMeetingRecording,
     stopMeetingRecording,
   };
