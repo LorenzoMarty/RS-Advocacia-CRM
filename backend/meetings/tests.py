@@ -296,7 +296,7 @@ class MeetingTaskTests(TemporaryMediaTestCase):
         )
 
     @patch("meetings.tasks.summarize_transcript", return_value="Resumo")
-    @patch("meetings.tasks.transcribe_recording", return_value="Transcricao")
+    @patch("meetings.tasks.transcribe_audio", return_value="Transcricao")
     def test_processamento_persiste_transcricao_e_resumo(self, _transcribe, _summarize):
         from meetings.tasks import processar_gravacao
 

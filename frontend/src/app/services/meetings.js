@@ -94,13 +94,14 @@ function demoClientName(clientId) {
   return names[clientId] || '';
 }
 
-function recordingFromApi(recording) {
+export function recordingFromApi(recording) {
   if (!recording) {
     return null;
   }
 
   return {
     id: String(recording.id || recording.pk),
+    driveFileId: recording.drive_file_id || '',
     filename: recording.nome_original || '',
     contentType: recording.mime_type || '',
     size: Number(recording.tamanho_bytes || 0),
@@ -215,7 +216,108 @@ export async function deleteMeeting(meetingId) {
   return String(meetingId);
 }
 
-export async function uploadRecording(meetingId, recording) {
+// Vercel functions reject bodies over ~4.5 MB, so the multipart endpoint only
+// works for small blobs; real recordings go straight from the browser to Drive.
+export const MULTIPART_FALLBACK_MAX_BYTES = 4 * 1024 * 1024;
+
+export function chooseUploadStrategy({ sessionErrorStatus, blobSize }) {
+  if (sessionErrorStatus == null) {
+    return 'drive';
+  }
+  if (sessionErrorStatus === 503 && blobSize <= MULTIPART_FALLBACK_MAX_BYTES) {
+    return 'multipart';
+  }
+  return 'fail';
+}
+
+export async function createRecordingUploadSession(meetingId, { filename, contentType, size }) {
+  return apiRequest(`/api/reunioes/${meetingId}/gravacoes/sessao-upload/`, {
+    method: 'POST',
+    body: JSON.stringify({
+      nome_arquivo: filename,
+      mime_type: contentType,
+      tamanho_bytes: size,
+    }),
+  });
+}
+
+export function uploadBlobToDrive(uploadUrl, blob, { onProgress } = {}) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', blob.type || 'application/octet-stream');
+
+    if (xhr.upload && onProgress) {
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          onProgress(Math.round((event.loaded / event.total) * 100));
+        }
+      };
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText || '{}'));
+        } catch {
+          resolve({});
+        }
+      } else {
+        reject(new Error(`Falha ao enviar o áudio ao Google Drive (${xhr.status}).`));
+      }
+    };
+    xhr.onerror = () => {
+      reject(new Error('Falha de rede ao enviar o áudio ao Google Drive.'));
+    };
+
+    xhr.send(blob);
+  });
+}
+
+export async function confirmRecording(meetingId, { driveFileId, filename, contentType }) {
+  const payload = await apiRequest(`/api/reunioes/${meetingId}/gravacoes/confirmar/`, {
+    method: 'POST',
+    body: JSON.stringify({
+      drive_file_id: driveFileId,
+      nome_original: filename,
+      mime_type: contentType,
+    }),
+  });
+  return recordingFromApi(payload.gravacao);
+}
+
+async function uploadRecordingViaDrive(meetingId, recording, { onProgress } = {}) {
+  const contentType = recording.blob?.type || 'audio/webm';
+  const session = await createRecordingUploadSession(meetingId, {
+    filename: recording.filename,
+    contentType,
+    size: recording.blob?.size || 0,
+  });
+
+  const driveFile = await uploadBlobToDrive(session.upload_url, recording.blob, { onProgress });
+  if (!driveFile.id) {
+    throw new Error('O Google Drive não confirmou o upload do áudio. Tente novamente.');
+  }
+
+  return confirmRecording(meetingId, {
+    driveFileId: driveFile.id,
+    filename: recording.filename,
+    contentType,
+  });
+}
+
+async function uploadRecordingMultipart(meetingId, recording) {
+  const data = new FormData();
+  data.append('audio', recording.blob, recording.filename);
+
+  const payload = await apiRequest(`/api/reunioes/${meetingId}/gravacoes/`, {
+    method: 'POST',
+    body: data,
+  });
+  return recordingFromApi(payload.gravacao);
+}
+
+export async function uploadRecording(meetingId, recording, { onProgress } = {}) {
   if (isUsingDemoMeetings) {
     const nextRecording = {
       id: nextDemoId('demo-recording'),
@@ -243,14 +345,27 @@ export async function uploadRecording(meetingId, recording) {
     return cloneRecording(nextRecording);
   }
 
-  const data = new FormData();
-  data.append('audio', recording.blob, recording.filename);
+  try {
+    return await uploadRecordingViaDrive(meetingId, recording, { onProgress });
+  } catch (error) {
+    const strategy = chooseUploadStrategy({
+      sessionErrorStatus: error?.status ?? null,
+      blobSize: recording.blob?.size || 0,
+    });
 
-  const payload = await apiRequest(`/api/reunioes/${meetingId}/gravacoes/`, {
-    method: 'POST',
-    body: data,
-  });
-  return recordingFromApi(payload.gravacao);
+    if (strategy === 'multipart') {
+      // Drive/queue not configured (e.g. local dev) and the blob is small
+      // enough for the legacy multipart endpoint.
+      return uploadRecordingMultipart(meetingId, recording);
+    }
+
+    if (error?.status === 401) {
+      throw new Error(
+        'Conecte sua conta Google em Integrações para enviar gravações ao Drive.',
+      );
+    }
+    throw error;
+  }
 }
 
 export async function getRecording(recordingId) {

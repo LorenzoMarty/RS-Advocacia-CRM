@@ -9,6 +9,7 @@ from clientes.models import Cliente
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
+    ler_corpo_json,
     metodo_nao_permitido,
     resposta_erro,
     resposta_sucesso,
@@ -163,6 +164,173 @@ def estrutura_drive_view(request, cliente_id):
                 "pasta_outros_id": estrutura.pasta_outros_id,
             }
         }
+    )
+
+
+# --- Folder explorer (Drive-live) -------------------------------------------
+
+
+def _serialize_pasta(pasta: dict):
+    return {"id": pasta.get("id", ""), "nome": pasta.get("name", "")}
+
+
+def _serialize_arquivo(arquivo: dict):
+    return {
+        "id": arquivo.get("id", ""),
+        "nome": arquivo.get("name", ""),
+        "mime_type": arquivo.get("mimeType", ""),
+        "link": arquivo.get("webViewLink", ""),
+        "tamanho_bytes": int(arquivo.get("size") or 0),
+        "modificado_em": arquivo.get("modifiedTime", ""),
+    }
+
+
+@app_permissions_required("documentos.view_documentocliente", "clientes.view_cliente")
+def listar_drive_view(request, cliente_id):
+    if request.method != "GET":
+        return metodo_nao_permitido(["GET"])
+
+    cliente = get_object_or_404(Cliente, pk=cliente_id)
+    folder_id = request.GET.get("folder_id") or None
+    usuario = current_usuario(request)
+    try:
+        conteudo = services.listar_conteudo_pasta(usuario, cliente, folder_id)
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+
+    return resposta_sucesso(
+        {
+            "folder_id": conteudo["folder_id"],
+            "raiz_id": conteudo["raiz_id"],
+            "pastas": [_serialize_pasta(p) for p in conteudo["pastas"]],
+            "arquivos": [_serialize_arquivo(a) for a in conteudo["arquivos"]],
+        }
+    )
+
+
+@app_permissions_required("documentos.add_documentocliente", "clientes.view_cliente")
+def criar_pasta_view(request, cliente_id):
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    get_object_or_404(Cliente, pk=cliente_id)
+    try:
+        payload = ler_corpo_json(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    nome = (payload.get("nome") or "").strip()[:255]
+    parent_id = (payload.get("parent_id") or "").strip()
+    if not nome:
+        return resposta_erro({"nome": ["Informe o nome da pasta."]}, status=400)
+    if not parent_id:
+        return resposta_erro({"parent_id": ["Pasta de destino invalida."]}, status=400)
+
+    usuario = current_usuario(request)
+    try:
+        pasta = services.criar_pasta(usuario, nome=nome, parent_id=parent_id)
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+
+    return resposta_sucesso(
+        {"pasta": _serialize_pasta(pasta)},
+        mensagem="Pasta criada no Google Drive.",
+        status=201,
+    )
+
+
+@app_permissions_required("documentos.delete_documentocliente", "clientes.view_cliente")
+def excluir_pasta_view(request, cliente_id, folder_id):
+    if request.method != "DELETE":
+        return metodo_nao_permitido(["DELETE"])
+
+    cliente = get_object_or_404(Cliente, pk=cliente_id)
+    # Guard: never let the explorer delete the client's root folder.
+    if folder_id == services._client_root_id(cliente):
+        return resposta_erro(
+            {"folder_id": ["Nao e possivel excluir a pasta raiz do cliente."]},
+            status=400,
+        )
+
+    usuario = current_usuario(request)
+    try:
+        services.excluir_pasta(usuario, folder_id)
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+
+    return resposta_sucesso({"id": folder_id}, mensagem="Pasta excluida do Google Drive.")
+
+
+@app_permissions_required("documentos.add_documentocliente", "clientes.view_cliente")
+def upload_drive_view(request, cliente_id):
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    get_object_or_404(Cliente, pk=cliente_id)
+
+    folder_id = (request.POST.get("folder_id") or "").strip()
+    if not folder_id:
+        return resposta_erro(
+            {"folder_id": ["Pasta de destino invalida."]}, status=400
+        )
+
+    arquivo = request.FILES.get("arquivo") or next(iter(request.FILES.values()), None)
+    if arquivo is None:
+        return resposta_erro({"arquivo": ["Envie um arquivo."]}, status=400)
+
+    extension = Path(arquivo.name or "").suffix.lower()
+    if extension not in SUPPORTED_DOCUMENT_EXTENSIONS:
+        formatos = ", ".join(
+            sorted(ext.removeprefix(".") for ext in SUPPORTED_DOCUMENT_EXTENSIONS)
+        )
+        return resposta_erro(
+            {"arquivo": [f"Formato invalido. Use: {formatos}."]}, status=400
+        )
+
+    max_bytes = settings.DRIVE_MAX_FILE_SIZE_MB * 1024 * 1024
+    if arquivo.size > max_bytes:
+        return resposta_erro(
+            {
+                "arquivo": [
+                    f"O arquivo deve ter no maximo {settings.DRIVE_MAX_FILE_SIZE_MB} MB."
+                ]
+            },
+            status=400,
+        )
+
+    nome = (arquivo.name or "arquivo")[:255]
+    usuario = current_usuario(request)
+    try:
+        arquivo_meta = services.upload_para_pasta(
+            usuario,
+            folder_id=folder_id,
+            nome=nome,
+            content=arquivo.read(),
+            mime_type=arquivo.content_type or "",
+        )
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+
+    return resposta_sucesso(
+        {"arquivo": _serialize_arquivo(arquivo_meta)},
+        mensagem="Arquivo enviado ao Google Drive.",
+        status=201,
     )
 
 
