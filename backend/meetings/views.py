@@ -135,9 +135,12 @@ def _mapear_erro_google(exc):
         return resposta_erro(str(exc), status=401)
     if isinstance(exc, GoogleApiError):
         logger.warning("Erro da API Google Drive: %s", exc)
-        return resposta_erro(
-            "Nao foi possivel concluir a operacao no Google Drive.", status=502
-        )
+        detalhe = "Nao foi possivel concluir a operacao no Google Drive."
+        if settings.DEBUG:
+            causa = exc.__cause__
+            status = getattr(getattr(causa, "resp", None), "status", None)
+            detalhe = f"{detalhe} [debug status={status}] {str(causa)[:400]}"
+        return resposta_erro(detalhe, status=502)
     return None
 
 
