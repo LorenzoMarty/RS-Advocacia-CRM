@@ -49,8 +49,11 @@ Para a costura e o contexto:
   (`getMeeting`) enquanto houver trecho processando.
 
 ## Deploy R$0
-- `backend/vercel.json`: + `functions["api/index.py"].maxDuration = 60` (necessário p/ inline; default
-  da Vercel é baixo demais). Hobby teto = 60s; trecho de 5 min cabe.
+- **Function Max Duration = 60s** (necessário p/ inline; default da Vercel é baixo demais; Hobby
+  teto = 60s, trecho de 5 min cabe). Setar no **Dashboard** (Settings → Functions), **não** no
+  `vercel.json`: este backend roteia tudo via rewrite catch-all pra `/api/index.py`, que a Vercel
+  não reconhece como Serverless Function nomeada → o bloco `functions` quebra o deploy com
+  "pattern doesn't match any Serverless Functions".
 - Setar `MEETINGS_PROCESSING_MODE=inline`; **não** setar `CELERY_BROKER_URL`/`REDIS_URL`. Sem VM.
 - Custo restante: OpenAI por uso (não mensalidade). Vercel Hobby é uso não-comercial pelos ToS —
   escritório é comercial; tecnicamente pediria Pro (US$20/mo). Risco de ToS, não custo técnico.
