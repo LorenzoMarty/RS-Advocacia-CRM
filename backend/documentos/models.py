@@ -20,6 +20,9 @@ class ClienteDrive(models.Model):
     pasta_peticoes_id = models.CharField(max_length=255)
     pasta_documentos_id = models.CharField(max_length=255)
     pasta_outros_id = models.CharField(max_length=255)
+    # Pasta "Reuniões" do cliente (áudios e documentos de reunião). Preenchida
+    # sob demanda no primeiro uso (lazy-create), por isso aceita vazio.
+    pasta_reunioes_id = models.CharField(max_length=255, blank=True, default="")
     atualizado_em = models.DateTimeField(auto_now=True)
 
     def __str__(self):

@@ -198,6 +198,27 @@ def _ensure_cliente_root(usuario, cliente):
     return service, pasta_cliente_id
 
 
+def ensure_pasta_reunioes(usuario, cliente) -> str:
+    """Find-or-create the client's "Reuniões" folder; cache and return its id.
+
+    Idempotent. The folder holds both meeting audio and the generated meeting
+    documents. Owned here (documentos is the owner of the client folder tree);
+    meetings calls this instead of recreating the folder logic.
+    """
+    registro = ClienteDrive.objects.filter(cliente=cliente).first()
+    if registro and registro.pasta_reunioes_id:
+        return registro.pasta_reunioes_id
+
+    service, pasta_cliente_id = _ensure_cliente_root(usuario, cliente)
+    pasta_reunioes_id = drive.ensure_folder(service, "Reuniões", pasta_cliente_id)
+
+    registro = ClienteDrive.objects.filter(cliente=cliente).first()
+    if registro:
+        registro.pasta_reunioes_id = pasta_reunioes_id
+        registro.save(update_fields=["pasta_reunioes_id"])
+    return pasta_reunioes_id
+
+
 def ensure_client_template(usuario, cliente) -> str:
     """Idempotently ensure the client's folder template exists; return its root id.
 

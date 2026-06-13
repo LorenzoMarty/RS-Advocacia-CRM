@@ -8,6 +8,7 @@ import {
   createMeeting,
   deleteMeeting,
   deleteRecording,
+  finalizeMeeting,
   getMeeting,
   listMeetings,
   updateMeeting,
@@ -30,6 +31,38 @@ function statusTone(status) {
     return 'danger';
   }
   return 'gold';
+}
+
+// Etapas do processamento de uma gravação, na ordem do backend
+// (meetings.models.Gravacao.Status). "falhou" é tratado à parte.
+const PROCESSING_STEPS = [
+  { key: 'enviada', label: 'Enviada' },
+  { key: 'transcribindo', label: 'Transcrevendo' },
+  { key: 'resumindo', label: 'Resumindo' },
+  { key: 'concluida', label: 'Concluída' },
+];
+
+function RecordingPipeline({ status }) {
+  if (status === 'falhou') {
+    return null;
+  }
+
+  const currentIndex = PROCESSING_STEPS.findIndex((step) => step.key === status);
+  const activeIndex = currentIndex === -1 ? 0 : currentIndex;
+
+  return (
+    <ol className="recording-pipeline" aria-label="Progresso do processamento">
+      {PROCESSING_STEPS.map((step, index) => {
+        const state = index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'pending';
+        return (
+          <li key={step.key} className={`recording-step recording-step-${state}`}>
+            <span className="recording-step-dot" aria-hidden="true" />
+            <span className="recording-step-label">{step.label}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
 }
 
 function formatDateTime(value) {
@@ -334,6 +367,8 @@ function RecordingResult({ onDelete, onSaveTranscript, recording }) {
         </div>
       </div>
 
+      <RecordingPipeline status={recording.status} />
+
       {recording.processingError ? (
         <p className="recording-failure">{recording.processingError}</p>
       ) : null}
@@ -402,6 +437,7 @@ export function MeetingsPage() {
   const [selectedId, setSelectedId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
 
   useEffect(() => {
     addFlashRef.current = addFlash;
@@ -531,6 +567,24 @@ export function MeetingsPage() {
       addFlashRef.current('Reunião deletada.', 'success');
     } catch (error) {
       addFlashRef.current(errorText(error), 'error');
+    }
+  }
+
+  async function handleFinalizeMeeting() {
+    if (!selectedMeeting) {
+      return;
+    }
+    setIsFinalizing(true);
+    try {
+      const updated = await finalizeMeeting(selectedMeeting.id);
+      setMeetings((current) => current.map((meeting) => (
+        meeting.id === updated.id ? updated : meeting
+      )));
+      addFlashRef.current('Documento da reunião salvo no Drive.', 'success');
+    } catch (error) {
+      addFlashRef.current(errorText(error), 'error');
+    } finally {
+      setIsFinalizing(false);
     }
   }
 
@@ -735,13 +789,37 @@ export function MeetingsPage() {
                       {selectedMeeting.clientName || 'Sem cliente vinculado'} | {formatDateTime(selectedMeeting.meetingAt)}
                     </p>
                   </div>
-                  <button
-                    className="btn btn-secondary"
-                    type="button"
-                    onClick={() => openEditForm(selectedMeeting)}
-                  >
-                    Editar reunião
-                  </button>
+                  <div className="meeting-context-actions">
+                    {selectedMeeting.documentLink ? (
+                      <a
+                        className="btn btn-secondary"
+                        href={selectedMeeting.documentLink}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Ver documento
+                      </a>
+                    ) : null}
+                    <button
+                      className="btn"
+                      type="button"
+                      onClick={handleFinalizeMeeting}
+                      disabled={isFinalizing}
+                    >
+                      {isFinalizing
+                        ? 'Salvando...'
+                        : selectedMeeting.documentLink
+                          ? 'Atualizar documento'
+                          : 'Finalizar reunião'}
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      type="button"
+                      onClick={() => openEditForm(selectedMeeting)}
+                    >
+                      Editar reunião
+                    </button>
+                  </div>
                 </div>
                 <AudioRecorder onUpload={handleUpload} />
 

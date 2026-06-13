@@ -63,7 +63,7 @@
 
 .productivity-kpis{
     display:grid;
-    grid-template-columns:repeat(6,minmax(0,1fr));
+    grid-template-columns:repeat(5,minmax(0,1fr));
     gap:1px;
     padding:1px;
     border-radius:14px;
@@ -88,10 +88,29 @@
 }
 
 .productivity-kpi strong{
+    display:flex;
+    align-items:baseline;
+    gap:7px;
     font-size:1.05rem;
     line-height:1.1;
     letter-spacing:-.02em;
     font-variant-numeric:tabular-nums;
+}
+
+.kpi-delta{
+    font-size:.66rem;
+    font-weight:700;
+    font-style:normal;
+    letter-spacing:.02em;
+}
+
+.kpi-delta-up{color:var(--success);}
+.kpi-delta-down{color:var(--danger);}
+
+.productivity-loading{
+    display:grid;
+    place-items:center;
+    min-height:120px;
 }
 
 .productivity-bar{

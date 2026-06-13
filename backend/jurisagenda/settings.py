@@ -352,6 +352,14 @@ MEETINGS_MAX_AUDIO_SIZE_MB = int(
     os.getenv("MEETINGS_MAX_AUDIO_SIZE_MB", "").strip() or "25"
 )
 
+# Quando ligado, ao finalizar a reunião (gerar o documento no Drive com sucesso)
+# os áudios da gravação são apagados do Drive. Desligado por padrão: o documento
+# é sempre gerado, mas o áudio só é removido após validação do fluxo ponta a ponta.
+MEETINGS_DELETE_AUDIO_AFTER_DOC = (
+    os.getenv("MEETINGS_DELETE_AUDIO_AFTER_DOC", "").strip().lower()
+    in ("1", "true", "yes", "on")
+)
+
 _REDIS_URL = os.getenv("REDIS_URL", "").strip()
 CELERY_BROKER_URL = (
     os.getenv("CELERY_BROKER_URL", "").strip()

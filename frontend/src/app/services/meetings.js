@@ -24,26 +24,26 @@ function createDemoMeetings() {
           contentType: 'audio/webm',
           size: 1843200,
           status: 'concluida',
-          statusLabel: 'Concluida',
-          transcript: 'Rose e Irua comentaram as anotacoes sobre concausas preexistente, concomitante e superveniente. A equipe alinhou a necessidade de revisar enunciados e sumulas para consolidar o material de estudo.',
+          statusLabel: 'Concluída',
+          transcript: 'Rose e Iruã comentaram as anotações sobre concausas preexistente, concomitante e superveniente. A equipe alinhou a necessidade de revisar enunciados e súmulas para consolidar o material de estudo.',
           summary: [
             '## Resumo executivo',
-            'Reuniao formativa para alinhar estudo juridico sobre concausas e nexo causal. O principal encaminhamento foi consolidar anotacoes e revisar referencias jurisprudenciais.',
+            'Reunião formativa para alinhar estudo jurídico sobre concausas e nexo causal. O principal encaminhamento foi consolidar anotações e revisar referências jurisprudenciais.',
             '',
             '## Participantes',
             '- Rose',
-            '- Irua',
-            '- Equipe juridica interna',
+            '- Iruã',
+            '- Equipe jurídica interna',
             '',
             '## Pontos discutidos',
-            '- Classificacao das concausas em preexistente, concomitante e superveniente.',
-            '- Dificuldade de acompanhar a exposicao sem material complementar.',
-            '- Necessidade de consultar enunciados e sumulas relacionadas.',
+            '- Classificação das concausas em preexistente, concomitante e superveniente.',
+            '- Dificuldade de acompanhar a exposição sem material complementar.',
+            '- Necessidade de consultar enunciados e súmulas relacionadas.',
             '',
-            '## Proximas acoes',
-            '- Solicitar anotacoes completas a Rose e Irua.',
-            '- Preparar resumo juridico para a proxima aula.',
-            '- Confirmar data do proximo encontro formativo.',
+            '## Próximas ações',
+            '- Solicitar anotações completas a Rose e Iruã.',
+            '- Preparar resumo jurídico para a próxima aula.',
+            '- Confirmar data do próximo encontro formativo.',
           ].join('\n'),
           provider: 'demo',
           transcriptionModel: 'Demo transcript',
@@ -136,6 +136,8 @@ function meetingFromApi(meeting) {
     // refined into one report; see backend meetings.tasks).
     summary: meeting.resumo || '',
     transcript: meeting.transcricao || '',
+    documentLink: meeting.documento_link || '',
+    documentGeneratedAt: meeting.documento_gerado_em || '',
     recordings: (meeting.gravacoes || []).map(recordingFromApi).filter(Boolean),
   };
 }
@@ -219,6 +221,29 @@ export async function deleteMeeting(meetingId) {
     method: 'DELETE',
   });
   return String(meetingId);
+}
+
+export async function finalizeMeeting(meetingId) {
+  if (isUsingDemoMeetings) {
+    let updatedMeeting = null;
+    demoMeetings = demoMeetings.map((currentMeeting) => {
+      if (currentMeeting.id !== meetingId) {
+        return currentMeeting;
+      }
+      updatedMeeting = {
+        ...currentMeeting,
+        documentLink: 'https://drive.google.com/',
+        documentGeneratedAt: new Date().toISOString(),
+      };
+      return updatedMeeting;
+    });
+    return cloneMeeting(updatedMeeting);
+  }
+
+  const payload = await apiRequest(`/api/reunioes/${meetingId}/finalizar/`, {
+    method: 'POST',
+  });
+  return meetingFromApi(payload.reuniao);
 }
 
 // Vercel functions reject bodies over ~4.5 MB, so the multipart endpoint only
@@ -333,9 +358,9 @@ export async function uploadRecording(meetingId, recording, { onProgress } = {})
       contentType: recording.blob?.type || '',
       size: recording.blob?.size || 0,
       status: 'concluida',
-      statusLabel: 'Concluida',
+      statusLabel: 'Concluída',
       transcript: '',
-      summary: '## Resumo\nAudio demo recebido. Edite a transcricao para simular a revisao do conteudo.',
+      summary: '## Resumo\nÁudio demo recebido. Edite a transcrição para simular a revisão do conteúdo.',
       provider: 'demo',
       transcriptionModel: 'Demo transcript',
       summaryModel: 'Demo summary',

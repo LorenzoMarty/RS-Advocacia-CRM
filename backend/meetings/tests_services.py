@@ -423,3 +423,66 @@ class SegmentacaoTaskTests(TestCase):
         )
         self.reuniao.refresh_from_db()
         self.assertEqual(self.reuniao.resumo, "Trecho zero.|Trecho um.")
+
+
+@override_settings(GOOGLE_DRIVE_ROOT_FOLDER_ID=ROOT)
+class FinalizarReuniaoTests(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Advogada", email="adv@example.com", cargo="Administrador"
+        )
+        # Reunião avulsa (sem cliente) para evitar mockar a app documentos.
+        self.reuniao = Reuniao.objects.create(titulo="Reuniao", resumo="## Resumo\nOk.")
+
+    @patch("meetings.services.drive_service")
+    @patch("meetings.services.drive")
+    def test_finalizar_gera_documento(self, mock_drive, _mock_service):
+        mock_drive.ensure_folder.side_effect = _ensure_folder_fake
+        mock_drive.create_google_doc.return_value = {
+            "id": "doc-1",
+            "webViewLink": "https://docs/doc-1",
+        }
+
+        resultado = services.finalizar_reuniao(self.usuario, self.reuniao)
+
+        self.assertEqual(resultado["documento_drive_id"], "doc-1")
+        self.assertEqual(resultado["audios_apagados"], 0)
+        self.reuniao.refresh_from_db()
+        self.assertEqual(self.reuniao.documento_drive_id, "doc-1")
+        self.assertEqual(self.reuniao.documento_link, "https://docs/doc-1")
+        self.assertIsNotNone(self.reuniao.documento_gerado_em)
+        mock_drive.create_google_doc.assert_called_once()
+
+    def test_finalizar_sem_conteudo_falha(self):
+        vazia = Reuniao.objects.create(titulo="Vazia")
+        with self.assertRaises(ValueError):
+            services.finalizar_reuniao(self.usuario, vazia)
+
+    @override_settings(MEETINGS_DELETE_AUDIO_AFTER_DOC=True)
+    @patch("meetings.services.excluir_audio_drive")
+    @patch("meetings.services.drive_service")
+    @patch("meetings.services.drive")
+    def test_finalizar_apaga_audio_quando_flag_ligada(
+        self, mock_drive, _mock_service, mock_excluir
+    ):
+        mock_drive.ensure_folder.side_effect = _ensure_folder_fake
+        mock_drive.create_google_doc.return_value = {
+            "id": "doc-2",
+            "webViewLink": "https://docs/doc-2",
+        }
+        gravacao = Gravacao.objects.create(
+            reuniao=self.reuniao,
+            drive_file_id="file-1",
+            enviada_por=self.usuario,
+            nome_original="a.webm",
+            transcricao="Trecho.",
+            tamanho_bytes=1000,
+        )
+
+        resultado = services.finalizar_reuniao(self.usuario, self.reuniao)
+
+        self.assertEqual(resultado["audios_apagados"], 1)
+        mock_excluir.assert_called_once()
+        gravacao.refresh_from_db()
+        self.assertEqual(gravacao.drive_file_id, "")
+        self.assertEqual(gravacao.tamanho_bytes, 0)

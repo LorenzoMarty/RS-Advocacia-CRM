@@ -182,6 +182,9 @@ def serialize_reuniao(reuniao: Reuniao):
         "criado_em": isoformat_ou_nulo(reuniao.criado_em),
         "resumo": reuniao.resumo,
         "transcricao": transcricao,
+        "documento_drive_id": reuniao.documento_drive_id,
+        "documento_link": reuniao.documento_link,
+        "documento_gerado_em": isoformat_ou_nulo(reuniao.documento_gerado_em),
         "gravacoes": [serialize_gravacao(item) for item in gravacoes],
     }
 
@@ -292,6 +295,49 @@ def excluir_reuniao(request, reuniao_id):
     reuniao.delete()
     return resposta_sucesso(
         {"id": deleted_id}, mensagem="Reuniao excluida com sucesso."
+    )
+
+
+@app_permissions_required("meetings.change_reuniao", "meetings.view_reuniao")
+def finalizar_reuniao(request, reuniao_id):
+    """Generate the meeting document on Drive (and delete audio when enabled)."""
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    reuniao = get_object_or_404(
+        Reuniao.objects.select_related("cliente").prefetch_related("gravacoes"),
+        pk=reuniao_id,
+    )
+
+    usuario = current_usuario(request)
+    if usuario is None:
+        return resposta_erro("Sessao expirada. Entre novamente.", status=401)
+
+    try:
+        resultado = services.finalizar_reuniao(usuario, reuniao)
+    except ValueError as exc:
+        return resposta_erro({"reuniao": [str(exc)]}, status=400)
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+
+    reuniao = (
+        Reuniao.objects.select_related("cliente")
+        .prefetch_related("gravacoes")
+        .get(pk=reuniao.pk)
+    )
+    mensagem = "Documento da reunião salvo no Drive."
+    if resultado["audios_apagados"]:
+        mensagem = (
+            f"Documento salvo no Drive e {resultado['audios_apagados']} áudio(s) "
+            "removido(s)."
+        )
+    return resposta_sucesso(
+        {"reuniao": serialize_reuniao(reuniao), "resultado": resultado},
+        mensagem=mensagem,
     )
 
 
