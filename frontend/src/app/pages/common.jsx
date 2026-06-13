@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const CUSTOM_OPTION = '__custom__';
 
-// Select com opção de digitar um valor novo (combobox). Mesmo padrão do "Tipo de
-// compromisso" da agenda; reusa as classes .type-combo / .type-combo-back.
+// Select com opção de digitar um valor novo (combobox).
+// IMPORTANTE: o <select> nunca é desmontado durante o seu próprio onChange — apenas escondido
+// (display:none) e o input é montado ao lado. Desmontar o <select> dentro do evento de seleção
+// quebrava com `removeChild` (React tentava remover um nó que o navegador já mexeu).
 export function ComboField({
   id,
   value,
@@ -13,54 +15,61 @@ export function ComboField({
   customLabel = '+ Digitar novo...',
   customPlaceholder = 'Digite o novo valor',
 }) {
-  // Inclui o valor atual na lista para que a `<option>` dele seja fixa: alterar opções durante o
-  // onChange do <select> (option condicional) causava o crash removeChild do React.
   const known = [...new Set([...(value ? [value] : []), ...options].filter(Boolean))];
   const [mode, setMode] = useState(() => (value && !options.filter(Boolean).includes(value) ? 'custom' : 'select'));
+  const inputRef = useRef(null);
 
-  if (mode === 'custom') {
-    return (
-      <div className="type-combo">
-        <input
-          id={id}
-          value={value}
-          placeholder={customPlaceholder}
-          autoFocus
-          onChange={(event) => onChange(event.target.value)}
-        />
-        <button
-          type="button"
-          className="type-combo-back"
-          onClick={() => {
-            setMode('select');
-            onChange(known[0] || '');
-          }}
-        >
-          ← Selecionar
-        </button>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (mode === 'custom') {
+      inputRef.current?.focus();
+    }
+  }, [mode]);
+
+  const isCustom = mode === 'custom';
 
   return (
-    <select
-      id={id}
-      value={value}
-      onChange={(event) => {
-        if (event.target.value === CUSTOM_OPTION) {
-          setMode('custom');
-          onChange('');
-        } else {
-          onChange(event.target.value);
-        }
-      }}
-    >
-      <option value="">{selectPlaceholder}</option>
-      {known.map((option) => (
-        <option key={option} value={option}>{option}</option>
-      ))}
-      <option value={CUSTOM_OPTION}>{customLabel}</option>
-    </select>
+    <>
+      <select
+        id={id}
+        value={value}
+        style={isCustom ? { display: 'none' } : undefined}
+        onChange={(event) => {
+          if (event.target.value === CUSTOM_OPTION) {
+            setMode('custom');
+            onChange('');
+          } else {
+            onChange(event.target.value);
+          }
+        }}
+      >
+        <option value="">{selectPlaceholder}</option>
+        {known.map((option) => (
+          <option key={option} value={option}>{option}</option>
+        ))}
+        <option value={CUSTOM_OPTION}>{customLabel}</option>
+      </select>
+      {isCustom ? (
+        <div className="type-combo">
+          <input
+            ref={inputRef}
+            id={`${id}-novo`}
+            value={value}
+            placeholder={customPlaceholder}
+            onChange={(event) => onChange(event.target.value)}
+          />
+          <button
+            type="button"
+            className="type-combo-back"
+            onClick={() => {
+              setMode('select');
+              onChange(known[0] || '');
+            }}
+          >
+            ← Selecionar
+          </button>
+        </div>
+      ) : null}
+    </>
   );
 }
 
