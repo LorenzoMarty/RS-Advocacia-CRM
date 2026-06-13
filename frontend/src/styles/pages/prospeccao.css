@@ -166,6 +166,54 @@
   color: var(--danger);
 }
 
+.prospect-card.is-stale {
+  border-color: rgba(212, 175, 55, .45);
+}
+
+.prospect-card-stale {
+  margin: 0;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--warn);
+}
+
+.prospect-card-quick {
+  margin-top: 2px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+.prospect-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.prospect-card-actions .btn {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.prospect-quick-form {
+  display: grid;
+  gap: 6px;
+  cursor: default;
+}
+
+.prospect-quick-form select,
+.prospect-quick-form input {
+  width: 100%;
+}
+
+.prospect-quick-form-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.prospect-quick-form-actions .btn {
+  flex: 1;
+}
+
 .prospect-audit {
   padding: 10px 12px;
   border-radius: 12px;

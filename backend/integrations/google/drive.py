@@ -142,6 +142,42 @@ def upload_file(
     )
 
 
+GOOGLE_DOC_MIME_TYPE = "application/vnd.google-apps.document"
+
+
+def create_google_doc(
+    service,
+    name: str,
+    parent_id: str,
+    html: str,
+) -> dict[str, Any]:
+    """Create a native Google Doc under ``parent_id`` from an HTML body.
+
+    Drive converts the uploaded HTML into a Google Doc when the file metadata
+    mimeType is ``application/vnd.google-apps.document`` and the media is
+    ``text/html``. No extra dependency is needed.
+    """
+    media = MediaIoBaseUpload(
+        io.BytesIO(html.encode("utf-8")),
+        mimetype="text/html",
+        resumable=False,
+    )
+    body = {
+        "name": name,
+        "parents": [parent_id],
+        "mimeType": GOOGLE_DOC_MIME_TYPE,
+    }
+    return _execute(
+        lambda: service.files().create(
+            body=body,
+            media_body=media,
+            fields=FILE_FIELDS,
+            supportsAllDrives=True,
+        ),
+        "Não foi possível criar o documento no Google Drive.",
+    )
+
+
 def update_file(
     service,
     file_id: str,

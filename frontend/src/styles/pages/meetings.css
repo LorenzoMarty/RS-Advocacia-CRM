@@ -22,6 +22,7 @@
 .meeting-context{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
 .meeting-context h2{margin:0 0 6px;font-size:1.25rem}
 .meeting-context p{margin:0;color:var(--muted);font-size:.88rem}
+.meeting-context-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .btn-compact{min-height:32px;padding:0 10px;border-radius:11px;font-size:.75rem}
 .audio-recorder{display:grid;gap:14px;padding:18px;border-radius:18px;border:1px dashed var(--line-strong);background:var(--ghost)}
 .recording-actions,.recording-ready{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -40,6 +41,14 @@
 .recording-result-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .recording-result-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .recording-result-head p{margin:5px 0 0;color:var(--muted);font-size:.78rem}
+.recording-pipeline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:0;padding:0;list-style:none}
+.recording-step{display:flex;align-items:center;gap:7px;font-size:.74rem;color:var(--muted)}
+.recording-step-dot{width:9px;height:9px;border-radius:999px;background:var(--line);border:1px solid var(--line);flex:none}
+.recording-step-done .recording-step-dot{background:var(--success);border-color:var(--success)}
+.recording-step-done .recording-step-label{color:var(--soft)}
+.recording-step-active .recording-step-dot{background:var(--gold-soft);border-color:var(--gold-soft);animation:recording-pulse 1.4s ease-in-out infinite}
+.recording-step-active .recording-step-label{color:var(--text);font-weight:600}
+@keyframes recording-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(212,175,55,.4)}50%{opacity:.65;box-shadow:0 0 0 4px rgba(212,175,55,0)}}
 .ai-output{display:grid;gap:10px}
 .ai-output h3{margin:0;color:var(--gold-soft);font-size:.88rem;text-transform:uppercase;letter-spacing:.12em}
 .summary-report{display:grid;gap:10px}

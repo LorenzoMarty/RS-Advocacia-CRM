@@ -61,14 +61,75 @@ function interactionLabel(type) {
   return INTERACTION_TYPE_OPTIONS.find((option) => option.value === type)?.label || type;
 }
 
-function ProspectCard({ prospect, deadlines, onDragStart, onDragEnd, isDragging }) {
+const STALE_DAYS = 7;
+const TERMINAL_STATUSES = ['Convertido', 'Perdido'];
+
+function daysSince(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return Math.floor((Date.now() - date.getTime()) / 86400000);
+}
+
+function idleLabel(days) {
+  if (days == null) return 'sem contato registrado';
+  if (days <= 0) return 'hoje';
+  if (days === 1) return 'há 1 dia';
+  return `há ${days} dias`;
+}
+
+function nextStatusOf(status) {
+  const index = PROSPECT_STATUS_COLUMNS.findIndex((column) => column.label === status);
+  if (index === -1) return null;
+  return PROSPECT_STATUS_COLUMNS[index + 1]?.label || null;
+}
+
+function ProspectCard({ prospect, deadlines, onDragStart, onDragEnd, isDragging, onAdvance, onAddInteraction }) {
   const audit = deadlineAuditFor(prospect.responsibleName, deadlines);
+  const [showInteraction, setShowInteraction] = useState(false);
+  const [interactionType, setInteractionType] = useState('ligacao');
+  const [interactionText, setInteractionText] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isTerminal = TERMINAL_STATUSES.some(
+    (status) => normalizeText(prospect.status) === normalizeText(status),
+  );
+  const idleDays = daysSince(prospect.lastContact || prospect.createdAt);
+  const isStale = !isTerminal && idleDays != null && idleDays >= STALE_DAYS;
+  const nextStatus = isTerminal ? null : nextStatusOf(prospect.status);
+
+  function handleDragStart(event) {
+    // Não inicia drag a partir dos controles de ação rápida.
+    if (event.target.closest('.prospect-card-quick')) {
+      event.preventDefault();
+      return;
+    }
+    onDragStart(event, prospect.id);
+  }
+
+  async function submitInteraction(event) {
+    event.preventDefault();
+    if (!interactionText.trim()) return;
+    setIsSaving(true);
+    try {
+      const saved = await onAddInteraction(prospect.id, {
+        type: interactionType,
+        description: interactionText.trim(),
+      });
+      if (saved) {
+        setInteractionText('');
+        setShowInteraction(false);
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <article
-      className={`prospect-card${isDragging ? ' is-dragging' : ''}${audit.critical ? ' is-critical' : ''}`}
+      className={`prospect-card${isDragging ? ' is-dragging' : ''}${audit.critical ? ' is-critical' : ''}${isStale ? ' is-stale' : ''}`}
       draggable
-      onDragStart={(event) => onDragStart(event, prospect.id)}
+      onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
     >
       <div className="prospect-card-head">
@@ -92,17 +153,74 @@ function ProspectCard({ prospect, deadlines, onDragStart, onDragEnd, isDragging 
           <dd>{prospect.lastContact ? formatDate(prospect.lastContact) : '-'}</dd>
         </div>
       </dl>
+
+      {isStale ? (
+        <p className="prospect-card-stale">⏳ Parado {idleLabel(idleDays)}</p>
+      ) : null}
+
       {audit.critical ? (
         <p className="prospect-card-alert">
           {audit.active} prazo(s) ativo(s) · {audit.critical} crítico(s)
         </p>
       ) : null}
+
+      <div className="prospect-card-quick">
+        {showInteraction ? (
+          <form className="prospect-quick-form" onSubmit={submitInteraction}>
+            <select
+              aria-label="Tipo de interação"
+              value={interactionType}
+              onChange={(event) => setInteractionType(event.target.value)}
+            >
+              {INTERACTION_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            <input
+              value={interactionText}
+              placeholder="Descreva a interação"
+              onChange={(event) => setInteractionText(event.target.value)}
+            />
+            <div className="prospect-quick-form-actions">
+              <button className="btn btn-compact" type="submit" disabled={isSaving}>
+                {isSaving ? 'Salvando...' : 'Registrar'}
+              </button>
+              <button
+                className="btn btn-secondary btn-compact"
+                type="button"
+                onClick={() => setShowInteraction(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="prospect-card-actions">
+            <button
+              className="btn btn-secondary btn-compact"
+              type="button"
+              onClick={() => setShowInteraction(true)}
+            >
+              + Interação
+            </button>
+            {nextStatus ? (
+              <button
+                className="btn btn-compact"
+                type="button"
+                onClick={() => onAdvance(prospect, nextStatus)}
+              >
+                Avançar → {nextStatus}
+              </button>
+            ) : null}
+          </div>
+        )}
+      </div>
     </article>
   );
 }
 
 export function ProspectKanbanPage() {
-  const { prospects, deadlines, saveProspect, addFlash } = useAppState();
+  const { prospects, deadlines, saveProspect, addInteracao, addFlash } = useAppState();
   const [search, setSearch] = useState('');
   const [responsibleFilter, setResponsibleFilter] = useState('');
   const [draggingId, setDraggingId] = useState('');
@@ -177,6 +295,13 @@ export function ProspectKanbanPage() {
     }
   }
 
+  async function advanceProspect(prospect, nextStatus) {
+    const saved = await saveProspect({ ...prospect, status: nextStatus });
+    if (saved) {
+      addFlash(`Prospect movido para ${nextStatus}.`, 'info');
+    }
+  }
+
   return (
     <>
       <PageChrome label="Prospecção" />
@@ -242,6 +367,8 @@ export function ProspectKanbanPage() {
                         isDragging={draggingId === prospect.id}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
+                        onAdvance={advanceProspect}
+                        onAddInteraction={addInteracao}
                       />
                     ))
                   ) : (

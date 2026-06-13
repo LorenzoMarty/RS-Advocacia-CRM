@@ -24,6 +24,11 @@ class Reuniao(models.Model):
     # transcribed (see meetings.tasks.processar_gravacao). The full transcript
     # is derived from the ordered segments, so it is not stored here.
     resumo = models.TextField(blank=True)
+    # Documento (Google Doc) gerado na pasta Reuniões do cliente ao finalizar a
+    # reunião. Serve de gate: só apagamos os áudios depois que ele foi salvo.
+    documento_drive_id = models.CharField(max_length=128, blank=True, default="")
+    documento_link = models.URLField(max_length=1000, blank=True, default="")
+    documento_gerado_em = models.DateTimeField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 

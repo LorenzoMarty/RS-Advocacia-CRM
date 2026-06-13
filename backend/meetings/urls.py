@@ -21,6 +21,11 @@ urlpatterns = [
         name="excluir_reuniao",
     ),
     path(
+        "api/reunioes/<int:reuniao_id>/finalizar/",
+        views.finalizar_reuniao,
+        name="finalizar_reuniao",
+    ),
+    path(
         "api/reunioes/<int:reuniao_id>/gravacoes/",
         views.enviar_gravacao,
         name="enviar_gravacao",

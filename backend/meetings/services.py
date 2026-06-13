@@ -23,6 +23,7 @@ from __future__ import annotations
 import logging
 
 from django.conf import settings
+from django.utils import timezone
 
 from integrations.google import drive
 from integrations.google.client import credentials_for_usuario, drive_service
@@ -33,7 +34,8 @@ from integrations.google.exceptions import (
 )
 
 from .audio import max_audio_bytes
-from .models import Gravacao
+from .document import build_meeting_document_html, meeting_document_title
+from .models import Gravacao, Reuniao
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +59,21 @@ def pasta_gravacoes_reuniao(usuario, reuniao) -> str:
         pasta_cliente_id = drive.ensure_folder(service, reuniao.cliente.nome, root_id)
         return drive.ensure_folder(service, PASTA_REUNIOES, pasta_cliente_id)
     return drive.ensure_folder(service, PASTA_REUNIOES_AVULSAS, root_id)
+
+
+def pasta_documento_reuniao(usuario, reuniao) -> str:
+    """Folder id for the meeting document.
+
+    For meetings with a client, delegates to :mod:`documentos.services` (owner of
+    the client folder tree) so the "Reuniões" folder id is cached on
+    ``ClienteDrive``. Resolves to the same Drive folder the audio uses.
+    """
+    if reuniao.cliente_id is not None:
+        # Local import avoids a hard module-load dependency on the documentos app.
+        from documentos.services import ensure_pasta_reunioes
+
+        return ensure_pasta_reunioes(usuario, reuniao.cliente)
+    return pasta_gravacoes_reuniao(usuario, reuniao)
 
 
 def criar_sessao_upload(
@@ -154,3 +171,90 @@ def excluir_audio_drive(gravacao: Gravacao) -> None:
         excluir_arquivo_drive(gravacao.enviada_por, gravacao.drive_file_id)
     except (GoogleAuthorizationRequired, GoogleApiError, GoogleConfigurationError):
         logger.exception("Falha ao apagar arquivo Drive da gravacao %s.", gravacao.pk)
+
+
+def transcricao_completa(reuniao) -> str:
+    """Concatenate the segment transcripts in capture order."""
+    partes = [
+        gravacao.transcricao.strip()
+        for gravacao in reuniao.gravacoes.order_by("ordem", "criada_em")
+        if gravacao.transcricao and gravacao.transcricao.strip()
+    ]
+    return "\n\n".join(partes)
+
+
+def salvar_reuniao_como_documento(usuario, reuniao) -> Reuniao:
+    """Generate the meeting document (Google Doc) in the client's Reuniões folder.
+
+    Stores the resulting Drive id/link on the meeting. Raises ``ValueError`` if
+    the meeting has no textual content yet (no summary and no transcript).
+    """
+    resumo = (reuniao.resumo or "").strip()
+    transcricao = transcricao_completa(reuniao)
+    if not resumo and not transcricao:
+        raise ValueError("Reunião sem conteúdo para gerar o documento.")
+
+    pasta_id = pasta_documento_reuniao(usuario, reuniao)
+    html = build_meeting_document_html(
+        titulo=reuniao.titulo,
+        cliente_nome=reuniao.cliente.nome if reuniao.cliente_id else "",
+        data_reuniao=reuniao.data_reuniao,
+        resumo=resumo,
+        transcricao=transcricao,
+    )
+    service = drive_service(usuario)
+    meta = drive.create_google_doc(
+        service, meeting_document_title(reuniao), pasta_id, html
+    )
+
+    reuniao.documento_drive_id = meta.get("id", "") or ""
+    reuniao.documento_link = meta.get("webViewLink", "") or ""
+    reuniao.documento_gerado_em = timezone.now()
+    reuniao.save(
+        update_fields=[
+            "documento_drive_id",
+            "documento_link",
+            "documento_gerado_em",
+            "atualizado_em",
+        ]
+    )
+    return reuniao
+
+
+def _apagar_audios_reuniao(reuniao) -> int:
+    """Delete the meeting's audio files from Drive and clear their references.
+
+    Keeps the ``Gravacao`` rows (and their transcripts) — only the audio asset
+    is removed. Returns how many files were deleted. Best-effort per file.
+    """
+    apagadas = 0
+    for gravacao in reuniao.gravacoes.exclude(drive_file_id=""):
+        excluir_audio_drive(gravacao)
+        Gravacao.objects.filter(pk=gravacao.pk).update(
+            drive_file_id="", tamanho_bytes=0
+        )
+        apagadas += 1
+    return apagadas
+
+
+def finalizar_reuniao(usuario, reuniao) -> dict:
+    """Save the meeting document and, when enabled, delete the audio.
+
+    The document is always (re)generated. Audio is only removed when
+    ``MEETINGS_DELETE_AUDIO_AFTER_DOC`` is enabled AND the document was saved
+    successfully — the guard the user validates before turning deletion on.
+    """
+    salvar_reuniao_como_documento(usuario, reuniao)
+
+    audios_apagados = 0
+    if (
+        getattr(settings, "MEETINGS_DELETE_AUDIO_AFTER_DOC", False)
+        and reuniao.documento_drive_id
+    ):
+        audios_apagados = _apagar_audios_reuniao(reuniao)
+
+    return {
+        "documento_drive_id": reuniao.documento_drive_id,
+        "documento_link": reuniao.documento_link,
+        "audios_apagados": audios_apagados,
+    }
