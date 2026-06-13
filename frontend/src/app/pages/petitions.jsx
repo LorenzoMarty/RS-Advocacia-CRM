@@ -82,6 +82,7 @@ function PetitionCard({
   isMoving,
   onDragEnd,
   onDragStart,
+  onTimerStart,
   petition,
   processes,
 }) {
@@ -107,6 +108,8 @@ function PetitionCard({
           title={petition.adversary || petition.type || PETITION_DEFAULT_TYPE}
           processId={petition.processId}
           processNumber={processNumber}
+          taskStatus={petition.status}
+          onStart={() => onTimerStart?.(petition)}
         />
         <div className="petition-card-meta">
           {processNumber ? <span>{processNumber}</span> : null}
@@ -195,10 +198,22 @@ export function PetitionsPage() {
     petitionsByColumn[petitionColumnKey(petition)].push(petition);
   });
 
+  async function promotePetitionToActive(petition) {
+    if (petitionColumnKey(petition) !== 'pendente') {
+      return;
+    }
+    await savePetition({ ...petition, status: 'Em andamento' }, { silent: true });
+  }
+
   async function movePetition(petition, nextColumnKey) {
     const nextColumn = PETITION_STATUS_COLUMNS.find((column) => column.key === nextColumnKey);
 
     if (!nextColumn || petitionColumnKey(petition) === nextColumnKey) {
+      return;
+    }
+
+    if (nextColumnKey === 'pendente') {
+      addFlash('Tarefa em andamento não volta para Pendente.', 'warn');
       return;
     }
 
@@ -353,6 +368,7 @@ export function PetitionsPage() {
                         isMoving={movingPetitionId === petition.id}
                         onDragEnd={handleDragEnd}
                         onDragStart={handleDragStart}
+                        onTimerStart={promotePetitionToActive}
                         petition={petition}
                         processes={processes}
                       />

@@ -18,10 +18,22 @@
 }
 
 .prospeccao-toolbar {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
+}
+.prospeccao-toolbar .page-search-inline {
+  width: auto;
+}
+.prospeccao-toolbar .filter-select {
+  width: 100%;
+  min-width: 180px;
+}
+@media (max-width: 640px) {
+  .prospeccao-toolbar {
+    grid-template-columns: 1fr;
+  }
 }
 
 .prospeccao-board {

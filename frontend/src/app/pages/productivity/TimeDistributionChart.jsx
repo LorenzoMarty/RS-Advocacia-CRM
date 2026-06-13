@@ -1,6 +1,6 @@
 import { StatusBadge } from '../../layout';
 import { Donut } from './charts/Donut';
-import { formatTimerSeconds, isTaskDone, taskTypeColor, taskTypeIcon, taskTypeLabel } from './productivity-data';
+import { formatMinutes, isTaskDone, taskTypeColor, taskTypeIcon, taskTypeLabel } from './productivity-data';
 
 const VISIBLE = 8;
 
@@ -25,7 +25,7 @@ export function TimeDistributionChart({ byType, byTask, deadlines, petitions }) 
 
       {donutData.length ? (
         <div className="productivity-distribution">
-          <Donut data={donutData} />
+          <Donut data={donutData} formatValue={formatMinutes} />
           <div className="productivity-distribution-tasks">
             <h3 className="section-subtitle">Onde o tempo foi gasto</h3>
             {top.length ? (
@@ -44,7 +44,7 @@ export function TimeDistributionChart({ byType, byTask, deadlines, petitions }) 
                         </span>
                       </div>
                       <StatusBadge tone={done ? 'success' : 'muted'}>{done ? 'Realizado' : 'Em andamento'}</StatusBadge>
-                      <strong className="productivity-task-time">{formatTimerSeconds(item.seconds)}</strong>
+                      <strong className="productivity-task-time">{formatMinutes(item.seconds)}</strong>
                     </article>
                   );
                 })}

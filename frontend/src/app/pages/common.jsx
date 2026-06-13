@@ -1,3 +1,68 @@
+import { useState } from 'react';
+
+const CUSTOM_OPTION = '__custom__';
+
+// Select com opção de digitar um valor novo (combobox). Mesmo padrão do "Tipo de
+// compromisso" da agenda; reusa as classes .type-combo / .type-combo-back.
+export function ComboField({
+  id,
+  value,
+  options,
+  onChange,
+  selectPlaceholder = 'Selecione',
+  customLabel = '+ Digitar novo...',
+  customPlaceholder = 'Digite o novo valor',
+}) {
+  const known = [...new Set(options.filter(Boolean))];
+  const [mode, setMode] = useState(() => (value && !known.includes(value) ? 'custom' : 'select'));
+
+  if (mode === 'custom') {
+    return (
+      <div className="type-combo">
+        <input
+          id={id}
+          value={value}
+          placeholder={customPlaceholder}
+          autoFocus
+          onChange={(event) => onChange(event.target.value)}
+        />
+        <button
+          type="button"
+          className="type-combo-back"
+          onClick={() => {
+            setMode('select');
+            onChange(known[0] || '');
+          }}
+        >
+          ← Selecionar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <select
+      id={id}
+      value={value}
+      onChange={(event) => {
+        if (event.target.value === CUSTOM_OPTION) {
+          setMode('custom');
+          onChange('');
+        } else {
+          onChange(event.target.value);
+        }
+      }}
+    >
+      <option value="">{selectPlaceholder}</option>
+      {value && !known.includes(value) ? <option value={value}>{value}</option> : null}
+      {known.map((option) => (
+        <option key={option} value={option}>{option}</option>
+      ))}
+      <option value={CUSTOM_OPTION}>{customLabel}</option>
+    </select>
+  );
+}
+
 export function EmptyState({ title, copy, actions = null, className = '' }) {
   return (
     <div className={`empty-state${className ? ` ${className}` : ''}`}>

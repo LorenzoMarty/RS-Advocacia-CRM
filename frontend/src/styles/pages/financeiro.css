@@ -112,10 +112,22 @@
 }
 
 .financeiro-toolbar {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
+}
+.financeiro-toolbar .page-search-inline {
+  width: auto;
+}
+.financeiro-toolbar .filter-select {
+  width: 100%;
+  min-width: 180px;
+}
+@media (max-width: 640px) {
+  .financeiro-toolbar {
+    grid-template-columns: 1fr;
+  }
 }
 
 .financeiro-table {

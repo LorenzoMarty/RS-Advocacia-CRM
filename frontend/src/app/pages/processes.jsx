@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { PROCESS_AREA_OPTIONS, PROCESS_STATUS_OPTIONS } from '../data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, getStatusTone, normalizeText } from '../utils';
-import { EmptyState, Field, NotFoundState } from './common';
+import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
 function validateProcessForm(form) {
   const nextErrors = {};
@@ -152,6 +153,10 @@ export function ProcessFormPage() {
   }));
   const [errors, setErrors] = useState({});
 
+  const statusOptions = [...new Set([...PROCESS_STATUS_OPTIONS, ...processes.map((item) => item.status).filter(Boolean)])];
+  const areaOptions = [...new Set([...PROCESS_AREA_OPTIONS, ...processes.map((item) => item.area).filter(Boolean)])];
+  const courtOptions = [...new Set(processes.map((item) => item.court).filter(Boolean))];
+
   if (isEditing && !process) {
     return <NotFoundState title="Processo não encontrado." />;
   }
@@ -246,10 +251,14 @@ export function ProcessFormPage() {
                 </Field>
 
                 <Field id="process-status" label="Status" error={errors.status}>
-                  <input
+                  <ComboField
                     id="process-status"
                     value={form.status}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, status: event.target.value }))}
+                    options={statusOptions}
+                    selectPlaceholder="Selecione o status"
+                    customLabel="+ Digitar novo status..."
+                    customPlaceholder="Ex: Suspenso..."
+                    onChange={(value) => setForm((currentForm) => ({ ...currentForm, status: value }))}
                   />
                 </Field>
               </div>
@@ -262,18 +271,26 @@ export function ProcessFormPage() {
 
               <div className="form-grid">
                 <Field id="process-area" label="Área jurídica" error={errors.area}>
-                  <input
+                  <ComboField
                     id="process-area"
                     value={form.area}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, area: event.target.value }))}
+                    options={areaOptions}
+                    selectPlaceholder="Selecione a área jurídica"
+                    customLabel="+ Digitar nova área..."
+                    customPlaceholder="Ex: Penal, Previdenciário..."
+                    onChange={(value) => setForm((currentForm) => ({ ...currentForm, area: value }))}
                   />
                 </Field>
 
                 <Field id="process-court" label="Vara" error={errors.court}>
-                  <input
+                  <ComboField
                     id="process-court"
                     value={form.court}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, court: event.target.value }))}
+                    options={courtOptions}
+                    selectPlaceholder="Selecione a vara"
+                    customLabel="+ Digitar nova vara..."
+                    customPlaceholder="Ex: 2ª Vara Criminal..."
+                    onChange={(value) => setForm((currentForm) => ({ ...currentForm, court: value }))}
                   />
                 </Field>
               </div>

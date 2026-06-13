@@ -51,6 +51,7 @@ def serialize_cliente(cliente: Cliente):
         "telefone": cliente.telefone,
         "cpf": cliente.cpf,
         "tipo_cliente": cliente.tipo_cliente,
+        "parceria": cliente.parceria,
         "obs": cliente.obs,
     }
 

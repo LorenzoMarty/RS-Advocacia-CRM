@@ -920,6 +920,30 @@ export function AppStateProvider({ children }) {
     }
 
     if (canUseProductivityApi) {
+      // Entrada provisória: a UI reage na hora; reconcilia com a resposta da API.
+      const optimisticId = nextId('time-entry-pending');
+      const optimisticEntry = {
+        id: optimisticId,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        taskId: String(payload.taskId),
+        taskType: payload.taskType,
+        taskName: taskDisplayName(payload),
+        processId: payload.processId || '',
+        processNumber: payload.processNumber || '',
+        startedAt,
+        pausedAt: '',
+        resumedAt: '',
+        endedAt: '',
+        totalSeconds: 0,
+        elapsedSeconds: 0,
+        status: 'running',
+      };
+      setTimeEntries((currentEntries) => replaceById(
+        options.pauseExisting ? pauseRunningEntries(currentEntries, optimisticId) : currentEntries,
+        optimisticEntry,
+      ));
+
       try {
         const response = await api.startTimeEntry({
           task_id: payload.taskId,
@@ -931,11 +955,12 @@ export function AppStateProvider({ children }) {
           throw new Error('Resposta inválida da API de produtividade.');
         }
         setTimeEntries((currentEntries) => replaceById(
-          options.pauseExisting ? pauseRunningEntries(currentEntries, savedEntry.id) : currentEntries,
+          currentEntries.filter((entry) => entry.id !== optimisticId),
           savedEntry,
         ));
         return savedEntry;
       } catch (error) {
+        setTimeEntries((currentEntries) => currentEntries.filter((entry) => entry.id !== optimisticId));
         addFlash(errorMessage(error), 'error');
         return null;
       }
