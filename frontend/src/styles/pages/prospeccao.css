@@ -5,6 +5,11 @@
   gap: 16px;
 }
 
+/* Na rota /prospeccao, hero (intro) e main (board) ficam grudados, sem espaço. */
+.prospeccao-page {
+  gap: 0;
+}
+
 .prospeccao-intro {
   display: grid;
   gap: 16px;
@@ -172,11 +177,6 @@
 .prospect-audit.is-critical {
   border-color: rgba(239, 122, 122, .45);
   color: var(--danger);
-}
-
-/* Campos do cadastro de prospect sem espaço entre si (bordas grudadas). */
-.prospect-form .form-grid {
-  gap: 0;
 }
 
 .prospect-detail-head {

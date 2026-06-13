@@ -187,9 +187,13 @@
 
     .client-actions{
         display:flex;
-        justify-content:flex-end;
+        justify-content:center;
         gap:8px;
         flex-wrap:wrap;
+    }
+
+    .list-head span:last-child{
+        text-align:center;
     }
 
     .action-link{
