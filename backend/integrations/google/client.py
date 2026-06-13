@@ -16,7 +16,7 @@ def account_for_usuario(usuario) -> GoogleAccount:
     try:
         account = usuario.google_account
     except (AttributeError, GoogleAccount.DoesNotExist) as exc:
-        raise GoogleAuthorizationRequired("Conta Google nao conectada.") from exc
+        raise GoogleAuthorizationRequired("Conta Google não conectada.") from exc
     if not account.connected:
         raise GoogleAuthorizationRequired("Autorize novamente o Google Calendar.")
     return account

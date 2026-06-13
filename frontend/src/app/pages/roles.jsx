@@ -1,11 +1,9 @@
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
-import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome } from '../layout';
 import { useAppState } from '../store';
 import { formatCount } from '../utils';
-import { EmptyState, Field, NotFoundState } from './common';
+import { EmptyState, NotFoundState } from './common';
 
 const ACTION_ORDER = ['view', 'create', 'edit', 'delete'];
 
@@ -190,41 +188,11 @@ function roleUsersCount(role, users) {
   return role.usersCount ?? linkedUsers(users, role.id).length;
 }
 
-function validateRoleForm(form) {
-  const nextErrors = {};
-
-  if (!form.name.trim()) nextErrors.name = 'Informe o nome do cargo.';
-
-  return nextErrors;
-}
-
 export function RolesListPage() {
-  const { addFlash, deleteRole, permissionGroups, roles, users } = useAppState();
-  const { confirm, confirmPopup } = useConfirmPopup();
-
-  async function handleDeleteRole(role) {
-    if (roleUsersCount(role, users)) {
-      addFlash('Realoque os usuários vinculados antes de deletar este cargo.', 'warning');
-      return;
-    }
-
-    const canDelete = await confirm({
-      title: 'Tem certeza?',
-      message: `O cargo "${role.name}" será deletado.`,
-      confirmLabel: 'Deletar',
-      tone: 'danger',
-    });
-
-    if (!canDelete) {
-      return;
-    }
-
-    await deleteRole(role.id);
-  }
+  const { permissionGroups, roles, users } = useAppState();
 
   return (
     <>
-      {confirmPopup}
       <PageChrome label="Cargos" />
 
       <div className="cargos-page">
@@ -232,14 +200,13 @@ export function RolesListPage() {
           <div className="section-head">
             <div>
               <h1 className="intro-title">Cargos</h1>
-              <p className="section-note">Defina o que cada pessoa pode ver, cadastrar, editar ou excluir.</p>
+              <p className="section-note">Consulte o que cada cargo pode ver, cadastrar, editar ou excluir. A criação e a edição de cargos são feitas pelo administrador do sistema.</p>
             </div>
             <span className="badge gold">{formatCount(roles.length)}</span>
           </div>
 
           <div className="cargos-intro-actions">
             <Link className="btn btn-secondary" to="/usuarios">Usuários</Link>
-            <Link className="btn" to="/cargos/novo">Novo cargo</Link>
           </div>
         </section>
 
@@ -284,8 +251,6 @@ export function RolesListPage() {
 
                       <div className="cargo-actions">
                         <Link className="action-link" to={`/cargos/${role.id}`}>Ver</Link>
-                        <Link className="action-link" to={`/cargos/${role.id}/editar`}>Editar</Link>
-                        <button className="action-link action-link-danger" type="button" onClick={() => handleDeleteRole(role)}>Excluir</button>
                       </div>
                     </article>
                   );
@@ -293,212 +258,8 @@ export function RolesListPage() {
               </div>
             </>
           ) : (
-            <EmptyState title="Sem cargos disponíveis." copy="Crie o primeiro cargo para organizar os acessos da equipe." actions={<Link className="btn" to="/cargos/novo">Novo cargo</Link>} />
+            <EmptyState title="Sem cargos disponíveis." copy="Os cargos são criados pelo administrador do sistema e aparecem aqui para consulta." />
           )}
-        </section>
-      </div>
-    </>
-  );
-}
-
-export function RoleFormPage() {
-  const navigate = useNavigate();
-  const params = useParams();
-  const isEditing = Boolean(params.roleId);
-  const { addFlash, deleteRole, permissionGroups, roles, saveRole, users } = useAppState();
-  const { confirm, confirmPopup } = useConfirmPopup();
-  const role = roles.find((item) => item.id === params.roleId) || null;
-  const [form, setForm] = useState(() => ({
-    id: role?.id || '',
-    name: role?.name || '',
-    permissionIds: role?.permissionIds || [],
-  }));
-  const [errors, setErrors] = useState({});
-  const permissionSections = buildPermissionSections(permissionGroups);
-  const selectedPermissionIds = new Set(form.permissionIds.map(String));
-
-  if (isEditing && !role) {
-    return <NotFoundState title="Cargo não encontrado." />;
-  }
-
-  function setPermissionSelection(permissionIds, shouldSelect) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      permissionIds: [
-        ...permissionIds.reduce((nextPermissionIds, permissionId) => {
-          if (shouldSelect) {
-            nextPermissionIds.add(String(permissionId));
-          } else {
-            nextPermissionIds.delete(String(permissionId));
-          }
-          return nextPermissionIds;
-        }, new Set(currentForm.permissionIds.map(String))),
-      ],
-    }));
-  }
-
-  function togglePermission(permissionId) {
-    setPermissionSelection([permissionId], !selectedPermissionIds.has(String(permissionId)));
-  }
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    const nextErrors = validateRoleForm(form);
-
-    if (Object.keys(nextErrors).length) {
-      setErrors(nextErrors);
-      return;
-    }
-
-    const savedRole = await saveRole({
-      id: form.id || undefined,
-      name: form.name.trim(),
-      permissionIds: form.permissionIds,
-    });
-
-    if (!savedRole) {
-      return;
-    }
-
-    navigate(`/cargos/${savedRole.id || form.id}`, { replace: true });
-  }
-
-  async function handleDeleteRole() {
-    if (!role) {
-      return;
-    }
-
-    if (roleUsersCount(role, users)) {
-      addFlash('Realoque os usuários vinculados antes de deletar este cargo.', 'warning');
-      return;
-    }
-
-    const canDelete = await confirm({
-      title: 'Tem certeza?',
-      message: `O cargo "${role.name}" será deletado.`,
-      confirmLabel: 'Deletar',
-      tone: 'danger',
-    });
-
-    if (!canDelete) {
-      return;
-    }
-
-    const wasDeleted = await deleteRole(role.id);
-    if (wasDeleted) {
-      navigate('/cargos', { replace: true });
-    }
-  }
-
-  return (
-    <>
-      {confirmPopup}
-      <PageChrome label={isEditing ? 'Editar cargo' : 'Novo cargo'} />
-
-      <div className="cargo-form-page">
-        <section className="surface cargo-intro">
-          <div className="intro-grid">
-            <Link className="intro-link" to={isEditing ? `/cargos/${role.id}` : '/cargos'}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-              {isEditing ? 'Voltar para o cargo' : 'Voltar para cargos'}
-            </Link>
-            <div className="section-head">
-              <div>
-                <h1 className="intro-title">{isEditing ? role.name : 'Novo cargo'}</h1>
-                <p className="intro-note">
-                  {isEditing ? 'Atualize o nome e os acessos deste cargo.' : 'Crie um cargo e escolha as ações liberadas para ele.'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="surface cargo-panel">
-          <form className="cargo-form" onSubmit={handleSubmit}>
-            <Field id="role-name" label="Nome do cargo" error={errors.name}>
-              <input id="role-name" value={form.name} onChange={(event) => setForm((currentForm) => ({ ...currentForm, name: event.target.value }))} />
-            </Field>
-
-            <section className={`permissions-panel${errors.permissionIds ? ' has-error' : ''}`}>
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Acessos do cargo</h2>
-                  <p className="section-note">Marque as ações que este cargo pode fazer em cada área.</p>
-                </div>
-              </div>
-
-              <p className="permission-guide">Dica: marque Ver quando a pessoa precisar abrir a área no menu.</p>
-
-              {permissionSections.length ? (
-                <div className="permissions-sections">
-                  {permissionSections.map((section) => {
-                    const ids = sectionPermissionIds(section);
-                    const selectedCount = ids.filter((id) => selectedPermissionIds.has(id)).length;
-                    const isFullySelected = ids.length > 0 && selectedCount === ids.length;
-
-                    return (
-                      <section key={section.key} className="permission-section">
-                        <div className="permission-section-head">
-                          <div>
-                            <h3 className="permission-section-title">{section.label}</h3>
-                            <p className="permission-section-note">{section.note}</p>
-                          </div>
-                          <div className="permission-section-tools">
-                            <span>{selectedCount} de {ids.length}</span>
-                            <button type="button" onClick={() => setPermissionSelection(ids, !isFullySelected)}>
-                              {isFullySelected ? 'Limpar área' : 'Marcar área'}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="permission-resource-list">
-                          {section.resources.map((resource) => (
-                            <article key={resource.key} className="permission-resource">
-                              <div className="permission-resource-copy">
-                                <h4>{resource.label}</h4>
-                                <p>{resource.note}</p>
-                              </div>
-
-                              <div className="permission-action-grid">
-                                {resource.permissions.map((permission) => (
-                                  <label
-                                    key={permission.id}
-                                    className={`permission-action-option permission-action-${permission.actionKey}`}
-                                    htmlFor={`permission-${permission.id}`}
-                                  >
-                                    <input
-                                      id={`permission-${permission.id}`}
-                                      type="checkbox"
-                                      checked={selectedPermissionIds.has(permission.id)}
-                                      onChange={() => togglePermission(permission.id)}
-                                    />
-                                    <span>
-                                      <strong>{permission.actionLabel}</strong>
-                                      <small>{permission.actionNote}</small>
-                                    </span>
-                                  </label>
-                                ))}
-                              </div>
-                            </article>
-                          ))}
-                        </div>
-                      </section>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="selection-empty">As permissões ainda não foram carregadas.</div>
-              )}
-            </section>
-
-            <div className="form-actions">
-              <button className="btn" type="submit">Salvar cargo</button>
-              {isEditing ? <button className="btn btn-danger" type="button" onClick={handleDeleteRole}>Excluir cargo</button> : null}
-              <Link className="btn btn-secondary" to={isEditing ? `/cargos/${role.id}` : '/cargos'}>Cancelar</Link>
-            </div>
-          </form>
         </section>
       </div>
     </>

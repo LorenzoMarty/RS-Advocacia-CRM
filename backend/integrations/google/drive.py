@@ -86,7 +86,7 @@ def find_folder(service, name: str, parent_id: str) -> str | None:
             includeItemsFromAllDrives=True,
             supportsAllDrives=True,
         ),
-        "Nao foi possivel localizar a pasta no Google Drive.",
+        "Não foi possível localizar a pasta no Google Drive.",
     )
     files = response.get("files", []) if response else []
     return files[0]["id"] if files else None
@@ -105,7 +105,7 @@ def create_folder(service, name: str, parent_id: str) -> dict[str, Any]:
             fields="id, name, parents",
             supportsAllDrives=True,
         ),
-        "Nao foi possivel criar a pasta no Google Drive.",
+        "Não foi possível criar a pasta no Google Drive.",
     )
 
 
@@ -138,7 +138,7 @@ def upload_file(
             fields=FILE_FIELDS,
             supportsAllDrives=True,
         ),
-        "Nao foi possivel enviar o arquivo para o Google Drive.",
+        "Não foi possível enviar o arquivo para o Google Drive.",
     )
 
 
@@ -161,7 +161,7 @@ def update_file(
             fields=FILE_FIELDS,
             supportsAllDrives=True,
         ),
-        "Nao foi possivel atualizar o arquivo no Google Drive.",
+        "Não foi possível atualizar o arquivo no Google Drive.",
     )
 
 
@@ -185,7 +185,7 @@ def list_files(service, parent_id: str) -> list[dict[str, Any]]:
                 includeItemsFromAllDrives=True,
                 supportsAllDrives=True,
             ),
-            "Nao foi possivel listar os arquivos do Google Drive.",
+            "Não foi possível listar os arquivos do Google Drive.",
         )
         files.extend(response.get("files", []) if response else [])
         page_token = response.get("nextPageToken") if response else None
@@ -215,7 +215,7 @@ def list_folders(service, parent_id: str) -> list[dict[str, Any]]:
                 includeItemsFromAllDrives=True,
                 supportsAllDrives=True,
             ),
-            "Nao foi possivel listar as pastas do Google Drive.",
+            "Não foi possível listar as pastas do Google Drive.",
         )
         folders.extend(response.get("files", []) if response else [])
         page_token = response.get("nextPageToken") if response else None
@@ -232,7 +232,7 @@ def delete_folder(service, folder_id: str) -> None:
                 fileId=folder_id,
                 supportsAllDrives=True,
             ),
-            "Nao foi possivel excluir a pasta do Google Drive.",
+            "Não foi possível excluir a pasta do Google Drive.",
         )
     except GoogleApiError as exc:
         cause = exc.__cause__
@@ -249,7 +249,7 @@ def get_file(service, file_id: str) -> dict[str, Any]:
             fields=FILE_FIELDS,
             supportsAllDrives=True,
         ),
-        "Nao foi possivel consultar o arquivo no Google Drive.",
+        "Não foi possível consultar o arquivo no Google Drive.",
     )
 
 
@@ -261,7 +261,7 @@ def delete_file(service, file_id: str) -> None:
                 fileId=file_id,
                 supportsAllDrives=True,
             ),
-            "Nao foi possivel excluir o arquivo do Google Drive.",
+            "Não foi possível excluir o arquivo do Google Drive.",
         )
     except GoogleApiError as exc:
         cause = exc.__cause__

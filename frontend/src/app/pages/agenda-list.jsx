@@ -55,7 +55,7 @@ export function AgendaListPage() {
     ...new Set(events.map((event) => event.type).filter(Boolean)),
   ];
   const responsibleOptions = [
-    ...new Set(events.map((event) => event.responsible).filter(Boolean)),
+    ...new Set(events.map((event) => event.responsibleName).filter(Boolean)),
   ];
   const statusOptions = [
     ...new Set(events.map((event) => event.status).filter(Boolean)),
@@ -73,7 +73,7 @@ export function AgendaListPage() {
         processes.find((process) => process.id === event.processId)?.number,
         event.type,
         event.status,
-        event.responsible,
+        event.responsibleName,
       ]);
 
       if (search && !haystack.includes(normalizeText(search))) return false;
@@ -81,7 +81,7 @@ export function AgendaListPage() {
         return false;
       if (
         responsible &&
-        normalizeText(event.responsible) !== normalizeText(responsible)
+        normalizeText(event.responsibleName) !== normalizeText(responsible)
       )
         return false;
       if (status && normalizeText(event.status) !== normalizeText(status))

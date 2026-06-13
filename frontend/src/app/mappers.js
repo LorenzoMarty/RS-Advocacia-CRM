@@ -25,14 +25,21 @@ export function userFromResponse(payload) {
   return userFromApi(itemFromResponse(payload, 'usuario'));
 }
 
+// Lista enxuta (id + nome) usada para popular selects de responsável quando o
+// usuário não tem permissão de ver a lista completa de usuários.
+export function assignableUsersFromResponse(payload) {
+  return collectionFromResponse(payload, 'usuarios_atribuiveis')
+    .map((user) => ({
+      id: String(user.id || user.pk || ''),
+      name: user.nome || user.name || '',
+    }))
+    .filter((user) => user.id && user.name);
+}
+
 export function rolesFromResponse(payload) {
   return collectionFromResponse(payload, 'cargos')
     .map(roleFromApi)
     .filter((role) => role && role.id && role.name);
-}
-
-export function roleFromResponse(payload) {
-  return roleFromApi(itemFromResponse(payload, 'cargo'));
 }
 
 export function clientsFromResponse(payload) {
@@ -218,7 +225,8 @@ export function eventFromApi(event) {
     clientName: event.cliente_nome || '',
     processId: String(event.processo_id || ''),
     processNumber: event.processo_numero || '',
-    responsible: event.responsavel || '',
+    responsible: event.responsavel ? String(event.responsavel) : '',
+    responsibleName: event.responsavel_nome || '',
     createdBy: event.criado_por || '',
     location: event.local || '',
     notes: event.observacoes || '',
@@ -288,7 +296,7 @@ export function eventToPayload(event) {
     lembrete_em: event.reminderAt || null,
     cliente: event.clientId,
     processo: event.processId,
-    responsavel: event.responsible,
+    responsavel: event.responsible || null,
     status: event.status,
     local: event.location,
     observacoes: event.notes,
@@ -476,13 +484,6 @@ export function userToPayload(user) {
     nome: user.name,
     email: user.email,
     cargo_id: user.roleId,
-  };
-}
-
-export function roleToPayload(role) {
-  return {
-    nome: role.name,
-    permissoes: role.permissionIds,
   };
 }
 

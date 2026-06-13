@@ -44,7 +44,7 @@ PASTA_REUNIOES_AVULSAS = "Reuniões avulsas"
 def _root_folder_id() -> str:
     root = getattr(settings, "GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
     if not root:
-        raise GoogleConfigurationError("GOOGLE_DRIVE_ROOT_FOLDER_ID nao configurado.")
+        raise GoogleConfigurationError("GOOGLE_DRIVE_ROOT_FOLDER_ID não configurado.")
     return root
 
 
@@ -100,7 +100,7 @@ def confirmar_upload(
 
     pasta_id = pasta_gravacoes_reuniao(usuario, reuniao)
     if pasta_id not in (meta.get("parents") or []):
-        raise ValueError("O arquivo enviado nao esta na pasta de gravacoes da reuniao.")
+        raise ValueError("O arquivo enviado não está na pasta de gravações da reunião.")
 
     tamanho = int(meta.get("size") or 0)
     if tamanho <= 0 or tamanho > max_audio_bytes():

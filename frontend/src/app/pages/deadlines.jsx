@@ -81,7 +81,7 @@ function buildDeadlineTitle(process, responsible) {
     return '';
   }
 
-  return `${processNumber || 'Processo'} - ${responsibleName || 'Responsavel'}`;
+  return `${processNumber || 'Processo'} - ${responsibleName || 'Responsável'}`;
 }
 
 function deadlineColumnKey(deadline) {
@@ -118,7 +118,7 @@ function validateDeadlineForm(form) {
   const nextErrors = {};
 
   if (!form.processId) nextErrors.processId = 'Selecione o processo.';
-  if (!form.responsible.trim()) nextErrors.responsible = 'Informe o responsavel.';
+  if (!form.responsible.trim()) nextErrors.responsible = 'Informe o responsável.';
 
   return nextErrors;
 }
@@ -384,7 +384,7 @@ export function DeadlinesPage() {
                 value={responsible}
                 onChange={(event) => setResponsible(event.target.value)}
               >
-                <option value="">Responsavel</option>
+                <option value="">Responsável</option>
                 {responsibleOptions.map((option) => (
                   <option key={option} value={option}>
                     {option}
@@ -658,7 +658,7 @@ export function DeadlineDetailPage() {
           <section className="surface deadline-detail-panel">
             <div className="section-head">
               <div>
-                <h2 className="section-title">Descricao</h2>
+                <h2 className="section-title">Descrição</h2>
                 <p className="section-note">Tarefa vinculada ao prazo</p>
               </div>
             </div>
@@ -682,7 +682,7 @@ export function DeadlineDetailPage() {
                 {process ? <Link to={`/processos/${process.id}`}>{process.number}</Link> : <strong>-</strong>}
               </article>
               <article className="detail-item">
-                <span>Responsavel</span>
+                <span>Responsável</span>
                 <strong>{deadline.responsible || '-'}</strong>
               </article>
               <article className="detail-item">
@@ -847,7 +847,7 @@ export function DeadlineFormPage() {
             <form className="deadline-task-form" onSubmit={handleSubmit}>
               <div className="deadline-generated-name">
                 <span>Nome do prazo</span>
-                <strong>{generatedTitle || 'Selecione processo e responsavel'}</strong>
+                <strong>{generatedTitle || 'Selecione processo e responsável'}</strong>
               </div>
 
               <div className="form-grid">
@@ -866,7 +866,7 @@ export function DeadlineFormPage() {
                   </select>
                 </Field>
 
-                <Field id="deadline-responsible" label="Responsavel" className="span-2" error={errors.responsible}>
+                <Field id="deadline-responsible" label="Responsável" className="span-2" error={errors.responsible}>
                   <select
                     id="deadline-responsible"
                     value={form.responsible}
@@ -879,7 +879,7 @@ export function DeadlineFormPage() {
                   </select>
                 </Field>
 
-                <Field id="deadline-description" label="Descricao opcional" className="span-2" error={errors.description}>
+                <Field id="deadline-description" label="Descrição opcional" className="span-2" error={errors.description}>
                   <textarea
                     id="deadline-description"
                     rows="6"

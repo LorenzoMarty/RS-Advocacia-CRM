@@ -212,7 +212,7 @@ def _resolve_usuario(claims: dict, initiating_user_id: int | None) -> Usuario:
     name = str(claims.get("name") or "").strip() or email.split("@")[0]
     picture = str(claims.get("picture") or "").strip()
     if not sub or not email:
-        raise ValueError("Resposta invalida do Google.")
+        raise ValueError("Resposta inválida do Google.")
 
     existing_account = (
         GoogleAccount.objects.select_related("usuario")

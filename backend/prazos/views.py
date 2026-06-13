@@ -168,7 +168,7 @@ def atualizar_timer_prazo(request, prazo_id):
 
         if tempo_decorrido_segundos < 0:
             return resposta_erro(
-                {"tempo_decorrido_segundos": ["O tempo nao pode ser negativo."]},
+                {"tempo_decorrido_segundos": ["O tempo não pode ser negativo."]},
                 status=400,
             )
 

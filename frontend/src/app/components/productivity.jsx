@@ -403,7 +403,7 @@ function ProductivityUserContent({ user, readOnly = false }) {
     && isDateInRange(petitionDoneDate(petition), filterBounds),
   );
   const attendedEvents = events.filter((event) =>
-    belongsToUser(event.responsible, user)
+    belongsToUser(event.responsibleName, user)
     && isEventAttended(event, now)
     && isDateInRange(event.start, filterBounds),
   );

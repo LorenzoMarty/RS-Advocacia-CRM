@@ -95,7 +95,7 @@ class PeticaoForm(forms.ModelForm):
 
         if cliente and processo and processo.cliente_id != cliente.pk:
             self.add_error(
-                "processo", "O processo selecionado nao pertence ao cliente."
+                "processo", "O processo selecionado não pertence ao cliente."
             )
 
         return cleaned_data

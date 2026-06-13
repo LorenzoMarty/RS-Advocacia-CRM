@@ -40,7 +40,6 @@ import {
 } from "./app/pages/users";
 import {
   RolesListPage,
-  RoleFormPage,
   RoleDetailPage,
 } from "./app/pages/roles";
 import { ProductivityPage } from "./app/pages/productivity/ProductivityPage";
@@ -88,11 +87,6 @@ function PetitionFormRoute() {
 function UserFormRoute() {
   const { userId } = useParams();
   return <UserFormPage key={userId || "user-new"} />;
-}
-
-function RoleFormRoute() {
-  const { roleId } = useParams();
-  return <RoleFormPage key={roleId || "role-new"} />;
 }
 
 function ProspectFormRoute() {
@@ -207,9 +201,7 @@ export default function App() {
             />
 
             <Route path="/cargos" element={<RolesListPage />} />
-            <Route path="/cargos/novo" element={<RoleFormRoute />} />
             <Route path="/cargos/:roleId" element={<RoleDetailPage />} />
-            <Route path="/cargos/:roleId/editar" element={<RoleFormRoute />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

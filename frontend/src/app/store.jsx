@@ -15,8 +15,8 @@ import { createDemoState } from './demo-data';
 import {
   usersFromResponse,
   userFromResponse,
+  assignableUsersFromResponse,
   rolesFromResponse,
-  roleFromResponse,
   clientsFromResponse,
   clientFromResponse,
   processesFromResponse,
@@ -46,7 +46,6 @@ import {
   petitionToPayload,
   deadlineTimerToPayload,
   userToPayload,
-  roleToPayload,
 } from './mappers';
 
 const AppStateContext = createContext(null);
@@ -203,6 +202,10 @@ export function AppStateProvider({ children }) {
     }
     if (Object.prototype.hasOwnProperty.call(payload, 'usuarios')) {
       setUsers((currentUsers) => sortByName(mergeById(currentUsers, usersFromResponse(payload))));
+    } else if (Object.prototype.hasOwnProperty.call(payload, 'usuarios_atribuiveis')) {
+      // Sem permissão para a lista completa: usa a lista enxuta (id + nome)
+      // apenas para popular os selects de responsável.
+      setUsers((currentUsers) => sortByName(mergeById(currentUsers, assignableUsersFromResponse(payload))));
     }
     setClients(sortByName(clientsFromResponse(payload)));
     setProcesses(processesFromResponse(payload));
@@ -730,39 +733,6 @@ export function AppStateProvider({ children }) {
     return savedUser || payload;
   }
 
-  async function saveRole(payload) {
-    if (canUseApi) {
-      try {
-        const response = payload.id
-          ? await api.updateRole(payload.id, roleToPayload(payload))
-          : await api.createRole(roleToPayload(payload));
-        const savedRole = roleFromResponse(response);
-        if (!savedRole) {
-          throw new Error('Resposta inválida da API de cargos.');
-        }
-        setRoles((currentRoles) => sortByName(replaceById(currentRoles, savedRole)));
-        addFlash(payload.id ? 'Cargo atualizado.' : 'Cargo salvo.', 'success');
-        return savedRole;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
-      }
-    }
-
-    if (payload.id) {
-      setRoles((currentRoles) =>
-        sortByName(currentRoles.map((role) => (role.id === payload.id ? { ...role, ...payload } : role))),
-      );
-      addFlash('Cargo atualizado.', 'success');
-      return payload;
-    }
-
-    const nextRole = { ...payload, id: nextId('role') };
-    setRoles((currentRoles) => sortByName([...currentRoles, nextRole]));
-    addFlash('Cargo salvo.', 'success');
-    return nextRole;
-  }
-
   async function deleteClient(clientId) {
     if (canUseApi) {
       try {
@@ -872,21 +842,6 @@ export function AppStateProvider({ children }) {
       setCurrentUserId(null);
     }
     addFlash('Usuário deletado.', 'success');
-    return true;
-  }
-
-  async function deleteRole(roleId) {
-    if (canUseApi) {
-      try {
-        await api.deleteRole(roleId);
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return false;
-      }
-    }
-
-    setRoles((currentRoles) => currentRoles.filter((role) => role.id !== roleId));
-    addFlash('Cargo deletado.', 'success');
     return true;
   }
 
@@ -1479,14 +1434,12 @@ export function AppStateProvider({ children }) {
     loadDeadline,
     loadPetition,
     saveUser,
-    saveRole,
     deleteClient,
     deleteProcess,
     deleteEvent,
     deleteDeadline,
     deletePetition,
     deleteUser,
-    deleteRole,
     saveProspect,
     deleteProspect,
     addInteracao,

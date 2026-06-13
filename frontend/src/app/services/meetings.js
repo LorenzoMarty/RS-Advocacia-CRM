@@ -56,7 +56,7 @@ function createDemoMeetings() {
     },
     {
       id: 'demo-meeting-bruno',
-      title: 'Alinhamento de audiencia - Bruno Lima',
+      title: 'Alinhamento de audiência - Bruno Lima',
       meetingAt: demoDateTime(1, '15:00'),
       clientId: 'demo-client-bruno',
       clientName: 'Bruno Lima',

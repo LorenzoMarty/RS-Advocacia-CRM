@@ -118,6 +118,9 @@ export function EventFormPage() {
       return;
     }
 
+    const responsibleUser = users.find((user) => user.id === form.responsible);
+    const responsibleName = responsibleUser?.name || "";
+
     const savedEvent = await saveEvent({
       id: form.id || undefined,
       title: form.title.trim(),
@@ -128,7 +131,8 @@ export function EventFormPage() {
       reminderAt: parseDateTimeInput(form.reminderAt),
       clientId: form.clientId,
       processId: form.processId,
-      responsible: form.responsible.trim(),
+      responsible: form.responsible,
+      responsibleName,
       status: form.status,
       location: form.location.trim(),
       description: form.description.trim(),
@@ -136,7 +140,7 @@ export function EventFormPage() {
       completed: form.completed,
       createdBy:
         eventItem?.createdBy ||
-        form.responsible.trim() ||
+        responsibleName ||
         users[0]?.name ||
         "Interno",
     });
@@ -441,7 +445,7 @@ export function EventFormPage() {
                   >
                     <option value="">Selecione o responsável</option>
                     {users.map((user) => (
-                      <option key={user.id} value={user.name}>
+                      <option key={user.id} value={user.id}>
                         {user.name}
                       </option>
                     ))}
