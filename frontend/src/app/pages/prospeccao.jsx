@@ -11,7 +11,7 @@ import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, formatDate, getStatusTone, normalizeText } from '../utils';
-import { EmptyState, Field, NotFoundState } from './common';
+import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
 const STATUS_LABELS = PROSPECT_STATUS_COLUMNS.map((column) => column.label);
 
@@ -295,6 +295,9 @@ export function ProspectFormPage() {
   const selectedUser = users.find((user) => user.id === form.responsibleId) || null;
   const audit = deadlineAuditFor(selectedUser?.name, deadlines);
 
+  const originOptions = [...new Set([...PROSPECT_ORIGIN_OPTIONS, ...prospects.map((item) => item.origin).filter(Boolean)])];
+  const statusOptions = [...new Set([...STATUS_LABELS, ...prospects.map((item) => item.status).filter(Boolean)])];
+
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
@@ -345,15 +348,15 @@ export function ProspectFormPage() {
                 <input id="prospect-email" type="email" value={form.email} onChange={(event) => update('email', event.target.value)} />
               </Field>
               <Field id="prospect-origin" label="Origem do contato">
-                <select id="prospect-origin" value={form.origin} onChange={(event) => update('origin', event.target.value)}>
-                  <option value="">Selecione</option>
-                  {PROSPECT_ORIGIN_OPTIONS.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field id="prospect-demand" label="Tipo de demanda jurídica">
-                <input id="prospect-demand" value={form.demandType} onChange={(event) => update('demandType', event.target.value)} />
+                <ComboField
+                  id="prospect-origin"
+                  value={form.origin}
+                  options={originOptions}
+                  selectPlaceholder="Selecione"
+                  customLabel="+ Digitar nova origem..."
+                  customPlaceholder="Ex: Evento, Parceria..."
+                  onChange={(value) => update('origin', value)}
+                />
               </Field>
               <Field id="prospect-responsible" label="Responsável interno">
                 <select
@@ -374,11 +377,15 @@ export function ProspectFormPage() {
                 </div>
               ) : null}
               <Field id="prospect-status" label="Status">
-                <select id="prospect-status" value={form.status} onChange={(event) => update('status', event.target.value)}>
-                  {STATUS_LABELS.map((label) => (
-                    <option key={label} value={label}>{label}</option>
-                  ))}
-                </select>
+                <ComboField
+                  id="prospect-status"
+                  value={form.status}
+                  options={statusOptions}
+                  selectPlaceholder="Selecione o status"
+                  customLabel="+ Digitar novo status..."
+                  customPlaceholder="Nome do status"
+                  onChange={(value) => update('status', value)}
+                />
               </Field>
               <Field id="prospect-priority" label="Prioridade">
                 <select id="prospect-priority" value={form.priority} onChange={(event) => update('priority', event.target.value)}>
