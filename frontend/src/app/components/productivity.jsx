@@ -207,7 +207,7 @@ function PeriodFilter({ period, setPeriod, customStart, setCustomStart, customEn
   );
 }
 
-export function TaskTimer({ taskId, taskType, title, processId = '', processNumber = '' }) {
+export function TaskTimer({ taskId, taskType, title, processId = '', processNumber = '', taskStatus = '', onStart }) {
   const {
     addFlash,
     currentUser,
@@ -248,8 +248,8 @@ export function TaskTimer({ taskId, taskType, title, processId = '', processNumb
     }
 
     return confirm({
-      title: 'Timer ativo',
-      message: `Você já tem um timer ativo em ${activeOtherEntry.taskName || 'outra tarefa'}. Deseja pausar aquele e iniciar aqui?`,
+      title: 'Tarefa em andamento',
+      message: `Você já tem uma tarefa em andamento em ${activeOtherEntry.taskName || 'outra tarefa'}. Deseja pausar aquela e iniciar aqui?`,
       confirmLabel: 'Pausar e iniciar',
       tone: 'danger',
     });
@@ -270,8 +270,11 @@ export function TaskTimer({ taskId, taskType, title, processId = '', processNumb
     }, { pauseExisting: Boolean(activeOtherEntry) });
 
     if (!savedEntry) {
-      addFlash('Não foi possível iniciar o timer.', 'error');
+      addFlash('Não foi possível iniciar a tarefa.', 'error');
+      return;
     }
+
+    onStart?.();
   }
 
   async function handleResume() {
@@ -287,6 +290,9 @@ export function TaskTimer({ taskId, taskType, title, processId = '', processNumb
     return null;
   }
 
+  // Tarefa finalizada (Protocolado/Concluído) não mostra mais o Iniciar.
+  const isDone = /protocolad|conclu/.test(String(taskStatus || '').toLowerCase());
+
   return (
     <div className="task-timer" onMouseDown={(event) => event.stopPropagation()}>
       {confirmPopup}
@@ -295,17 +301,17 @@ export function TaskTimer({ taskId, taskType, title, processId = '', processNumb
         <strong>{formatTimerSeconds(elapsedSeconds)}</strong>
       </div>
       <div className="task-timer-actions">
-        {!taskEntry || taskEntry.status === 'stopped' ? (
-          <button className="timer-btn" type="button" onClick={handleStart} aria-label="Iniciar timer">Iniciar</button>
+        {(!taskEntry || taskEntry.status === 'stopped') && !isDone ? (
+          <button className="timer-btn" type="button" onClick={handleStart} aria-label="Iniciar tarefa">Iniciar</button>
         ) : null}
         {taskEntry?.status === 'running' ? (
-          <button className="timer-btn" type="button" onClick={() => pauseTimeEntry(taskEntry.id)} aria-label="Pausar timer">Pausar</button>
+          <button className="timer-btn" type="button" onClick={() => pauseTimeEntry(taskEntry.id)} aria-label="Pausar tarefa">Pausar</button>
         ) : null}
         {taskEntry?.status === 'paused' ? (
-          <button className="timer-btn" type="button" onClick={handleResume} aria-label="Retomar timer">Retomar</button>
+          <button className="timer-btn" type="button" onClick={handleResume} aria-label="Retomar tarefa">Retomar</button>
         ) : null}
         {taskEntry && taskEntry.status !== 'stopped' ? (
-          <button className="timer-btn timer-btn-stop" type="button" onClick={() => stopTimeEntry(taskEntry.id)} aria-label="Encerrar timer">Encerrar</button>
+          <button className="timer-btn timer-btn-stop" type="button" onClick={() => stopTimeEntry(taskEntry.id)} aria-label="Encerrar tarefa">Encerrar</button>
         ) : null}
       </div>
     </div>

@@ -4,14 +4,13 @@ import { Link } from 'react-router-dom';
 import { PageChrome } from '../../layout';
 import { useAppState } from '../../store';
 import { EmptyState } from '../common';
-import { ActiveTimers } from './ActiveTimers';
 import { PeriodFilter } from './PeriodFilter';
 import { TimeDistributionChart } from './TimeDistributionChart';
 import { dateInputValue, formatHoursCompact, startOfWeek } from './productivity-data';
 import { useProductivityData } from './use-productivity-data';
 
 export function ProductivityPage() {
-  const { currentUser, deadlines, petitions } = useAppState();
+  const { deadlines, petitions } = useAppState();
 
   const [period, setPeriod] = useState('week');
   const [customStart, setCustomStart] = useState(() => dateInputValue(startOfWeek()));
@@ -25,7 +24,6 @@ export function ProductivityPage() {
     { label: 'Petições realizadas', value: data.deliverables.donePetitions.length },
     { label: 'Processos acompanhados', value: data.processCount },
     { label: 'Média/tarefa', value: formatHoursCompact(data.averageTaskSeconds) },
-    { label: 'Timers rodando', value: data.runningCount },
   ];
 
   return (
@@ -58,10 +56,6 @@ export function ProductivityPage() {
           </div>
         </section>
 
-        {currentUser ? (
-          <ActiveTimers entries={data.activeEntries} now={data.now} currentUserId={currentUser.id} />
-        ) : null}
-
         <TimeDistributionChart
           byType={data.byType}
           byTask={data.byTask}
@@ -69,10 +63,10 @@ export function ProductivityPage() {
           petitions={petitions}
         />
 
-        {!data.totalSeconds && !data.activeEntries.length ? (
+        {!data.totalSeconds ? (
           <EmptyState
             title="Nenhum tempo registrado ainda."
-            copy="Inicie um timer em um prazo ou petição para acompanhar sua produtividade aqui."
+            copy="Inicie a contagem de tempo em um prazo ou petição para acompanhar sua produtividade aqui."
             actions={<Link className="btn" to="/prazos">Ver prazos</Link>}
           />
         ) : null}

@@ -3,7 +3,8 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { formatHoursCompact } from '../productivity-data';
 
 // Donut de distribuição. data: [{ name, value (segundos), color }]
-export function Donut({ data, height = 200 }) {
+// formatValue: como exibir os valores (total, legenda). Default: h/m compacto.
+export function Donut({ data, height = 200, formatValue = formatHoursCompact }) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   return (
@@ -29,7 +30,7 @@ export function Donut({ data, height = 200 }) {
         </ResponsiveContainer>
         <div className="pd-donut-center">
           <span>Total</span>
-          <strong>{formatHoursCompact(total)}</strong>
+          <strong>{formatValue(total)}</strong>
         </div>
       </div>
       <ul className="pd-donut-legend">
@@ -37,7 +38,7 @@ export function Donut({ data, height = 200 }) {
           <li key={item.name}>
             <span className="pd-dot" style={{ background: item.color }} />
             <span className="pd-legend-label">{item.name}</span>
-            <span className="pd-legend-value">{formatHoursCompact(item.value)}</span>
+            <span className="pd-legend-value">{formatValue(item.value)}</span>
           </li>
         ))}
       </ul>

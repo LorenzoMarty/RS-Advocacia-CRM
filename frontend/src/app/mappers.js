@@ -174,6 +174,7 @@ export function clientFromApi(client) {
     phone: client.telefone || '',
     document: client.cpf || '',
     clientType: client.tipo_cliente || 'esporadico',
+    partner: client.parceria || '',
     notes: client.obs || '',
   };
 }
@@ -257,6 +258,7 @@ export function clientToPayload(client) {
     nome: client.name,
     cpf: client.document,
     tipo_cliente: client.clientType,
+    parceria: client.partner || '',
     telefone: client.phone,
     email: client.email,
     obs: client.notes,

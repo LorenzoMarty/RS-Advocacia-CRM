@@ -27,6 +27,11 @@ export function formatHoursCompact(totalSeconds) {
   return `${hours ? `${hours}h` : ''}${hours && minutes ? ' ' : ''}${minutes ? `${minutes}m` : ''}`;
 }
 
+export function formatMinutes(totalSeconds) {
+  const safe = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  return `${Math.round(safe / 60)} min`;
+}
+
 export function timeEntryElapsedSeconds(entry, currentTime = Date.now()) {
   const totalSeconds = Math.max(0, Math.floor(Number(entry?.totalSeconds) || 0));
   if (entry?.status !== 'running') {

@@ -387,12 +387,6 @@ export function ProspectFormPage() {
                   ))}
                 </select>
               </Field>
-              <Field id="prospect-next" label="Próxima ação" className="span-2">
-                <input id="prospect-next" value={form.nextAction} onChange={(event) => update('nextAction', event.target.value)} />
-              </Field>
-              <Field id="prospect-case" label="Descrição do caso" className="span-2">
-                <textarea id="prospect-case" rows="4" value={form.caseDescription} onChange={(event) => update('caseDescription', event.target.value)} />
-              </Field>
               <Field id="prospect-notes" label="Observações" className="span-2">
                 <textarea id="prospect-notes" rows="3" value={form.notes} onChange={(event) => update('notes', event.target.value)} />
               </Field>

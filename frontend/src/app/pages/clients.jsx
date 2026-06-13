@@ -27,7 +27,7 @@ import {
   normalizeText,
   stripDocument,
 } from '../utils';
-import { EmptyState, Field, NotFoundState } from './common';
+import { ComboField, EmptyState, Field, NotFoundState } from './common';
 import { ClientDocuments } from '../components/client-documents';
 
 const columnHelper = createColumnHelper();
@@ -39,6 +39,7 @@ const clientSchema = z.object({
     'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).',
   ),
   clientType: z.enum(['esporadico', 'mensalista']),
+  partner: z.string().optional(),
   phone: z.string().min(1, 'Informe o telefone.'),
   email: z.string().min(1, 'Informe o e-mail.').email('E-mail inválido.'),
   notes: z.string(),
@@ -232,11 +233,14 @@ export function ClientFormPage() {
       name: client?.name ?? '',
       document: client ? formatDocument(client.document) : '',
       clientType: client?.clientType ?? 'esporadico',
+      partner: client?.partner ?? '',
       phone: client?.phone ?? '',
       email: client?.email ?? '',
       notes: client?.notes ?? '',
     },
   });
+
+  const partnerOptions = [...new Set(clients.map((item) => item.partner).filter(Boolean))];
 
   if (isEditing && !client) {
     return <NotFoundState title="Cliente não encontrado." />;
@@ -248,6 +252,7 @@ export function ClientFormPage() {
       name: data.name.trim(),
       document: stripDocument(data.document),
       clientType: data.clientType,
+      partner: (data.partner || '').trim(),
       phone: data.phone.trim(),
       email: data.email.trim(),
       notes: data.notes.trim(),
@@ -313,6 +318,24 @@ export function ClientFormPage() {
                     <option value="esporadico">Esporádico</option>
                     <option value="mensalista">Mensalista</option>
                   </select>
+                </Field>
+
+                <Field id="client-partner" label="Parceria" error={errors.partner?.message} note="Origem do cliente, se veio de um parceiro.">
+                  <Controller
+                    name="partner"
+                    control={control}
+                    render={({ field }) => (
+                      <ComboField
+                        id="client-partner"
+                        value={field.value || ''}
+                        options={partnerOptions}
+                        selectPlaceholder="Sem parceria"
+                        customLabel="+ Digitar novo parceiro..."
+                        customPlaceholder="Nome do parceiro"
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
                 </Field>
               </div>
             </section>
@@ -425,6 +448,10 @@ export function ClientDetailPage() {
                 <article className="detail-item">
                   <span>Tipo</span>
                   <strong>{getClientTypeLabel(client.clientType)}</strong>
+                </article>
+                <article className="detail-item">
+                  <span>Parceria</span>
+                  <strong>{client.partner || '-'}</strong>
                 </article>
                 <article className="detail-item">
                   <span>Observações</span>

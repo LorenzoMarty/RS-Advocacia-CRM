@@ -13,7 +13,7 @@ import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import { buildSearchText, formatDate, getStatusTone, normalizeText } from '../utils';
-import { EmptyState, Field, NotFoundState } from './common';
+import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
 const PAGE_SIZE = 10;
 
@@ -122,9 +122,10 @@ export function FinanceiroPage() {
   }, [lancamentos]);
 
   const categoryOptions = useMemo(() => {
-    if (tab === 'despesas') return FINANCE_CATEGORIES.despesa;
-    return FINANCE_CATEGORIES.receita;
-  }, [tab]);
+    const type = tab === 'despesas' ? 'despesa' : 'receita';
+    const existing = lancamentos.filter((item) => item.type === type).map((item) => item.category);
+    return [...new Set([...FINANCE_CATEGORIES[type], ...existing].filter(Boolean))];
+  }, [tab, lancamentos]);
 
   const rows = useMemo(() => {
     let list = lancamentos.filter((item) => tabFilter(item, tab));
@@ -336,7 +337,11 @@ export function LancamentoFormPage() {
     return <NotFoundState title="Lançamento não encontrado." />;
   }
 
-  const categories = form.type === 'despesa' ? FINANCE_CATEGORIES.despesa : FINANCE_CATEGORIES.receita;
+  const categorySeed = form.type === 'despesa' ? FINANCE_CATEGORIES.despesa : FINANCE_CATEGORIES.receita;
+  const categories = [...new Set([
+    ...categorySeed,
+    ...lancamentos.filter((item) => item.type === form.type).map((item) => item.category),
+  ].filter(Boolean))];
 
   function update(field, value) {
     setForm((current) => {
@@ -402,12 +407,15 @@ export function LancamentoFormPage() {
                 </select>
               </Field>
               <Field id="lanc-category" label="Categoria" error={errors.category}>
-                <select id="lanc-category" value={form.category} onChange={(event) => update('category', event.target.value)}>
-                  <option value="">Selecione</option>
-                  {categories.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
+                <ComboField
+                  id="lanc-category"
+                  value={form.category}
+                  options={categories}
+                  selectPlaceholder="Selecione"
+                  customLabel="+ Digitar nova categoria..."
+                  customPlaceholder="Nome da categoria"
+                  onChange={(value) => update('category', value)}
+                />
               </Field>
               <Field id="lanc-value" label="Valor (R$)" error={errors.value}>
                 <input id="lanc-value" type="number" min="0" step="0.01" value={form.value} onChange={(event) => update('value', event.target.value)} />

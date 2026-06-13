@@ -42,7 +42,7 @@ const AREA_NOTES = {
   clientes: 'Cadastro, dados e histórico dos clientes.',
   prazos: 'Prazos processuais e tarefas de protocolo.',
   peticoes: 'Petição, contestação, protocolo e acompanhamento.',
-  productivity: 'Timers, metas e histórico de produtividade.',
+  productivity: 'Tarefas cronometradas, metas e histórico de produtividade.',
   processos: 'Processos jurídicos e seus dados principais.',
   usuarios: 'Cadastro da equipe que usa o sistema.',
 };
@@ -56,7 +56,7 @@ const RESOURCE_LABELS = {
   peticao: 'Petições ou contestações',
   productivitygoal: 'Metas de produtividade',
   processo: 'Processos',
-  timeentry: 'Timers',
+  timeentry: 'Tarefas cronometradas',
   user: 'Contas internas',
   usuario: 'Usuários',
 };

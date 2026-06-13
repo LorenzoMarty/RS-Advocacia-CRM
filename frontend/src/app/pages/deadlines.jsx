@@ -129,6 +129,7 @@ function DeadlineCard({
   isMoving,
   onDragStart,
   onDragEnd,
+  onTimerStart,
   processes,
 }) {
   const process = processes.find((item) => item.id === deadline.processId) || null;
@@ -152,6 +153,8 @@ function DeadlineCard({
         title={cardTitle}
         processId={deadline.processId}
         processNumber={process?.number || deadline.processNumber || ''}
+        taskStatus={deadline.status}
+        onStart={() => onTimerStart?.(deadline)}
       />
     </article>
   );
@@ -218,10 +221,27 @@ export function DeadlinesPage() {
     deadlinesByColumn[deadlineColumnKey(deadline)].push(deadline);
   });
 
+  async function promoteDeadlineToActive(deadline) {
+    if (deadlineColumnKey(deadline) !== 'a_fazer') {
+      return;
+    }
+    const deadlineProcess = processes.find((process) => process.id === deadline.processId) || null;
+    await saveDeadline({
+      ...deadline,
+      title: buildDeadlineTitle(deadlineProcess, deadline.responsible) || deadline.title,
+      status: 'Em andamento',
+    }, { silent: true });
+  }
+
   async function moveDeadline(deadline, nextColumnKey) {
     const nextColumn = DEADLINE_STATUS_COLUMNS.find((column) => column.key === nextColumnKey);
 
     if (!nextColumn || deadlineColumnKey(deadline) === nextColumnKey) {
+      return;
+    }
+
+    if (nextColumnKey === 'a_fazer') {
+      addFlash('Tarefa em andamento não volta para Pendente.', 'warn');
       return;
     }
 
@@ -426,6 +446,7 @@ export function DeadlinesPage() {
                         isMoving={movingDeadlineId === deadline.id}
                         onDragEnd={handleDragEnd}
                         onDragStart={handleDragStart}
+                        onTimerStart={promoteDeadlineToActive}
                         processes={processes}
                       />
                     ))

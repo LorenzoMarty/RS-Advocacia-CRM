@@ -20,7 +20,7 @@ class ClienteForm(forms.ModelForm):
 
     class Meta:
         model = Cliente
-        fields = ["nome", "cpf", "tipo_cliente", "telefone", "email", "obs"]
+        fields = ["nome", "cpf", "tipo_cliente", "parceria", "telefone", "email", "obs"]
         widgets = {
             "obs": forms.Textarea(attrs={"rows": 4}),
         }

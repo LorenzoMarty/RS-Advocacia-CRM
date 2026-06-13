@@ -15,6 +15,7 @@ class Cliente(models.Model):
     tipo_cliente = models.CharField(
         max_length=20, choices=TIPOS_CLIENTE, default="esporadico"
     )
+    parceria = models.CharField(max_length=120, blank=True, default="")
     obs = models.TextField(blank=True)
 
     def __str__(self):
