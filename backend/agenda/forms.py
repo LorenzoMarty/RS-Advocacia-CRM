@@ -55,7 +55,11 @@ class ProcessoSelect(forms.Select):
 
 
 class EventoForm(forms.ModelForm):
-    responsavel = forms.ChoiceField(choices=(), label="Responsável")
+    responsavel = forms.ModelChoiceField(
+        queryset=Usuario.objects.all(),
+        label="Responsável",
+        empty_label="Selecione o responsável",
+    )
     status = forms.ChoiceField(choices=(), label="Status")
 
     class Meta:
@@ -108,11 +112,8 @@ class EventoForm(forms.ModelForm):
                 field.input_formats = datetime_formats
 
         instance = getattr(self, "instance", None)
-        current_responsavel = getattr(instance, "responsavel", "")
         current_status = getattr(instance, "status", "")
-        usuarios = Usuario.objects.values_list("nome", flat=True)
         existing_events = Evento.objects.exclude(tipo_evento__icontains="prazo")
-        existing_responsaveis = existing_events.values_list("responsavel", flat=True)
         existing_statuses = existing_events.exclude(
             status__in=("A fazer", "Protocolar", "Protocolado")
         ).values_list("status", flat=True)
@@ -130,12 +131,7 @@ class EventoForm(forms.ModelForm):
                 "cliente"
             ).order_by("numero_processo")
 
-        self.fields["responsavel"].choices = _build_choices(
-            "Selecione o responsável",
-            [current_responsavel],
-            usuarios,
-            existing_responsaveis,
-        )
+        self.fields["responsavel"].queryset = Usuario.objects.order_by("nome")
         self.fields["status"].choices = _build_choices(
             "Selecione o status",
             [current_status],

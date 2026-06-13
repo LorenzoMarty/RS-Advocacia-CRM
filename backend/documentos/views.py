@@ -54,7 +54,7 @@ def _mapear_erro_google(exc):
         return resposta_erro(str(exc), status=401)
     if isinstance(exc, GoogleApiError):
         logger.warning("Erro da API Google Drive: %s", exc)
-        detalhe = "Nao foi possivel concluir a operacao no Google Drive."
+        detalhe = "Não foi possível concluir a operação no Google Drive."
         if settings.DEBUG:
             causa = exc.__cause__
             status = getattr(getattr(causa, "resp", None), "status", None)
@@ -259,7 +259,7 @@ def excluir_pasta_view(request, cliente_id, folder_id):
     # Guard: never let the explorer delete the client's root folder.
     if folder_id == services._client_root_id(cliente):
         return resposta_erro(
-            {"folder_id": ["Nao e possivel excluir a pasta raiz do cliente."]},
+            {"folder_id": ["Não é possível excluir a pasta raiz do cliente."]},
             status=400,
         )
 

@@ -140,7 +140,7 @@ def disconnect(request: HttpRequest):
     usuario = current_usuario(request)
     account = getattr(usuario, "google_account", None)
     if account is None:
-        return resposta_sucesso(mensagem="Conta Google ja desconectada.")
+        return resposta_sucesso(mensagem="Conta Google já desconectada.")
     token = account.refresh_token or account.access_token
     if token:
         try:

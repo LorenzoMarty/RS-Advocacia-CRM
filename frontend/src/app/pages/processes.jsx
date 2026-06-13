@@ -445,7 +445,7 @@ export function ProcessDetailPage() {
 
                     <div className="list-meta">
                       <span className="meta-chip">{event.type || 'Compromisso'}</span>
-                      {event.responsible ? <span className="meta-chip">{event.responsible}</span> : null}
+                      {event.responsibleName ? <span className="meta-chip">{event.responsibleName}</span> : null}
                       {event.location ? <span className="meta-chip">{event.location}</span> : null}
                     </div>
                   </article>

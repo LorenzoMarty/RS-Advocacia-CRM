@@ -272,7 +272,7 @@ export function computeDeliverables(bounds, { deadlines, petitions, events, user
       && isDateInRange(p.atualizado_em || p.updatedAt || p.criado_em, bounds),
   );
   const attendedEvents = events.filter(
-    (e) => matchUser(e.responsible) && isEventAttended(e, now) && isDateInRange(e.start, bounds),
+    (e) => matchUser(e.responsibleName) && isEventAttended(e, now) && isDateInRange(e.start, bounds),
   );
   return { doneDeadlines, donePetitions, attendedEvents };
 }

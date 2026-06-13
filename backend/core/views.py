@@ -105,7 +105,7 @@ def inicializacao(request):
     processos = Processo.objects.select_related("cliente").all()
     eventos = (
         Evento.objects.exclude(tipo_evento__icontains="prazo")
-        .select_related("cliente", "processo")
+        .select_related("cliente", "processo", "responsavel")
         .all()
     )
     peticoes = Peticao.objects.select_related("cliente", "processo").all()
@@ -131,6 +131,13 @@ def inicializacao(request):
         "prazos": serialized_prazos,
         "grupos_permissoes": serialize_permission_groups(),
     }
+
+    # Lista enxuta (id + nome) para popular selects de responsável mesmo para
+    # quem não tem permissão de gerenciar usuários (view_usuario).
+    data["usuarios_atribuiveis"] = [
+        {"id": str(pk), "nome": nome}
+        for pk, nome in Usuario.objects.order_by("nome").values_list("pk", "nome")
+    ]
 
     if user_has_permission(request, "usuarios.view_usuario"):
         serialized_usuarios = serialize_usuarios(Usuario.objects.all())

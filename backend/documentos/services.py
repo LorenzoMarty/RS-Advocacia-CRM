@@ -40,7 +40,7 @@ PROCESSO_SUBPASTAS = ("PETIÇÕES", "PROTOCOLADOS", "RECURSOS")
 def _root_folder_id() -> str:
     root = getattr(settings, "GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
     if not root:
-        raise GoogleConfigurationError("GOOGLE_DRIVE_ROOT_FOLDER_ID nao configurado.")
+        raise GoogleConfigurationError("GOOGLE_DRIVE_ROOT_FOLDER_ID não configurado.")
     return root
 
 

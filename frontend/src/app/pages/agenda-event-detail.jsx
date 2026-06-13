@@ -192,7 +192,7 @@ export function EventDetailPage() {
                 </article>
                 <article className="detail-item">
                   <span>Responsável</span>
-                  <strong>{eventItem.responsible || "-"}</strong>
+                  <strong>{eventItem.responsibleName || "-"}</strong>
                 </article>
                 <article className="detail-item">
                   <span>Início</span>

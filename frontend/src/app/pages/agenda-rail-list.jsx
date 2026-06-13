@@ -47,8 +47,8 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
             {event.type ? (
               <span className="meta-chip">{event.type}</span>
             ) : null}
-            {event.responsible ? (
-              <span className="meta-chip">{event.responsible}</span>
+            {event.responsibleName ? (
+              <span className="meta-chip">{event.responsibleName}</span>
             ) : null}
             {event.clientId ? (
               <span className="meta-chip">

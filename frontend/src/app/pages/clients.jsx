@@ -520,7 +520,7 @@ export function ClientDetailPage() {
                     <div className="list-meta">
                       <span className="meta-chip">{event.type}</span>
                       {event.processId ? <span className="meta-chip">{processes.find((process) => process.id === event.processId)?.number}</span> : null}
-                      {event.responsible ? <span className="meta-chip">{event.responsible}</span> : null}
+                      {event.responsibleName ? <span className="meta-chip">{event.responsibleName}</span> : null}
                     </div>
                   </article>
                 )) : (

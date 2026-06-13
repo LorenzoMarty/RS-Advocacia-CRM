@@ -174,6 +174,8 @@ describe('eventFromApi / eventToPayload', () => {
       cliente_id: 3,
       processo_id: 10,
       processo_numero: '123',
+      responsavel: 7,
+      responsavel_nome: 'Mariana Souza',
       lembrete_em: '2026-06-10T08:00:00',
       concluido: 1,
     });
@@ -188,9 +190,16 @@ describe('eventFromApi / eventToPayload', () => {
       clientId: '3',
       processId: '10',
       processNumber: '123',
+      responsible: '7',
+      responsibleName: 'Mariana Souza',
       reminderAt: '2026-06-10T08:00:00',
       completed: true,
     });
+  });
+
+  it('sends responsavel id and nulls it when empty', () => {
+    expect(eventToPayload({ responsible: '7' }).responsavel).toBe('7');
+    expect(eventToPayload({ responsible: '' }).responsavel).toBeNull();
   });
 
   it('sends null reminder when empty and booleanizes concluido', () => {

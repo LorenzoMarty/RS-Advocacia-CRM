@@ -14,7 +14,13 @@ class Evento(models.Model):
     prioridade = models.CharField(max_length=50)
     cliente = models.ForeignKey("clientes.Cliente", on_delete=models.CASCADE)
     processo = models.ForeignKey("processos.Processo", on_delete=models.CASCADE)
-    responsavel = models.CharField(max_length=100)
+    responsavel = models.ForeignKey(
+        "usuarios.Usuario",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="eventos_responsavel",
+    )
     criado_por = models.CharField(max_length=100)
     local = models.CharField(max_length=200)
     observacoes = models.TextField(blank=True)

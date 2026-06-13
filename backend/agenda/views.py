@@ -70,6 +70,7 @@ def _sincronizar_evento_se_conectado(request, evento):
 def serialize_evento(evento: Evento):
     cliente_nome = evento.cliente.nome if evento.cliente_id else ""
     processo_numero = evento.processo.numero_processo if evento.processo_id else ""
+    responsavel_nome = evento.responsavel.nome if evento.responsavel_id else ""
     return {
         "id": str(evento.pk),
         "pk": evento.pk,
@@ -84,7 +85,8 @@ def serialize_evento(evento: Evento):
         "cliente_nome": cliente_nome,
         "processo_id": str(evento.processo_id),
         "processo_numero": processo_numero,
-        "responsavel": evento.responsavel,
+        "responsavel": str(evento.responsavel_id) if evento.responsavel_id else "",
+        "responsavel_nome": responsavel_nome,
         "criado_por": evento.criado_por,
         "local": evento.local,
         "observacoes": evento.observacoes,
@@ -104,7 +106,7 @@ def listar_eventos(request):
         return metodo_nao_permitido(["GET"])
 
     eventos = (
-        _eventos_compromisso_queryset().select_related("cliente", "processo").all()
+        _eventos_compromisso_queryset().select_related("cliente", "processo", "responsavel").all()
     )
     serialized = [serialize_evento(evento) for evento in eventos]
     return resposta_sucesso({"eventos": serialized})
@@ -128,7 +130,7 @@ def criar_evento(request):
 
         google_sync = _sincronizar_evento_se_conectado(request, evento)
 
-        evento = Evento.objects.select_related("cliente", "processo").get(pk=evento.pk)
+        evento = Evento.objects.select_related("cliente", "processo", "responsavel").get(pk=evento.pk)
         serialized = serialize_evento(evento)
 
         return resposta_sucesso(
@@ -146,7 +148,7 @@ def detalhes_evento(request, evento_id):
         return metodo_nao_permitido(["GET"])
 
     evento = get_object_or_404(
-        _eventos_compromisso_queryset().select_related("cliente", "processo"),
+        _eventos_compromisso_queryset().select_related("cliente", "processo", "responsavel"),
         pk=evento_id,
     )
     serialized = serialize_evento(evento)
@@ -171,7 +173,7 @@ def editar_evento(request, evento_id):
 
         google_sync = _sincronizar_evento_se_conectado(request, evento)
 
-        evento = Evento.objects.select_related("cliente", "processo").get(pk=evento.pk)
+        evento = Evento.objects.select_related("cliente", "processo", "responsavel").get(pk=evento.pk)
         serialized = serialize_evento(evento)
         return resposta_sucesso(
             {"evento": serialized, "sincronizacao_google": google_sync},
@@ -195,7 +197,7 @@ def excluir_evento(request, evento_id):
     except Exception:
         logger.exception("Erro ao excluir evento no Google Calendar.")
         return resposta_erro(
-            "Nao foi possivel excluir o evento no Google Calendar. Tente novamente.",
+            "Não foi possível excluir o evento no Google Calendar. Tente novamente.",
             status=502,
         )
 
@@ -240,7 +242,7 @@ def sincronizar_google_calendar(request):
         )
 
     eventos = (
-        _eventos_compromisso_queryset().select_related("cliente", "processo").all()
+        _eventos_compromisso_queryset().select_related("cliente", "processo", "responsavel").all()
     )
     serialized = [serialize_evento(evento) for evento in eventos]
     return resposta_sucesso(

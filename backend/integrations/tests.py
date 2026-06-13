@@ -172,7 +172,7 @@ class GoogleCalendarSyncTests(TestCase):
             prioridade="Media",
             cliente=cliente,
             processo=processo,
-            responsavel=self.usuario.nome,
+            responsavel=self.usuario,
             criado_por=self.usuario.nome,
             local="Online",
             observacoes="",

@@ -174,8 +174,8 @@ export function AgendaDayPage() {
                             {process ? (
                               <span className="meta-chip">{process.number}</span>
                             ) : null}
-                            {event.responsible && !client ? (
-                              <span className="meta-chip">{event.responsible}</span>
+                            {event.responsibleName && !client ? (
+                              <span className="meta-chip">{event.responsibleName}</span>
                             ) : null}
                           </div>
                           <button

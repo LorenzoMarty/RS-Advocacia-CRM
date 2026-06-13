@@ -46,7 +46,7 @@ def _erros_configuracao_processamento():
     modo = _modo_processamento()
     if not settings.OPENAI_API_KEY:
         erros["openai"] = [
-            "OPENAI_API_KEY nao configurada no backend. "
+            "OPENAI_API_KEY não configurada no backend. "
             "Defina a variavel na Vercel e faca novo deploy."
         ]
     if modo not in PROCESSING_MODES:
@@ -55,7 +55,7 @@ def _erros_configuracao_processamento():
         ]
     if modo == "celery" and not settings.CELERY_BROKER_URL:
         erros["fila"] = [
-            "Redis/Celery nao configurado. Defina REDIS_URL ou CELERY_BROKER_URL "
+            "Redis/Celery não configurado. Defina REDIS_URL ou CELERY_BROKER_URL "
             "e mantenha um worker Celery rodando fora da Vercel, ou use "
             "MEETINGS_PROCESSING_MODE=inline."
         ]
@@ -64,7 +64,7 @@ def _erros_configuracao_processamento():
 
 def _falhar_gravacao_por_fila(gravacao, exc):
     mensagem = (
-        "Nao foi possivel enfileirar o processamento da gravacao. "
+        "Não foi possível enfileirar o processamento da gravação. "
         "Verifique Redis/Celery worker."
     )
     gravacao.status = Gravacao.Status.FALHOU
@@ -77,7 +77,7 @@ def _falhar_gravacao_por_fila(gravacao, exc):
 def _resposta_falha_processamento_inline(gravacao, exc):
     gravacao.refresh_from_db()
     mensagem = (
-        "Nao foi possivel transcrever/resumir a gravacao nesta requisicao. "
+        "Não foi possível transcrever/resumir a gravação nesta requisição. "
         "Verifique OPENAI_API_KEY, tamanho do audio e limite de execucao da Vercel."
     )
     logger.exception("Falha ao processar gravacao %s em modo inline.", gravacao.pk)
@@ -135,7 +135,7 @@ def _mapear_erro_google(exc):
         return resposta_erro(str(exc), status=401)
     if isinstance(exc, GoogleApiError):
         logger.warning("Erro da API Google Drive: %s", exc)
-        detalhe = "Nao foi possivel concluir a operacao no Google Drive."
+        detalhe = "Não foi possível concluir a operação no Google Drive."
         if settings.DEBUG:
             causa = exc.__cause__
             status = getattr(getattr(causa, "resp", None), "status", None)

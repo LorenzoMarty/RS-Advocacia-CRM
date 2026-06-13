@@ -84,7 +84,7 @@ def _ensure_clients():
             "telefone": "(11) 98888-1200",
             "cpf": "12345678909",
             "tipo_cliente": "mensalista",
-            "obs": "Cliente com acompanhamento ativo em demanda civel e prazos fatais nesta semana.",
+            "obs": "Cliente com acompanhamento ativo em demanda cível e prazos fatais nesta semana.",
         },
     )
     almeida, _ = Cliente.objects.update_or_create(
@@ -104,7 +104,7 @@ def _ensure_clients():
             "telefone": "(21) 97777-8844",
             "cpf": "98765432100",
             "tipo_cliente": "esporadico",
-            "obs": "Atendimento pontual em acao indenizatoria.",
+            "obs": "Atendimento pontual em ação indenizatória.",
         },
     )
     return bruno, almeida, ana
@@ -116,8 +116,8 @@ def _ensure_processes(clients):
         numero_processo="1000002-20.2026.8.26.0100",
         defaults={
             "cliente": bruno,
-            "descricao": "Acao de obrigacao de fazer com pedido de tutela de urgencia.",
-            "vara": "12a Vara Civel de Sao Paulo",
+            "descricao": "Ação de obrigação de fazer com pedido de tutela de urgência.",
+            "vara": "12ª Vara Cível de São Paulo",
             "area_juridica": "Civel",
             "status": "Em andamento",
             "advogado_responsavel": "Mariana Souza",
@@ -127,8 +127,8 @@ def _ensure_processes(clients):
         numero_processo="0002451-77.2026.5.02.0031",
         defaults={
             "cliente": almeida,
-            "descricao": "Reclamacao trabalhista com audiencia inicial designada.",
-            "vara": "31a Vara do Trabalho de Sao Paulo",
+            "descricao": "Reclamação trabalhista com audiência inicial designada.",
+            "vara": "31ª Vara do Trabalho de São Paulo",
             "area_juridica": "Trabalhista",
             "status": "Aguardando despacho",
             "advogado_responsavel": "Renata Sampaio",
@@ -138,8 +138,8 @@ def _ensure_processes(clients):
         numero_processo="0801123-45.2026.8.19.0001",
         defaults={
             "cliente": ana,
-            "descricao": "Acao indenizatoria por danos materiais e morais.",
-            "vara": "5a Vara Civel do Rio de Janeiro",
+            "descricao": "Ação indenizatória por danos materiais e morais.",
+            "vara": "5ª Vara Cível do Rio de Janeiro",
             "area_juridica": "Civel",
             "status": "Ativo",
             "advogado_responsavel": "Mariana Souza",
@@ -151,10 +151,10 @@ def _ensure_processes(clients):
 def _ensure_events(processes):
     processo_bruno, processo_almeida, processo_ana = processes
     Evento.objects.update_or_create(
-        titulo="Audiencia de conciliacao",
+        titulo="Audiência de conciliação",
         processo=processo_bruno,
         defaults={
-            "descricao": "Audiencia virtual. Conferir documentos e proposta antes do horario.",
+            "descricao": "Audiência virtual. Conferir documentos e proposta antes do horário.",
             "data_inicio": _demo_datetime(0, 9, 30),
             "data_fim": _demo_datetime(0, 10, 30),
             "tipo_evento": "Audiencia",
@@ -163,17 +163,17 @@ def _ensure_events(processes):
             "cliente": processo_bruno.cliente,
             "responsavel": "Mariana Souza",
             "criado_por": "Renata Sampaio",
-            "local": "Videoconferencia",
+            "local": "Videoconferência",
             "observacoes": "Enviar link ao cliente 30 minutos antes.",
             "lembrete_em": _demo_datetime(0, 9, 0),
             "concluido": False,
         },
     )
     Evento.objects.update_or_create(
-        titulo="Reuniao de alinhamento trabalhista",
+        titulo="Reunião de alinhamento trabalhista",
         processo=processo_almeida,
         defaults={
-            "descricao": "Revisar documentos de jornada e estrategia para audiencia.",
+            "descricao": "Revisar documentos de jornada e estratégia para audiência.",
             "data_inicio": _demo_datetime(1, 14, 0),
             "data_fim": _demo_datetime(1, 15, 0),
             "tipo_evento": "Reuniao",
@@ -215,12 +215,12 @@ def _ensure_deadlines(processes):
         titulo="1000002-20.2026.8.26.0100 - Bruno Lima",
         processo=processo_bruno,
         defaults={
-            "descricao": "Preparar contestacao e documentos para protocolo.",
+            "descricao": "Preparar contestação e documentos para protocolo.",
             "data_limite": _demo_date(0),
             "responsavel": "Mariana Souza",
             "status": "Pendente",
             "prioridade": "Alta",
-            "observacoes": "Conferir procuracao e comprovantes anexos.",
+            "observacoes": "Conferir procuração e comprovantes anexos.",
             "concluido": False,
             "tempo_decorrido_segundos": 2700,
             "timer_iniciado_em": None,
@@ -231,7 +231,7 @@ def _ensure_deadlines(processes):
         titulo="0002451-77.2026.5.02.0031 - Almeida Comercio LTDA",
         processo=processo_almeida,
         defaults={
-            "descricao": "Manifestacao sobre documentos juntados pela parte reclamante.",
+            "descricao": "Manifestação sobre documentos juntados pela parte reclamante.",
             "data_limite": _demo_date(1),
             "responsavel": "Renata Sampaio",
             "status": "Em andamento",
@@ -247,7 +247,7 @@ def _ensure_deadlines(processes):
         titulo="0801123-45.2026.8.19.0001 - Ana Ribeiro",
         processo=processo_ana,
         defaults={
-            "descricao": "Protocolar peticao inicial revisada.",
+            "descricao": "Protocolar petição inicial revisada.",
             "data_limite": _demo_date(7),
             "responsavel": "Mariana Souza",
             "status": "Protocolar",
@@ -272,7 +272,7 @@ def _ensure_petitions(clients, processes):
             "tipo": Peticao.TIPO_CONTESTACAO,
             "responsavel_acao": "Mariana Souza",
             "link_drive": "https://drive.google.com/",
-            "motivo_pendente": "Aguardando confirmacao de documentos complementares.",
+            "motivo_pendente": "Aguardando confirmação de documentos complementares.",
             "area_juridica": "Civel",
             "status": Peticao.STATUS_PENDENTE,
             "criado_por": "Renata Sampaio",
@@ -327,24 +327,24 @@ def _ensure_meetings(clients):
             "tamanho_bytes": 1843200,
             "status": Gravacao.Status.CONCLUIDA,
             "transcricao": (
-                "Rose e Irua comentaram as anotacoes sobre concausas preexistente, "
+                "Rose e Iruã comentaram as anotações sobre concausas preexistente, "
                 "concomitante e superveniente. A equipe alinhou a necessidade de "
-                "revisar enunciados e sumulas para consolidar o material de estudo."
+                "revisar enunciados e súmulas para consolidar o material de estudo."
             ),
             "resumo": "\n".join(
                 [
                     "## Resumo executivo",
-                    "Reuniao formativa para alinhar estudo juridico sobre concausas e nexo causal.",
+                    "Reunião formativa para alinhar estudo jurídico sobre concausas e nexo causal.",
                     "",
                     "## Participantes",
                     "- Rose",
-                    "- Irua",
-                    "- Equipe juridica interna",
+                    "- Iruã",
+                    "- Equipe jurídica interna",
                     "",
-                    "## Proximas acoes",
-                    "- Solicitar anotacoes completas a Rose e Irua.",
-                    "- Preparar resumo juridico para a proxima aula.",
-                    "- Confirmar data do proximo encontro formativo.",
+                    "## Próximas ações",
+                    "- Solicitar anotações completas a Rose e Iruã.",
+                    "- Preparar resumo jurídico para a próxima aula.",
+                    "- Confirmar data do próximo encontro formativo.",
                 ]
             ),
             "provedor": "demo",
@@ -355,7 +355,7 @@ def _ensure_meetings(clients):
         },
     )
     Reuniao.objects.update_or_create(
-        titulo="Alinhamento de audiencia - Bruno Lima",
+        titulo="Alinhamento de audiência - Bruno Lima",
         defaults={
             "data_reuniao": _demo_datetime(1, 15, 0),
             "cliente": bruno,

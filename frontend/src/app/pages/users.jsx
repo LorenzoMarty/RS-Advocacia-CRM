@@ -211,8 +211,7 @@ export function UserFormPage() {
                 id="user-role"
                 label="Cargo"
                 error={errors.roleId}
-                headLink={<Link className="field-link" to="/cargos/novo">Criar cargo</Link>}
-                note="Se o cargo ainda não existir, crie-o e volte para selecionar aqui."
+                note="Selecione um dos cargos disponíveis. A criação de cargos é feita pelo administrador do sistema."
               >
                 <select id="user-role" value={form.roleId} onChange={(event) => setForm((currentForm) => ({ ...currentForm, roleId: event.target.value }))}>
                   <option value="">Selecione o cargo</option>
@@ -243,7 +242,7 @@ export function UserDetailPage() {
   }
 
   const relatedProcesses = processes.filter((process) => normalizeText(process.owner) === normalizeText(user.name));
-  const relatedEvents = events.filter((event) => normalizeText(event.responsible) === normalizeText(user.name));
+  const relatedEvents = events.filter((event) => event.responsible === user.id);
   const linkedRole = roles.find((role) => role.id === user.roleId) || null;
 
   return (
