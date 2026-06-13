@@ -13,8 +13,10 @@ export function ComboField({
   customLabel = '+ Digitar novo...',
   customPlaceholder = 'Digite o novo valor',
 }) {
-  const known = [...new Set(options.filter(Boolean))];
-  const [mode, setMode] = useState(() => (value && !known.includes(value) ? 'custom' : 'select'));
+  // Inclui o valor atual na lista para que a `<option>` dele seja fixa: alterar opções durante o
+  // onChange do <select> (option condicional) causava o crash removeChild do React.
+  const known = [...new Set([...(value ? [value] : []), ...options].filter(Boolean))];
+  const [mode, setMode] = useState(() => (value && !options.filter(Boolean).includes(value) ? 'custom' : 'select'));
 
   if (mode === 'custom') {
     return (
@@ -54,7 +56,6 @@ export function ComboField({
       }}
     >
       <option value="">{selectPlaceholder}</option>
-      {value && !known.includes(value) ? <option value={value}>{value}</option> : null}
       {known.map((option) => (
         <option key={option} value={option}>{option}</option>
       ))}
