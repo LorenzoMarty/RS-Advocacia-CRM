@@ -55,6 +55,44 @@ class GoogleOAuthTests(TestCase):
         GOOGLE_CLIENT_SECRET="secret",
         GOOGLE_REDIRECT_URI=CALLBACK,
     )
+    def test_login_ignora_sessao_ambiente_e_nao_vincula(self):
+        # Sessão ambiente (ex.: auto-login demo) não pode transformar o login
+        # em vínculo de conta — isso rejeitava e-mails diferentes no callback.
+        usuario = Usuario.objects.create(
+            nome="Sessao Demo", email="demo@example.com", cargo="Administrador"
+        )
+        session = self.client.session
+        session["usuario_id"] = usuario.pk
+        session.save()
+
+        self.client.get(reverse("login_google"))
+
+        state = self.client.session["google_oauth_state"]
+        self.assertIsNone(state["usuario_id"])
+
+    @override_settings(
+        GOOGLE_CLIENT_ID="client-id",
+        GOOGLE_CLIENT_SECRET="secret",
+        GOOGLE_REDIRECT_URI=CALLBACK,
+    )
+    def test_vincular_explicito_usa_usuario_da_sessao(self):
+        usuario = Usuario.objects.create(
+            nome="Logado", email="logado@example.com", cargo="Administrador"
+        )
+        session = self.client.session
+        session["usuario_id"] = usuario.pk
+        session.save()
+
+        self.client.get(reverse("login_google"), {"vincular": "1"})
+
+        state = self.client.session["google_oauth_state"]
+        self.assertEqual(state["usuario_id"], usuario.pk)
+
+    @override_settings(
+        GOOGLE_CLIENT_ID="client-id",
+        GOOGLE_CLIENT_SECRET="secret",
+        GOOGLE_REDIRECT_URI=CALLBACK,
+    )
     def test_reautorizacao_forca_consentimento_no_mesmo_fluxo(self):
         response = self.client.get(reverse("login_google"), {"force_consent": "1"})
         query = parse_qs(urlsplit(response["Location"]).query)

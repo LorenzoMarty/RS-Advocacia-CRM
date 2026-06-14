@@ -97,11 +97,16 @@ def begin_authorization(
     *,
     force_consent: bool = False,
     next_path: str = "/",
+    link_to_session: bool = False,
 ) -> HttpResponseRedirect:
     configured_client_id = client_id()
     client_secret()
     state = token_urlsafe(32)
-    initiating_user = current_usuario(request)
+    # Só vincula a conta Google ao usuário em sessão quando o chamador pede
+    # explicitamente (fluxo de reautorização/conectar calendar). No login
+    # normal, uma sessão ambiente (ex.: auto-login demo) não pode transformar
+    # o login em vínculo — isso rejeitava e-mails diferentes do da sessão.
+    initiating_user = current_usuario(request) if link_to_session else None
     request.session[STATE_SESSION_KEY] = {
         "value": state,
         "usuario_id": initiating_user.pk if initiating_user else None,
