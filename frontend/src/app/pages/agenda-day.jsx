@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Link,
   useNavigate,
@@ -26,8 +27,10 @@ const DAY_HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 07–22
 export function AgendaDayPage() {
   const params = useParams();
   const navigate = useNavigate();
-  const { clients, deleteEvent, events, processes } = useAppState();
+  const { clients, deleteEvent, events, moveEvent, processes } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
+  const [draggingEventId, setDraggingEventId] = useState("");
+  const [dragOverHour, setDragOverHour] = useState(null);
 
   const date = parseDayParam(params.date);
 
@@ -53,6 +56,58 @@ export function AgendaDayPage() {
     if (canDelete) {
       await deleteEvent(eventId);
     }
+  }
+
+  function toLocalIso(value) {
+    const pad = (part) => String(part).padStart(2, "0");
+    return (
+      `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}` +
+      `T${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`
+    );
+  }
+
+  function handleEventDragStart(dragEvent, eventId) {
+    setDraggingEventId(eventId);
+    dragEvent.dataTransfer.effectAllowed = "move";
+    dragEvent.dataTransfer.setData("text/plain", eventId);
+  }
+
+  function handleEventDragEnd() {
+    setDraggingEventId("");
+    setDragOverHour(null);
+  }
+
+  function handleSlotDragOver(dragEvent, hour) {
+    if (!draggingEventId) return;
+    dragEvent.preventDefault();
+    dragEvent.dataTransfer.dropEffect = "move";
+    if (dragOverHour !== hour) setDragOverHour(hour);
+  }
+
+  async function handleSlotDrop(dragEvent, hour) {
+    dragEvent.preventDefault();
+    const eventId = dragEvent.dataTransfer.getData("text/plain") || draggingEventId;
+    setDraggingEventId("");
+    setDragOverHour(null);
+
+    const event = events.find((item) => item.id === eventId);
+    if (!event) return;
+
+    const start = new Date(event.start);
+    if (Number.isNaN(start.getTime()) || start.getHours() === hour) return;
+
+    const newStart = new Date(start);
+    newStart.setHours(hour, start.getMinutes(), start.getSeconds(), 0);
+
+    let newEnd = event.end;
+    if (event.end) {
+      const end = new Date(event.end);
+      if (!Number.isNaN(end.getTime())) {
+        newEnd = toLocalIso(new Date(newStart.getTime() + (end - start)));
+      }
+    }
+
+    await moveEvent(eventId, { start: toLocalIso(newStart), end: newEnd });
   }
 
   function goDay(offset) {
@@ -137,7 +192,10 @@ export function AgendaDayPage() {
               return (
                 <div
                   key={hour}
-                  className={`timeline-row${slotEvents.length ? " has-events" : ""}${isNow ? " is-now" : ""}`}
+                  className={`timeline-row${slotEvents.length ? " has-events" : ""}${isNow ? " is-now" : ""}${dragOverHour === hour && draggingEventId ? " is-drop-target" : ""}`}
+                  onDragOver={(dragEvent) => handleSlotDragOver(dragEvent, hour)}
+                  onDragEnter={(dragEvent) => handleSlotDragOver(dragEvent, hour)}
+                  onDrop={(dragEvent) => handleSlotDrop(dragEvent, hour)}
                 >
                   <div className="timeline-hour">
                     <span>{String(hour).padStart(2, "0")}:00</span>
@@ -151,9 +209,12 @@ export function AgendaDayPage() {
                       return (
                         <div
                           key={event.id}
-                          className={`timeline-event type-${getEventTypeKey(event.type)}${isOverdueEvent(event) ? " is-overdue" : ""}`}
+                          className={`timeline-event type-${getEventTypeKey(event.type)}${isOverdueEvent(event) ? " is-overdue" : ""}${draggingEventId === event.id ? " is-dragging" : ""}`}
                           role="link"
                           tabIndex="0"
+                          draggable
+                          onDragStart={(dragEvent) => handleEventDragStart(dragEvent, event.id)}
+                          onDragEnd={handleEventDragEnd}
                           onClick={() => navigate(`/agenda/${event.id}`)}
                           onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/agenda/${event.id}`); }}
                         >

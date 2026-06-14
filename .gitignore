@@ -23,6 +23,9 @@ pnpm-debug.log*
 db.sqlite3
 media/
 
+# graphify knowledge graph (regenerável: graphify update .)
+graphify-out/
+
 # Build/cache output
 dist/
 build/
