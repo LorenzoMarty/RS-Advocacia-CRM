@@ -4,7 +4,7 @@ from django.test import TestCase, override_settings
 
 from clientes.models import Cliente
 from documentos import services
-from documentos.models import ClienteDrive, DocumentoCliente
+from documentos.models import ClienteDrive, DocumentoCliente, PastaGerenciada
 from integrations.google.exceptions import GoogleConfigurationError
 from processos.models import Processo
 
@@ -314,3 +314,152 @@ class TemplateTests(TestCase):
         mock_drive.list_folders.assert_called_once_with(
             mock_service.return_value, "sub-folder"
         )
+
+
+@override_settings(GOOGLE_DRIVE_ROOT_FOLDER_ID=ROOT)
+class PastaNumeradaTests(TestCase):
+    def setUp(self):
+        self.cliente = _cliente()
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_create_prefixes_sequential_number(self, mock_drive, mock_service):
+        mock_drive.create_folder.side_effect = [
+            {"id": "f1", "name": "1. A"},
+            {"id": "f2", "name": "2. B"},
+            {"id": "f3", "name": "3. C"},
+        ]
+        for nome in ("A", "B", "C"):
+            services.criar_pasta(
+                "user", self.cliente, nome=nome, parent_id="parent"
+            )
+
+        nomes = [c.args[1] for c in mock_drive.create_folder.call_args_list]
+        self.assertEqual(nomes, ["1. A", "2. B", "3. C"])
+        ordens = list(
+            PastaGerenciada.objects.filter(parent_drive_id="parent")
+            .order_by("ordem")
+            .values_list("ordem", "nome_base")
+        )
+        self.assertEqual(ordens, [(1, "A"), (2, "B"), (3, "C")])
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_delete_renumbers_following_siblings(self, mock_drive, mock_service):
+        mock_drive.create_folder.side_effect = [
+            {"id": "f1", "name": "1. A"},
+            {"id": "f2", "name": "2. B"},
+            {"id": "f3", "name": "3. C"},
+        ]
+        for nome in ("A", "B", "C"):
+            services.criar_pasta("user", self.cliente, nome=nome, parent_id="parent")
+
+        services.excluir_pasta("user", self.cliente, "f2")
+
+        # B removed; C must become "2. C" (gap closed) via rename_file.
+        mock_drive.delete_folder.assert_called_once_with(
+            mock_service.return_value, "f2"
+        )
+        mock_drive.rename_file.assert_called_once_with(
+            mock_service.return_value, "f3", "2. C"
+        )
+        restantes = list(
+            PastaGerenciada.objects.filter(parent_drive_id="parent")
+            .order_by("ordem")
+            .values_list("ordem", "nome_base")
+        )
+        self.assertEqual(restantes, [(1, "A"), (2, "C")])
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_rename_keeps_number(self, mock_drive, mock_service):
+        mock_drive.create_folder.return_value = {"id": "f1", "name": "1. A"}
+        services.criar_pasta("user", self.cliente, nome="A", parent_id="parent")
+
+        services.renomear_pasta("user", self.cliente, "f1", "Contratos")
+
+        mock_drive.rename_file.assert_called_once_with(
+            mock_service.return_value, "f1", "1. Contratos"
+        )
+        self.assertEqual(
+            PastaGerenciada.objects.get(drive_folder_id="f1").nome_base, "Contratos"
+        )
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_rename_rejects_unmanaged_folder(self, mock_drive, mock_service):
+        with self.assertRaises(ValueError):
+            services.renomear_pasta("user", self.cliente, "structural", "X")
+
+
+@override_settings(GOOGLE_DRIVE_ROOT_FOLDER_ID=ROOT)
+class RenameSyncTests(TestCase):
+    def setUp(self):
+        self.cliente = _cliente(nome="Cliente Antigo")
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_renomear_pasta_cliente_renames_root_folder(self, mock_drive, mock_service):
+        ClienteDrive.objects.create(
+            cliente=self.cliente,
+            pasta_cliente_id="cliente-folder",
+            pasta_peticoes_id="",
+            pasta_documentos_id="",
+            pasta_outros_id="",
+        )
+
+        services.renomear_pasta_cliente("user", self.cliente, "Cliente Novo")
+
+        mock_drive.rename_file.assert_called_once_with(
+            mock_service.return_value, "cliente-folder", "Cliente Novo"
+        )
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_renomear_pasta_cliente_noop_without_drive(self, mock_drive, mock_service):
+        services.renomear_pasta_cliente("user", self.cliente, "Cliente Novo")
+        mock_drive.rename_file.assert_not_called()
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_renomear_pasta_processo_renames_by_old_name(
+        self, mock_drive, mock_service
+    ):
+        ClienteDrive.objects.create(
+            cliente=self.cliente,
+            pasta_cliente_id="cliente-folder",
+            pasta_peticoes_id="",
+            pasta_documentos_id="",
+            pasta_outros_id="",
+        )
+        processo = _processo(self.cliente, area="Trabalhista", numero="0001234-56.2026")
+        mock_drive.list_folders.return_value = [
+            {"id": "p-old", "name": "Cível - 0001234-56.2026"},
+            {"id": "other", "name": "Outra"},
+        ]
+
+        services.renomear_pasta_processo(
+            "user", processo, "Cível - 0001234-56.2026"
+        )
+
+        mock_drive.rename_file.assert_called_once_with(
+            mock_service.return_value, "p-old", "Trabalhista - 0001234-56.2026"
+        )
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
+    def test_renomear_pasta_processo_noop_when_name_unchanged(
+        self, mock_drive, mock_service
+    ):
+        ClienteDrive.objects.create(
+            cliente=self.cliente,
+            pasta_cliente_id="cliente-folder",
+            pasta_peticoes_id="",
+            pasta_documentos_id="",
+            pasta_outros_id="",
+        )
+        processo = _processo(self.cliente, area="Cível", numero="0001234-56.2026")
+
+        services.renomear_pasta_processo("user", processo, "Cível - 0001234-56.2026")
+
+        mock_drive.rename_file.assert_not_called()

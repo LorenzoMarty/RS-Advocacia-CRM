@@ -20,7 +20,7 @@ from integrations.google import drive
 from integrations.google.client import drive_service
 from integrations.google.exceptions import GoogleConfigurationError
 
-from .models import ClienteDrive, DocumentoCliente
+from .models import ClienteDrive, DocumentoCliente, PastaGerenciada
 
 # Subfolders created under every client folder, in display order.
 SUBPASTAS = ("Petições", "Documentos", "Outros")
@@ -267,16 +267,152 @@ def listar_conteudo_pasta(usuario, cliente, folder_id: str | None = None) -> dic
     }
 
 
-def criar_pasta(usuario, *, nome: str, parent_id: str) -> dict:
-    """Create a subfolder ``nome`` under ``parent_id`` and return its metadata."""
+def _nome_numerado(ordem: int, nome_base: str) -> str:
+    """Display name of a managed folder: ``"<ordem>. <nome_base>"``."""
+    return f"{ordem}. {nome_base}"
+
+
+def pastas_gerenciadas_ids(parent_id: str) -> set[str]:
+    """Drive ids of managed (auto-numbered) folders under ``parent_id``."""
+    return set(
+        PastaGerenciada.objects.filter(parent_drive_id=parent_id).values_list(
+            "drive_folder_id", flat=True
+        )
+    )
+
+
+def criar_pasta(usuario, cliente, *, nome: str, parent_id: str) -> dict:
+    """Create an auto-numbered subfolder under ``parent_id``; track it.
+
+    The next number is one past the count of managed siblings, so the sequence
+    is gap-free. Returns the Drive metadata (its ``name`` already carries the
+    number prefix).
+    """
     service = drive_service(usuario)
-    return drive.create_folder(service, nome, parent_id)
+    ordem = PastaGerenciada.objects.filter(parent_drive_id=parent_id).count() + 1
+    meta = drive.create_folder(service, _nome_numerado(ordem, nome), parent_id)
+    PastaGerenciada.objects.create(
+        cliente=cliente,
+        parent_drive_id=parent_id,
+        drive_folder_id=meta["id"],
+        ordem=ordem,
+        nome_base=nome,
+    )
+    return meta
 
 
-def excluir_pasta(usuario, folder_id: str) -> None:
-    """Delete folder ``folder_id`` (and its contents) from Drive."""
+def renomear_pasta(usuario, cliente, folder_id: str, novo_nome: str) -> dict:
+    """Rename a managed folder, keeping its number; return Drive metadata."""
+    registro = PastaGerenciada.objects.filter(
+        cliente=cliente, drive_folder_id=folder_id
+    ).first()
+    if registro is None:
+        raise ValueError("Apenas pastas criadas por você podem ser renomeadas.")
+    registro.nome_base = novo_nome
+    registro.save(update_fields=["nome_base"])
+    service = drive_service(usuario)
+    return drive.rename_file(
+        service, folder_id, _nome_numerado(registro.ordem, novo_nome)
+    )
+
+
+def excluir_pasta(usuario, cliente, folder_id: str) -> None:
+    """Delete ``folder_id`` from Drive; renumber managed siblings to close the gap.
+
+    Works for both managed and structural folders: structural folders are simply
+    deleted (no row to renumber).
+    """
     service = drive_service(usuario)
     drive.delete_folder(service, folder_id)
+
+    registro = PastaGerenciada.objects.filter(
+        cliente=cliente, drive_folder_id=folder_id
+    ).first()
+    if registro is None:
+        return
+
+    parent_id = registro.parent_drive_id
+    ordem_removida = registro.ordem
+    registro.delete()
+
+    posteriores = PastaGerenciada.objects.filter(
+        parent_drive_id=parent_id, ordem__gt=ordem_removida
+    ).order_by("ordem")
+    for irmao in posteriores:
+        irmao.ordem -= 1
+        irmao.save(update_fields=["ordem"])
+        drive.rename_file(
+            service, irmao.drive_folder_id, _nome_numerado(irmao.ordem, irmao.nome_base)
+        )
+
+
+# --- Documento de entidade (petições/prazos): 1 ref de Doc por entidade -------
+
+# Corpo HTML mínimo de um Doc em branco (Drive converte para Google Doc).
+EMPTY_DOC_HTML = "<p></p>"
+
+
+def pasta_peticoes_cliente(usuario, cliente) -> str:
+    """Return the id of the client's "Petições" folder (creating the tree if needed)."""
+    estrutura = ensure_client_drive_structure(usuario, cliente)
+    return estrutura.pasta_peticoes_id
+
+
+def pasta_processo_id(usuario, processo) -> str:
+    """Find-or-create the Drive folder of ``processo`` under its client; return id."""
+    service, pasta_cliente_id = _ensure_cliente_root(usuario, processo.cliente)
+    return drive.ensure_folder(
+        service, _nome_pasta_processo(processo), pasta_cliente_id
+    )
+
+
+def criar_documento_branco(usuario, *, parent_id: str, nome: str) -> dict:
+    """Create a blank Google Doc named ``nome`` under ``parent_id``; return metadata."""
+    service = drive_service(usuario)
+    return drive.create_google_doc(service, nome, parent_id, EMPTY_DOC_HTML)
+
+
+def excluir_arquivo(usuario, file_id: str) -> None:
+    """Delete a Drive file by id (404 counts as success)."""
+    service = drive_service(usuario)
+    drive.delete_file(service, file_id)
+
+
+def nome_pasta_processo(processo) -> str:
+    """Public display name for a process Drive folder (``"<area> - <numero>"``)."""
+    return _nome_pasta_processo(processo)
+
+
+def renomear_pasta_cliente(usuario, cliente, novo_nome: str) -> None:
+    """Rename the client's root Drive folder to ``novo_nome``.
+
+    No-op when the client has no Drive folder yet. Best-effort: the caller
+    decides whether a Drive failure should abort the edit.
+    """
+    registro = ClienteDrive.objects.filter(cliente=cliente).first()
+    if not registro or not registro.pasta_cliente_id:
+        return
+    service = drive_service(usuario)
+    drive.rename_file(service, registro.pasta_cliente_id, novo_nome)
+
+
+def renomear_pasta_processo(usuario, processo, nome_antigo: str) -> None:
+    """Rename the process Drive folder from ``nome_antigo`` to its current name.
+
+    Locates the folder by its previous display name under the client root; no-op
+    when the client has no Drive folder or the old folder is absent.
+    """
+    pasta_cliente_id = _client_root_id(processo.cliente)
+    if not pasta_cliente_id:
+        return
+    service = drive_service(usuario)
+    novo_nome = _nome_pasta_processo(processo)
+    if novo_nome == nome_antigo:
+        return
+    for pasta in drive.list_folders(service, pasta_cliente_id):
+        if pasta.get("name") == nome_antigo:
+            drive.rename_file(service, pasta["id"], novo_nome)
+            return
 
 
 def upload_para_pasta(

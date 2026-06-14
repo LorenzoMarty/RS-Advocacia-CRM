@@ -50,6 +50,8 @@ function folderFromApi(folder) {
   return {
     id: String(folder.id || ''),
     name: folder.nome || '',
+    // True only for user-created auto-numbered folders (renameable).
+    managed: Boolean(folder.gerenciada),
   };
 }
 
@@ -80,6 +82,17 @@ export async function createDriveFolder(clientId, { name, parentId }) {
     method: 'POST',
     body: JSON.stringify({ nome: name, parent_id: parentId }),
   });
+  return folderFromApi(payload.pasta);
+}
+
+export async function renameDriveFolder(clientId, { folderId, name }) {
+  const payload = await apiRequest(
+    `/api/clientes/${clientId}/drive/pastas/${encodeURIComponent(folderId)}/`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ nome: name }),
+    },
+  );
   return folderFromApi(payload.pasta);
 }
 

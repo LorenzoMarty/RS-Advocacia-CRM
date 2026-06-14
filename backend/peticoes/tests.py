@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -111,3 +112,65 @@ class PeticoesViewsTests(TestCase):
         self.assertEqual(response.status_code, 200, response.json())
         self.assertEqual(peticao.status, Peticao.STATUS_PENDENTE)
         self.assertEqual(peticao.motivo_pendente, "")
+
+    def _peticao(self, **overrides):
+        defaults = {
+            "cliente": self.cliente,
+            "processo": self.processo,
+            "tipo": Peticao.TIPO_CONTESTACAO,
+            "adverso": "Empresa adversa",
+            "responsavel_acao": self.usuario.nome,
+            "area_juridica": "Civel",
+            "status": Peticao.STATUS_PENDENTE,
+        }
+        defaults.update(overrides)
+        return Peticao.objects.create(**defaults)
+
+    @patch("peticoes.views.documentos_services")
+    def test_documento_peticao_cria_doc_em_branco(self, mock_services):
+        peticao = self._peticao()
+        mock_services.pasta_peticoes_cliente.return_value = "pasta-peticoes"
+        mock_services.criar_documento_branco.return_value = {
+            "id": "doc-1",
+            "webViewLink": "https://docs.google.com/doc-1",
+        }
+
+        response = self.client.post(reverse("documento_peticao", args=[peticao.pk]))
+
+        self.assertEqual(response.status_code, 201, response.json())
+        mock_services.criar_documento_branco.assert_called_once()
+        _, kwargs = mock_services.criar_documento_branco.call_args
+        self.assertEqual(kwargs["parent_id"], "pasta-peticoes")
+        self.assertEqual(kwargs["nome"], "Contestação - Empresa adversa")
+        peticao.refresh_from_db()
+        self.assertEqual(peticao.drive_file_id, "doc-1")
+        self.assertEqual(peticao.link_drive, "https://docs.google.com/doc-1")
+
+    @patch("peticoes.views.documentos_services")
+    def test_documento_peticao_remove_e_apaga_no_drive(self, mock_services):
+        peticao = self._peticao(
+            drive_file_id="doc-1", link_drive="https://docs.google.com/doc-1"
+        )
+
+        response = self.client.delete(
+            reverse("documento_peticao", args=[peticao.pk]) + "?apagar=1"
+        )
+
+        self.assertEqual(response.status_code, 200, response.json())
+        mock_services.excluir_arquivo.assert_called_once_with(self.usuario, "doc-1")
+        peticao.refresh_from_db()
+        self.assertEqual(peticao.drive_file_id, "")
+        self.assertEqual(peticao.link_drive, "")
+
+    @patch("peticoes.views.documentos_services")
+    def test_documento_peticao_desvincula_sem_apagar(self, mock_services):
+        peticao = self._peticao(
+            drive_file_id="doc-1", link_drive="https://docs.google.com/doc-1"
+        )
+
+        response = self.client.delete(reverse("documento_peticao", args=[peticao.pk]))
+
+        self.assertEqual(response.status_code, 200, response.json())
+        mock_services.excluir_arquivo.assert_not_called()
+        peticao.refresh_from_db()
+        self.assertEqual(peticao.drive_file_id, "")

@@ -91,6 +91,38 @@ class DocumentoCliente(models.Model):
         return f"{self.cliente.nome} / {self.get_categoria_display()} / {self.nome}"
 
 
+class PastaGerenciada(models.Model):
+    """A user-created Drive folder whose display name carries an auto number.
+
+    Only folders created through the documents explorer are tracked here. The
+    Drive display name is ``"<ordem>. <nome_base>"``; deleting one renumbers the
+    siblings under the same parent so the sequence never has a gap. Structural
+    folders (Petições/Documentos/Outros, template and per-process folders) are
+    located by name elsewhere and are intentionally NOT tracked/renumbered.
+    """
+
+    cliente = models.ForeignKey(
+        "clientes.Cliente",
+        on_delete=models.CASCADE,
+        related_name="pastas_gerenciadas",
+    )
+    parent_drive_id = models.CharField(max_length=255)
+    drive_folder_id = models.CharField(max_length=255, unique=True)
+    ordem = models.PositiveIntegerField()
+    nome_base = models.CharField(max_length=255)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("parent_drive_id", "ordem")
+
+    def __str__(self):
+        return f"{self.ordem}. {self.nome_base}"
+
+    @property
+    def nome_exibicao(self) -> str:
+        return f"{self.ordem}. {self.nome_base}"
+
+
 def serialize_documento(documento: DocumentoCliente):
     return {
         "id": str(documento.pk),

@@ -16,6 +16,11 @@ urlpatterns = [
         name="editar_peticao",
     ),
     path(
+        "api/peticoes/<int:peticao_id>/documento/",
+        views.documento_peticao,
+        name="documento_peticao",
+    ),
+    path(
         "api/peticoes/<int:peticao_id>/excluir/",
         views.excluir_peticao,
         name="excluir_peticao",

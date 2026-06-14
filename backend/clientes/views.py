@@ -13,6 +13,20 @@ from core.utils import (
     resposta_erro,
     resposta_sucesso,
 )
+from documentos import services as documentos_services
+from integrations.google.exceptions import (
+    GoogleApiError,
+    GoogleAuthorizationRequired,
+    GoogleConfigurationError,
+)
+from integrations.google.oauth import current_usuario
+
+# Drive-folder sync is best-effort: a Drive failure never aborts the edit.
+_GOOGLE_ERRORS = (
+    GoogleConfigurationError,
+    GoogleAuthorizationRequired,
+    GoogleApiError,
+)
 
 
 def _filtrar_clientes(request):
@@ -122,9 +136,18 @@ def editar_cliente(request, cliente_id):
     except ValueError as exc:
         return resposta_erro(str(exc), status=400)
 
+    nome_antigo = cliente.nome
+
     form = ClienteForm(payload, instance=cliente)
     if form.is_valid():
         cliente = form.save()
+        if cliente.nome != nome_antigo:
+            try:
+                documentos_services.renomear_pasta_cliente(
+                    current_usuario(request), cliente, cliente.nome
+                )
+            except _GOOGLE_ERRORS:
+                pass
         serialized = serialize_cliente(cliente)
         return resposta_sucesso(
             {"cliente": serialized},

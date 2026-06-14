@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 
@@ -10,6 +13,15 @@ from core.utils import (
     resposta_erro,
     resposta_sucesso,
 )
+from documentos import services as documentos_services
+from documentos.views import SUPPORTED_DOCUMENT_EXTENSIONS
+from integrations.google.exceptions import (
+    GoogleApiError,
+    GoogleAuthorizationRequired,
+    GoogleConfigurationError,
+)
+from integrations.google.oauth import current_usuario
+from integrations.google.responses import mapear_erro_google
 from prazos.forms import PrazoForm
 from prazos.models import Prazo
 
@@ -52,6 +64,8 @@ def serialize_prazo(prazo: Prazo):
         "responsavel": prazo.responsavel,
         "criado_por": prazo.criado_por,
         "observacoes": prazo.observacoes,
+        "link_drive": prazo.link_drive,
+        "drive_file_id": prazo.drive_file_id,
         "concluido": prazo.concluido,
         "tempo_decorrido_segundos": prazo.tempo_decorrido_segundos,
         "timer_iniciado_em": isoformat_ou_nulo(prazo.timer_iniciado_em),
@@ -197,6 +211,119 @@ def atualizar_timer_prazo(request, prazo_id):
     prazo.save(update_fields=update_fields)
     return resposta_sucesso(
         {"prazo": serialize_prazo(prazo)}, mensagem="Timer atualizado."
+    )
+
+
+_GOOGLE_ERRORS = (
+    GoogleConfigurationError,
+    GoogleAuthorizationRequired,
+    GoogleApiError,
+)
+
+
+@app_permissions_required("prazos.change_prazo")
+def documento_prazo(request, prazo_id):
+    """Create (POST) a blank Doc in the process folder, or remove (DELETE) the ref.
+
+    DELETE com ``?apagar=1`` também exclui o arquivo no Drive (era temporário).
+    """
+    if request.method not in {"POST", "DELETE"}:
+        return metodo_nao_permitido(["POST", "DELETE"])
+
+    prazo = get_object_or_404(
+        Prazo.objects.select_related("processo", "processo__cliente"), pk=prazo_id
+    )
+    usuario = current_usuario(request)
+
+    if request.method == "POST":
+        nome = (prazo.titulo.strip() or "Prazo")[:255]
+        try:
+            parent_id = documentos_services.pasta_processo_id(usuario, prazo.processo)
+            meta = documentos_services.criar_documento_branco(
+                usuario, parent_id=parent_id, nome=nome
+            )
+        except _GOOGLE_ERRORS as exc:
+            return mapear_erro_google(exc)
+
+        prazo.drive_file_id = meta["id"]
+        prazo.link_drive = meta.get("webViewLink", "") or ""
+        prazo.save(update_fields=["drive_file_id", "link_drive", "atualizado_em"])
+        return resposta_sucesso(
+            {"prazo": serialize_prazo(prazo)},
+            mensagem="Documento criado no Google Drive.",
+            status=201,
+        )
+
+    apagar = request.GET.get("apagar") == "1"
+    if apagar and prazo.drive_file_id:
+        try:
+            documentos_services.excluir_arquivo(usuario, prazo.drive_file_id)
+        except _GOOGLE_ERRORS as exc:
+            return mapear_erro_google(exc)
+
+    prazo.drive_file_id = ""
+    prazo.link_drive = ""
+    prazo.save(update_fields=["drive_file_id", "link_drive", "atualizado_em"])
+    return resposta_sucesso(
+        {"prazo": serialize_prazo(prazo)}, mensagem="Documento removido do prazo."
+    )
+
+
+@app_permissions_required("prazos.change_prazo")
+def upload_documento_prazo(request, prazo_id):
+    """Upload a file into the process folder and set it as the prazo's document."""
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    prazo = get_object_or_404(
+        Prazo.objects.select_related("processo", "processo__cliente"), pk=prazo_id
+    )
+
+    arquivo = request.FILES.get("arquivo") or next(iter(request.FILES.values()), None)
+    if arquivo is None:
+        return resposta_erro({"arquivo": ["Envie um arquivo."]}, status=400)
+
+    extension = Path(arquivo.name or "").suffix.lower()
+    if extension not in SUPPORTED_DOCUMENT_EXTENSIONS:
+        formatos = ", ".join(
+            sorted(ext.removeprefix(".") for ext in SUPPORTED_DOCUMENT_EXTENSIONS)
+        )
+        return resposta_erro(
+            {"arquivo": [f"Formato inválido. Use: {formatos}."]}, status=400
+        )
+
+    max_bytes = settings.DRIVE_MAX_FILE_SIZE_MB * 1024 * 1024
+    if arquivo.size > max_bytes:
+        return resposta_erro(
+            {
+                "arquivo": [
+                    f"O arquivo deve ter no maximo {settings.DRIVE_MAX_FILE_SIZE_MB} MB."
+                ]
+            },
+            status=400,
+        )
+
+    usuario = current_usuario(request)
+    nome = (arquivo.name or "arquivo")[:255]
+    try:
+        parent_id = documentos_services.pasta_processo_id(usuario, prazo.processo)
+        meta = documentos_services.upload_para_pasta(
+            usuario,
+            folder_id=parent_id,
+            nome=nome,
+            content=arquivo.read(),
+            mime_type=arquivo.content_type or "",
+        )
+    except _GOOGLE_ERRORS as exc:
+        return mapear_erro_google(exc)
+
+    prazo.drive_file_id = meta["id"]
+    prazo.link_drive = meta.get("webViewLink", "") or ""
+    prazo.save(update_fields=["drive_file_id", "link_drive", "atualizado_em"])
+    return resposta_sucesso(
+        {"prazo": serialize_prazo(prazo)},
+        mensagem="Arquivo enviado ao Google Drive.",
+        status=201,
     )
 
 

@@ -208,11 +208,19 @@ export const api = {
   createDeadline: (payload) => deadlineRequest('criar/', jsonOptions('POST', payload)),
   updateDeadline: (id, payload) => deadlineRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
   updateDeadlineTimer: (id, payload) => deadlineRequest(`${id}/timer/`, jsonOptions('PATCH', payload)),
+  createDeadlineDocument: (id) => deadlineRequest(`${id}/documento/`, { method: 'POST' }),
+  removeDeadlineDocument: (id, { deleteFile = false } = {}) =>
+    deadlineRequest(`${id}/documento/${deleteFile ? '?apagar=1' : ''}`, { method: 'DELETE' }),
+  uploadDeadlineDocument: (id, formData) =>
+    deadlineRequest(`${id}/documento/upload/`, { method: 'POST', body: formData }),
   deleteDeadline: (id) => deadlineRequest(`${id}/excluir/`, { method: 'DELETE' }),
   listPetitions: () => petitionRequest(),
   getPetition: (id) => petitionRequest(`${id}/`),
   createPetition: (payload) => petitionRequest('criar/', jsonOptions('POST', payload)),
   updatePetition: (id, payload) => petitionRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
+  createPetitionDocument: (id) => petitionRequest(`${id}/documento/`, { method: 'POST' }),
+  removePetitionDocument: (id, { deleteFile = false } = {}) =>
+    petitionRequest(`${id}/documento/${deleteFile ? '?apagar=1' : ''}`, { method: 'DELETE' }),
   deletePetition: (id) => petitionRequest(`${id}/excluir/`, { method: 'DELETE' }),
   getProductivity: () => productivityRequest(),
   getProductivityResumo: (params = {}) => {

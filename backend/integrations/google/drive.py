@@ -201,6 +201,19 @@ def update_file(
     )
 
 
+def rename_file(service, file_id: str, name: str) -> dict[str, Any]:
+    """Rename ``file_id`` (file or folder) to ``name``; return updated metadata."""
+    return _execute(
+        lambda: service.files().update(
+            fileId=file_id,
+            body={"name": name},
+            fields=FILE_FIELDS,
+            supportsAllDrives=True,
+        ),
+        "Não foi possível renomear o item no Google Drive.",
+    )
+
+
 def list_files(service, parent_id: str) -> list[dict[str, Any]]:
     """List non-trashed, non-folder files directly under ``parent_id``."""
     query = (
