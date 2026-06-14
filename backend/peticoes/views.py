@@ -9,6 +9,14 @@ from core.utils import (
     resposta_erro,
     resposta_sucesso,
 )
+from documentos import services as documentos_services
+from integrations.google.exceptions import (
+    GoogleApiError,
+    GoogleAuthorizationRequired,
+    GoogleConfigurationError,
+)
+from integrations.google.oauth import current_usuario
+from integrations.google.responses import mapear_erro_google
 from peticoes.forms import PeticaoForm
 from peticoes.models import Peticao
 
@@ -48,6 +56,7 @@ def serialize_peticao(peticao: Peticao):
         "adverso": peticao.adverso,
         "responsavel_acao": peticao.responsavel_acao,
         "link_drive": peticao.link_drive,
+        "drive_file_id": peticao.drive_file_id,
         "motivo_pendente": peticao.motivo_pendente,
         "area_juridica": peticao.area_juridica,
         "status": peticao.status,
@@ -146,6 +155,68 @@ def editar_peticao(request, peticao_id):
         )
 
     return resposta_erro(erros_formulario(form), status=400)
+
+
+@app_permissions_required("peticoes.change_peticao")
+def documento_peticao(request, peticao_id):
+    """Create (POST) or remove (DELETE) the petition's Google Doc reference.
+
+    POST cria um Google Doc em branco na pasta "Petições" do cliente e guarda
+    ``drive_file_id``/``link_drive``. DELETE limpa a referência; com ``?apagar=1``
+    também exclui o arquivo no Drive (documento temporário).
+    """
+    if request.method not in {"POST", "DELETE"}:
+        return metodo_nao_permitido(["POST", "DELETE"])
+
+    peticao = get_object_or_404(
+        Peticao.objects.select_related("cliente", "processo"), pk=peticao_id
+    )
+    usuario = current_usuario(request)
+
+    if request.method == "POST":
+        nome = (f"{peticao.tipo} - {peticao.adverso}".strip() or "Petição")[:255]
+        try:
+            parent_id = documentos_services.pasta_peticoes_cliente(
+                usuario, peticao.cliente
+            )
+            meta = documentos_services.criar_documento_branco(
+                usuario, parent_id=parent_id, nome=nome
+            )
+        except (
+            GoogleConfigurationError,
+            GoogleAuthorizationRequired,
+            GoogleApiError,
+        ) as exc:
+            return mapear_erro_google(exc)
+
+        peticao.drive_file_id = meta["id"]
+        peticao.link_drive = meta.get("webViewLink", "") or ""
+        peticao.save(update_fields=["drive_file_id", "link_drive", "atualizado_em"])
+        return resposta_sucesso(
+            {"peticao": serialize_peticao(peticao)},
+            mensagem="Documento criado no Google Drive.",
+            status=201,
+        )
+
+    # DELETE: limpa a referência (e apaga no Drive quando pedido).
+    apagar = request.GET.get("apagar") == "1"
+    if apagar and peticao.drive_file_id:
+        try:
+            documentos_services.excluir_arquivo(usuario, peticao.drive_file_id)
+        except (
+            GoogleConfigurationError,
+            GoogleAuthorizationRequired,
+            GoogleApiError,
+        ) as exc:
+            return mapear_erro_google(exc)
+
+    peticao.drive_file_id = ""
+    peticao.link_drive = ""
+    peticao.save(update_fields=["drive_file_id", "link_drive", "atualizado_em"])
+    return resposta_sucesso(
+        {"peticao": serialize_peticao(peticao)},
+        mensagem="Documento removido da petição.",
+    )
 
 
 @app_permissions_required("peticoes.delete_peticao")

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { DEADLINE_STATUS_COLUMNS } from '../data';
@@ -479,17 +479,22 @@ export function DeadlineDetailPage() {
   const { confirm, confirmPopup } = useConfirmPopup();
   const {
     clients,
+    createDeadlineDocument,
     deleteDeadline,
     deadlines,
     isDeadlinesLoading,
     loadDeadline,
     processes,
+    removeDeadlineDocument,
     saveDeadlineTimer,
+    uploadDeadlineDocument,
   } = useAppState();
   const [remoteDeadline, setRemoteDeadline] = useState(null);
   const deadline = remoteDeadline || deadlines.find((item) => item.id === params.deadlineId) || null;
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [isTimerSaving, setIsTimerSaving] = useState(false);
+  const [isDocBusy, setIsDocBusy] = useState(false);
+  const docInputRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -568,6 +573,53 @@ export function DeadlineDetailPage() {
       setCurrentTime(Date.now());
     } finally {
       setIsTimerSaving(false);
+    }
+  }
+
+  async function handleCreateDoc() {
+    if (isDocBusy) return;
+    setIsDocBusy(true);
+    try {
+      const saved = await createDeadlineDocument(deadline.id);
+      if (saved) {
+        setRemoteDeadline(saved);
+        if (saved.driveLink) {
+          window.open(saved.driveLink, '_blank', 'noopener');
+        }
+      }
+    } finally {
+      setIsDocBusy(false);
+    }
+  }
+
+  async function handleUploadDoc(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || isDocBusy) return;
+    setIsDocBusy(true);
+    try {
+      const saved = await uploadDeadlineDocument(deadline.id, file);
+      if (saved) {
+        setRemoteDeadline(saved);
+      }
+    } finally {
+      setIsDocBusy(false);
+    }
+  }
+
+  async function handleRemoveDoc() {
+    if (isDocBusy) return;
+    const apagar = window.confirm(
+      'Remover o documento deste prazo?\n\nOK = apagar o arquivo no Drive também (era temporário).\nCancelar = manter o arquivo, só desvincular.',
+    );
+    setIsDocBusy(true);
+    try {
+      const saved = await removeDeadlineDocument(deadline.id, { deleteFile: apagar });
+      if (saved) {
+        setRemoteDeadline(saved);
+      }
+    } finally {
+      setIsDocBusy(false);
     }
   }
 
@@ -653,6 +705,62 @@ export function DeadlineDetailPage() {
                 Pausar
               </button>
             </div>
+          </section>
+
+          <section className="surface deadline-detail-panel">
+            <div className="section-head">
+              <div>
+                <h2 className="section-title">Documento no Drive</h2>
+                <p className="section-note">Arquivo da pasta do processo</p>
+              </div>
+              {deadline.driveFileId ? (
+                <StatusBadge tone="success">Documento criado</StatusBadge>
+              ) : null}
+            </div>
+
+            <input
+              ref={docInputRef}
+              type="file"
+              hidden
+              onChange={handleUploadDoc}
+            />
+
+            {deadline.driveFileId || deadline.driveLink ? (
+              <div className="deadline-doc-actions">
+                {deadline.driveLink ? (
+                  <a className="btn" href={deadline.driveLink} target="_blank" rel="noreferrer">
+                    Abrir no Drive
+                  </a>
+                ) : null}
+                <button
+                  className="btn btn-danger"
+                  type="button"
+                  onClick={handleRemoveDoc}
+                  disabled={isDocBusy}
+                >
+                  Remover
+                </button>
+              </div>
+            ) : (
+              <div className="deadline-doc-actions">
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={handleCreateDoc}
+                  disabled={isDocBusy}
+                >
+                  {isDocBusy ? 'Criando…' : 'Criar documento'}
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  onClick={() => docInputRef.current?.click()}
+                  disabled={isDocBusy}
+                >
+                  Enviar arquivo
+                </button>
+              </div>
+            )}
           </section>
 
           <section className="surface deadline-detail-panel">

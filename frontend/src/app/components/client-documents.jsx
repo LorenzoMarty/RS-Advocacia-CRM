@@ -6,6 +6,7 @@ import {
   createDriveFolder,
   deleteDriveFolder,
   listClientDrive,
+  renameDriveFolder,
   uploadToDriveFolder,
 } from '../services/documentos';
 import { EmptyState } from '../pages/common';
@@ -97,6 +98,26 @@ export function ClientDocuments({ client }) {
       setCreating(false);
       await load(currentFolderId, path);
       addFlash('Pasta criada no Google Drive.', 'success');
+    } catch (err) {
+      addFlash(errorText(err), 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRenameFolder(folder) {
+    if (busy) return;
+    // Managed folders carry a "<n>. " prefix; let the user edit only the label.
+    const atual = folder.name.replace(/^\d+\.\s*/, '');
+    const novo = window.prompt('Novo nome da pasta:', atual);
+    if (novo === null) return;
+    const name = novo.trim();
+    if (!name || name === atual) return;
+    setBusy(true);
+    try {
+      await renameDriveFolder(client.id, { folderId: folder.id, name });
+      await load(currentFolderId, path);
+      addFlash('Pasta renomeada no Google Drive.', 'success');
     } catch (err) {
       addFlash(errorText(err), 'error');
     } finally {
@@ -276,14 +297,26 @@ export function ClientDocuments({ client }) {
                     <span className="folder-icon" aria-hidden="true">📁</span>
                     <span className="list-title">{folder.name}</span>
                   </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => handleDeleteFolder(folder)}
-                    disabled={busy}
-                  >
-                    Excluir
-                  </button>
+                  <div className="folder-actions">
+                    {folder.managed ? (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => handleRenameFolder(folder)}
+                        disabled={busy}
+                      >
+                        Renomear
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => handleDeleteFolder(folder)}
+                      disabled={busy}
+                    >
+                      Excluir
+                    </button>
+                  </div>
                 </article>
               ))}
             </div>

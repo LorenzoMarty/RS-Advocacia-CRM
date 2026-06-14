@@ -265,6 +265,23 @@ describe('deadlineFromApi / deadlineToPayload / deadlineTimerToPayload', () => {
     expect(deadlineTimerToPayload({ elapsedSeconds: -5 }).tempo_decorrido_segundos).toBe(0);
     expect(deadlineTimerToPayload({ elapsedSeconds: 'abc' }).tempo_decorrido_segundos).toBe(0);
   });
+
+  it('maps the Drive document reference', () => {
+    const deadline = deadlineFromApi({
+      id: 2,
+      titulo: 'X',
+      data_limite: '2026-06-20',
+      link_drive: 'http://drive/doc',
+      drive_file_id: 'doc-1',
+    });
+
+    expect(deadline).toMatchObject({ driveLink: 'http://drive/doc', driveFileId: 'doc-1' });
+  });
+
+  it('defaults the Drive reference to empty strings', () => {
+    const deadline = deadlineFromApi({ id: 2, titulo: 'X', data_limite: '2026-06-20' });
+    expect(deadline).toMatchObject({ driveLink: '', driveFileId: '' });
+  });
 });
 
 describe('userFromApi / userToPayload / roleFromApi', () => {
@@ -337,6 +354,13 @@ describe('petitionFromApi / petitionToPayload', () => {
       pendingReason: 'Aguardando doc',
       area: 'Trabalhista',
     });
+  });
+
+  it('maps the petition Drive document id', () => {
+    expect(petitionFromApi({ id: 8, drive_file_id: 'doc-9' })).toMatchObject({
+      driveFileId: 'doc-9',
+    });
+    expect(petitionFromApi({ id: 8 }).driveFileId).toBe('');
   });
 
   it('builds the petition payload', () => {

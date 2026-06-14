@@ -7,6 +7,7 @@ import { petitionTaskType } from '../productivity-utils';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, StatusBadge } from '../layout';
 import { useAppState } from '../store';
+import { listClientDrive } from '../services/documentos';
 import {
   buildSearchText,
   formatCount,
@@ -78,10 +79,13 @@ function validatePetitionForm(form) {
 
 function PetitionCard({
   clients,
+  docBusy,
   isDragging,
   isMoving,
+  onCreateDocument,
   onDragEnd,
   onDragStart,
+  onRemoveDocument,
   onTimerStart,
   petition,
   processes,
@@ -123,13 +127,43 @@ function PetitionCard({
         <p className="petition-card-reason">{petition.pendingReason}</p>
       ) : null}
 
+      {petition.driveFileId ? (
+        <p className="petition-card-docbadge">📄 Documento criado no Drive</p>
+      ) : null}
+
       <div className="petition-card-footer">
         <StatusBadge tone={getStatusTone(statusLabel)}>{statusLabel}</StatusBadge>
         <div className="petition-card-actions">
           {petition.driveLink ? (
             <a href={petition.driveLink} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
-              Drive
+              Abrir no Drive
             </a>
+          ) : null}
+          {!petition.driveFileId && !petition.driveLink ? (
+            <button
+              type="button"
+              className="linklike"
+              disabled={docBusy}
+              onClick={(event) => {
+                event.stopPropagation();
+                onCreateDocument?.(petition, { open: true });
+              }}
+            >
+              {docBusy ? 'Criando…' : 'Criar documento'}
+            </button>
+          ) : null}
+          {petition.driveFileId ? (
+            <button
+              type="button"
+              className="linklike"
+              disabled={docBusy}
+              onClick={(event) => {
+                event.stopPropagation();
+                onRemoveDocument?.(petition);
+              }}
+            >
+              Remover doc
+            </button>
           ) : null}
           <Link to={`/peticoes-contestacoes/${petition.id}/editar`}>
             Editar
@@ -144,12 +178,15 @@ export function PetitionsPage() {
   const {
     addFlash,
     clients,
+    createPetitionDocument,
     isPetitionsLoading,
     petitions,
     processes,
+    removePetitionDocument,
     savePetition,
   } = useAppState();
   const [search, setSearch] = useState('');
+  const [docBusyId, setDocBusyId] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [draggingPetitionId, setDraggingPetitionId] = useState('');
   const [dragOverColumnKey, setDragOverColumnKey] = useState('');
@@ -203,6 +240,39 @@ export function PetitionsPage() {
       return;
     }
     await savePetition({ ...petition, status: 'Em andamento' }, { silent: true });
+    // Ao iniciar, oferecer criar o documento no Drive e abri-lo automaticamente.
+    if (!petition.driveFileId && !petition.driveLink) {
+      const criar = window.confirm('Criar um documento no Google Drive para esta peça e abri-lo agora?');
+      if (criar) {
+        await handleCreateDocument(petition, { open: true });
+      }
+    }
+  }
+
+  async function handleCreateDocument(petition, { open = false } = {}) {
+    if (docBusyId) return;
+    setDocBusyId(petition.id);
+    try {
+      const saved = await createPetitionDocument(petition.id);
+      if (saved?.driveLink && open) {
+        window.open(saved.driveLink, '_blank', 'noopener');
+      }
+    } finally {
+      setDocBusyId('');
+    }
+  }
+
+  async function handleRemoveDocument(petition) {
+    if (docBusyId) return;
+    const apagar = window.confirm(
+      'Remover o documento desta peça?\n\nOK = apagar o arquivo no Drive também (era temporário).\nCancelar = manter o arquivo, só desvincular.',
+    );
+    setDocBusyId(petition.id);
+    try {
+      await removePetitionDocument(petition.id, { deleteFile: apagar });
+    } finally {
+      setDocBusyId('');
+    }
   }
 
   async function movePetition(petition, nextColumnKey) {
@@ -364,10 +434,13 @@ export function PetitionsPage() {
                       <PetitionCard
                         key={petition.id}
                         clients={clients}
+                        docBusy={docBusyId === petition.id}
                         isDragging={draggingPetitionId === petition.id}
                         isMoving={movingPetitionId === petition.id}
+                        onCreateDocument={handleCreateDocument}
                         onDragEnd={handleDragEnd}
                         onDragStart={handleDragStart}
+                        onRemoveDocument={handleRemoveDocument}
                         onTimerStart={promotePetitionToActive}
                         petition={petition}
                         processes={processes}
@@ -394,6 +467,71 @@ export function PetitionsPage() {
 
       </div>
     </>
+  );
+}
+
+function PetitionFolderFiles({ clientId }) {
+  const [state, setState] = useState({ status: 'loading', files: [] });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!clientId) {
+      return undefined;
+    }
+
+    async function loadFiles() {
+      try {
+        const root = await listClientDrive(clientId);
+        const peticoesFolder = root.folders.find(
+          (folder) => normalizeText(folder.name) === normalizeText('Petições'),
+        );
+        if (!peticoesFolder) {
+          if (isMounted) setState({ status: 'empty', files: [] });
+          return;
+        }
+        const content = await listClientDrive(clientId, peticoesFolder.id);
+        if (isMounted) {
+          setState({ status: content.files.length ? 'ready' : 'empty', files: content.files });
+        }
+      } catch {
+        if (isMounted) setState({ status: 'error', files: [] });
+      }
+    }
+
+    loadFiles();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [clientId]);
+
+  return (
+    <section className="surface petition-form-panel">
+      <div className="section-head">
+        <div>
+          <h2 className="section-title">Arquivos na pasta Petições</h2>
+          <p className="section-note">Documentos do cliente no Google Drive</p>
+        </div>
+      </div>
+
+      {state.status === 'loading' ? <p className="section-note">Carregando…</p> : null}
+      {state.status === 'error' ? <p className="section-note">Não foi possível listar os arquivos.</p> : null}
+      {state.status === 'empty' ? <p className="section-note">Nenhum arquivo nesta pasta.</p> : null}
+      {state.status === 'ready' ? (
+        <ul className="petition-drive-files">
+          {state.files.map((file) => (
+            <li key={file.id}>
+              {file.link ? (
+                <a href={file.link} target="_blank" rel="noreferrer">{file.name}</a>
+              ) : (
+                <span>{file.name}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
   );
 }
 
@@ -709,6 +847,10 @@ export function PetitionFormPage() {
             />
           </section>
         )}
+
+        {isEditing && form.clientId ? (
+          <PetitionFolderFiles key={form.clientId} clientId={form.clientId} />
+        ) : null}
       </div>
     </>
   );

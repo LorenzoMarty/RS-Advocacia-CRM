@@ -15,6 +15,9 @@ class Prazo(models.Model):
     status = models.CharField(max_length=50)
     prioridade = models.CharField(max_length=50, default="Alta")
     observacoes = models.TextField(blank=True)
+    # Documento único do prazo no Drive (Doc criado ou arquivo enviado pelo sistema).
+    link_drive = models.URLField(max_length=500, blank=True)
+    drive_file_id = models.CharField(max_length=255, blank=True, default="")
     concluido = models.BooleanField(default=False)
     tempo_decorrido_segundos = models.PositiveIntegerField(default=0)
     timer_iniciado_em = models.DateTimeField(blank=True, null=True)

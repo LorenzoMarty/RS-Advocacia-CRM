@@ -543,6 +543,62 @@ export function AppStateProvider({ children }) {
     return nextDeadline;
   }
 
+  function applyDeadlineFromResponse(response) {
+    const savedDeadline = deadlineFromResponse(response);
+    if (savedDeadline) {
+      setDeadlines((currentDeadlines) => replaceById(currentDeadlines, savedDeadline));
+    }
+    return savedDeadline;
+  }
+
+  async function createDeadlineDocument(deadlineId) {
+    if (!canUseDeadlinesApi) {
+      addFlash('Disponível apenas com a API e o Google Drive configurados.', 'error');
+      return null;
+    }
+    try {
+      const saved = applyDeadlineFromResponse(await api.createDeadlineDocument(deadlineId));
+      addFlash('Documento criado no Google Drive.', 'success');
+      return saved;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
+  }
+
+  async function uploadDeadlineDocument(deadlineId, file) {
+    if (!canUseDeadlinesApi) {
+      addFlash('Disponível apenas com a API e o Google Drive configurados.', 'error');
+      return null;
+    }
+    try {
+      const data = new FormData();
+      data.append('arquivo', file, file.name);
+      const saved = applyDeadlineFromResponse(await api.uploadDeadlineDocument(deadlineId, data));
+      addFlash('Arquivo enviado ao Google Drive.', 'success');
+      return saved;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
+  }
+
+  async function removeDeadlineDocument(deadlineId, { deleteFile = false } = {}) {
+    if (!canUseDeadlinesApi) {
+      return null;
+    }
+    try {
+      const saved = applyDeadlineFromResponse(
+        await api.removeDeadlineDocument(deadlineId, { deleteFile }),
+      );
+      addFlash('Documento removido do prazo.', 'success');
+      return saved;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
+  }
+
   async function savePetition(payload, options = {}) {
     if (canUsePetitionsApi) {
       try {
@@ -580,6 +636,43 @@ export function AppStateProvider({ children }) {
       addFlash('Petição salva.', 'success');
     }
     return nextPetition;
+  }
+
+  async function createPetitionDocument(petitionId) {
+    if (!canUsePetitionsApi) {
+      addFlash('Disponível apenas com a API e o Google Drive configurados.', 'error');
+      return null;
+    }
+    try {
+      const response = await api.createPetitionDocument(petitionId);
+      const savedPetition = petitionFromResponse(response);
+      if (savedPetition) {
+        setPetitions((currentPetitions) => replaceById(currentPetitions, savedPetition));
+      }
+      addFlash('Documento criado no Google Drive.', 'success');
+      return savedPetition;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
+  }
+
+  async function removePetitionDocument(petitionId, { deleteFile = false } = {}) {
+    if (!canUsePetitionsApi) {
+      return null;
+    }
+    try {
+      const response = await api.removePetitionDocument(petitionId, { deleteFile });
+      const savedPetition = petitionFromResponse(response);
+      if (savedPetition) {
+        setPetitions((currentPetitions) => replaceById(currentPetitions, savedPetition));
+      }
+      addFlash('Documento removido da petição.', 'success');
+      return savedPetition;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
   }
 
   async function loadEvent(eventId) {
@@ -1444,7 +1537,12 @@ export function AppStateProvider({ children }) {
     saveEvent,
     moveEvent,
     saveDeadline,
+    createDeadlineDocument,
+    uploadDeadlineDocument,
+    removeDeadlineDocument,
     savePetition,
+    createPetitionDocument,
+    removePetitionDocument,
     saveDeadlineTimer,
     syncGoogleCalendarEvents,
     loadEvent,

@@ -258,6 +258,8 @@ export function deadlineFromApi(deadline) {
     completed: Boolean(deadline.concluido),
     elapsedSeconds: Number(deadline.tempo_decorrido_segundos || 0),
     timerStartedAt: deadline.timer_iniciado_em || '',
+    driveLink: deadline.link_drive || '',
+    driveFileId: deadline.drive_file_id || '',
   };
 }
 
@@ -320,6 +322,7 @@ export function petitionFromApi(petition) {
     adversary: petition.adverso || '',
     responsible: petition.responsavel_acao || '',
     driveLink: petition.link_drive || '',
+    driveFileId: petition.drive_file_id || '',
     pendingReason: petition.motivo_pendente || '',
     area: petition.area_juridica || '',
     status: petition.status || '',

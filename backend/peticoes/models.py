@@ -38,6 +38,8 @@ class Peticao(models.Model):
     adverso = models.CharField(max_length=200)
     responsavel_acao = models.CharField(max_length=100)
     link_drive = models.URLField(max_length=500, blank=True)
+    # Google Doc criado pelo sistema para esta petição (webViewLink em link_drive).
+    drive_file_id = models.CharField(max_length=255, blank=True, default="")
     motivo_pendente = models.TextField(blank=True)
     area_juridica = models.CharField(max_length=100)
     status = models.CharField(

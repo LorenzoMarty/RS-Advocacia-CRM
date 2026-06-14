@@ -10,8 +10,22 @@ from core.utils import (
     resposta_erro,
     resposta_sucesso,
 )
+from documentos import services as documentos_services
+from integrations.google.exceptions import (
+    GoogleApiError,
+    GoogleAuthorizationRequired,
+    GoogleConfigurationError,
+)
+from integrations.google.oauth import current_usuario
 from processos.forms import ProcessoForm
 from processos.models import Processo
+
+# Drive-folder sync is best-effort: a Drive failure never aborts the edit.
+_GOOGLE_ERRORS = (
+    GoogleConfigurationError,
+    GoogleAuthorizationRequired,
+    GoogleApiError,
+)
 
 
 def _filtrar_processos(request):
@@ -113,10 +127,18 @@ def editar_processo(request, processo_id):
     except ValueError as exc:
         return resposta_erro(str(exc), status=400)
 
+    nome_pasta_antigo = documentos_services.nome_pasta_processo(processo)
+
     form = ProcessoForm(payload, instance=processo)
     if form.is_valid():
         processo = form.save()
         processo = Processo.objects.select_related("cliente").get(pk=processo.pk)
+        try:
+            documentos_services.renomear_pasta_processo(
+                current_usuario(request), processo, nome_pasta_antigo
+            )
+        except _GOOGLE_ERRORS:
+            pass
         serialized = serialize_processo(processo)
         return resposta_sucesso(
             {"processo": serialized},

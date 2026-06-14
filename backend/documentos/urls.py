@@ -35,8 +35,8 @@ urlpatterns = [
     ),
     path(
         "api/clientes/<int:cliente_id>/drive/pastas/<str:folder_id>/",
-        views.excluir_pasta_view,
-        name="excluir_pasta_drive",
+        views.gerenciar_pasta_view,
+        name="gerenciar_pasta_drive",
     ),
     path(
         "api/clientes/<int:cliente_id>/drive/upload/",
