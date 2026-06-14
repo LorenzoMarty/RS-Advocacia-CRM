@@ -40,6 +40,7 @@ def login_google(request: HttpRequest):
             request,
             force_consent=request.GET.get("force_consent") == "1",
             next_path=request.GET.get("next", "/"),
+            link_to_session=request.GET.get("vincular") == "1",
         )
     except GoogleConfigurationError as exc:
         return resposta_erro(str(exc), status=503)
