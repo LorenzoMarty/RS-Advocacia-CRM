@@ -46,7 +46,7 @@ def _root_folder_id() -> str:
 
 def _validar_categoria(categoria: str) -> str:
     if categoria not in DocumentoCliente.CATEGORIA_SUBPASTA:
-        raise ValueError("Categoria de documento invalida.")
+        raise ValueError("Categoria de documento inválida.")
     return categoria
 
 
