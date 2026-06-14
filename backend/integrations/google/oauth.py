@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from secrets import token_urlsafe
 from urllib.parse import urlencode, urlsplit
@@ -18,6 +19,8 @@ from integrations.google.exceptions import (
 )
 from integrations.models import GoogleAccount, GoogleCalendar
 from usuarios.models import Usuario
+
+logger = logging.getLogger(__name__)
 
 AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = (
@@ -142,6 +145,13 @@ def exchange_code(code: str, callback_uri: str) -> dict:
         timeout=10,
     )
     if response.status_code != 200:
+        # Corpo do Google traz o motivo real (invalid_client, redirect_uri_mismatch,
+        # invalid_grant, ...). Logar para diagnóstico — não contém segredos.
+        logger.error(
+            "Falha na troca de token Google: status=%s corpo=%s",
+            response.status_code,
+            response.text[:500],
+        )
         raise ValueError("Nao foi possivel concluir o login com Google.")
     token_payload = response.json()
     if not token_payload.get("id_token") or not token_payload.get("access_token"):
