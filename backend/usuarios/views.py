@@ -59,13 +59,18 @@ ADVOGADO_CARGO_PERMISSIONS = {
     "meetings.add_gravacao",
     "meetings.change_gravacao",
     "meetings.delete_gravacao",
-    "usuarios.view_usuario",
+    # Gestão de usuários (usuarios.*) e financeiro (financeiro.*) são exclusivos do
+    # Administrador — não entram no conjunto padrão dos demais cargos.
 }
 
+ASSISTENTE_CARGO_NAME = "Assistente Jurídico"
+
 DEFAULT_CARGO_PERMISSIONS = {
+    # Administrador = todas as permissões (None sinaliza "tudo").
     "Administrador": None,
+    # Advogado, Assistente Jurídico e Estagiário compartilham o mesmo conjunto padrão.
     "Advogado": ADVOGADO_CARGO_PERMISSIONS,
-    # Estagiário tem o mesmo nível de acesso que Advogado.
+    ASSISTENTE_CARGO_NAME: ADVOGADO_CARGO_PERMISSIONS,
     ESTAGIARIO_CARGO_NAME: ADVOGADO_CARGO_PERMISSIONS,
 }
 
