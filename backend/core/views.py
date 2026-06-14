@@ -7,7 +7,6 @@ from agenda.models import Evento
 from agenda.views import serialize_evento
 from clientes.models import Cliente
 from clientes.views import serialize_cliente
-from core.demo_data import ensure_demo_data
 from core.permission_utils import user_has_any_permissions, user_has_permission
 from core.permissions import app_permissions_required
 from core.utils import metodo_nao_permitido, resposta_sucesso
@@ -48,8 +47,6 @@ from usuarios.views import (
 def painel(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
-
-    ensure_demo_data()
 
     hoje = date.today()
     eventos_hoje = (
@@ -98,8 +95,6 @@ def painel(request):
 def inicializacao(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
-
-    ensure_demo_data()
 
     clientes = Cliente.objects.all()
     processos = Processo.objects.select_related("cliente").all()
