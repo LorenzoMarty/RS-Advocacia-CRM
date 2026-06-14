@@ -11,7 +11,6 @@ import {
   isProductivityApiEnabled,
 } from './api';
 
-import { createDemoState } from './demo-data';
 import {
   usersFromResponse,
   userFromResponse,
@@ -149,30 +148,12 @@ export function AppStateProvider({ children }) {
   const [isPetitionsLoading, setIsPetitionsLoading] = useState(isPetitionsApiEnabled);
   const [currentSessionUser, setCurrentSessionUser] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem('rs-advocacia-user') || null);
-  const isDemoMode = apiStatus === 'demo';
+  const isDemoMode = false;
   const canUseApi = isApiEnabled && !isDemoMode;
   const canUseEventsApi = isEventsApiEnabled && !isDemoMode;
   const canUseDeadlinesApi = isDeadlinesApiEnabled && !isDemoMode;
   const canUsePetitionsApi = isPetitionsApiEnabled && !isDemoMode;
   const canUseProductivityApi = isProductivityApiEnabled && !isDemoMode;
-
-  function applyDemoState() {
-    const demoState = createDemoState();
-    setPermissionGroups(demoState.permissionGroups);
-    setRoles(sortByName(demoState.roles));
-    setUsers(sortByName(demoState.users));
-    setClients(sortByName(demoState.clients));
-    setProcesses(demoState.processes);
-    setEvents(demoState.events);
-    setDeadlines(demoState.deadlines);
-    setPetitions(demoState.petitions);
-    setProspects(demoState.prospects);
-    setLancamentos(demoState.lancamentos);
-    setTimeEntries(demoState.timeEntries);
-    setProductivityGoals(demoState.productivityGoals);
-    setCurrentSessionUser(demoState.currentUser);
-    setCurrentUserId(demoState.currentUser.id);
-  }
 
   function syncCurrentUser(user) {
     if (!user) {
@@ -297,8 +278,7 @@ export function AppStateProvider({ children }) {
     let isMounted = true;
 
     if (!isApiEnabled) {
-      applyDemoState();
-      setApiStatus('demo');
+      setApiStatus('offline');
       setIsLoading(false);
       setIsEventsLoading(false);
       setIsDeadlinesLoading(false);
@@ -326,9 +306,9 @@ export function AppStateProvider({ children }) {
           return;
         }
 
-        applyDemoState();
-        setApiStatus('demo');
-        addFlash(`Modo demo carregado. API indisponivel: ${errorMessage(error)}`, 'info');
+        syncCurrentUser(null);
+        setApiStatus('error');
+        addFlash(`API indisponivel: ${errorMessage(error)}`, 'error');
       } finally {
         if (isMounted) {
           setIsLoading(false);

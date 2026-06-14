@@ -1,99 +1,5 @@
 import { apiRequest } from '../api';
 
-function demoDateTime(offset, time) {
-  const date = new Date();
-  date.setDate(date.getDate() + offset);
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return `${localDate.toISOString().slice(0, 10)}T${time}:00`;
-}
-
-function createDemoMeetings() {
-  return [
-    {
-      id: 'demo-meeting-concausas',
-      title: 'Estudo interno sobre concausas',
-      meetingAt: demoDateTime(0, '11:00'),
-      clientId: '',
-      clientName: '',
-      createdBy: 'Renata Sampaio',
-      createdAt: demoDateTime(0, '10:10'),
-      recordings: [
-        {
-          id: 'demo-recording-concausas',
-          filename: 'reuniao-concausas-demo.webm',
-          contentType: 'audio/webm',
-          size: 1843200,
-          status: 'concluida',
-          statusLabel: 'Concluída',
-          transcript: 'Rose e Iruã comentaram as anotações sobre concausas preexistente, concomitante e superveniente. A equipe alinhou a necessidade de revisar enunciados e súmulas para consolidar o material de estudo.',
-          summary: [
-            '## Resumo executivo',
-            'Reunião formativa para alinhar estudo jurídico sobre concausas e nexo causal. O principal encaminhamento foi consolidar anotações e revisar referências jurisprudenciais.',
-            '',
-            '## Participantes',
-            '- Rose',
-            '- Iruã',
-            '- Equipe jurídica interna',
-            '',
-            '## Pontos discutidos',
-            '- Classificação das concausas em preexistente, concomitante e superveniente.',
-            '- Dificuldade de acompanhar a exposição sem material complementar.',
-            '- Necessidade de consultar enunciados e súmulas relacionadas.',
-            '',
-            '## Próximas ações',
-            '- Solicitar anotações completas a Rose e Iruã.',
-            '- Preparar resumo jurídico para a próxima aula.',
-            '- Confirmar data do próximo encontro formativo.',
-          ].join('\n'),
-          provider: 'demo',
-          transcriptionModel: 'Demo transcript',
-          summaryModel: 'Demo summary',
-          processingError: '',
-          createdAt: demoDateTime(0, '10:15'),
-          completedAt: demoDateTime(0, '10:18'),
-        },
-      ],
-    },
-    {
-      id: 'demo-meeting-bruno',
-      title: 'Alinhamento de audiência - Bruno Lima',
-      meetingAt: demoDateTime(1, '15:00'),
-      clientId: 'demo-client-bruno',
-      clientName: 'Bruno Lima',
-      createdBy: 'Mariana Souza',
-      createdAt: demoDateTime(0, '12:30'),
-      recordings: [],
-    },
-  ];
-}
-
-let isUsingDemoMeetings = false;
-let demoMeetings = createDemoMeetings();
-
-function cloneRecording(recording) {
-  return { ...recording };
-}
-
-function cloneMeeting(meeting) {
-  return {
-    ...meeting,
-    recordings: meeting.recordings.map(cloneRecording),
-  };
-}
-
-function nextDemoId(prefix) {
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-}
-
-function demoClientName(clientId) {
-  const names = {
-    'demo-client-bruno': 'Bruno Lima',
-    'demo-client-almeida': 'Almeida Comercio LTDA',
-    'demo-client-ana': 'Ana Ribeiro',
-  };
-  return names[clientId] || '';
-}
-
 export function recordingFromApi(recording) {
   if (!recording) {
     return null;
@@ -143,32 +49,11 @@ function meetingFromApi(meeting) {
 }
 
 export async function listMeetings() {
-  try {
-    const payload = await apiRequest('/api/reunioes/');
-    isUsingDemoMeetings = false;
-    return (payload.reunioes || []).map(meetingFromApi).filter(Boolean);
-  } catch {
-    isUsingDemoMeetings = true;
-    return demoMeetings.map(cloneMeeting);
-  }
+  const payload = await apiRequest('/api/reunioes/');
+  return (payload.reunioes || []).map(meetingFromApi).filter(Boolean);
 }
 
 export async function createMeeting(meeting) {
-  if (isUsingDemoMeetings) {
-    const nextMeeting = {
-      id: nextDemoId('demo-meeting'),
-      title: meeting.title,
-      meetingAt: meeting.meetingAt || '',
-      clientId: meeting.clientId || '',
-      clientName: demoClientName(meeting.clientId),
-      createdBy: 'Demo',
-      createdAt: new Date().toISOString(),
-      recordings: [],
-    };
-    demoMeetings = [nextMeeting, ...demoMeetings];
-    return cloneMeeting(nextMeeting);
-  }
-
   const payload = await apiRequest('/api/reunioes/criar/', {
     method: 'POST',
     body: JSON.stringify({
@@ -181,25 +66,6 @@ export async function createMeeting(meeting) {
 }
 
 export async function updateMeeting(meetingId, meeting) {
-  if (isUsingDemoMeetings) {
-    let updatedMeeting = null;
-    demoMeetings = demoMeetings.map((currentMeeting) => {
-      if (currentMeeting.id !== meetingId) {
-        return currentMeeting;
-      }
-
-      updatedMeeting = {
-        ...currentMeeting,
-        title: meeting.title,
-        meetingAt: meeting.meetingAt || '',
-        clientId: meeting.clientId || '',
-        clientName: demoClientName(meeting.clientId),
-      };
-      return updatedMeeting;
-    });
-    return cloneMeeting(updatedMeeting);
-  }
-
   const payload = await apiRequest(`/api/reunioes/${meetingId}/editar/`, {
     method: 'PUT',
     body: JSON.stringify({
@@ -212,11 +78,6 @@ export async function updateMeeting(meetingId, meeting) {
 }
 
 export async function deleteMeeting(meetingId) {
-  if (isUsingDemoMeetings) {
-    demoMeetings = demoMeetings.filter((meeting) => meeting.id !== meetingId);
-    return String(meetingId);
-  }
-
   await apiRequest(`/api/reunioes/${meetingId}/excluir/`, {
     method: 'DELETE',
   });
@@ -224,22 +85,6 @@ export async function deleteMeeting(meetingId) {
 }
 
 export async function finalizeMeeting(meetingId) {
-  if (isUsingDemoMeetings) {
-    let updatedMeeting = null;
-    demoMeetings = demoMeetings.map((currentMeeting) => {
-      if (currentMeeting.id !== meetingId) {
-        return currentMeeting;
-      }
-      updatedMeeting = {
-        ...currentMeeting,
-        documentLink: 'https://drive.google.com/',
-        documentGeneratedAt: new Date().toISOString(),
-      };
-      return updatedMeeting;
-    });
-    return cloneMeeting(updatedMeeting);
-  }
-
   const payload = await apiRequest(`/api/reunioes/${meetingId}/finalizar/`, {
     method: 'POST',
   });
@@ -293,11 +138,11 @@ export function uploadBlobToDrive(uploadUrl, blob, { onProgress } = {}) {
           resolve({});
         }
       } else {
-        reject(new Error(`Falha ao enviar o áudio ao Google Drive (${xhr.status}).`));
+        reject(new Error(`Falha ao enviar o audio ao Google Drive (${xhr.status}).`));
       }
     };
     xhr.onerror = () => {
-      reject(new Error('Falha de rede ao enviar o áudio ao Google Drive.'));
+      reject(new Error('Falha de rede ao enviar o audio ao Google Drive.'));
     };
 
     xhr.send(blob);
@@ -327,7 +172,7 @@ async function uploadRecordingViaDrive(meetingId, recording, { onProgress } = {}
 
   const driveFile = await uploadBlobToDrive(session.upload_url, recording.blob, { onProgress });
   if (!driveFile.id) {
-    throw new Error('O Google Drive não confirmou o upload do áudio. Tente novamente.');
+    throw new Error('O Google Drive nao confirmou o upload do audio. Tente novamente.');
   }
 
   return confirmRecording(meetingId, {
@@ -351,33 +196,6 @@ async function uploadRecordingMultipart(meetingId, recording) {
 }
 
 export async function uploadRecording(meetingId, recording, { onProgress } = {}) {
-  if (isUsingDemoMeetings) {
-    const nextRecording = {
-      id: nextDemoId('demo-recording'),
-      filename: recording.filename,
-      contentType: recording.blob?.type || '',
-      size: recording.blob?.size || 0,
-      status: 'concluida',
-      statusLabel: 'Concluída',
-      transcript: '',
-      summary: '## Resumo\nÁudio demo recebido. Edite a transcrição para simular a revisão do conteúdo.',
-      provider: 'demo',
-      transcriptionModel: 'Demo transcript',
-      summaryModel: 'Demo summary',
-      processingError: '',
-      createdAt: new Date().toISOString(),
-      completedAt: new Date().toISOString(),
-    };
-
-    demoMeetings = demoMeetings.map((meeting) => (
-      meeting.id === meetingId
-        ? { ...meeting, recordings: [nextRecording, ...meeting.recordings] }
-        : meeting
-    ));
-
-    return cloneRecording(nextRecording);
-  }
-
   try {
     return await uploadRecordingViaDrive(meetingId, recording, { onProgress });
   } catch (error) {
@@ -394,7 +212,7 @@ export async function uploadRecording(meetingId, recording, { onProgress } = {})
 
     if (error?.status === 401) {
       throw new Error(
-        'Conecte sua conta Google em Integrações para enviar gravações ao Drive.',
+        'Conecte sua conta Google em Integracoes para enviar gravacoes ao Drive.',
       );
     }
     throw error;
@@ -402,44 +220,16 @@ export async function uploadRecording(meetingId, recording, { onProgress } = {})
 }
 
 export async function getRecording(recordingId) {
-  if (isUsingDemoMeetings) {
-    const recording = demoMeetings
-      .flatMap((meeting) => meeting.recordings)
-      .find((currentRecording) => currentRecording.id === recordingId);
-    return recording ? cloneRecording(recording) : null;
-  }
-
   const payload = await apiRequest(`/api/reunioes/gravacoes/${recordingId}/`);
   return recordingFromApi(payload.gravacao);
 }
 
 export async function getMeeting(meetingId) {
-  if (isUsingDemoMeetings) {
-    const meeting = demoMeetings.find((item) => item.id === meetingId);
-    return meeting ? cloneMeeting(meeting) : null;
-  }
-
   const payload = await apiRequest(`/api/reunioes/${meetingId}/`);
   return meetingFromApi(payload.reuniao);
 }
 
 export async function updateRecording(recordingId, recording) {
-  if (isUsingDemoMeetings) {
-    let updatedRecording = null;
-    demoMeetings = demoMeetings.map((meeting) => ({
-      ...meeting,
-      recordings: meeting.recordings.map((currentRecording) => {
-        if (currentRecording.id !== recordingId) {
-          return currentRecording;
-        }
-
-        updatedRecording = { ...currentRecording, transcript: recording.transcript };
-        return updatedRecording;
-      }),
-    }));
-    return cloneRecording(updatedRecording);
-  }
-
   const payload = await apiRequest(`/api/reunioes/gravacoes/${recordingId}/editar/`, {
     method: 'PATCH',
     body: JSON.stringify({
@@ -450,14 +240,6 @@ export async function updateRecording(recordingId, recording) {
 }
 
 export async function deleteRecording(recordingId) {
-  if (isUsingDemoMeetings) {
-    demoMeetings = demoMeetings.map((meeting) => ({
-      ...meeting,
-      recordings: meeting.recordings.filter((recording) => recording.id !== recordingId),
-    }));
-    return String(recordingId);
-  }
-
   await apiRequest(`/api/reunioes/gravacoes/${recordingId}/excluir/`, {
     method: 'DELETE',
   });
