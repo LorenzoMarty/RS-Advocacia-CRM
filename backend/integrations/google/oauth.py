@@ -32,14 +32,14 @@ SCOPES = ("openid", "email", "profile", CALENDAR_SCOPE, DRIVE_SCOPE)
 def client_id() -> str:
     value = getattr(settings, "GOOGLE_CLIENT_ID", "").strip()
     if not value:
-        raise GoogleConfigurationError("Login com Google nao configurado.")
+        raise GoogleConfigurationError("Login com Google não configurado.")
     return value
 
 
 def client_secret() -> str:
     value = getattr(settings, "GOOGLE_CLIENT_SECRET", "").strip()
     if not value:
-        raise GoogleConfigurationError("Login com Google nao configurado.")
+        raise GoogleConfigurationError("Login com Google não configurado.")
     return value
 
 
@@ -145,7 +145,7 @@ def exchange_code(code: str, callback_uri: str) -> dict:
         raise ValueError("Nao foi possivel concluir o login com Google.")
     token_payload = response.json()
     if not token_payload.get("id_token") or not token_payload.get("access_token"):
-        raise ValueError("Google nao retornou as credenciais esperadas.")
+        raise ValueError("Google não retornou as credenciais esperadas.")
     return token_payload
 
 
@@ -178,7 +178,7 @@ def verify_identity_token(credential: str) -> dict:
             client_id(),
         )
     except ValueError as exc:
-        raise ValueError("Token Google invalido.") from exc
+        raise ValueError("Token Google inválido.") from exc
 
     email = str(claims.get("email") or "").strip().lower()
     if not email or claims.get("email_verified") not in {True, "true", "True"}:
@@ -222,7 +222,7 @@ def _resolve_usuario(claims: dict, initiating_user_id: int | None) -> Usuario:
     if initiating_user_id:
         initiating_user = Usuario.objects.filter(pk=initiating_user_id).first()
         if initiating_user is None:
-            raise ValueError("Usuario da sessao nao encontrado.")
+            raise ValueError("Usuário da sessão não encontrado.")
         if existing_account and existing_account.usuario_id != initiating_user.pk:
             raise ValueError("Esta conta Google ja esta vinculada a outro usuario.")
         if initiating_user.email.lower() != email and not existing_account:
@@ -261,7 +261,7 @@ def complete_authorization(
 
     state_data = consume_state(request, received_state)
     if not code:
-        raise ValueError("Google nao retornou o codigo de autorizacao.")
+        raise ValueError("Google não retornou o código de autorização.")
     token_payload = exchange_code(code, redirect_uri(request))
     claims = verify_identity_token(str(token_payload["id_token"]))
     usuario = _resolve_usuario(claims, state_data.get("usuario_id"))

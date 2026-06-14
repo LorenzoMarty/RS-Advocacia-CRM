@@ -527,7 +527,7 @@ export function DeadlineDetailPage() {
       return null;
     }
 
-    return <NotFoundState title="Prazo nao encontrado." />;
+    return <NotFoundState title="Prazo não encontrado." />;
   }
 
   const process = processes.find((item) => item.id === deadline.processId) || null;
@@ -664,7 +664,7 @@ export function DeadlineDetailPage() {
             </div>
 
             <div className="deadline-description-box">
-              {deadline.description || 'Sem descricao cadastrada.'}
+              {deadline.description || 'Sem descrição cadastrada.'}
             </div>
           </section>
 
@@ -749,7 +749,7 @@ export function DeadlineFormPage() {
       return null;
     }
 
-    return <NotFoundState title="Prazo nao encontrado." />;
+    return <NotFoundState title="Prazo não encontrado." />;
   }
 
   const selectedProcess = processes.find((process) => process.id === form.processId) || null;

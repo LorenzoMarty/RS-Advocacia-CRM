@@ -51,7 +51,7 @@ def _erros_configuracao_processamento():
         ]
     if modo not in PROCESSING_MODES:
         erros["processamento"] = [
-            "MEETINGS_PROCESSING_MODE invalido. Use 'inline' sem Redis ou 'celery' com Redis."
+            "MEETINGS_PROCESSING_MODE inválido. Use 'inline' sem Redis ou 'celery' com Redis."
         ]
     if modo == "celery" and not settings.CELERY_BROKER_URL:
         erros["fila"] = [
@@ -294,7 +294,7 @@ def excluir_reuniao(request, reuniao_id):
         _apagar_audio_gravacao(gravacao)
     reuniao.delete()
     return resposta_sucesso(
-        {"id": deleted_id}, mensagem="Reuniao excluida com sucesso."
+        {"id": deleted_id}, mensagem="Reunião excluída com sucesso."
     )
 
 
@@ -407,7 +407,7 @@ def excluir_gravacao(request, gravacao_id):
     _apagar_audio_gravacao(gravacao)
     gravacao.delete()
     return resposta_sucesso(
-        {"id": deleted_id}, mensagem="Gravacao excluida com sucesso."
+        {"id": deleted_id}, mensagem="Gravação excluída com sucesso."
     )
 
 

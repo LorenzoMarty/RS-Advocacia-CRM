@@ -101,7 +101,7 @@ def upload_documento_view(request, cliente_id):
             sorted(ext.removeprefix(".") for ext in SUPPORTED_DOCUMENT_EXTENSIONS)
         )
         return resposta_erro(
-            {"arquivo": [f"Formato invalido. Use: {formatos}."]}, status=400
+            {"arquivo": [f"Formato inválido. Use: {formatos}."]}, status=400
         )
 
     max_bytes = settings.DRIVE_MAX_FILE_SIZE_MB * 1024 * 1024
@@ -231,7 +231,7 @@ def criar_pasta_view(request, cliente_id):
     if not nome:
         return resposta_erro({"nome": ["Informe o nome da pasta."]}, status=400)
     if not parent_id:
-        return resposta_erro({"parent_id": ["Pasta de destino invalida."]}, status=400)
+        return resposta_erro({"parent_id": ["Pasta de destino inválida."]}, status=400)
 
     usuario = current_usuario(request)
     try:
@@ -273,7 +273,7 @@ def excluir_pasta_view(request, cliente_id, folder_id):
     ) as exc:
         return _mapear_erro_google(exc)
 
-    return resposta_sucesso({"id": folder_id}, mensagem="Pasta excluida do Google Drive.")
+    return resposta_sucesso({"id": folder_id}, mensagem="Pasta excluída do Google Drive.")
 
 
 @app_permissions_required("documentos.add_documentocliente", "clientes.view_cliente")
@@ -286,7 +286,7 @@ def upload_drive_view(request, cliente_id):
     folder_id = (request.POST.get("folder_id") or "").strip()
     if not folder_id:
         return resposta_erro(
-            {"folder_id": ["Pasta de destino invalida."]}, status=400
+            {"folder_id": ["Pasta de destino inválida."]}, status=400
         )
 
     arquivo = request.FILES.get("arquivo") or next(iter(request.FILES.values()), None)
@@ -299,7 +299,7 @@ def upload_drive_view(request, cliente_id):
             sorted(ext.removeprefix(".") for ext in SUPPORTED_DOCUMENT_EXTENSIONS)
         )
         return resposta_erro(
-            {"arquivo": [f"Formato invalido. Use: {formatos}."]}, status=400
+            {"arquivo": [f"Formato inválido. Use: {formatos}."]}, status=400
         )
 
     max_bytes = settings.DRIVE_MAX_FILE_SIZE_MB * 1024 * 1024

@@ -33,7 +33,7 @@
 }
 .prospeccao-toolbar .filter-select {
   width: 100%;
-  min-width: 180px;
+  min-width: 260px;
 }
 @media (max-width: 640px) {
   .prospeccao-toolbar {

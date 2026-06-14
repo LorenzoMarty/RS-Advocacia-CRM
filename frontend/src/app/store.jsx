@@ -532,7 +532,7 @@ export function AppStateProvider({ children }) {
           : await api.createDeadline(deadlineToPayload(payload));
         const savedDeadline = deadlineFromResponse(response);
         if (!savedDeadline) {
-          throw new Error('Resposta invalida da API de prazos.');
+          throw new Error('Resposta inválida da API de prazos.');
         }
         setDeadlines((currentDeadlines) => replaceById(currentDeadlines, savedDeadline));
         if (!options.silent) {
@@ -571,7 +571,7 @@ export function AppStateProvider({ children }) {
           : await api.createPetition(petitionToPayload(payload));
         const savedPetition = petitionFromResponse(response);
         if (!savedPetition) {
-          throw new Error('Resposta invalida da API de peticoes.');
+          throw new Error('Resposta inválida da API de petições.');
         }
         setPetitions((currentPetitions) => replaceById(currentPetitions, savedPetition));
         if (!options.silent) {
@@ -670,7 +670,7 @@ export function AppStateProvider({ children }) {
 
   async function syncGoogleCalendarEvents({ silent = false } = {}) {
     if (!canUseEventsApi) {
-      addFlash('API de eventos nao configurada.', 'error');
+      addFlash('API de eventos não configurada.', 'error');
       return null;
     }
 
@@ -701,7 +701,7 @@ export function AppStateProvider({ children }) {
         const response = await api.updateDeadlineTimer(deadlineId, deadlineTimerToPayload(timerPayload));
         const savedDeadline = deadlineFromResponse(response);
         if (!savedDeadline) {
-          throw new Error('Resposta invalida da API de prazos.');
+          throw new Error('Resposta inválida da API de prazos.');
         }
         setDeadlines((currentDeadlines) => replaceById(currentDeadlines, savedDeadline));
         return savedDeadline;

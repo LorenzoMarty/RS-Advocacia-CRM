@@ -1,4 +1,5 @@
 from datetime import datetime, time, timedelta
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib.auth import login
@@ -7,10 +8,19 @@ from django.utils import timezone
 
 from agenda.models import Evento
 from clientes.models import Cliente
+from financeiro.models import (
+    STATUS_PAGO,
+    STATUS_PENDENTE,
+    TIPO_DESPESA,
+    TIPO_RECEITA,
+    Lancamento,
+)
 from meetings.models import Gravacao, Reuniao
 from peticoes.models import Peticao
 from prazos.models import Prazo
 from processos.models import Processo
+from productivity.models import ProductivityGoal, TimeEntry
+from prospeccao.models import InteracaoProspect, Prospect
 from usuarios.models import Usuario
 
 DEMO_EMAIL = "renata@rsadvocacia.demo"
@@ -391,6 +401,158 @@ def _ensure_meetings(clients):
     )
 
 
+def _ensure_prospects(usuarios_por_nome):
+    mariana = usuarios_por_nome.get("Mariana Souza")
+    renata = usuarios_por_nome.get("Renata Sampaio")
+    carla, _ = Prospect.objects.update_or_create(
+        email="carla.nogueira@email.demo",
+        defaults={
+            "nome": "Carla Nogueira",
+            "telefone": "(11) 98123-4567",
+            "origem_contato": "Indicação",
+            "tipo_demanda_juridica": "Trabalhista",
+            "descricao_caso": "Rescisão indireta com verbas atrasadas.",
+            "responsavel_interno": mariana,
+            "status_prospeccao": "Em contato",
+            "prioridade": "Alta",
+            "proxima_acao": "Enviar proposta de honorários",
+            "data_ultimo_contato": _demo_date(0),
+        },
+    )
+    InteracaoProspect.objects.update_or_create(
+        prospect=carla,
+        descricao="Primeiro contato. Cliente interessada.",
+        defaults={
+            "tipo": "ligacao",
+            "data": _demo_datetime(0, 9, 0),
+            "usuario": mariana,
+        },
+    )
+    Prospect.objects.update_or_create(
+        email="pedro.antunes@email.demo",
+        defaults={
+            "nome": "Pedro Antunes",
+            "telefone": "(11) 97654-3210",
+            "origem_contato": "Site",
+            "tipo_demanda_juridica": "Cível",
+            "descricao_caso": "Ação indenizatória por danos morais.",
+            "responsavel_interno": renata,
+            "status_prospeccao": "Novo",
+            "prioridade": "Media",
+            "proxima_acao": "Agendar reunião inicial",
+        },
+    )
+
+
+def _ensure_finance(clients, processes):
+    bruno, almeida, ana = clients
+    processo_bruno, processo_almeida, processo_ana = processes
+    Lancamento.objects.update_or_create(
+        descricao="Honorários iniciais - Bruno Lima",
+        defaults={
+            "tipo": TIPO_RECEITA,
+            "categoria": "Honorários",
+            "valor": Decimal("3500.00"),
+            "data_vencimento": _demo_date(7),
+            "status": STATUS_PENDENTE,
+            "cliente_relacionado": bruno,
+            "caso_relacionado": processo_bruno,
+        },
+    )
+    Lancamento.objects.update_or_create(
+        descricao="Mensalidade - Almeida Comercio LTDA",
+        defaults={
+            "tipo": TIPO_RECEITA,
+            "categoria": "Mensalidade",
+            "valor": Decimal("2000.00"),
+            "data_vencimento": _demo_date(-3),
+            "data_pagamento": _demo_date(-3),
+            "status": STATUS_PAGO,
+            "cliente_relacionado": almeida,
+            "caso_relacionado": processo_almeida,
+        },
+    )
+    # Pendente e vencido -> aparece como "Atrasado" (status_exibicao).
+    Lancamento.objects.update_or_create(
+        descricao="Custas processuais - Ana Ribeiro",
+        defaults={
+            "tipo": TIPO_DESPESA,
+            "categoria": "Custas processuais",
+            "valor": Decimal("350.00"),
+            "data_vencimento": _demo_date(-2),
+            "status": STATUS_PENDENTE,
+            "cliente_relacionado": ana,
+            "caso_relacionado": processo_ana,
+        },
+    )
+    Lancamento.objects.update_or_create(
+        descricao="Assinatura sistema jurídico",
+        defaults={
+            "tipo": TIPO_DESPESA,
+            "categoria": "Software",
+            "valor": Decimal("240.00"),
+            "data_vencimento": _demo_date(0),
+            "data_pagamento": _demo_date(0),
+            "status": STATUS_PAGO,
+        },
+    )
+
+
+def _ensure_productivity(usuarios_por_nome):
+    renata = usuarios_por_nome.get("Renata Sampaio")
+    mariana = usuarios_por_nome.get("Mariana Souza")
+    lorenzo = usuarios_por_nome.get("Lorenzo dos Reis")
+    metas = (
+        (renata, Decimal("6"), Decimal("30")),
+        (mariana, Decimal("7"), Decimal("35")),
+        (lorenzo, Decimal("5"), Decimal("25")),
+    )
+    for usuario, daily, weekly in metas:
+        if usuario:
+            ProductivityGoal.objects.update_or_create(
+                user=usuario,
+                defaults={"daily_hours": daily, "weekly_hours": weekly},
+            )
+
+    # task_id aponta para Prazo/Peticao reais para o nome da tarefa resolver na UI.
+    prazo_bruno = Prazo.objects.filter(
+        titulo="1000002-20.2026.8.26.0100 - Bruno Lima"
+    ).first()
+    prazo_ana = Prazo.objects.filter(
+        titulo="0801123-45.2026.8.19.0001 - Ana Ribeiro"
+    ).first()
+    peticao_bruno = Peticao.objects.filter(adverso="Companhia Alfa S/A").first()
+
+    entradas = []
+    if mariana and prazo_bruno:
+        entradas.append(
+            (mariana, TimeEntry.TASK_PRAZO, str(prazo_bruno.pk),
+             _demo_datetime(-1, 9, 0), _demo_datetime(-1, 11, 0), 7200)
+        )
+    if mariana and peticao_bruno:
+        entradas.append(
+            (mariana, TimeEntry.TASK_PETICAO, str(peticao_bruno.pk),
+             _demo_datetime(-1, 14, 0), _demo_datetime(-1, 15, 30), 5400)
+        )
+    if lorenzo and prazo_ana:
+        entradas.append(
+            (lorenzo, TimeEntry.TASK_PRAZO, str(prazo_ana.pk),
+             _demo_datetime(0, 10, 0), _demo_datetime(0, 11, 0), 3600)
+        )
+    for usuario, task_type, task_id, started, ended, total in entradas:
+        TimeEntry.objects.update_or_create(
+            user=usuario,
+            task_type=task_type,
+            task_id=task_id,
+            started_at=started,
+            defaults={
+                "ended_at": ended,
+                "total_seconds": total,
+                "status": TimeEntry.STATUS_STOPPED,
+            },
+        )
+
+
 def ensure_demo_data():
     if not demo_enabled():
         return None, None
@@ -425,6 +587,9 @@ def ensure_demo_data():
     _ensure_deadlines(processes)
     _ensure_petitions(clients, processes)
     _ensure_meetings(clients)
+    _ensure_prospects(usuarios_por_nome)
+    _ensure_finance(clients, processes)
+    _ensure_productivity(usuarios_por_nome)
     return demo_usuario, demo_auth_user
 
 

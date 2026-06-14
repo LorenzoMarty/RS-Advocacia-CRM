@@ -157,5 +157,5 @@ def excluir_peticao(request, peticao_id):
     deleted_id = str(peticao.pk)
     peticao.delete()
     return resposta_sucesso(
-        {"id": deleted_id}, mensagem="Peticao excluida com sucesso."
+        {"id": deleted_id}, mensagem="Petição excluída com sucesso."
     )
