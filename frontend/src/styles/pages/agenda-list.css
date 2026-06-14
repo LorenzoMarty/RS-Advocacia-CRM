@@ -97,6 +97,11 @@
     .day-card.has-events .day-dot{opacity:1}
     .day-card.is-overdue .day-dot{background:var(--danger)}
     .day-events{display:grid;gap:8px;align-content:start}
+    .day-card.is-drop-target{
+        border-color:rgba(212,175,55,.55);
+        background:rgba(212,175,55,.1);
+        box-shadow:0 0 0 1px rgba(212,175,55,.4) inset;
+    }
     .calendar-event{
         --event-accent: var(--gold);
         position:relative;
@@ -108,9 +113,11 @@
         background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(11,12,16,.98));
         box-shadow:0 10px 20px rgba(0,0,0,.18);
         color:var(--text);
+        cursor:grab;
         transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
         overflow:hidden;
     }
+    .calendar-event.is-dragging{opacity:.5;cursor:grabbing;}
     .calendar-event::before{
         content:"";
         position:absolute;

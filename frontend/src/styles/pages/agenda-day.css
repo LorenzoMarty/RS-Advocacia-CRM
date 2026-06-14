@@ -26,6 +26,10 @@
     background:rgba(212,175,55,.04);
     border-top-color:rgba(212,175,55,.28);
 }
+.timeline-row.is-drop-target{
+    background:rgba(212,175,55,.12);
+    box-shadow:0 0 0 1px rgba(212,175,55,.4) inset;
+}
 .timeline-row:first-child{border-top:none}
 .timeline-hour{
     display:flex;
@@ -61,9 +65,11 @@
     background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(11,12,16,.98));
     box-shadow:0 8px 18px rgba(0,0,0,.14);
     color:var(--text);
+    cursor:grab;
     transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
     overflow:hidden;
 }
+.timeline-event.is-dragging{opacity:.5;cursor:grabbing;}
 .timeline-event::before{
     content:"";
     position:absolute;

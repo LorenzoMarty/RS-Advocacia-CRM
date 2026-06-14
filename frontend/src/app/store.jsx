@@ -488,6 +488,42 @@ export function AppStateProvider({ children }) {
     return nextEvent;
   }
 
+  // Move de drag-and-drop no calendário: atualiza start/end mantendo o resto.
+  // Otimista (move na hora) com rollback se a API falhar. A re-sincronização
+  // com o Google Calendar é feita pelo backend no editar_evento.
+  async function moveEvent(eventId, { start, end }) {
+    const original = events.find((event) => event.id === eventId);
+    if (!original) {
+      return null;
+    }
+    const moved = { ...original, start, end: end || original.end };
+
+    setEvents((currentEvents) =>
+      currentEvents.map((event) => (event.id === eventId ? moved : event)),
+    );
+
+    if (!canUseEventsApi) {
+      return moved;
+    }
+
+    try {
+      const response = await api.updateEvent(eventId, eventToPayload(moved));
+      const savedEvent = eventFromResponse(response);
+      if (!savedEvent) {
+        throw new Error('Resposta inválida da API de eventos.');
+      }
+      setEvents((currentEvents) => replaceById(currentEvents, savedEvent));
+      return savedEvent;
+    } catch (error) {
+      // Rollback para a posição original.
+      setEvents((currentEvents) =>
+        currentEvents.map((event) => (event.id === eventId ? original : event)),
+      );
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
+  }
+
   async function saveDeadline(payload, options = {}) {
     if (canUseDeadlinesApi) {
       try {
@@ -1426,6 +1462,7 @@ export function AppStateProvider({ children }) {
     saveClient,
     saveProcess,
     saveEvent,
+    moveEvent,
     saveDeadline,
     savePetition,
     saveDeadlineTimer,

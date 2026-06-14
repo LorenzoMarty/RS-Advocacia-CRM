@@ -36,6 +36,7 @@ export function AgendaListPage() {
     currentUser,
     deleteEvent,
     events,
+    moveEvent,
     processes,
     syncGoogleCalendarEvents,
   } = useAppState();
@@ -50,6 +51,8 @@ export function AgendaListPage() {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
+  const [draggingEventId, setDraggingEventId] = useState("");
+  const [dragOverDayKey, setDragOverDayKey] = useState("");
 
   const typeOptions = [
     ...new Set(events.map((event) => event.type).filter(Boolean)),
@@ -168,6 +171,63 @@ export function AgendaListPage() {
 
     return () => window.clearInterval(intervalId);
   }, [currentUser?.googleCalendarConnected, syncGoogleCalendarEvents]);
+
+  function toLocalIso(date) {
+    const pad = (value) => String(value).padStart(2, "0");
+    return (
+      `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+      `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+    );
+  }
+
+  function handleEventDragStart(dragEvent, eventId) {
+    setDraggingEventId(eventId);
+    dragEvent.dataTransfer.effectAllowed = "move";
+    dragEvent.dataTransfer.setData("text/plain", eventId);
+  }
+
+  function handleEventDragEnd() {
+    setDraggingEventId("");
+    setDragOverDayKey("");
+  }
+
+  function handleDayDragOver(dragEvent, key) {
+    if (!draggingEventId) return;
+    dragEvent.preventDefault();
+    dragEvent.dataTransfer.dropEffect = "move";
+    if (dragOverDayKey !== key) setDragOverDayKey(key);
+  }
+
+  async function handleDayDrop(dragEvent, day) {
+    dragEvent.preventDefault();
+    const eventId = dragEvent.dataTransfer.getData("text/plain") || draggingEventId;
+    setDraggingEventId("");
+    setDragOverDayKey("");
+
+    const event = events.find((item) => item.id === eventId);
+    if (!event) return;
+
+    const start = new Date(event.start);
+    if (Number.isNaN(start.getTime()) || isSameDay(start, day.date)) return;
+
+    const newStart = new Date(day.date);
+    newStart.setHours(
+      start.getHours(),
+      start.getMinutes(),
+      start.getSeconds(),
+      0,
+    );
+
+    let newEnd = event.end;
+    if (event.end) {
+      const end = new Date(event.end);
+      if (!Number.isNaN(end.getTime())) {
+        newEnd = toLocalIso(new Date(newStart.getTime() + (end - start)));
+      }
+    }
+
+    await moveEvent(eventId, { start: toLocalIso(newStart), end: newEnd });
+  }
 
   async function handleQuickDelete(eventId, eventTitle) {
     const canDelete = await confirm({
@@ -381,7 +441,10 @@ export function AgendaListPage() {
                 {days.map((day) => (
                   <article
                     key={day.key}
-                    className={`day-card${day.date.getMonth() !== viewDate.getMonth() ? " is-muted" : ""}${isSameDay(day.date, today) ? " is-today" : ""}${day.events.some((event) => isOverdueEvent(event)) ? " is-overdue" : ""}${day.events.length ? " has-events" : ""}`}
+                    className={`day-card${day.date.getMonth() !== viewDate.getMonth() ? " is-muted" : ""}${isSameDay(day.date, today) ? " is-today" : ""}${day.events.some((event) => isOverdueEvent(event)) ? " is-overdue" : ""}${day.events.length ? " has-events" : ""}${dragOverDayKey === day.key && draggingEventId ? " is-drop-target" : ""}`}
+                    onDragOver={(dragEvent) => handleDayDragOver(dragEvent, day.key)}
+                    onDragEnter={(dragEvent) => handleDayDragOver(dragEvent, day.key)}
+                    onDrop={(dragEvent) => handleDayDrop(dragEvent, day)}
                   >
                     <div className="day-head">
                       <Link
@@ -398,9 +461,12 @@ export function AgendaListPage() {
                       {day.events.slice(0, 2).map((event) => (
                         <div
                           key={event.id}
-                          className={`calendar-event type-${getEventTypeKey(event.type)}${isOverdueEvent(event) ? " is-overdue" : ""}`}
+                          className={`calendar-event type-${getEventTypeKey(event.type)}${isOverdueEvent(event) ? " is-overdue" : ""}${draggingEventId === event.id ? " is-dragging" : ""}`}
                           role="link"
                           tabIndex="0"
+                          draggable
+                          onDragStart={(dragEvent) => handleEventDragStart(dragEvent, event.id)}
+                          onDragEnd={handleEventDragEnd}
                           onClick={() => navigate(`/agenda/${event.id}`)}
                           onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/agenda/${event.id}`); }}
                         >
