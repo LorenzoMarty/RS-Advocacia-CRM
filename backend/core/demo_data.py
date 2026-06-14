@@ -3,7 +3,6 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.contrib.auth import login
-from django.contrib.auth.models import Group, Permission, User
 from django.utils import timezone
 
 from agenda.models import Evento
@@ -39,50 +38,18 @@ def _demo_datetime(offset, hour, minute=0):
     return timezone.make_aware(value, timezone.get_current_timezone())
 
 
-def _ensure_group(name, permissions=None):
-    group, _ = Group.objects.get_or_create(name=name)
-    if permissions is None:
-        permissions = Permission.objects.all()
-    missing = permissions.exclude(pk__in=group.permissions.values_list("pk", flat=True))
-    if missing.exists():
-        group.permissions.add(*missing)
-    return group
+def _ensure_usuario(nome, email, cargo_label):
+    # Reusa o sistema de cargos real (usuarios.views): cria/sincroniza o auth user
+    # e aplica o grupo/permissões corretos do cargo (Administrador=tudo,
+    # Advogado/Estagiário=subconjunto). Evita escalonar privilégio. Import tardio
+    # para não criar ciclo de import no carregamento do módulo.
+    from usuarios.views import _sync_usuario_auth
 
-
-def _ensure_usuario(nome, email, cargo, group):
     usuario, _ = Usuario.objects.update_or_create(
         email=email,
-        defaults={
-            "nome": nome,
-            "cargo": group.name if group else cargo,
-            "picture": "",
-        },
+        defaults={"nome": nome, "cargo": cargo_label, "picture": ""},
     )
-    auth_user, created = User.objects.get_or_create(
-        username=email,
-        defaults={
-            "email": email,
-            "first_name": nome,
-            "is_active": True,
-        },
-    )
-    updates = []
-    if auth_user.email != email:
-        auth_user.email = email
-        updates.append("email")
-    if auth_user.first_name != nome:
-        auth_user.first_name = nome
-        updates.append("first_name")
-    if not auth_user.is_active:
-        auth_user.is_active = True
-        updates.append("is_active")
-    if created:
-        auth_user.set_unusable_password()
-        auth_user.save()
-    elif updates:
-        auth_user.save(update_fields=updates)
-    if group:
-        auth_user.groups.set([group])
+    auth_user = _sync_usuario_auth(usuario)
     return usuario, auth_user
 
 
@@ -553,27 +520,24 @@ def _ensure_productivity(usuarios_por_nome):
         )
 
 
-def ensure_demo_data():
-    if not demo_enabled():
-        return None, None
+def seed_demo_data():
+    """Insere/atualiza todos os dados demo. Idempotente. NÃO checa a flag —
+    use ensure_demo_data() para o caminho gated por DEMO_DATA_ENABLED, ou o
+    management command `seed_demo` para inserir uma vez manualmente."""
+    # Cria os cargos padrão (Administrador/Advogado/Estagiário) com as permissões
+    # corretas antes de vincular os usuários demo.
+    from usuarios.views import _ensure_default_cargos
 
-    admin_group = _ensure_group("Administrador")
-    lawyer_group = _ensure_group("Advogado")
-    assistant_group = _ensure_group("Assistente juridico")
+    _ensure_default_cargos()
+
     demo_usuario, demo_auth_user = _ensure_usuario(
-        "Renata Sampaio",
-        DEMO_EMAIL,
-        "Administrador",
-        admin_group,
+        "Renata Sampaio", DEMO_EMAIL, "Administrador"
     )
     mariana_usuario, _ = _ensure_usuario(
-        "Mariana Souza", "mariana@rsadvocacia.demo", "Advogado", lawyer_group
+        "Mariana Souza", "mariana@rsadvocacia.demo", "Advogado"
     )
     lorenzo_usuario, _ = _ensure_usuario(
-        "Lorenzo dos Reis",
-        "lorenzo@rsadvocacia.demo",
-        "Assistente juridico",
-        assistant_group,
+        "Lorenzo dos Reis", "lorenzo@rsadvocacia.demo", "Estagiário"
     )
     usuarios_por_nome = {
         "Renata Sampaio": demo_usuario,
@@ -591,6 +555,12 @@ def ensure_demo_data():
     _ensure_finance(clients, processes)
     _ensure_productivity(usuarios_por_nome)
     return demo_usuario, demo_auth_user
+
+
+def ensure_demo_data():
+    if not demo_enabled():
+        return None, None
+    return seed_demo_data()
 
 
 def ensure_demo_session(request):
