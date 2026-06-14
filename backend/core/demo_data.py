@@ -1,5 +1,7 @@
+import random
 from datetime import datetime, time, timedelta
 from decimal import Decimal
+from uuid import uuid4
 
 from django.conf import settings
 from django.contrib.auth import login
@@ -573,3 +575,153 @@ def ensure_demo_session(request):
     request.session["usuario_nome"] = demo_usuario.nome
     request.session["usuario_email"] = demo_usuario.email
     return demo_usuario
+
+
+# --- Geração aditiva (apenas create(), nunca apaga/atualiza) -----------------
+# Usada pelo command `seed_demo --bulk N` para "encher" o banco com registros
+# demo novos e distintos, sem colidir nem mexer no que já existe.
+
+_BULK_NOMES = [
+    "Carlos", "Fernanda", "Rafael", "Juliana", "Bruno", "Patrícia", "Thiago",
+    "Aline", "Marcelo", "Camila", "Eduardo", "Beatriz", "Rodrigo", "Larissa",
+    "Gustavo", "Vanessa", "Felipe", "Tatiane", "André", "Priscila",
+]
+_BULK_SOBRENOMES = [
+    "Oliveira", "Santos", "Souza", "Pereira", "Lima", "Carvalho", "Ferreira",
+    "Almeida", "Costa", "Gomes", "Ribeiro", "Martins", "Rocha", "Barbosa",
+]
+_BULK_AREAS = ["Civel", "Trabalhista", "Tributário", "Empresarial", "Família", "Penal"]
+_BULK_VARAS = [
+    "1ª Vara Cível de São Paulo", "3ª Vara do Trabalho de Campinas",
+    "2ª Vara da Fazenda Pública", "5ª Vara Cível do Rio de Janeiro",
+    "4ª Vara de Família e Sucessões",
+]
+_BULK_TIPO_EVENTO = ["Audiencia", "Reuniao", "Tarefa interna", "Prazo"]
+_BULK_PRIORIDADES = ["Alta", "Media", "Baixa"]
+_BULK_ORIGENS = ["Indicação", "Site", "Instagram", "Google", "Cliente antigo"]
+_BULK_DEMANDAS = ["Trabalhista", "Cível", "Consumidor", "Família", "Tributário"]
+_BULK_CAT_RECEITA = ["Honorários", "Consulta", "Êxito", "Mensalidade", "Acordo"]
+_BULK_CAT_DESPESA = ["Custas processuais", "Escritório", "Software", "Marketing"]
+
+
+def bulk_demo_data(quantidade: int = 10) -> dict:
+    """Insere `quantidade` lotes de dados demo NOVOS (cliente + processo + eventos
+    + prazo + prospect + lançamento), via create() puro. Não toca em registros
+    existentes nem usa update_or_create — seguro para rodar num banco já populado."""
+    usuarios = list(Usuario.objects.all())
+    criados = {
+        "clientes": 0, "processos": 0, "eventos": 0,
+        "prazos": 0, "prospects": 0, "lancamentos": 0,
+    }
+
+    for _ in range(max(0, quantidade)):
+        suf = uuid4().hex[:6]
+        nome = f"{random.choice(_BULK_NOMES)} {random.choice(_BULK_SOBRENOMES)}"
+        responsavel = random.choice(usuarios) if usuarios else None
+        resp_nome = responsavel.nome if responsavel else "Equipe RS"
+
+        cliente = Cliente.objects.create(
+            nome=nome,
+            email=f"{suf}@demo.local",
+            telefone=f"(11) 9{random.randint(1000, 9999)}-{random.randint(1000, 9999)}",
+            cpf=f"{random.randint(100, 999)}.{random.randint(100, 999)}."
+            f"{random.randint(100, 999)}-{random.randint(10, 99)}",
+            tipo_cliente=random.choice(["esporadico", "mensalista"]),
+            obs="Cliente demo gerado em lote.",
+        )
+        criados["clientes"] += 1
+
+        processo = Processo.objects.create(
+            numero_processo=(
+                f"{random.randint(1000000, 9999999)}-"
+                f"{random.randint(10, 99)}.2026.8.26.{random.randint(1000, 9999)}"
+            ),
+            cliente=cliente,
+            descricao="Processo demo gerado em lote.",
+            vara=random.choice(_BULK_VARAS),
+            area_juridica=random.choice(_BULK_AREAS),
+            status=random.choice(["Em andamento", "Aguardando despacho", "Ativo"]),
+            advogado_responsavel=resp_nome,
+        )
+        criados["processos"] += 1
+
+        for _ev in range(random.randint(1, 3)):
+            offset = random.randint(-5, 10)
+            hora = random.randint(8, 17)
+            Evento.objects.create(
+                titulo=f"{random.choice(_BULK_TIPO_EVENTO)} - {nome}",
+                descricao="Evento demo gerado em lote.",
+                data_inicio=_demo_datetime(offset, hora, 0),
+                data_fim=_demo_datetime(offset, hora + 1, 0),
+                tipo_evento=random.choice(_BULK_TIPO_EVENTO),
+                status=random.choice(["Agendado", "Pendente", "Confirmado"]),
+                prioridade=random.choice(_BULK_PRIORIDADES),
+                cliente=cliente,
+                processo=processo,
+                responsavel=responsavel,
+                criado_por=resp_nome,
+                local=random.choice(["Escritório", "Videoconferência", "Fórum", ""]),
+                observacoes="",
+                lembrete_em=None,
+                concluido=random.choice([True, False]),
+            )
+            criados["eventos"] += 1
+
+        Prazo.objects.create(
+            titulo=f"{processo.numero_processo} - {nome}",
+            descricao="Prazo demo gerado em lote.",
+            data_limite=_demo_date(random.randint(-3, 14)),
+            responsavel=resp_nome,
+            status=random.choice(["Pendente", "Em andamento", "Protocolar"]),
+            prioridade=random.choice(_BULK_PRIORIDADES),
+            observacoes="",
+            concluido=False,
+            tempo_decorrido_segundos=random.choice([0, 1800, 3600, 5400]),
+            timer_iniciado_em=None,
+            criado_por=resp_nome,
+            processo=processo,
+        )
+        criados["prazos"] += 1
+
+        prospect_nome = f"{random.choice(_BULK_NOMES)} {random.choice(_BULK_SOBRENOMES)}"
+        Prospect.objects.create(
+            nome=prospect_nome,
+            telefone=f"(11) 9{random.randint(1000, 9999)}-{random.randint(1000, 9999)}",
+            email=f"prospect.{suf}@demo.local",
+            origem_contato=random.choice(_BULK_ORIGENS),
+            tipo_demanda_juridica=random.choice(_BULK_DEMANDAS),
+            descricao_caso="Prospect demo gerado em lote.",
+            responsavel_interno=responsavel,
+            status_prospeccao=random.choice(
+                ["Novo", "Em contato", "Proposta enviada", "Aguardando retorno"]
+            ),
+            prioridade=random.choice(_BULK_PRIORIDADES),
+            proxima_acao=random.choice(
+                ["Ligar", "Enviar proposta", "Agendar reunião", "Aguardar retorno"]
+            ),
+            data_ultimo_contato=_demo_date(random.randint(-10, 0)),
+        )
+        criados["prospects"] += 1
+
+        receita = random.choice([True, False])
+        pago = random.choice([True, False])
+        venc = _demo_date(random.randint(-10, 20))
+        Lancamento.objects.create(
+            descricao=(
+                f"{'Honorários' if receita else 'Despesa'} - {nome}"
+            ),
+            tipo=TIPO_RECEITA if receita else TIPO_DESPESA,
+            categoria=random.choice(
+                _BULK_CAT_RECEITA if receita else _BULK_CAT_DESPESA
+            ),
+            valor=Decimal(random.randint(150, 8000)),
+            data_vencimento=venc,
+            data_pagamento=venc if pago else None,
+            status=STATUS_PAGO if pago else STATUS_PENDENTE,
+            cliente_relacionado=cliente,
+            caso_relacionado=processo,
+            observacoes="",
+        )
+        criados["lancamentos"] += 1
+
+    return criados
