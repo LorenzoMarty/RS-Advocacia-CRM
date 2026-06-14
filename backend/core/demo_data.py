@@ -148,7 +148,8 @@ def _ensure_processes(clients):
     return processo_bruno, processo_almeida, processo_ana
 
 
-def _ensure_events(processes):
+def _ensure_events(processes, usuarios_por_nome):
+    # Evento.responsavel é FK para Usuario (padronizado por id); usar a instância.
     processo_bruno, processo_almeida, processo_ana = processes
     Evento.objects.update_or_create(
         titulo="Audiência de conciliação",
@@ -161,7 +162,7 @@ def _ensure_events(processes):
             "status": "Agendado",
             "prioridade": "Alta",
             "cliente": processo_bruno.cliente,
-            "responsavel": "Mariana Souza",
+            "responsavel": usuarios_por_nome.get("Mariana Souza"),
             "criado_por": "Renata Sampaio",
             "local": "Videoconferência",
             "observacoes": "Enviar link ao cliente 30 minutos antes.",
@@ -180,7 +181,7 @@ def _ensure_events(processes):
             "status": "Agendado",
             "prioridade": "Media",
             "cliente": processo_almeida.cliente,
-            "responsavel": "Renata Sampaio",
+            "responsavel": usuarios_por_nome.get("Renata Sampaio"),
             "criado_por": "Lorenzo dos Reis",
             "local": "Escritorio",
             "observacoes": "Separar contrato social e controles de ponto.",
@@ -199,7 +200,7 @@ def _ensure_events(processes):
             "status": "Pendente",
             "prioridade": "Media",
             "cliente": processo_ana.cliente,
-            "responsavel": "Lorenzo dos Reis",
+            "responsavel": usuarios_por_nome.get("Lorenzo dos Reis"),
             "criado_por": "Mariana Souza",
             "local": "",
             "observacoes": "Validar notas fiscais e comprovantes.",
@@ -310,18 +311,41 @@ def _ensure_petitions(clients, processes):
 
 def _ensure_meetings(clients):
     bruno, _almeida, _ana = clients
+    resumo_concausas = "\n".join(
+        [
+            "## Resumo executivo",
+            "Reunião formativa para alinhar estudo jurídico sobre concausas e nexo causal.",
+            "",
+            "## Participantes",
+            "- Rose",
+            "- Iruã",
+            "- Equipe jurídica interna",
+            "",
+            "## Próximas ações",
+            "- Solicitar anotações completas a Rose e Iruã.",
+            "- Preparar resumo jurídico para a próxima aula.",
+            "- Confirmar data do próximo encontro formativo.",
+        ]
+    )
+    # Reunião concluída e já finalizada como documento na pasta "Reuniões" do
+    # cliente (documento_* preenchidos = gate de exclusão de áudio satisfeito).
     reuniao, _ = Reuniao.objects.update_or_create(
         titulo="Estudo interno sobre concausas",
         defaults={
             "data_reuniao": _demo_datetime(0, 11, 0),
             "cliente": None,
             "criado_por": "Renata Sampaio",
+            "resumo": resumo_concausas,
+            "documento_drive_id": "demo-doc-concausas",
+            "documento_link": "https://docs.google.com/document/d/demo-doc-concausas/view",
+            "documento_gerado_em": _demo_datetime(0, 10, 25),
         },
     )
     Gravacao.objects.update_or_create(
         reuniao=reuniao,
         nome_original="reuniao-concausas-demo.webm",
         defaults={
+            "ordem": 0,
             "arquivo_audio": "meetings/demo/reuniao-concausas-demo.webm",
             "mime_type": "audio/webm",
             "tamanho_bytes": 1843200,
@@ -331,22 +355,7 @@ def _ensure_meetings(clients):
                 "concomitante e superveniente. A equipe alinhou a necessidade de "
                 "revisar enunciados e súmulas para consolidar o material de estudo."
             ),
-            "resumo": "\n".join(
-                [
-                    "## Resumo executivo",
-                    "Reunião formativa para alinhar estudo jurídico sobre concausas e nexo causal.",
-                    "",
-                    "## Participantes",
-                    "- Rose",
-                    "- Iruã",
-                    "- Equipe jurídica interna",
-                    "",
-                    "## Próximas ações",
-                    "- Solicitar anotações completas a Rose e Iruã.",
-                    "- Preparar resumo jurídico para a próxima aula.",
-                    "- Confirmar data do próximo encontro formativo.",
-                ]
-            ),
+            "resumo": resumo_concausas,
             "provedor": "demo",
             "modelo_transcricao": "Demo transcript",
             "modelo_resumo": "Demo summary",
@@ -354,12 +363,30 @@ def _ensure_meetings(clients):
             "processada_em": _demo_datetime(0, 10, 18),
         },
     )
-    Reuniao.objects.update_or_create(
+    # Reunião com gravação ainda em processamento (sem documento gerado) — mostra
+    # o estado "transcrevendo" na lista de reuniões.
+    reuniao_bruno, _ = Reuniao.objects.update_or_create(
         titulo="Alinhamento de audiência - Bruno Lima",
         defaults={
             "data_reuniao": _demo_datetime(1, 15, 0),
             "cliente": bruno,
             "criado_por": "Mariana Souza",
+            "resumo": "",
+        },
+    )
+    Gravacao.objects.update_or_create(
+        reuniao=reuniao_bruno,
+        nome_original="alinhamento-bruno-demo.webm",
+        defaults={
+            "ordem": 0,
+            "drive_file_id": "demo-audio-bruno",
+            "mime_type": "audio/webm",
+            "tamanho_bytes": 2457600,
+            "status": Gravacao.Status.TRANSCRIBINDO,
+            "transcricao": "",
+            "resumo": "",
+            "provedor": "demo",
+            "erro_processamento": "",
         },
     )
 
@@ -377,19 +404,24 @@ def ensure_demo_data():
         "Administrador",
         admin_group,
     )
-    _ensure_usuario(
+    mariana_usuario, _ = _ensure_usuario(
         "Mariana Souza", "mariana@rsadvocacia.demo", "Advogado", lawyer_group
     )
-    _ensure_usuario(
+    lorenzo_usuario, _ = _ensure_usuario(
         "Lorenzo dos Reis",
         "lorenzo@rsadvocacia.demo",
         "Assistente juridico",
         assistant_group,
     )
+    usuarios_por_nome = {
+        "Renata Sampaio": demo_usuario,
+        "Mariana Souza": mariana_usuario,
+        "Lorenzo dos Reis": lorenzo_usuario,
+    }
 
     clients = _ensure_clients()
     processes = _ensure_processes(clients)
-    _ensure_events(processes)
+    _ensure_events(processes, usuarios_por_nome)
     _ensure_deadlines(processes)
     _ensure_petitions(clients, processes)
     _ensure_meetings(clients)
