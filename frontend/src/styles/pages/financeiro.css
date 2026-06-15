@@ -1,7 +1,16 @@
-.financeiro-page,
+.financeiro-page {
+  display: grid;
+}
+
 .lancamento-form-page {
   display: grid;
   gap: 16px;
+}
+
+.financeiro-shell {
+  display: grid;
+  overflow: hidden;
+  padding: 0;
 }
 
 .financeiro-intro {
@@ -84,6 +93,7 @@
   display: grid;
   gap: 14px;
   padding: 18px;
+  border-top: 1px solid var(--line);
 }
 
 .financeiro-tabs {

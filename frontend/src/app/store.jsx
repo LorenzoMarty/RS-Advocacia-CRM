@@ -1475,6 +1475,9 @@ export function AppStateProvider({ children }) {
     if (isDemoMode) {
       return true;
     }
+    if (currentUser?.isAdmin || currentRole?.name === 'Administrador') {
+      return true;
+    }
     return Boolean(accessFlags[path]);
   }
 
