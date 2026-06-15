@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch } from '../layout';
+import { motion as Motion, staggerContainer, staggerItem } from '../motion';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, normalizeText } from '../utils';
 import { EmptyState, Field, NotFoundState } from './common';
@@ -90,9 +91,14 @@ export function UsersListPage() {
                 <span>Ações</span>
               </div>
 
-              <div className="users-list">
+              <Motion.div
+                className="users-list"
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+              >
                 {filteredUsers.map((user) => (
-                  <article key={user.id} className="user-row">
+                  <Motion.article key={user.id} className="user-row" variants={staggerItem}>
                     <div className="user-avatar" aria-hidden="true">{user.name.slice(0, 1).toUpperCase()}</div>
 
                     <div className="user-main">
@@ -115,9 +121,9 @@ export function UsersListPage() {
                       <Link className="action-link" to={`/usuarios/${user.id}/editar`}>Editar</Link>
                       <button className="action-link action-link-danger" type="button" onClick={() => handleDeleteUser(user)}>Excluir</button>
                     </div>
-                  </article>
+                  </Motion.article>
                 ))}
-              </div>
+              </Motion.div>
             </>
           ) : (
             <EmptyState

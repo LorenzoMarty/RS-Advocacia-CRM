@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { AnimatePresence, motion as Motion } from '../motion';
+
 const CUSTOM_OPTION = '__custom__';
+
+const FIELD_ERROR_MOTION = {
+  initial: { opacity: 0, y: -4, height: 0 },
+  animate: { opacity: 1, y: 0, height: 'auto' },
+  exit: { opacity: 0, y: -4, height: 0 },
+  transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+};
 
 // Select com opção de digitar um valor novo (combobox).
 // IMPORTANTE: o <select> nunca é desmontado durante o seu próprio onChange — apenas escondido
@@ -106,7 +115,19 @@ export function Field({
       )}
       {children}
       {note ? <p className="field-help">{note}</p> : null}
-      {error ? <div className="field-error">{error}</div> : null}
+      <AnimatePresence initial={false}>
+        {error ? (
+          <Motion.div
+            key="field-error"
+            className="field-error"
+            role="alert"
+            style={{ overflow: 'hidden' }}
+            {...FIELD_ERROR_MOTION}
+          >
+            {error}
+          </Motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

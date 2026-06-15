@@ -88,6 +88,40 @@
     50%{transform:translateY(-3px);box-shadow:0 22px 38px rgba(212,175,55,.13)}
 }
 
+/* Skeletons — placeholders de carregamento (componente Skeleton.jsx). */
+.skeleton-stack{
+    display:grid;
+    gap:8px;
+    width:100%;
+}
+
+.skeleton{
+    display:block;
+    position:relative;
+    overflow:hidden;
+    background:var(--ghost-strong, rgba(148,163,184,.1));
+    border-radius:10px;
+}
+
+.skeleton::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    transform:translateX(-100%);
+    background:linear-gradient(
+        90deg,
+        transparent,
+        rgba(212,175,55,.12),
+        rgba(255,255,255,.06),
+        transparent
+    );
+    animation:skeleton-shimmer 1.4s var(--ease-in-out, ease-in-out) infinite;
+}
+
+@keyframes skeleton-shimmer{
+    100%{transform:translateX(100%)}
+}
+
 @media (prefers-reduced-motion:reduce){
     .loading-mark,
     .loading-progress span{
@@ -97,6 +131,10 @@
     .loading-progress span{
         transform:none;
         width:100%;
+    }
+
+    .skeleton::after{
+        animation:none;
     }
 }
 

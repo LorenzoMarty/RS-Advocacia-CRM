@@ -4,8 +4,16 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PETITION_STATUS_COLUMNS } from '../data';
 import { TaskTimer } from '../components/productivity';
 import { petitionTaskType } from '../productivity-utils';
+import { taskLoggedSeconds } from './productivity/productivity-data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, StatusBadge } from '../layout';
+import {
+  motion,
+  AnimatePresence,
+  prefersReducedMotion,
+  DURATION,
+  EASE_OUT,
+} from '../motion';
 import { useAppState } from '../store';
 import { listClientDrive } from '../services/documentos';
 import {
@@ -19,6 +27,24 @@ import { EmptyState, Field } from './common';
 const PETITION_DEFAULT_STATUS = PETITION_STATUS_COLUMNS[0].label;
 const PETITION_TYPE_OPTIONS = ['Petição', 'Contestação'];
 const PETITION_DEFAULT_TYPE = PETITION_TYPE_OPTIONS[0];
+
+// Aliases de componentes motion (member access registra uso de `motion` no lint).
+const MotionArticle = motion.article;
+const MotionSpan = motion.span;
+const MotionDiv = motion.div;
+
+// Entrada/saída de cards dentro de uma coluna do kanban (AnimatePresence).
+const kanbanCardMotion = prefersReducedMotion()
+  ? {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 },
+    }
+  : {
+      initial: { opacity: 0, y: 8, scale: 0.98 },
+      animate: { opacity: 1, y: 0, scale: 1, transition: { duration: DURATION.base, ease: EASE_OUT } },
+      exit: { opacity: 0, scale: 0.96, transition: { duration: DURATION.fast, ease: EASE_OUT } },
+    };
 
 function sortedUnique(values) {
   return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))]
@@ -97,7 +123,9 @@ function PetitionCard({
   const statusLabel = petitionStatusLabel(petition);
 
   return (
-    <article
+    <MotionArticle
+      layout
+      {...kanbanCardMotion}
       className={`petition-card${isDragging ? ' is-dragging' : ''}${isMoving ? ' is-moving' : ''}`}
       draggable
       onDragStart={(event) => onDragStart(event, petition.id)}
@@ -170,7 +198,7 @@ function PetitionCard({
           </Link>
         </div>
       </div>
-    </article>
+    </MotionArticle>
   );
 }
 
@@ -184,6 +212,7 @@ export function PetitionsPage() {
     processes,
     removePetitionDocument,
     savePetition,
+    timeEntries,
   } = useAppState();
   const [search, setSearch] = useState('');
   const [docBusyId, setDocBusyId] = useState('');
@@ -282,8 +311,8 @@ export function PetitionsPage() {
       return;
     }
 
-    if (nextColumnKey === 'pendente') {
-      addFlash('Tarefa em andamento não volta para Pendente.', 'warn');
+    if (nextColumnKey === 'pendente' && taskLoggedSeconds(timeEntries, petition.id, petitionTaskType(petition)) > 0) {
+      addFlash('Tarefa com tempo registrado não volta para Pendente.', 'warn');
       return;
     }
 
@@ -430,22 +459,24 @@ export function PetitionsPage() {
                   ) : null}
 
                   {petitionsByColumn[column.key].length ? (
-                    petitionsByColumn[column.key].map((petition) => (
-                      <PetitionCard
-                        key={petition.id}
-                        clients={clients}
-                        docBusy={docBusyId === petition.id}
-                        isDragging={draggingPetitionId === petition.id}
-                        isMoving={movingPetitionId === petition.id}
-                        onCreateDocument={handleCreateDocument}
-                        onDragEnd={handleDragEnd}
-                        onDragStart={handleDragStart}
-                        onRemoveDocument={handleRemoveDocument}
-                        onTimerStart={promotePetitionToActive}
-                        petition={petition}
-                        processes={processes}
-                      />
-                    ))
+                    <AnimatePresence initial={false}>
+                      {petitionsByColumn[column.key].map((petition) => (
+                        <PetitionCard
+                          key={petition.id}
+                          clients={clients}
+                          docBusy={docBusyId === petition.id}
+                          isDragging={draggingPetitionId === petition.id}
+                          isMoving={movingPetitionId === petition.id}
+                          onCreateDocument={handleCreateDocument}
+                          onDragEnd={handleDragEnd}
+                          onDragStart={handleDragStart}
+                          onRemoveDocument={handleRemoveDocument}
+                          onTimerStart={promotePetitionToActive}
+                          petition={petition}
+                          processes={processes}
+                        />
+                      ))}
+                    </AnimatePresence>
                   ) : (
                     <div className="petition-column-empty">
                       {isPetitionsLoading ? 'Carregando peças.' : 'Nenhuma peça nesta coluna.'}
@@ -475,6 +506,11 @@ function processFolderName(process) {
   return [process?.area, process?.number].map((part) => (part || '').trim()).filter(Boolean).join(' - ');
 }
 
+function findFolderByName(folders, name) {
+  const wanted = normalizeText(name);
+  return folders.find((folder) => normalizeText(folder.name) === wanted) || null;
+}
+
 function PetitionFolderFiles({ clientId, process }) {
   const [state, setState] = useState({ status: 'loading', files: [] });
 
@@ -490,18 +526,13 @@ function PetitionFolderFiles({ clientId, process }) {
       try {
         // Navega: raiz do cliente → pasta do processo (<área> - <número>) → PETIÇÕES.
         const root = await listClientDrive(clientId);
-        const wantedName = normalizeText(processFolderName(process));
-        const processFolder = root.folders.find(
-          (folder) => normalizeText(folder.name) === wantedName,
-        );
+        const processFolder = findFolderByName(root.folders, processFolderName(process));
         if (!processFolder) {
           if (isMounted) setState({ status: 'empty', files: [] });
           return;
         }
         const processContent = await listClientDrive(clientId, processFolder.id);
-        const peticoesFolder = processContent.folders.find(
-          (folder) => normalizeText(folder.name) === normalizeText('Petições'),
-        );
+        const peticoesFolder = findFolderByName(processContent.folders, 'Petições');
         if (!peticoesFolder) {
           if (isMounted) setState({ status: 'empty', files: [] });
           return;

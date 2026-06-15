@@ -90,6 +90,17 @@
     --space-6:24px;
     --space-8:32px;
 
+    /* Tokens de movimento (framer-motion + CSS).
+       Durações e easings compartilhados por todo o app para um feel coeso.
+       Usados pelos primitivos em app/motion/* e pelas transições de CSS. */
+    --motion-fast:120ms;
+    --motion:200ms;
+    --motion-slow:360ms;
+    /* Easings: saída suave para entradas; "spring" via cubic-bezier com leve overshoot. */
+    --ease-out:cubic-bezier(.22,1,.36,1);
+    --ease-in-out:cubic-bezier(.65,0,.35,1);
+    --ease-spring:cubic-bezier(.34,1.56,.64,1);
+
     /* Paleta de gráficos (donut/barras) — adapta aos dois temas */
     --chart-1:#D4AF37;
     --chart-2:#73d3b1;
@@ -103,5 +114,20 @@
 html[data-theme="light"]{
     --chart-grid:rgba(30,34,45,.1);
     --chart-track:rgba(30,34,45,.08);
+}
+
+/* Estratégia global de movimento reduzido.
+   Colapsa durações de transições/animações CSS a ~zero para quem pede
+   prefers-reduced-motion. Os primitivos JS (framer-motion) também checam a
+   media query e desligam variantes — ver app/motion/presets.js. */
+@media (prefers-reduced-motion: reduce){
+    *,
+    *::before,
+    *::after{
+        animation-duration:.001ms !important;
+        animation-iteration-count:1 !important;
+        transition-duration:.001ms !important;
+        scroll-behavior:auto !important;
+    }
 }
 

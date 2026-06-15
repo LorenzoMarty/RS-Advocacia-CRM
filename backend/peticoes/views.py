@@ -20,6 +20,12 @@ from integrations.google.responses import mapear_erro_google
 from peticoes.forms import PeticaoForm
 from peticoes.models import Peticao
 
+_GOOGLE_ERRORS = (
+    GoogleConfigurationError,
+    GoogleAuthorizationRequired,
+    GoogleApiError,
+)
+
 
 def _resolver_criador_peticao(request):
     nome_sessao = (request.session.get("usuario_nome") or "").strip()
@@ -165,11 +171,7 @@ def editar_peticao(request, peticao_id):
                     file_id=peticao.drive_file_id,
                     processo=peticao.processo,
                 )
-            except (
-                GoogleConfigurationError,
-                GoogleAuthorizationRequired,
-                GoogleApiError,
-            ):
+            except _GOOGLE_ERRORS:
                 pass
         return resposta_sucesso(
             {"peticao": serialize_peticao(peticao)},
@@ -183,9 +185,9 @@ def editar_peticao(request, peticao_id):
 def documento_peticao(request, peticao_id):
     """Create (POST) or remove (DELETE) the petition's Google Doc reference.
 
-    POST cria um Google Doc em branco na pasta "Petições" do cliente e guarda
-    ``drive_file_id``/``link_drive``. DELETE limpa a referência; com ``?apagar=1``
-    também exclui o arquivo no Drive (documento temporário).
+    POST cria um Google Doc em branco na subpasta "PETIÇÕES" da pasta do processo
+    e guarda ``drive_file_id``/``link_drive``. DELETE limpa a referência; com
+    ``?apagar=1`` também exclui o arquivo no Drive (documento temporário).
     """
     if request.method not in {"POST", "DELETE"}:
         return metodo_nao_permitido(["POST", "DELETE"])
@@ -209,11 +211,7 @@ def documento_peticao(request, peticao_id):
             meta = documentos_services.criar_documento_branco(
                 usuario, parent_id=parent_id, nome=nome
             )
-        except (
-            GoogleConfigurationError,
-            GoogleAuthorizationRequired,
-            GoogleApiError,
-        ) as exc:
+        except _GOOGLE_ERRORS as exc:
             return mapear_erro_google(exc)
 
         peticao.drive_file_id = meta["id"]
@@ -230,11 +228,7 @@ def documento_peticao(request, peticao_id):
     if apagar and peticao.drive_file_id:
         try:
             documentos_services.excluir_arquivo(usuario, peticao.drive_file_id)
-        except (
-            GoogleConfigurationError,
-            GoogleAuthorizationRequired,
-            GoogleApiError,
-        ) as exc:
+        except _GOOGLE_ERRORS as exc:
             return mapear_erro_google(exc)
 
     peticao.drive_file_id = ""

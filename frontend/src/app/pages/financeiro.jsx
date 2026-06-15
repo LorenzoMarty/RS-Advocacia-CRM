@@ -11,11 +11,40 @@ import {
 } from '../data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
+import { AnimatePresence, motion as Motion, pop, staggerContainer, staggerItem } from '../motion';
 import { useAppState } from '../store';
 import { buildSearchText, formatDate, getStatusTone, normalizeText } from '../utils';
 import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
 const PAGE_SIZE = 10;
+
+function SortArrow({ active, dir }) {
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      {active ? (
+        <Motion.svg
+          key={dir}
+          className="financeiro-sort-arrow"
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          initial={{ opacity: 0, y: dir === 'asc' ? 3 : -3 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: dir === 'asc' ? -3 : 3 }}
+          transition={{ duration: 0.14 }}
+        >
+          {dir === 'asc' ? <path d="m18 15-6-6-6 6" /> : <path d="m6 9 6 6 6-6" />}
+        </Motion.svg>
+      ) : null}
+    </AnimatePresence>
+  );
+}
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value) || 0);
@@ -210,13 +239,18 @@ export function FinanceiroPage() {
               <Link className="btn" to="/financeiro/novo">Novo lançamento</Link>
             </div>
 
-            <div className="financeiro-metrics">
-              <article className="metric"><span>Recebido no mês</span><strong>{formatCurrency(dashboard.recebidoMes)}</strong></article>
-              <article className="metric"><span>A receber</span><strong>{formatCurrency(dashboard.pendente)}</strong></article>
-              <article className="metric metric-danger"><span>Atrasado</span><strong>{formatCurrency(dashboard.atrasado)}</strong></article>
-              <article className="metric"><span>Despesas no mês</span><strong>{formatCurrency(dashboard.despesasMes)}</strong></article>
-              <article className="metric"><span>Saldo estimado</span><strong>{formatCurrency(dashboard.saldo)}</strong></article>
-            </div>
+            <Motion.div
+              className="financeiro-metrics"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
+              <Motion.article className="metric" variants={pop}><span>Recebido no mês</span><strong>{formatCurrency(dashboard.recebidoMes)}</strong></Motion.article>
+              <Motion.article className="metric" variants={pop}><span>A receber</span><strong>{formatCurrency(dashboard.pendente)}</strong></Motion.article>
+              <Motion.article className="metric metric-danger" variants={pop}><span>Atrasado</span><strong>{formatCurrency(dashboard.atrasado)}</strong></Motion.article>
+              <Motion.article className="metric" variants={pop}><span>Despesas no mês</span><strong>{formatCurrency(dashboard.despesasMes)}</strong></Motion.article>
+              <Motion.article className="metric" variants={pop}><span>Saldo estimado</span><strong>{formatCurrency(dashboard.saldo)}</strong></Motion.article>
+            </Motion.div>
 
             <div className="financeiro-charts">
               <CategoryDonut title="Receita por categoria" data={dashboard.receitaPorCategoria} />
@@ -259,15 +293,28 @@ export function FinanceiroPage() {
               <>
                 <div className="financeiro-table" role="table">
                   <div className="financeiro-row financeiro-row-head" role="row">
-                    <button type="button" className="financeiro-th" onClick={() => toggleSort('description')}>Descrição</button>
+                    <button type="button" className={`financeiro-th is-sortable${sort.field === 'description' ? ' is-sorted' : ''}`} onClick={() => toggleSort('description')}>
+                      Descrição <SortArrow active={sort.field === 'description'} dir={sort.dir} />
+                    </button>
                     <span className="financeiro-th">Categoria</span>
-                    <button type="button" className="financeiro-th" onClick={() => toggleSort('value')}>Valor</button>
-                    <button type="button" className="financeiro-th" onClick={() => toggleSort('dueDate')}>Vencimento</button>
+                    <button type="button" className={`financeiro-th is-sortable${sort.field === 'value' ? ' is-sorted' : ''}`} onClick={() => toggleSort('value')}>
+                      Valor <SortArrow active={sort.field === 'value'} dir={sort.dir} />
+                    </button>
+                    <button type="button" className={`financeiro-th is-sortable${sort.field === 'dueDate' ? ' is-sorted' : ''}`} onClick={() => toggleSort('dueDate')}>
+                      Vencimento <SortArrow active={sort.field === 'dueDate'} dir={sort.dir} />
+                    </button>
                     <span className="financeiro-th">Status</span>
                     <span className="financeiro-th">Ações</span>
                   </div>
+                  <Motion.div
+                    key={`${tab}-${safePage}-${sort.field}-${sort.dir}`}
+                    className="financeiro-rows"
+                    variants={staggerContainer}
+                    initial="hidden"
+                    animate="visible"
+                  >
                   {pageRows.map((item) => (
-                    <div className="financeiro-row" role="row" key={item.id}>
+                    <Motion.div className="financeiro-row" role="row" key={item.id} variants={staggerItem}>
                       <span className="financeiro-cell" data-label="Descrição">
                         {item.description}
                         {item.clientName ? <small>{item.clientName}</small> : null}
@@ -288,8 +335,9 @@ export function FinanceiroPage() {
                         ) : null}
                         <button className="btn btn-mini btn-danger" type="button" onClick={() => handleDelete(item)}>Excluir</button>
                       </span>
-                    </div>
+                    </Motion.div>
                   ))}
+                  </Motion.div>
                 </div>
 
                 {totalPages > 1 ? (

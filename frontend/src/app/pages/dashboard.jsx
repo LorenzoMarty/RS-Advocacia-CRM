@@ -1,9 +1,60 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PageChrome, StatusBadge } from "../layout";
+import {
+  motion,
+  staggerContainer,
+  staggerItem,
+  pop,
+  cardHover,
+  prefersReducedMotion,
+} from "../motion";
 import { useAppState } from "../store";
 import { formatDate, formatTime, getStatusTone, isSameDay } from "../utils";
 import { EmptyState } from "./common";
+
+const MotionLink = motion(Link);
+
+/**
+ * Contador animado para os KPIs do painel. Anima de 0 ao valor final com
+ * easing; sob prefers-reduced-motion mostra o valor final instantaneamente.
+ */
+function CountUp({ value, duration = 0.9 }) {
+  const target = Number(value) || 0;
+  const [display, setDisplay] = useState(() =>
+    prefersReducedMotion() ? target : 0,
+  );
+  const frameRef = useRef(0);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDisplay(target);
+      return undefined;
+    }
+
+    const ease = (t) => 1 - Math.pow(1 - t, 3);
+    const totalMs = Math.max(1, duration * 1000);
+    let start = null;
+
+    function step(timestamp) {
+      if (start === null) {
+        start = timestamp;
+      }
+      const progress = Math.min(1, (timestamp - start) / totalMs);
+      setDisplay(Math.round(ease(progress) * target));
+      if (progress < 1) {
+        frameRef.current = window.requestAnimationFrame(step);
+      }
+    }
+
+    frameRef.current = window.requestAnimationFrame(step);
+    return () => window.cancelAnimationFrame(frameRef.current);
+  }, [target, duration]);
+
+  return <>{display}</>;
+}
 
 export function DashboardPage() {
   const { clients, deadlines, events, processes } = useAppState();
@@ -43,24 +94,29 @@ export function DashboardPage() {
               </Link>
             </div>
 
-            <div className="metric-row">
-              <article className="metric">
+            <motion.div
+              className="metric-row"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.article className="metric" variants={staggerItem}>
                 <span>Prazos</span>
-                <strong>{deadlinesToday.length}</strong>
-              </article>
-              <article className="metric">
+                <strong><CountUp value={deadlinesToday.length} /></strong>
+              </motion.article>
+              <motion.article className="metric" variants={staggerItem}>
                 <span>Compromissos</span>
-                <strong>{eventsToday.length}</strong>
-              </article>
-              <article className="metric">
+                <strong><CountUp value={eventsToday.length} /></strong>
+              </motion.article>
+              <motion.article className="metric" variants={staggerItem}>
                 <span>Clientes</span>
-                <strong>{clients.length}</strong>
-              </article>
-              <article className="metric">
+                <strong><CountUp value={clients.length} /></strong>
+              </motion.article>
+              <motion.article className="metric" variants={staggerItem}>
                 <span>Processos</span>
-                <strong>{processes.length}</strong>
-              </article>
-            </div>
+                <strong><CountUp value={processes.length} /></strong>
+              </motion.article>
+            </motion.div>
           </div>
 
           <aside className="focus-card">
@@ -107,24 +163,37 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <section className="dashboard-grid">
+      <motion.section
+        className="dashboard-grid"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="stack">
-          <article className="surface panel">
+          <motion.article className="surface panel" variants={staggerItem}>
             <div className="section-head">
               <div>
                 <h2 className="section-title">Agenda</h2>
                 <p className="section-note">Hoje</p>
               </div>
-              <span className="badge gold">{eventsToday.length}</span>
+              <motion.span
+                className="badge gold"
+                variants={pop}
+                initial="hidden"
+                animate="visible"
+              >
+                {eventsToday.length}
+              </motion.span>
             </div>
 
             <div className="list">
               {eventsToday.length ? (
                 eventsToday.map((event) => (
-                  <Link
+                  <MotionLink
                     key={event.id}
-                    className="item item-link"
+                    className="item item-link is-clickable"
                     to={`/agenda/${event.id}`}
+                    {...cardHover}
                   >
                     <div className="item-time">{formatTime(event.start)}</div>
 
@@ -160,7 +229,7 @@ export function DashboardPage() {
                       </StatusBadge>
                       <span>{event.type || "Compromisso"}</span>
                     </div>
-                  </Link>
+                  </MotionLink>
                 ))
               ) : (
                 <EmptyState
@@ -170,24 +239,32 @@ export function DashboardPage() {
                 />
               )}
             </div>
-          </article>
+          </motion.article>
 
-          <article className="surface panel">
+          <motion.article className="surface panel" variants={staggerItem}>
             <div className="section-head">
               <div>
                 <h2 className="section-title">Prazos</h2>
                 <p className="section-note">Próximos</p>
               </div>
-              <span className="badge warn">{upcomingDeadlines.length}</span>
+              <motion.span
+                className="badge warn"
+                variants={pop}
+                initial="hidden"
+                animate="visible"
+              >
+                {upcomingDeadlines.length}
+              </motion.span>
             </div>
 
             <div className="list">
               {upcomingDeadlines.length ? (
                 upcomingDeadlines.map((deadline) => (
-                  <Link
+                  <MotionLink
                     key={deadline.id}
-                    className="item item-link"
+                    className="item item-link is-clickable"
                     to={`/prazos/${deadline.id}`}
+                    {...cardHover}
                   >
                     <div className="item-time">
                       {formatDate(new Date(`${deadline.date}T12:00:00`)).slice(0, 5)}
@@ -223,7 +300,7 @@ export function DashboardPage() {
                       </StatusBadge>
                       <span>Prazo</span>
                     </div>
-                  </Link>
+                  </MotionLink>
                 ))
               ) : (
                 <EmptyState
@@ -233,11 +310,11 @@ export function DashboardPage() {
                 />
               )}
             </div>
-          </article>
+          </motion.article>
         </div>
 
         <aside className="stack">
-          <article className="surface rail">
+          <motion.article className="surface rail" variants={staggerItem}>
             <div className="section-head">
               <div>
                 <h2 className="section-title">Operação</h2>
@@ -246,8 +323,13 @@ export function DashboardPage() {
             </div>
 
             <div className="rail-group">
-              <div className="shortcut-grid">
-                <Link className="shortcut" to="/agenda/novo">
+              <motion.div
+                className="shortcut-grid"
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+              >
+                <MotionLink className="shortcut is-clickable" to="/agenda/novo" variants={staggerItem} {...cardHover}>
                   <div className="shortcut-copy">
                     <strong>Compromisso</strong>
                     <span>Novo compromisso</span>
@@ -267,9 +349,9 @@ export function DashboardPage() {
                       <path d="M5 12h14" />
                     </svg>
                   </span>
-                </Link>
+                </MotionLink>
 
-                <Link className="shortcut" to="/clientes/novo">
+                <MotionLink className="shortcut is-clickable" to="/clientes/novo" variants={staggerItem} {...cardHover}>
                   <div className="shortcut-copy">
                     <strong>Cliente</strong>
                     <span>Novo cliente</span>
@@ -291,9 +373,9 @@ export function DashboardPage() {
                       <path d="M21 6v4" />
                     </svg>
                   </span>
-                </Link>
+                </MotionLink>
 
-                <Link className="shortcut" to="/processos/novo">
+                <MotionLink className="shortcut is-clickable" to="/processos/novo" variants={staggerItem} {...cardHover}>
                   <div className="shortcut-copy">
                     <strong>Processo</strong>
                     <span>Novo processo</span>
@@ -315,9 +397,9 @@ export function DashboardPage() {
                       <path d="M9 15h6" />
                     </svg>
                   </span>
-                </Link>
+                </MotionLink>
 
-                <Link className="shortcut" to="/prazos/novo">
+                <MotionLink className="shortcut is-clickable" to="/prazos/novo" variants={staggerItem} {...cardHover}>
                   <div className="shortcut-copy">
                     <strong>Prazo</strong>
                     <span>Novo prazo</span>
@@ -341,9 +423,9 @@ export function DashboardPage() {
                       <path d="M10 16h4" />
                     </svg>
                   </span>
-                </Link>
+                </MotionLink>
 
-                <Link className="shortcut" to="/peticoes-contestacoes">
+                <MotionLink className="shortcut is-clickable" to="/peticoes-contestacoes" variants={staggerItem} {...cardHover}>
                   <div className="shortcut-copy">
                     <strong>Petições</strong>
                     <span>Petições ou contestações</span>
@@ -366,12 +448,12 @@ export function DashboardPage() {
                       <path d="M9 9h1" />
                     </svg>
                   </span>
-                </Link>
-              </div>
+                </MotionLink>
+              </motion.div>
             </div>
-          </article>
+          </motion.article>
         </aside>
-      </section>
+      </motion.section>
     </>
   );
 }
