@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { PETITION_STATUS_COLUMNS, PROCESS_AREA_OPTIONS } from '../data';
+import { PETITION_STATUS_COLUMNS } from '../data';
 import { TaskTimer } from '../components/productivity';
 import { petitionTaskType } from '../productivity-utils';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
@@ -66,10 +66,10 @@ function validatePetitionForm(form) {
   const nextErrors = {};
 
   if (!form.clientId) nextErrors.clientId = 'Selecione o cliente.';
+  if (!form.processId) nextErrors.processId = 'Selecione o processo vinculado.';
   if (!PETITION_TYPE_OPTIONS.includes(form.type)) nextErrors.type = 'Selecione o tipo da peça.';
   if (!form.adversary.trim()) nextErrors.adversary = 'Informe o adverso.';
   if (!form.responsible.trim()) nextErrors.responsible = 'Informe o responsável pela ação.';
-  if (!form.area.trim()) nextErrors.area = 'Informe a área jurídica.';
   if (form.driveLink.trim() && !/^https?:\/\//i.test(form.driveLink.trim())) {
     nextErrors.driveLink = 'Informe um link iniciado por http:// ou https://.';
   }
@@ -567,10 +567,7 @@ export function PetitionFormPage() {
     ...users.map((user) => user.name),
     ...petitions.map((item) => item.responsible),
   ]);
-  const areaOptions = sortedUnique([
-    ...PROCESS_AREA_OPTIONS,
-    ...petitions.map((item) => item.area),
-  ]);
+  const derivedArea = processes.find((process) => process.id === form.processId)?.area || form.area || '';
 
   useEffect(() => {
     if (!petition) {
@@ -639,7 +636,7 @@ export function PetitionFormPage() {
       responsible: form.responsible.trim(),
       driveLink: form.driveLink.trim(),
       pendingReason: form.pendingReason.trim(),
-      area: form.area.trim(),
+      area: derivedArea,
       status: form.status || PETITION_DEFAULT_STATUS,
     });
 
@@ -719,7 +716,7 @@ export function PetitionFormPage() {
                   </select>
                 </Field>
 
-                <Field id="petition-process" label="Processo vinculado" className="span-2">
+                <Field id="petition-process" label="Processo vinculado" className="span-2" error={errors.processId}>
                   <select
                     id="petition-process"
                     value={form.processId}
@@ -730,10 +727,11 @@ export function PetitionFormPage() {
                         ...currentForm,
                         processId,
                         clientId: selectedProcess?.clientId || currentForm.clientId,
+                        area: selectedProcess?.area || '',
                       }));
                     }}
                   >
-                    <option value="">Sem processo vinculado</option>
+                    <option value="">Selecione o processo</option>
                     {processOptions.map((process) => {
                       const client = clients.find((item) => item.id === process.clientId) || null;
                       return (
@@ -778,17 +776,14 @@ export function PetitionFormPage() {
                   </select>
                 </Field>
 
-                <Field id="petition-area" label="Área jurídica" error={errors.area}>
-                  <select
+                <Field id="petition-area" label="Área jurídica" note="Herdada do processo vinculado.">
+                  <input
                     id="petition-area"
-                    value={form.area}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, area: event.target.value }))}
-                  >
-                    <option value="">Selecione a área</option>
-                    {areaOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
+                    value={derivedArea}
+                    readOnly
+                    disabled
+                    placeholder="Selecione um processo"
+                  />
                 </Field>
 
                 <Field id="petition-status" label="Status" error={errors.status}>

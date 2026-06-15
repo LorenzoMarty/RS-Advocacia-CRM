@@ -53,7 +53,6 @@ class PeticoesViewsTests(TestCase):
             "responsavel_acao": self.usuario.nome,
             "link_drive": "https://drive.google.com/file/d/exemplo",
             "motivo_pendente": "Aguardando documentos",
-            "area_juridica": "Cível",
             "status": Peticao.STATUS_PENDENTE,
         }
 
@@ -93,9 +92,9 @@ class PeticoesViewsTests(TestCase):
     def test_peticao_pode_voltar_para_pendente_sem_motivo(self):
         peticao = Peticao.objects.create(
             cliente=self.cliente,
+            processo=self.processo,
             adverso="Empresa adversa",
             responsavel_acao=self.usuario.nome,
-            area_juridica="Civel",
             status=Peticao.STATUS_PROTOCOLADO,
         )
         payload = self.payload()
@@ -120,7 +119,6 @@ class PeticoesViewsTests(TestCase):
             "tipo": Peticao.TIPO_CONTESTACAO,
             "adverso": "Empresa adversa",
             "responsavel_acao": self.usuario.nome,
-            "area_juridica": "Civel",
             "status": Peticao.STATUS_PENDENTE,
         }
         defaults.update(overrides)
@@ -129,7 +127,7 @@ class PeticoesViewsTests(TestCase):
     @patch("peticoes.views.documentos_services")
     def test_documento_peticao_cria_doc_em_branco(self, mock_services):
         peticao = self._peticao()
-        mock_services.pasta_peticoes_cliente.return_value = "pasta-peticoes"
+        mock_services.pasta_peticoes_processo.return_value = "pasta-peticoes"
         mock_services.criar_documento_branco.return_value = {
             "id": "doc-1",
             "webViewLink": "https://docs.google.com/doc-1",
@@ -174,3 +172,52 @@ class PeticoesViewsTests(TestCase):
         mock_services.excluir_arquivo.assert_not_called()
         peticao.refresh_from_db()
         self.assertEqual(peticao.drive_file_id, "")
+
+    def test_area_juridica_derivada_do_processo(self):
+        peticao = self._peticao()
+        response = self.client.get(reverse("detalhes_peticao", args=[peticao.pk]))
+        self.assertEqual(response.status_code, 200, response.json())
+        self.assertEqual(
+            response.json()["dados"]["peticao"]["area_juridica"],
+            self.processo.area_juridica,
+        )
+
+    def test_processo_obrigatorio_ao_criar(self):
+        payload = self.payload()
+        payload.pop("processo")
+        response = self.client.post(
+            reverse("criar_peticao"),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Peticao.objects.count(), 0)
+
+    @patch("peticoes.views.documentos_services")
+    def test_editar_move_doc_ao_trocar_processo(self, mock_services):
+        peticao = self._peticao(
+            drive_file_id="doc-1", link_drive="https://docs.google.com/doc-1"
+        )
+        outro_processo = Processo.objects.create(
+            numero_processo="2000000-00.2026.8.26.0000",
+            cliente=self.cliente,
+            descricao="Outro processo",
+            vara="2a Vara Civel",
+            area_juridica="Trabalhista",
+            status="Ativo",
+            advogado_responsavel=self.usuario.nome,
+        )
+        payload = self.payload()
+        payload["processo"] = outro_processo.pk
+
+        response = self.client.put(
+            reverse("editar_peticao", args=[peticao.pk]),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200, response.json())
+        mock_services.mover_documento_peticao.assert_called_once()
+        _, kwargs = mock_services.mover_documento_peticao.call_args
+        self.assertEqual(kwargs["file_id"], "doc-1")
+        self.assertEqual(kwargs["processo"], outro_processo)

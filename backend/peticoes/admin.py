@@ -20,6 +20,10 @@ class PeticaoAdmin(admin.ModelAdmin):
         "tipo",
         "adverso",
         "responsavel_acao",
-        "area_juridica",
+        "processo__area_juridica",
     )
-    list_filter = ("tipo", "status", "area_juridica", "responsavel_acao")
+    list_filter = ("tipo", "status", "processo__area_juridica", "responsavel_acao")
+
+    @admin.display(description="Área jurídica", ordering="processo__area_juridica")
+    def area_juridica(self, obj):
+        return obj.processo.area_juridica if obj.processo_id else ""

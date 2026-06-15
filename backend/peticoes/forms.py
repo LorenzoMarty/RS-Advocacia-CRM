@@ -1,6 +1,5 @@
 from django import forms
 
-from processos.forms import AREA_JURIDICA_CHOICES
 from processos.models import Processo
 from usuarios.models import Usuario
 
@@ -31,7 +30,6 @@ def _build_choices(placeholder, *groups):
 class PeticaoForm(forms.ModelForm):
     tipo = forms.ChoiceField(choices=Peticao.TIPO_CHOICES, label="Tipo")
     responsavel_acao = forms.ChoiceField(choices=(), label="Responsavel pela acao")
-    area_juridica = forms.ChoiceField(choices=(), label="Area juridica")
     status = forms.ChoiceField(choices=Peticao.STATUS_CHOICES, label="Status")
 
     class Meta:
@@ -44,7 +42,6 @@ class PeticaoForm(forms.ModelForm):
             "responsavel_acao",
             "link_drive",
             "motivo_pendente",
-            "area_juridica",
             "status",
         ]
         widgets = {
@@ -56,12 +53,10 @@ class PeticaoForm(forms.ModelForm):
 
         instance = getattr(self, "instance", None)
         current_responsavel = getattr(instance, "responsavel_acao", "")
-        current_area = getattr(instance, "area_juridica", "")
         usuarios = Usuario.objects.values_list("nome", flat=True)
         existing_responsaveis = Peticao.objects.values_list(
             "responsavel_acao", flat=True
         )
-        existing_areas = Peticao.objects.values_list("area_juridica", flat=True)
 
         cliente_field = self.fields.get("cliente")
         if isinstance(cliente_field, forms.ModelChoiceField):
@@ -70,6 +65,7 @@ class PeticaoForm(forms.ModelForm):
 
         processo_field = self.fields.get("processo")
         if isinstance(processo_field, forms.ModelChoiceField):
+            processo_field.required = True
             processo_field.empty_label = "Selecione o processo"
             processo_field.queryset = Processo.objects.select_related(
                 "cliente"
@@ -80,12 +76,6 @@ class PeticaoForm(forms.ModelForm):
             [current_responsavel],
             usuarios,
             existing_responsaveis,
-        )
-        self.fields["area_juridica"].choices = _build_choices(
-            "Selecione a area juridica",
-            [current_area],
-            AREA_JURIDICA_CHOICES,
-            existing_areas,
         )
 
     def clean(self):

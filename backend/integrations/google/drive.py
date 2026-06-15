@@ -214,6 +214,22 @@ def rename_file(service, file_id: str, name: str) -> dict[str, Any]:
     )
 
 
+def move_file(
+    service, file_id: str, new_parent_id: str, old_parent_id: str
+) -> dict[str, Any]:
+    """Move ``file_id`` from ``old_parent_id`` to ``new_parent_id``; return metadata."""
+    return _execute(
+        lambda: service.files().update(
+            fileId=file_id,
+            addParents=new_parent_id,
+            removeParents=old_parent_id,
+            fields=FILE_FIELDS,
+            supportsAllDrives=True,
+        ),
+        "Não foi possível mover o item no Google Drive.",
+    )
+
+
 def list_files(service, parent_id: str) -> list[dict[str, Any]]:
     """List non-trashed, non-folder files directly under ``parent_id``."""
     query = (
