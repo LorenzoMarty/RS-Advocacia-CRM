@@ -429,7 +429,6 @@ export function petitionToPayload(petition) {
     responsavel_acao: petition.responsible,
     link_drive: petition.driveLink,
     motivo_pendente: petition.pendingReason,
-    area_juridica: petition.area,
     status: petition.status,
   };
 }

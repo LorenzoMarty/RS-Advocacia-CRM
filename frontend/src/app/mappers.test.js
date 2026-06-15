@@ -374,6 +374,7 @@ describe('petitionFromApi / petitionToPayload', () => {
     expect(payload.cliente).toBe('3');
     expect(payload.tipo).toBe('Petição');
     expect(payload.processo).toBe('');
+    expect(payload.area_juridica).toBeUndefined();
   });
 });
 

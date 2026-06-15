@@ -366,6 +366,34 @@ def pasta_processo_id(usuario, processo) -> str:
     )
 
 
+def pasta_peticoes_processo(usuario, processo) -> str:
+    """Return the id of the ``"PETIÇÕES"`` folder inside ``processo``'s Drive folder.
+
+    Creates the process folder and the subfolder if needed.
+    """
+    pasta_processo = pasta_processo_id(usuario, processo)
+    service = drive_service(usuario)
+    return drive.ensure_folder(service, PROCESSO_SUBPASTAS[0], pasta_processo)
+
+
+def mover_documento_peticao(usuario, *, file_id: str, processo) -> None:
+    """Move a petition's Drive doc into ``processo``'s ``"PETIÇÕES"`` folder.
+
+    No-op when the file is already there. Best-effort: the caller decides whether
+    a Drive failure should abort the edit.
+    """
+    if not file_id:
+        return
+    destino = pasta_peticoes_processo(usuario, processo)
+    service = drive_service(usuario)
+    meta = drive.get_file(service, file_id)
+    parents = meta.get("parents") or []
+    if destino in parents:
+        return
+    old_parent = parents[0] if parents else ""
+    drive.move_file(service, file_id, destino, old_parent)
+
+
 def criar_documento_branco(usuario, *, parent_id: str, nome: str) -> dict:
     """Create a blank Google Doc named ``nome`` under ``parent_id``; return metadata."""
     service = drive_service(usuario)

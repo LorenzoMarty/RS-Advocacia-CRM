@@ -58,7 +58,9 @@ def serialize_peticao(peticao: Peticao):
         "link_drive": peticao.link_drive,
         "drive_file_id": peticao.drive_file_id,
         "motivo_pendente": peticao.motivo_pendente,
-        "area_juridica": peticao.area_juridica,
+        "area_juridica": (
+            peticao.processo.area_juridica if peticao.processo else ""
+        ),
         "status": peticao.status,
         "criado_por": peticao.criado_por,
         "criado_em": isoformat_ou_nulo(peticao.criado_em),
@@ -137,6 +139,7 @@ def editar_peticao(request, peticao_id):
         return metodo_nao_permitido(["PUT", "PATCH"])
 
     peticao = get_object_or_404(Peticao, pk=peticao_id)
+    processo_id_antigo = peticao.processo_id
 
     try:
         payload = _peticao_api_payload(request)
@@ -149,6 +152,25 @@ def editar_peticao(request, peticao_id):
         peticao = Peticao.objects.select_related("cliente", "processo").get(
             pk=peticao.pk
         )
+        # Processo mudou: move o doc da petição para a pasta do novo processo
+        # (best-effort — falha no Drive não aborta o save).
+        if (
+            peticao.processo_id != processo_id_antigo
+            and peticao.processo_id
+            and peticao.drive_file_id
+        ):
+            try:
+                documentos_services.mover_documento_peticao(
+                    current_usuario(request),
+                    file_id=peticao.drive_file_id,
+                    processo=peticao.processo,
+                )
+            except (
+                GoogleConfigurationError,
+                GoogleAuthorizationRequired,
+                GoogleApiError,
+            ):
+                pass
         return resposta_sucesso(
             {"peticao": serialize_peticao(peticao)},
             mensagem="Peticao atualizada com sucesso.",
@@ -174,10 +196,15 @@ def documento_peticao(request, peticao_id):
     usuario = current_usuario(request)
 
     if request.method == "POST":
+        if not peticao.processo_id:
+            return resposta_erro(
+                "Vincule um processo à petição antes de criar o documento.",
+                status=400,
+            )
         nome = (f"{peticao.tipo} - {peticao.adverso}".strip() or "Petição")[:255]
         try:
-            parent_id = documentos_services.pasta_peticoes_cliente(
-                usuario, peticao.cliente
+            parent_id = documentos_services.pasta_peticoes_processo(
+                usuario, peticao.processo
             )
             meta = documentos_services.criar_documento_branco(
                 usuario, parent_id=parent_id, nome=nome
