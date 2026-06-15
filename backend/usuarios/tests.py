@@ -58,6 +58,57 @@ class UsuariosTests(TestCase):
         self.assertNotIn("Administrador", nomes)
         self.assertIn("Operacional", nomes)
 
+    def test_listar_cargos_remove_assistente_juridico(self):
+        Group.objects.create(name="Advogado")
+        Group.objects.create(name="Assistente Jurídico")
+        usuario = Usuario.objects.create(
+            nome="Assistente",
+            email="assistente@example.com",
+            cargo="Assistente Jurídico",
+        )
+
+        response = self.client.get(reverse("listar_cargos"))
+
+        usuario.refresh_from_db()
+        nomes = {cargo["nome"] for cargo in response.json()["dados"]["cargos"]}
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(usuario.cargo, "Advogado")
+        self.assertNotIn("Assistente Jurídico", nomes)
+        self.assertFalse(Group.objects.filter(name="Assistente Jurídico").exists())
+
+    def test_advogado_e_estagiario_tem_mesmas_permissoes_operacionais(self):
+        response = self.client.get(reverse("listar_cargos"))
+
+        self.assertEqual(response.status_code, 200)
+        advogado = Group.objects.get(name="Advogado")
+        estagiario = Group.objects.get(name=dict(Usuario.TIPOS)["estagiario"])
+        advogado_permissions = {
+            f"{app_label}.{codename}"
+            for app_label, codename in advogado.permissions.values_list(
+                "content_type__app_label", "codename"
+            )
+        }
+        estagiario_permissions = {
+            f"{app_label}.{codename}"
+            for app_label, codename in estagiario.permissions.values_list(
+                "content_type__app_label", "codename"
+            )
+        }
+        forbidden_apps = {"financeiro", "usuarios", "auth"}
+
+        self.assertEqual(advogado_permissions, estagiario_permissions)
+        self.assertIn("clientes.delete_cliente", advogado_permissions)
+        self.assertIn("processos.delete_processo", advogado_permissions)
+        self.assertIn("documentos.add_documentocliente", advogado_permissions)
+        self.assertFalse(
+            forbidden_apps
+            & set(
+                advogado.permissions.values_list(
+                    "content_type__app_label", flat=True
+                )
+            )
+        )
+
     def test_usuario_atual_sincroniza_permissoes_do_cargo(self):
         usuario = Usuario.objects.create(
             nome="Admin Front",

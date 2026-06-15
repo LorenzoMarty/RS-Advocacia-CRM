@@ -8,6 +8,7 @@ from usuarios.models import Cargo, Usuario
 PERMISSION_APP_LABELS = OrderedDict(
     (
         ("clientes", "Clientes"),
+        ("documentos", "Documentos"),
         ("processos", "Processos"),
         ("agenda", "Agenda"),
         ("prazos", "Prazos"),

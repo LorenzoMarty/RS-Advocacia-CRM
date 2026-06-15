@@ -31,22 +31,34 @@ ADVOGADO_CARGO_PERMISSIONS = {
     "clientes.view_cliente",
     "clientes.add_cliente",
     "clientes.change_cliente",
+    "clientes.delete_cliente",
+    "documentos.view_documentocliente",
+    "documentos.add_documentocliente",
+    "documentos.change_documentocliente",
+    "documentos.delete_documentocliente",
     "processos.view_processo",
     "processos.add_processo",
     "processos.change_processo",
+    "processos.delete_processo",
     "agenda.view_evento",
     "agenda.add_evento",
     "agenda.change_evento",
+    "agenda.delete_evento",
     "prazos.view_prazo",
     "prazos.add_prazo",
     "prazos.change_prazo",
+    "prazos.delete_prazo",
     "peticoes.view_peticao",
     "peticoes.add_peticao",
     "peticoes.change_peticao",
+    "peticoes.delete_peticao",
     "productivity.view_timeentry",
     "productivity.add_timeentry",
     "productivity.change_timeentry",
     "productivity.view_productivitygoal",
+    "productivity.add_productivitygoal",
+    "productivity.change_productivitygoal",
+    "productivity.delete_productivitygoal",
     "prospeccao.view_prospect",
     "prospeccao.add_prospect",
     "prospeccao.change_prospect",
@@ -63,14 +75,34 @@ ADVOGADO_CARGO_PERMISSIONS = {
     # Administrador — não entram no conjunto padrão dos demais cargos.
 }
 
-ASSISTENTE_CARGO_NAME = "Assistente Jurídico"
+STANDARD_CARGO_NAMES = {
+    "Advogado",
+    ESTAGIARIO_CARGO_NAME,
+    "Estagiario",
+}
+
+REMOVED_CARGO_REASSIGNMENTS = {
+    "Assistente Jurídico": "Advogado",
+    "Assistente Juridico": "Advogado",
+}
+
+STANDARD_CARGO_PERMISSION_APP_LABELS = (
+    "agenda",
+    "clientes",
+    "documentos",
+    "meetings",
+    "peticoes",
+    "prazos",
+    "processos",
+    "productivity",
+    "prospeccao",
+)
 
 DEFAULT_CARGO_PERMISSIONS = {
     # Administrador = todas as permissões (None sinaliza "tudo").
     "Administrador": None,
-    # Advogado, Assistente Jurídico e Estagiário compartilham o mesmo conjunto padrão.
+    # Advogado e Estagiário compartilham o mesmo conjunto padrão.
     "Advogado": ADVOGADO_CARGO_PERMISSIONS,
-    ASSISTENTE_CARGO_NAME: ADVOGADO_CARGO_PERMISSIONS,
     ESTAGIARIO_CARGO_NAME: ADVOGADO_CARGO_PERMISSIONS,
 }
 
@@ -115,6 +147,7 @@ def _authenticated_user(request: HttpRequest) -> User | None:
 
 
 def _ensure_default_cargos() -> list[Group]:
+    _retire_removed_cargos()
     cargos = []
     should_create_missing = not Cargo.objects.exists()
 
@@ -129,15 +162,27 @@ def _ensure_default_cargos() -> list[Group]:
     return cargos
 
 
+def _retire_removed_cargos() -> None:
+    for removed_name, replacement_name in REMOVED_CARGO_REASSIGNMENTS.items():
+        Usuario.objects.filter(cargo=removed_name).update(cargo=replacement_name)
+    Cargo.objects.filter(name__in=REMOVED_CARGO_REASSIGNMENTS.keys()).delete()
+
+
 def _apply_default_cargo_permissions(cargo: Group) -> None:
-    default_permissions = DEFAULT_CARGO_PERMISSIONS.get(cargo.name)
-    if default_permissions is None:
-        if cargo.name == "Administrador":
-            missing_permissions = Permission.objects.exclude(
-                pk__in=cargo.permissions.values_list("pk", flat=True)
+    if cargo.name == "Administrador":
+        cargo.permissions.set(Permission.objects.all())
+        return
+
+    if cargo.name in STANDARD_CARGO_NAMES:
+        cargo.permissions.set(
+            Permission.objects.filter(
+                content_type__app_label__in=STANDARD_CARGO_PERMISSION_APP_LABELS
             )
-            if missing_permissions.exists():
-                cargo.permissions.add(*missing_permissions)
+        )
+        return
+
+    default_permissions = DEFAULT_CARGO_PERMISSIONS.get(cargo.name)
+    if not default_permissions:
         return
 
     permission_filter = Q()
@@ -145,12 +190,7 @@ def _apply_default_cargo_permissions(cargo: Group) -> None:
         app_label, codename = permission_path.split(".", 1)
         permission_filter |= Q(content_type__app_label=app_label, codename=codename)
 
-    if permission_filter:
-        missing_permissions = Permission.objects.filter(permission_filter).exclude(
-            pk__in=cargo.permissions.values_list("pk", flat=True)
-        )
-        if missing_permissions.exists():
-            cargo.permissions.add(*missing_permissions)
+    cargo.permissions.set(Permission.objects.filter(permission_filter))
 
 
 def _find_auth_user(identifier: str) -> User | None:
@@ -285,16 +325,18 @@ def _usuarios_for_cargo(cargo: Group):
     return Usuario.objects.filter(cargo__in=cargo_lookup_values(cargo.name))
 
 
-def serialize_cargo(cargo: Group):
+def serialize_cargo(cargo: Group, *, include_user_count: bool = True):
     permission_ids = [str(pk) for pk in cargo.permissions.values_list("pk", flat=True)]
-    return {
+    data = {
         "id": str(cargo.pk),
         "pk": cargo.pk,
         "nome": cargo.name,
         "permissoes": permission_ids,
         "permissoes_total": cargo.permissions.count(),
-        "usuarios_total": _usuarios_for_cargo(cargo).count(),
     }
+    if include_user_count:
+        data["usuarios_total"] = _usuarios_for_cargo(cargo).count()
+    return data
 
 
 def _cargo_map_for_usuarios(usuarios: list[Usuario]) -> dict[str, Cargo]:
