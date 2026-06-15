@@ -15,7 +15,6 @@ import {
   usersFromResponse,
   userFromResponse,
   assignableUsersFromResponse,
-  rolesFromResponse,
   clientsFromResponse,
   clientFromResponse,
   processesFromResponse,
@@ -34,7 +33,6 @@ import {
   timeEntriesFromResponse,
   timeEntryFromResponse,
   productivityGoalsFromResponse,
-  permissionGroupsFromResponse,
   clientToPayload,
   processToPayload,
   eventToPayload,
@@ -129,8 +127,7 @@ function taskDisplayName(payload) {
 }
 
 export function AppStateProvider({ children }) {
-  const [permissionGroups, setPermissionGroups] = useState([]);
-  const [roles, setRoles] = useState([]);
+  const [accessFlags, setAccessFlags] = useState({});
   const [users, setUsers] = useState([]);
   const [clients, setClients] = useState([]);
   const [processes, setProcesses] = useState([]);
@@ -174,12 +171,8 @@ export function AppStateProvider({ children }) {
   }
 
   function applyBootstrapPayload(payload) {
-    if (payload.grupos_permissoes) {
-      setPermissionGroups(permissionGroupsFromResponse(payload));
-    }
-
-    if (Object.prototype.hasOwnProperty.call(payload, 'cargos')) {
-      setRoles(sortByName(rolesFromResponse(payload)));
+    if (payload.acessos) {
+      setAccessFlags(payload.acessos);
     }
     if (Object.prototype.hasOwnProperty.call(payload, 'usuarios')) {
       setUsers((currentUsers) => sortByName(mergeById(currentUsers, usersFromResponse(payload))));
@@ -237,10 +230,6 @@ export function AppStateProvider({ children }) {
           setTimeEntries(timeEntriesFromResponse(payload));
           setProductivityGoals(productivityGoalsFromResponse(payload));
         },
-      },
-      {
-        load: api.listRoles,
-        apply: (payload) => setRoles(sortByName(rolesFromResponse(payload))),
       },
     ];
 
@@ -355,7 +344,7 @@ export function AppStateProvider({ children }) {
 
     setCurrentSessionUser(null);
     setCurrentUserId(null);
-    setRoles([]);
+    setAccessFlags({});
     setUsers([]);
     setClients([]);
     setProcesses([]);
@@ -1477,39 +1466,19 @@ export function AppStateProvider({ children }) {
   }
 
   const currentUser = users.find((user) => user.id === currentUserId) || currentSessionUser;
-  const currentRole = roles.find((role) => role.id === currentUser?.roleId) || null;
-
-  const currentPermissionPaths = (() => {
-    if (!currentRole || !permissionGroups.length) {
-      return null;
-    }
-    const idToPath = new Map();
-    permissionGroups.forEach((group) => {
-      (group.permissions || []).forEach((permission) => {
-        idToPath.set(String(permission.id), permission.path);
-      });
-    });
-    const paths = new Set();
-    (currentRole.permissionIds || []).forEach((id) => {
-      const path = idToPath.get(String(id));
-      if (path) paths.add(path);
-    });
-    return paths;
-  })();
+  const currentRole = currentUser ? {
+    id: currentUser.roleId || currentUser.roleName || '',
+    name: currentUser.roleName || currentUser.roleId || '',
+  } : null;
 
   function hasPermission(path) {
     if (isDemoMode) {
       return true;
     }
-    if (currentPermissionPaths === null) {
-      return false;
-    }
-    return currentPermissionPaths.has(path);
+    return Boolean(accessFlags[path]);
   }
 
   const value = {
-    permissionGroups,
-    roles,
     users,
     clients,
     processes,

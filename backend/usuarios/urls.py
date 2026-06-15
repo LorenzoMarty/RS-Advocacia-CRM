@@ -21,11 +21,4 @@ urlpatterns = [
         views.excluir_usuario,
         name="excluir_usuario",
     ),
-    path("api/cargos/", views.listar_cargos, name="listar_cargos"),
-    path("api/cargos/criar/", views.criar_cargo, name="criar_cargo"),
-    path("api/cargos/<int:cargo_id>/", views.detalhes_cargo, name="detalhes_cargo"),
-    path("api/cargos/<int:cargo_id>/editar/", views.editar_cargo, name="editar_cargo"),
-    path(
-        "api/cargos/<int:cargo_id>/excluir/", views.excluir_cargo, name="excluir_cargo"
-    ),
 ]

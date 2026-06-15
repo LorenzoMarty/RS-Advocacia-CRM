@@ -238,7 +238,6 @@ export const api = {
   createUser: (payload) => apiRequest('/api/usuarios/criar/', jsonOptions('POST', payload)),
   updateUser: (id, payload) => apiRequest(`/api/usuarios/${id}/editar/`, jsonOptions('PUT', payload)),
   deleteUser: (id) => apiRequest(`/api/usuarios/${id}/excluir/`, { method: 'DELETE' }),
-  listRoles: () => apiRequest('/api/cargos/'),
   listProspects: () => prospeccaoRequest(),
   getProspect: (id) => prospeccaoRequest(`${id}/`),
   createProspect: (payload) => prospeccaoRequest('criar/', jsonOptions('POST', payload)),

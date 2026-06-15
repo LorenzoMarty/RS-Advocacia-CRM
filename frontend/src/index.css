@@ -19,9 +19,6 @@
 @import "./styles/pages/usuarios-list.css";
 @import "./styles/pages/usuarios-form.css";
 @import "./styles/pages/usuarios-detail.css";
-@import "./styles/pages/usuarios-cargos.css";
-@import "./styles/pages/usuarios-cargo-form.css";
-@import "./styles/pages/usuarios-cargo-detail.css";
 @import "./styles/pages/api-test.css";
 
 #root {
@@ -107,9 +104,6 @@ button.action-link {
   .process-hero,
   .event-hero,
   .user-hero,
-  .cargo-hero,
-  .cargos-intro,
-  .cargos-panel,
   .create-intro,
   .event-intro,
   .form-panel,
@@ -142,9 +136,6 @@ html[data-theme="light"] #root .main :where(
   .process-hero,
   .event-hero,
   .user-hero,
-  .cargo-hero,
-  .cargos-intro,
-  .cargo-intro,
   .create-intro,
   .event-intro,
   .api-test-hero
@@ -171,9 +162,6 @@ html[data-theme="light"] #root .main :where(
   .audit-page,
   .process-page,
   .meetings-page,
-  .cargos-page,
-  .cargo-form-page,
-  .cargo-detail-page,
   .user-page,
   .users-page,
   .dashboard-grid,
@@ -182,7 +170,6 @@ html[data-theme="light"] #root .main :where(
   .event-layout,
   .process-layout,
   .user-layout,
-  .cargo-layout,
   .deadline-detail-layout,
   .meetings-layout,
   .stack
@@ -311,7 +298,6 @@ html:not([data-theme="light"]) #root .main select:not(.rs-native-select) :where(
   .process-mark,
   .client-avatar,
   .user-avatar,
-  .cargo-mark,
   .deadline-mark
 ) {
   border-radius: 12px;
@@ -328,10 +314,6 @@ html:not([data-theme="light"]) #root .main select:not(.rs-native-select) :where(
   .owner-chip,
   .role-badge,
   .contact-chip,
-  .cargo-app-chip,
-  .cargo-chip,
-  .cargo-pill,
-  .permission-action-chip,
   .item-time,
   .calendar-event-time,
   .deadline-move,

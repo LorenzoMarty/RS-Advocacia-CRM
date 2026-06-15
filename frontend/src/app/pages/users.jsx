@@ -7,8 +7,11 @@ import { useAppState } from '../store';
 import { buildSearchText, formatCount, normalizeText } from '../utils';
 import { EmptyState, Field, NotFoundState } from './common';
 
-function roleLabel(roles, roleId) {
-  return roles.find((role) => role.id === roleId)?.name || 'Sem cargo';
+const USER_PROFILE_OPTIONS = ['Administrador', 'Advogado', 'Estagiário'];
+
+function profileLabel(userOrValue) {
+  if (typeof userOrValue === 'string') return userOrValue || 'Sem perfil';
+  return userOrValue?.roleName || userOrValue?.roleId || 'Sem perfil';
 }
 
 function validateUserForm(form, users, currentId) {
@@ -25,12 +28,12 @@ function validateUserForm(form, users, currentId) {
 }
 
 export function UsersListPage() {
-  const { addFlash, currentUser, deleteUser, roles, users } = useAppState();
+  const { addFlash, currentUser, deleteUser, users } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
 
   const filteredUsers = users.filter((user) =>
-    buildSearchText([user.name, user.email, roleLabel(roles, user.roleId)]).includes(normalizeText(search)),
+    buildSearchText([user.name, user.email, profileLabel(user)]).includes(normalizeText(search)),
   );
 
   async function handleDeleteUser(user) {
@@ -72,7 +75,6 @@ export function UsersListPage() {
             <PageSearch value={search} onChange={(event) => setSearch(event.target.value)} />
 
             <div className="list-intro-actions">
-              <Link className="btn btn-secondary list-intro-action" to="/cargos">Cargos</Link>
               <Link className="btn list-intro-action" to="/usuarios/novo">Novo</Link>
             </div>
           </div>
@@ -105,7 +107,7 @@ export function UsersListPage() {
                     </div>
 
                     <div className="user-role">
-                      <span className="role-badge">{roleLabel(roles, user.roleId)}</span>
+                      <span className="role-badge">{profileLabel(user)}</span>
                     </div>
 
                     <div className="user-actions">
@@ -134,7 +136,7 @@ export function UserFormPage() {
   const navigate = useNavigate();
   const params = useParams();
   const isEditing = Boolean(params.userId);
-  const { roles, saveUser, users } = useAppState();
+  const { saveUser, users } = useAppState();
   const user = users.find((item) => item.id === params.userId) || null;
   const [form, setForm] = useState(() => ({
     id: user?.id || '',
@@ -188,9 +190,8 @@ export function UserFormPage() {
               <div>
                 <h1 className="intro-title">{isEditing ? 'Editar usuário' : 'Novo usuário'}</h1>
                 <p className="intro-note">
-                  {isEditing ? 'Atualize os dados do perfil sem perder o contexto atual.' : 'Cadastre um membro da equipe e vincule um cargo.'}
+                  {isEditing ? 'Atualize os dados do perfil sem perder o contexto atual.' : 'Cadastre um membro da equipe e defina o perfil de acesso.'}
                 </p>
-                <p className="intro-note">O cargo define automaticamente as permissões herdadas no sistema.</p>
               </div>
             </div>
           </div>
@@ -209,13 +210,12 @@ export function UserFormPage() {
 
               <Field
                 id="user-role"
-                label="Cargo"
+                label="Perfil"
                 error={errors.roleId}
-                note="Selecione um dos cargos disponíveis. A criação de cargos é feita pelo administrador do sistema."
               >
                 <select id="user-role" value={form.roleId} onChange={(event) => setForm((currentForm) => ({ ...currentForm, roleId: event.target.value }))}>
-                  <option value="">Selecione o cargo</option>
-                  {roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}
+                  <option value="">Selecione o perfil</option>
+                  {USER_PROFILE_OPTIONS.map((profile) => <option key={profile} value={profile}>{profile}</option>)}
                 </select>
               </Field>
 
@@ -234,7 +234,7 @@ export function UserFormPage() {
 
 export function UserDetailPage() {
   const params = useParams();
-  const { events, processes, roles, users } = useAppState();
+  const { events, processes, users } = useAppState();
   const user = users.find((item) => item.id === params.userId) || null;
 
   if (!user) {
@@ -243,7 +243,7 @@ export function UserDetailPage() {
 
   const relatedProcesses = processes.filter((process) => normalizeText(process.owner) === normalizeText(user.name));
   const relatedEvents = events.filter((event) => event.responsible === user.id);
-  const linkedRole = roles.find((role) => role.id === user.roleId) || null;
+  const linkedProfile = profileLabel(user);
 
   return (
     <>
@@ -268,7 +268,7 @@ export function UserDetailPage() {
               <aside className="hero-summary">
                 <article className="summary-card">
                   <span>Perfil</span>
-                  <strong>{linkedRole?.name || 'Sem cargo'}</strong>
+                  <strong>{linkedProfile}</strong>
                 </article>
                 <article className="summary-card">
                   <span>Processos</span>
@@ -303,8 +303,8 @@ export function UserDetailPage() {
                   <a href={`mailto:${user.email}`}>{user.email}</a>
                 </article>
                 <article className="detail-item">
-                  <span>Cargo</span>
-                  <strong>{linkedRole?.name || 'Sem cargo'}</strong>
+                  <span>Perfil</span>
+                  <strong>{linkedProfile}</strong>
                 </article>
               </div>
             </section>
@@ -358,26 +358,6 @@ export function UserDetailPage() {
                 </div>
               </section>
             ) : null}
-
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Cargo</h2>
-                  <p className="section-note">Permissões vinculadas</p>
-                </div>
-              </div>
-
-              {linkedRole ? (
-                <>
-                  <div className="cargo-list">
-                    <Link className="meta-chip cargo-chip" to={`/cargos/${linkedRole.id}`}>{linkedRole.name}</Link>
-                  </div>
-                  <div className="note-box">{linkedRole.permissionIds.length} permissões herdadas pelo cargo atribuído a este usuário.</div>
-                </>
-              ) : (
-                <div className="note-box">Este usuário ainda não possui um cargo vinculado.</div>
-              )}
-            </section>
 
           </div>
         </div>

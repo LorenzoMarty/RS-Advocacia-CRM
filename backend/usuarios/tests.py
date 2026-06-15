@@ -9,6 +9,7 @@ from django.urls import reverse
 
 from integrations.models import GoogleAccount, GoogleCalendar
 from usuarios.models import Usuario
+from usuarios.views import _ensure_default_cargos
 
 
 class UsuariosTests(TestCase):
@@ -19,46 +20,28 @@ class UsuariosTests(TestCase):
         )
         self.client.force_login(self.auth_user)
 
-    def test_exclui_cargo_sem_usuarios_vinculados(self):
-        cargo = Group.objects.create(name="Operacional")
-        response = self.client.delete(reverse("excluir_cargo", args=[cargo.pk]))
+    def test_ensure_default_cargos_semeia_padroes_em_base_sem_cargos(self):
+        _ensure_default_cargos()
 
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(Group.objects.filter(pk=cargo.pk).exists())
-
-    def test_nao_exclui_cargo_com_usuario_vinculado(self):
-        cargo = Group.objects.create(name="Operacional")
-        Usuario.objects.create(nome="Ana", email="ana@example.com", cargo=cargo.name)
-
-        response = self.client.delete(reverse("excluir_cargo", args=[cargo.pk]))
-
-        self.assertEqual(response.status_code, 409)
-        self.assertTrue(Group.objects.filter(pk=cargo.pk).exists())
-
-    def test_listar_cargos_semeia_padroes_em_base_sem_cargos(self):
-        response = self.client.get(reverse("listar_cargos"))
-
-        self.assertEqual(response.status_code, 200)
         nomes = {
-            cargo["nome"] for cargo in response.json()["dados"]["cargos"]
+            cargo.name for cargo in Group.objects.order_by("name")
         }
         self.assertTrue(set(dict(Usuario.TIPOS).values()).issubset(nomes))
 
-    def test_listar_cargos_nao_recria_padrao_removido_em_base_inicializada(self):
+    def test_ensure_default_cargos_nao_recria_padrao_removido_em_base_inicializada(self):
         admin = Group.objects.create(name="Administrador")
         Group.objects.create(name="Operacional")
         admin.delete()
 
-        response = self.client.get(reverse("listar_cargos"))
+        _ensure_default_cargos()
 
-        self.assertEqual(response.status_code, 200)
         nomes = {
-            cargo["nome"] for cargo in response.json()["dados"]["cargos"]
+            cargo.name for cargo in Group.objects.order_by("name")
         }
         self.assertNotIn("Administrador", nomes)
         self.assertIn("Operacional", nomes)
 
-    def test_listar_cargos_remove_assistente_juridico(self):
+    def test_ensure_default_cargos_remove_assistente_juridico(self):
         Group.objects.create(name="Advogado")
         Group.objects.create(name="Assistente Jurídico")
         usuario = Usuario.objects.create(
@@ -67,19 +50,15 @@ class UsuariosTests(TestCase):
             cargo="Assistente Jurídico",
         )
 
-        response = self.client.get(reverse("listar_cargos"))
+        _ensure_default_cargos()
 
         usuario.refresh_from_db()
-        nomes = {cargo["nome"] for cargo in response.json()["dados"]["cargos"]}
-        self.assertEqual(response.status_code, 200)
         self.assertEqual(usuario.cargo, "Advogado")
-        self.assertNotIn("Assistente Jurídico", nomes)
         self.assertFalse(Group.objects.filter(name="Assistente Jurídico").exists())
 
     def test_advogado_e_estagiario_tem_mesmas_permissoes_operacionais(self):
-        response = self.client.get(reverse("listar_cargos"))
+        _ensure_default_cargos()
 
-        self.assertEqual(response.status_code, 200)
         advogado = Group.objects.get(name="Advogado")
         estagiario = Group.objects.get(name=dict(Usuario.TIPOS)["estagiario"])
         advogado_permissions = {

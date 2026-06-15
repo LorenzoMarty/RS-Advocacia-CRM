@@ -1,4 +1,4 @@
-from typing import Any, Iterable, cast
+from typing import Iterable, cast
 
 from django.contrib.auth import logout as encerrar_sessao_django
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
-from core.permissions import app_any_permissions_required, app_permissions_required
+from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
     ler_corpo_json,
@@ -17,13 +17,10 @@ from core.utils import (
 from integrations.google.calendar import calendar_label
 from integrations.models import GoogleAccount
 from usuarios.forms import (
-    PERMISSION_APP_LABELS,
-    CargoForm,
     UsuarioForm,
-    _format_permission_name,
     normalize_cargo_name,
 )
-from usuarios.models import Cargo, Usuario, cargo_lookup_values
+from usuarios.models import Cargo, Usuario
 
 ESTAGIARIO_CARGO_NAME = dict(Usuario.TIPOS).get("estagiario", "Estagiario")
 
@@ -107,23 +104,6 @@ DEFAULT_CARGO_PERMISSIONS = {
     "Advogado": ADVOGADO_CARGO_PERMISSIONS,
     ESTAGIARIO_CARGO_NAME: ADVOGADO_CARGO_PERMISSIONS,
 }
-
-PERMISSION_ACTION_API_LABELS = {
-    "add": "criar",
-    "change": "editar",
-    "delete": "excluir",
-    "view": "visualizar",
-}
-
-CARGO_LIST_PERMISSIONS = (
-    "auth.view_group",
-    "auth.add_group",
-    "auth.change_group",
-    "usuarios.view_usuario",
-    "usuarios.add_usuario",
-    "usuarios.change_usuario",
-)
-
 
 def _clear_usuario_session(request: HttpRequest) -> None:
     request.session.pop("usuario_id", None)
@@ -286,61 +266,6 @@ def _get_cargos() -> list[Group]:
     return list(Cargo.objects.order_by("name"))
 
 
-def serialize_permission(permission: Permission):
-    action, _, model_name = permission.codename.partition("_")
-    action_label = PERMISSION_ACTION_API_LABELS.get(action, action)
-    return {
-        "id": str(permission.pk),
-        "caminho": f"{permission.content_type.app_label}.{permission.codename}",
-        "nome": _format_permission_name(permission),
-        "modelo": model_name.replace("_", " ").title()
-        or permission.content_type.model.title(),
-        "modulo": permission.content_type.app_label,
-        "acao": action_label,
-    }
-
-
-def serialize_permission_groups():
-    grouped: dict[str, dict[str, Any]] = {}
-    permissions = Permission.objects.select_related("content_type").filter(
-        content_type__app_label__in=PERMISSION_APP_LABELS.keys()
-    )
-
-    for permission in permissions.order_by(
-        "content_type__app_label", "content_type__model", "codename"
-    ):
-        app_label = permission.content_type.app_label
-        grouped.setdefault(
-            app_label,
-            {
-                "chave": app_label,
-                "rotulo": PERMISSION_APP_LABELS.get(app_label, app_label.title()),
-                "permissoes": [],
-            },
-        )
-        grouped[app_label]["permissoes"].append(serialize_permission(permission))
-
-    return list(grouped.values())
-
-
-def _usuarios_for_cargo(cargo: Group):
-    return Usuario.objects.filter(cargo__in=cargo_lookup_values(cargo.name))
-
-
-def serialize_cargo(cargo: Group, *, include_user_count: bool = True):
-    permission_ids = [str(pk) for pk in cargo.permissions.values_list("pk", flat=True)]
-    data = {
-        "id": str(cargo.pk),
-        "pk": cargo.pk,
-        "nome": cargo.name,
-        "permissoes": permission_ids,
-        "permissoes_total": cargo.permissions.count(),
-    }
-    if include_user_count:
-        data["usuarios_total"] = _usuarios_for_cargo(cargo).count()
-    return data
-
-
 def _cargo_map_for_usuarios(usuarios: list[Usuario]) -> dict[str, Cargo]:
     cargo_names = {
         cargo_name
@@ -372,6 +297,7 @@ def serialize_usuario(
         "foto": usuario.picture,
         "cargo": cargo_nome,
         "cargo_id": str(cargo.pk) if cargo else cargo_nome,
+        "admin": cargo_nome == "Administrador",
         "google_calendar_conectado": bool(account and account.connected),
         "google_calendar_destino": calendar_label(usuario),
     }
@@ -396,16 +322,6 @@ def _usuarios_response(usuarios):
     return {"usuarios": serialized}
 
 
-def _cargo_response(cargo: Group):
-    serialized = serialize_cargo(cargo)
-    return {"cargo": serialized}
-
-
-def _cargos_response(cargos):
-    serialized = [serialize_cargo(cargo) for cargo in cargos]
-    return {"cargos": serialized}
-
-
 def _resolve_cargo_api_value(value):
     if value in (None, ""):
         return value
@@ -417,32 +333,6 @@ def _resolve_cargo_api_value(value):
     return cargo.name if cargo else value
 
 
-def _normalize_permission_values(values):
-    if values in (None, ""):
-        return []
-
-    if not isinstance(values, (list, tuple, set)):
-        values = [values]
-
-    normalized = []
-    for value in values:
-        value = str(value)
-        if value.isdigit():
-            normalized.append(value)
-            continue
-
-        if "." in value:
-            app_label, codename = value.split(".", 1)
-            permission = Permission.objects.filter(
-                content_type__app_label=app_label,
-                codename=codename,
-            ).first()
-            if permission:
-                normalized.append(str(permission.pk))
-
-    return normalized
-
-
 def _usuario_api_payload(request):
     payload = ler_corpo_json(request)
     data = dict(payload)
@@ -450,17 +340,6 @@ def _usuario_api_payload(request):
         data["cargo"] = payload["cargo_id"]
     if "cargo" in data:
         data["cargo"] = _resolve_cargo_api_value(data["cargo"])
-    return data
-
-
-def _cargo_api_payload(request):
-    payload = ler_corpo_json(request)
-    data = dict(payload)
-    if "nome" in payload and "name" not in data:
-        data["name"] = payload["nome"]
-    if "permissoes" in payload and "permissions" not in data:
-        data["permissions"] = payload["permissoes"]
-    data["permissions"] = _normalize_permission_values(data.get("permissions"))
     return data
 
 
@@ -504,14 +383,11 @@ def detalhes_usuario(request, usuario_id):
         return metodo_nao_permitido(["GET"])
 
     usuario = get_object_or_404(Usuario, pk=usuario_id)
-    auth_user = _sync_usuario_auth(usuario)
-    cargos = [serialize_cargo(cargo) for cargo in auth_user.groups.order_by("name")]
+    _sync_usuario_auth(usuario)
 
     return resposta_sucesso(
         {
             **_usuario_response(usuario),
-            "cargos": cargos,
-            "permissoes_total": len(auth_user.get_group_permissions()),
         }
     )
 
@@ -556,103 +432,6 @@ def excluir_usuario(request, usuario_id):
     return resposta_sucesso(
         {"id": deleted_id}, mensagem="Usuário excluído com sucesso."
     )
-
-
-@app_any_permissions_required(*CARGO_LIST_PERMISSIONS)
-def listar_cargos(request):
-    if request.method != "GET":
-        return metodo_nao_permitido(["GET"])
-
-    return resposta_sucesso(_cargos_response(_get_cargos()))
-
-
-@app_permissions_required("auth.add_group")
-def criar_cargo(request):
-    if request.method != "POST":
-        return metodo_nao_permitido(["POST"])
-
-    try:
-        payload = _cargo_api_payload(request)
-    except ValueError as exc:
-        return resposta_erro(str(exc), status=400)
-
-    form = CargoForm(payload)
-    if form.is_valid():
-        cargo = form.save()
-        return resposta_sucesso(
-            _cargo_response(cargo),
-            mensagem="Cargo criado com sucesso.",
-            status=201,
-        )
-
-    return resposta_erro(erros_formulario(form), status=400)
-
-
-@app_permissions_required("auth.view_group")
-def detalhes_cargo(request, cargo_id):
-    if request.method != "GET":
-        return metodo_nao_permitido(["GET"])
-
-    cargo = get_object_or_404(Cargo, pk=cargo_id)
-    usuarios_vinculados = _usuarios_for_cargo(cargo).order_by("nome")
-    usuarios = serialize_usuarios(usuarios_vinculados)
-    return resposta_sucesso(
-        {
-            **_cargo_response(cargo),
-            "usuarios_vinculados": usuarios,
-        }
-    )
-
-
-@app_permissions_required("auth.change_group")
-def editar_cargo(request, cargo_id):
-    if request.method not in {"PUT", "PATCH"}:
-        return metodo_nao_permitido(["PUT", "PATCH"])
-
-    cargo = get_object_or_404(Cargo, pk=cargo_id)
-    previous_name = cargo.name
-
-    try:
-        payload = _cargo_api_payload(request)
-    except ValueError as exc:
-        return resposta_erro(str(exc), status=400)
-
-    form = CargoForm(payload, instance=cargo)
-    if form.is_valid():
-        cargo = form.save()
-        if previous_name != cargo.name:
-            Usuario.objects.filter(cargo__in=cargo_lookup_values(previous_name)).update(
-                cargo=cargo.name
-            )
-        return resposta_sucesso(
-            _cargo_response(cargo),
-            mensagem="Cargo atualizado com sucesso.",
-        )
-
-    return resposta_erro(erros_formulario(form), status=400)
-
-
-@app_permissions_required("auth.delete_group")
-def excluir_cargo(request, cargo_id):
-    if request.method != "DELETE":
-        return metodo_nao_permitido(["DELETE"])
-
-    cargo = get_object_or_404(Cargo, pk=cargo_id)
-    usuarios_vinculados = _usuarios_for_cargo(cargo).count()
-
-    if usuarios_vinculados:
-        return resposta_erro(
-            {
-                "cargo": [
-                    "Remova ou altere os usuários vinculados antes de excluir este cargo."
-                ]
-            },
-            status=409,
-        )
-
-    deleted_id = str(cargo.pk)
-    cargo.delete()
-    return resposta_sucesso({"id": deleted_id}, mensagem="Cargo excluído com sucesso.")
 
 
 def sair(request: HttpRequest):

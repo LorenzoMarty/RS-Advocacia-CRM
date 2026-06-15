@@ -7,7 +7,7 @@ from agenda.models import Evento
 from agenda.views import serialize_evento
 from clientes.models import Cliente
 from clientes.views import serialize_cliente
-from core.permission_utils import user_has_any_permissions, user_has_permission
+from core.permission_utils import user_has_permission
 from core.permissions import app_permissions_required
 from core.utils import metodo_nao_permitido, resposta_sucesso
 from financeiro.models import Lancamento
@@ -27,14 +27,16 @@ from productivity.views import (
 )
 from prospeccao.models import Prospect
 from prospeccao.views import serialize_prospect
-from usuarios.forms import normalize_cargo_name
-from usuarios.models import Cargo, Usuario
-from usuarios.views import (
-    CARGO_LIST_PERMISSIONS,
-    _get_cargos,
-    serialize_cargo,
-    serialize_permission_groups,
-    serialize_usuarios,
+from usuarios.models import Usuario
+from usuarios.views import serialize_usuarios
+
+FRONTEND_ACCESS_PERMISSIONS = (
+    "financeiro.view_lancamento",
+    "financeiro.add_lancamento",
+    "financeiro.change_lancamento",
+    "usuarios.view_usuario",
+    "usuarios.add_usuario",
+    "usuarios.change_usuario",
 )
 
 
@@ -113,24 +115,16 @@ def inicializacao(request):
     serialized_prazos = [serialize_prazo(prazo) for prazo in prazos]
     usuario_atual = _current_usuario(request)
 
-    can_include_cargos = user_has_any_permissions(request, CARGO_LIST_PERMISSIONS)
-    serialized_cargos = []
-    if can_include_cargos:
-        cargos = _get_cargos()
-        serialized_cargos = [serialize_cargo(cargo) for cargo in cargos]
-    elif usuario_atual:
-        cargo_nome = normalize_cargo_name(usuario_atual.cargo)
-        cargo = Cargo.objects.filter(name=cargo_nome).first()
-        if cargo:
-            serialized_cargos = [serialize_cargo(cargo, include_user_count=False)]
-
     data = {
         "clientes": serialized_clientes,
         "processos": serialized_processos,
         "eventos": serialized_eventos,
         "peticoes": serialized_peticoes,
         "prazos": serialized_prazos,
-        "grupos_permissoes": serialize_permission_groups(),
+        "acessos": {
+            permission: user_has_permission(request, permission)
+            for permission in FRONTEND_ACCESS_PERMISSIONS
+        },
     }
 
     # Lista enxuta (id + nome) para popular selects de responsável mesmo para
@@ -143,9 +137,6 @@ def inicializacao(request):
     if user_has_permission(request, "usuarios.view_usuario"):
         serialized_usuarios = serialize_usuarios(Usuario.objects.all())
         data["usuarios"] = serialized_usuarios
-
-    if serialized_cargos:
-        data["cargos"] = serialized_cargos
 
     if usuario_atual and user_has_permission(request, "productivity.view_timeentry"):
         time_entries = TimeEntry.objects.select_related("user")

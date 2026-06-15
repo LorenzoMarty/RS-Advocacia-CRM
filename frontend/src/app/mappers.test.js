@@ -14,7 +14,6 @@ import {
   itemFromResponse,
   lancamentoFromApi,
   lancamentoToPayload,
-  permissionGroupsFromResponse,
   petitionFromApi,
   petitionToPayload,
   processFromApi,
@@ -22,7 +21,6 @@ import {
   productivityGoalFromApi,
   prospectFromApi,
   prospectToPayload,
-  roleFromApi,
   timeEntryFromApi,
   userFromApi,
   userToPayload,
@@ -284,14 +282,15 @@ describe('deadlineFromApi / deadlineToPayload / deadlineTimerToPayload', () => {
   });
 });
 
-describe('userFromApi / userToPayload / roleFromApi', () => {
+describe('userFromApi / userToPayload', () => {
   it('maps user fields including Google Calendar state', () => {
     const user = userFromApi({
       id: 1,
       nome: 'João',
       email: 'j@x.com',
       foto: 'http://img',
-      cargo_id: 4,
+      cargo: 'Advogado',
+      admin: false,
       google_calendar_conectado: 1,
       google_calendar_destino: 'Agenda Escritório',
     });
@@ -300,7 +299,9 @@ describe('userFromApi / userToPayload / roleFromApi', () => {
       id: '1',
       name: 'João',
       picture: 'http://img',
-      roleId: '4',
+      roleId: 'Advogado',
+      roleName: 'Advogado',
+      isAdmin: false,
       googleCalendarConnected: true,
       googleCalendarDestination: 'Agenda Escritório',
     });
@@ -318,14 +319,8 @@ describe('userFromApi / userToPayload / roleFromApi', () => {
     });
   });
 
-  it('maps role permissions to string ids and usersCount', () => {
-    const role = roleFromApi({ id: 4, nome: 'Advogado', permissoes: [1, 2], usuarios_total: '3' });
-
-    expect(role).toMatchObject({ id: '4', name: 'Advogado', permissionIds: ['1', '2'], usersCount: 3 });
-  });
-
-  it('leaves usersCount undefined when the API omits it', () => {
-    expect(roleFromApi({ id: 4, nome: 'X' }).usersCount).toBeUndefined();
+  it('marks Administrador users as admin', () => {
+    expect(userFromApi({ id: 1, cargo: 'Administrador' }).isAdmin).toBe(true);
   });
 });
 
@@ -517,28 +512,5 @@ describe('productivity mappers', () => {
       configured: false,
     });
     expect(productivityGoalFromApi({ id: 1, daily_hours: 0 }).dailyHours).toBe(0);
-  });
-});
-
-describe('permissionGroupsFromResponse', () => {
-  it('maps groups and translates actions to English', () => {
-    const groups = permissionGroupsFromResponse({
-      grupos_permissoes: [
-        {
-          chave: 'clientes',
-          rotulo: 'Clientes',
-          permissoes: [
-            { id: 1, caminho: 'clientes.criar', nome: 'Criar cliente', modelo: 'Cliente', modulo: 'clientes', acao: 'criar' },
-            { id: 2, caminho: 'clientes.ver', nome: 'Ver cliente', modelo: 'Cliente', modulo: 'clientes', acao: 'visualizar' },
-            { id: 3, caminho: 'clientes.x', nome: 'X', modelo: 'Cliente', modulo: 'clientes', acao: 'custom' },
-          ],
-        },
-      ],
-    });
-
-    expect(groups).toHaveLength(1);
-    expect(groups[0]).toMatchObject({ key: 'clientes', label: 'Clientes' });
-    expect(groups[0].permissions.map((p) => p.action)).toEqual(['create', 'view', 'custom']);
-    expect(groups[0].permissions[0]).toMatchObject({ id: '1', path: 'clientes.criar', app: 'clientes' });
   });
 });
