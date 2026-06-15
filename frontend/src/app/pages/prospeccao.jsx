@@ -9,6 +9,7 @@ import {
 } from '../data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
+import { motion as Motion, pop, staggerContainer } from '../motion';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, formatDate, getStatusTone, normalizeText } from '../utils';
 import { ComboField, EmptyState, Field, NotFoundState } from './common';
@@ -315,13 +316,18 @@ export function ProspectKanbanPage() {
             <Link className="btn" to="/prospeccao/novo">Novo prospect</Link>
           </div>
 
-          <div className="prospeccao-metrics">
-            <article className="metric"><span>Total</span><strong>{metrics.total}</strong></article>
-            <article className="metric"><span>Novos no mês</span><strong>{metrics.novosMes}</strong></article>
-            <article className="metric"><span>Convertidos</span><strong>{metrics.convertidos}</strong></article>
-            <article className="metric"><span>Perdidos</span><strong>{metrics.perdidos}</strong></article>
-            <article className="metric"><span>Taxa conversão</span><strong>{metrics.taxa}%</strong></article>
-          </div>
+          <Motion.div
+            className="prospeccao-metrics"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <Motion.article className="metric" variants={pop}><span>Total</span><strong>{metrics.total}</strong></Motion.article>
+            <Motion.article className="metric" variants={pop}><span>Novos no mês</span><strong>{metrics.novosMes}</strong></Motion.article>
+            <Motion.article className="metric" variants={pop}><span>Convertidos</span><strong>{metrics.convertidos}</strong></Motion.article>
+            <Motion.article className="metric" variants={pop}><span>Perdidos</span><strong>{metrics.perdidos}</strong></Motion.article>
+            <Motion.article className="metric" variants={pop}><span>Taxa conversão</span><strong>{metrics.taxa}%</strong></Motion.article>
+          </Motion.div>
 
           <div className="prospeccao-toolbar">
             <PageSearch

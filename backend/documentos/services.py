@@ -28,8 +28,8 @@ SUBPASTAS = ("Petições", "Documentos", "Outros")
 # Fixed folders of the client document template (the per-process folders are
 # created from the client's processos; see ``ensure_client_template``).
 TEMPLATE_FOLDERS = (
-    "1. DOCUMENTOS PESSOAIS",
-    "2. CONTRATOS E PROCURAÇÕES",
+    "DOCUMENTOS PESSOAIS",
+    "CONTRATOS E PROCURAÇÕES",
 )
 
 # Subfolders created under each process folder.

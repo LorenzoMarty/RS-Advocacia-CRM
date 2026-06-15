@@ -52,6 +52,27 @@
         text-transform:uppercase;
     }
 
+    .list-head-cell.is-sortable{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        border-radius:8px;
+        transition:color var(--motion) var(--ease-out);
+    }
+
+    .list-head-cell.is-sortable:hover{
+        color:var(--gold-soft);
+    }
+
+    .list-head-cell.is-sorted{
+        color:var(--gold-soft);
+    }
+
+    .list-head-cell .sort-indicator{
+        display:inline-flex;
+        align-items:center;
+    }
+
     .clients-list{
         display:grid;
         gap:var(--gap-list);

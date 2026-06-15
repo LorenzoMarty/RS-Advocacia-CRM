@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { motion as Motion, staggerContainer, staggerItem } from '../motion';
 import { PROCESS_AREA_OPTIONS, PROCESS_STATUS_OPTIONS } from '../data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
@@ -86,9 +87,14 @@ export function ProcessesListPage() {
                 <span>Ações</span>
               </div>
 
-              <div className="process-list">
+              <Motion.div
+                className="process-list"
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+              >
                 {filteredProcesses.map((process) => (
-                  <article key={process.id} className="process-row">
+                  <Motion.article key={process.id} className="process-row" variants={staggerItem}>
                     <div className="process-main">
                       <h2 className="process-number">{process.number}</h2>
                       <span className="process-client">{clients.find((client) => client.id === process.clientId)?.name}</span>
@@ -116,9 +122,9 @@ export function ProcessesListPage() {
                       <Link className="action-link" to={`/processos/${process.id}/editar`}>Editar</Link>
                       <button className="action-link action-link-danger" type="button" onClick={() => handleDeleteProcess(process)}>Excluir</button>
                     </div>
-                  </article>
+                  </Motion.article>
                 ))}
-              </div>
+              </Motion.div>
             </>
           ) : (
             <EmptyState

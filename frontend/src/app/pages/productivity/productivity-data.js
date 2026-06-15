@@ -44,6 +44,17 @@ export function timeEntryElapsedSeconds(entry, currentTime = Date.now()) {
   return totalSeconds + Math.max(0, Math.floor((currentTime - baseTime) / 1000));
 }
 
+// Total de tempo logado numa tarefa (soma de todos os time entries dela).
+// Usado para liberar o retorno a "Pendente" só quando o contador é 0:00.
+export function taskLoggedSeconds(timeEntries, taskId, taskType, currentTime = Date.now()) {
+  return (timeEntries || []).reduce((total, entry) => {
+    if (String(entry.taskId) !== String(taskId) || entry.taskType !== taskType) {
+      return total;
+    }
+    return total + timeEntryElapsedSeconds(entry, currentTime);
+  }, 0);
+}
+
 // ---------------------------------------------------------------------------
 // Rótulos de tarefa / status
 // ---------------------------------------------------------------------------

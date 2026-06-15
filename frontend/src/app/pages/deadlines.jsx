@@ -3,8 +3,18 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { DEADLINE_STATUS_COLUMNS } from '../data';
 import { TaskTimer } from '../components/productivity';
+import { taskLoggedSeconds } from './productivity/productivity-data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, StatusBadge } from '../layout';
+import {
+  motion,
+  AnimatePresence,
+  pop,
+  cardHover,
+  prefersReducedMotion,
+  DURATION,
+  EASE_OUT,
+} from '../motion';
 import { useAppState } from '../store';
 import {
   buildSearchText,
@@ -17,6 +27,24 @@ import {
 import { EmptyState, Field, NotFoundState } from './common';
 
 const DEADLINE_DEFAULT_STATUS = DEADLINE_STATUS_COLUMNS[0].label;
+
+// Aliases de componentes motion (member access registra uso de `motion` no lint).
+const MotionArticle = motion.article;
+const MotionSpan = motion.span;
+const MotionDiv = motion.div;
+
+// Entrada/saída de cards dentro de uma coluna do kanban (AnimatePresence).
+const kanbanCardMotion = prefersReducedMotion()
+  ? {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 },
+    }
+  : {
+      initial: { opacity: 0, y: 8, scale: 0.98 },
+      animate: { opacity: 1, y: 0, scale: 1, transition: { duration: DURATION.base, ease: EASE_OUT } },
+      exit: { opacity: 0, scale: 0.96, transition: { duration: DURATION.fast, ease: EASE_OUT } },
+    };
 
 function sortedUnique(values) {
   return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))]
@@ -134,10 +162,13 @@ function DeadlineCard({
 }) {
   const process = processes.find((item) => item.id === deadline.processId) || null;
   const cardTitle = buildDeadlineTitle(process, deadline.responsible) || deadline.title;
+  const interactions = isDragging ? {} : cardHover;
 
   return (
-    <article
-      className={`deadline-card${isDragging ? ' is-dragging' : ''}${isMoving ? ' is-moving' : ''}`}
+    <MotionArticle
+      {...kanbanCardMotion}
+      {...interactions}
+      className={`deadline-card is-clickable${isDragging ? ' is-dragging' : ''}${isMoving ? ' is-moving' : ''}`}
       draggable
       onDragStart={(event) => onDragStart(event, deadline.id)}
       onDragEnd={onDragEnd}
@@ -156,12 +187,12 @@ function DeadlineCard({
         taskStatus={deadline.status}
         onStart={() => onTimerStart?.(deadline)}
       />
-    </article>
+    </MotionArticle>
   );
 }
 
 export function DeadlinesPage() {
-  const { addFlash, clients, deadlines, processes, saveDeadline } = useAppState();
+  const { addFlash, clients, deadlines, processes, saveDeadline, timeEntries } = useAppState();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState(() => dateInputValue(searchParams.get('data') || new Date()));
   const [search, setSearch] = useState('');
@@ -240,8 +271,8 @@ export function DeadlinesPage() {
       return;
     }
 
-    if (nextColumnKey === 'a_fazer') {
-      addFlash('Tarefa em andamento não volta para Pendente.', 'warn');
+    if (nextColumnKey === 'a_fazer' && taskLoggedSeconds(timeEntries, deadline.id, 'prazo') > 0) {
+      addFlash('Tarefa com tempo registrado não volta para Pendente.', 'warn');
       return;
     }
 
@@ -425,31 +456,47 @@ export function DeadlinesPage() {
                     <h2>{column.label}</h2>
                     <p>{formatCount(deadlinesByColumn[column.key].length, 'prazo', 'prazos')}</p>
                   </div>
-                  <span className="deadline-column-count">
+                  <MotionSpan
+                    key={deadlinesByColumn[column.key].length}
+                    className="deadline-column-count"
+                    variants={pop}
+                    initial="hidden"
+                    animate="visible"
+                  >
                     {deadlinesByColumn[column.key].length}
-                  </span>
+                  </MotionSpan>
                 </div>
 
                 <div className="deadline-column-list">
-                  {draggingDeadlineId && dragOverColumnKey === column.key ? (
-                    <div className="deadline-drop-indicator">
-                      Solte aqui
-                    </div>
-                  ) : null}
+                  <AnimatePresence initial={false}>
+                    {draggingDeadlineId && dragOverColumnKey === column.key ? (
+                      <MotionDiv
+                        className="deadline-drop-indicator"
+                        initial={{ opacity: 0, scaleY: 0.6 }}
+                        animate={{ opacity: 1, scaleY: 1 }}
+                        exit={{ opacity: 0, scaleY: 0.6 }}
+                        transition={{ duration: DURATION.fast, ease: EASE_OUT }}
+                      >
+                        Solte aqui
+                      </MotionDiv>
+                    ) : null}
+                  </AnimatePresence>
 
                   {deadlinesByColumn[column.key].length ? (
-                    deadlinesByColumn[column.key].map((deadline) => (
-                      <DeadlineCard
-                        key={deadline.id}
-                        deadline={deadline}
-                        isDragging={draggingDeadlineId === deadline.id}
-                        isMoving={movingDeadlineId === deadline.id}
-                        onDragEnd={handleDragEnd}
-                        onDragStart={handleDragStart}
-                        onTimerStart={promoteDeadlineToActive}
-                        processes={processes}
-                      />
-                    ))
+                    <AnimatePresence initial={false}>
+                      {deadlinesByColumn[column.key].map((deadline) => (
+                        <DeadlineCard
+                          key={deadline.id}
+                          deadline={deadline}
+                          isDragging={draggingDeadlineId === deadline.id}
+                          isMoving={movingDeadlineId === deadline.id}
+                          onDragEnd={handleDragEnd}
+                          onDragStart={handleDragStart}
+                          onTimerStart={promoteDeadlineToActive}
+                          processes={processes}
+                        />
+                      ))}
+                    </AnimatePresence>
                   ) : (
                     <div className="deadline-column-empty">
                       Nenhum prazo nesta coluna.

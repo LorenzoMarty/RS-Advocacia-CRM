@@ -14,6 +14,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
+import { AnimatePresence, motion as Motion, staggerContainer, staggerItem } from '../motion';
 import { useAppState } from '../store';
 import {
   buildSearchText,
@@ -157,26 +158,48 @@ export function ClientsListPage() {
           {rows.length ? (
             <>
               <div className="list-head" aria-hidden="true">
-                {table.getHeaderGroups()[0].headers.map((header) => (
-                  <span
-                    key={header.id}
-                    style={header.column.getCanSort() ? { cursor: 'pointer', userSelect: 'none' } : {}}
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    {' '}
-                    {SORT_ICONS[header.column.getIsSorted()] ?? null}
-                  </span>
-                ))}
+                {table.getHeaderGroups()[0].headers.map((header) => {
+                  const sortState = header.column.getIsSorted();
+                  return (
+                    <span
+                      key={header.id}
+                      className={`list-head-cell${header.column.getCanSort() ? ' is-sortable' : ''}${sortState ? ' is-sorted' : ''}`}
+                      style={header.column.getCanSort() ? { cursor: 'pointer', userSelect: 'none' } : {}}
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {' '}
+                      <AnimatePresence mode="wait" initial={false}>
+                        {sortState ? (
+                          <Motion.span
+                            key={sortState}
+                            className="sort-indicator"
+                            initial={{ opacity: 0, y: sortState === 'asc' ? 3 : -3 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: sortState === 'asc' ? -3 : 3 }}
+                            transition={{ duration: 0.14 }}
+                          >
+                            {SORT_ICONS[sortState]}
+                          </Motion.span>
+                        ) : null}
+                      </AnimatePresence>
+                    </span>
+                  );
+                })}
                 <span>Ações</span>
               </div>
 
-              <div className="clients-list">
+              <Motion.div
+                className="clients-list"
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+              >
                 {rows.map((row) => {
                   const client = row.original;
                   const processCount = processes.filter((process) => process.clientId === client.id).length;
                   return (
-                    <article key={client.id} className="client-row">
+                    <Motion.article key={client.id} className="client-row" variants={staggerItem}>
                       <div className="client-avatar" aria-hidden="true">{client.name.slice(0, 1).toUpperCase()}</div>
 
                       <div className="client-main">
@@ -202,10 +225,10 @@ export function ClientsListPage() {
                         <Link className="action-link" to={`/clientes/${client.id}/editar`}>Editar</Link>
                         <button className="action-link action-link-danger" type="button" onClick={() => handleDeleteClient(client)}>Excluir</button>
                       </div>
-                    </article>
+                    </Motion.article>
                   );
                 })}
-              </div>
+              </Motion.div>
             </>
           ) : (
             <EmptyState

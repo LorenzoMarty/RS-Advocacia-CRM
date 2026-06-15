@@ -9,6 +9,11 @@
 .profile .avatar{width:34px;height:34px;border-radius:11px}
 .main{display:grid;gap:0;min-width:0;background:transparent}
 .main > *{min-width:0}
+
+/* Envólucro de transição de página (MotionPage). Repassa o contexto de grid
+   da .main para o conteúdo da rota — herda o mesmo layout/gap. */
+.page-motion{display:grid;gap:0;min-width:0}
+.page-motion > *{min-width:0}
 .surface{
     position:relative;
     min-width:0;
@@ -25,6 +30,37 @@
 }
 
 .surface > *{position:relative;z-index:1}
+
+/* Afford. clicável — opt-in. Aplique .is-clickable a cards/superfícies
+   interativas (links, rows, tiles) para ganhar hover lift + cursor.
+   Cards não interativos ficam intactos. */
+.is-clickable{
+    cursor:pointer;
+    transition:transform var(--motion) var(--ease-out),
+               box-shadow var(--motion) var(--ease-out),
+               border-color var(--motion) var(--ease-out),
+               background var(--motion) var(--ease-out);
+}
+
+.is-clickable:hover{
+    transform:translateY(-3px);
+    border-color:var(--line-strong);
+    box-shadow:0 20px 44px rgba(0,0,0,.26);
+}
+
+.is-clickable:active{
+    transform:translateY(-1px);
+}
+
+.is-clickable:focus-visible{
+    outline:none;
+    box-shadow:0 0 0 3px rgba(212,175,55,.32),0 18px 40px rgba(0,0,0,.24);
+}
+
+@media (prefers-reduced-motion:reduce){
+    .is-clickable:hover,
+    .is-clickable:active{transform:none}
+}
 .badge{
     display:inline-flex;
     align-items:center;

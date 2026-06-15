@@ -3,6 +3,7 @@ import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
 import { AppearancePanel, AppearanceTrigger } from './components/appearance-panel';
+import { AnimatePresence, MotionPage } from './motion';
 import { NAV_ITEMS } from './data';
 import { useAppState } from './store';
 import { useAppearanceState } from './use-appearance';
@@ -497,7 +498,11 @@ export function ProtectedLayout() {
         <div className="page">
           <div className="page-wrap">
             <main className="main">
-              <Outlet />
+              <AnimatePresence mode="wait" initial={false}>
+                <MotionPage key={location.pathname} className="page-motion">
+                  <Outlet />
+                </MotionPage>
+              </AnimatePresence>
             </main>
           </div>
         </div>

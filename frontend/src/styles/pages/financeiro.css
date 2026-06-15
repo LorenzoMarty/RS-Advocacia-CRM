@@ -145,6 +145,40 @@
   gap: 4px;
 }
 
+.financeiro-rows {
+  display: grid;
+  gap: 4px;
+}
+
+.financeiro-th.is-sortable {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 6px;
+  transition: color var(--motion) var(--ease-out);
+}
+
+.financeiro-th.is-sortable:hover,
+.financeiro-th.is-sorted {
+  color: var(--gold-soft);
+}
+
+.financeiro-sort-arrow {
+  flex: none;
+}
+
+.financeiro-row {
+  transition: border-color var(--motion) var(--ease-out),
+    background var(--motion) var(--ease-out),
+    transform var(--motion) var(--ease-out);
+}
+
+.financeiro-row:not(.financeiro-row-head):hover {
+  border-color: var(--line-strong);
+  background: var(--ghost-strong);
+  transform: translateY(-1px);
+}
+
 .financeiro-row {
   display: grid;
   grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 1.6fr;
