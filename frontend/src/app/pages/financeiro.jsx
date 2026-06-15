@@ -200,112 +200,114 @@ export function FinanceiroPage() {
       {confirmPopup}
       <PageChrome label="Financeiro" />
       <div className="financeiro-page">
-        <section className="surface financeiro-intro">
-          <div className="section-head">
-            <div>
-              <h1 className="intro-title">Financeiro</h1>
-              <p className="section-note">Receitas, despesas e fluxo do escritório</p>
-            </div>
-            <Link className="btn" to="/financeiro/novo">Novo lançamento</Link>
-          </div>
-
-          <div className="financeiro-metrics">
-            <article className="metric"><span>Recebido no mês</span><strong>{formatCurrency(dashboard.recebidoMes)}</strong></article>
-            <article className="metric"><span>A receber</span><strong>{formatCurrency(dashboard.pendente)}</strong></article>
-            <article className="metric metric-danger"><span>Atrasado</span><strong>{formatCurrency(dashboard.atrasado)}</strong></article>
-            <article className="metric"><span>Despesas no mês</span><strong>{formatCurrency(dashboard.despesasMes)}</strong></article>
-            <article className="metric"><span>Saldo estimado</span><strong>{formatCurrency(dashboard.saldo)}</strong></article>
-          </div>
-
-          <div className="financeiro-charts">
-            <CategoryDonut title="Receita por categoria" data={dashboard.receitaPorCategoria} />
-            <CategoryDonut title="Despesa por categoria" data={dashboard.despesaPorCategoria} />
-          </div>
-        </section>
-
-        <section className="surface financeiro-panel">
-          <div className="financeiro-tabs" role="tablist">
-            {FINANCE_TABS.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                role="tab"
-                aria-selected={tab === item.key}
-                className={`financeiro-tab${tab === item.key ? ' is-active' : ''}`}
-                onClick={() => changeTab(item.key)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="financeiro-toolbar">
-            <PageSearch value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Buscar lançamento" />
-            <select
-              className="filter-select"
-              aria-label="Filtrar por categoria"
-              value={categoryFilter}
-              onChange={(event) => { setCategoryFilter(event.target.value); setPage(1); }}
-            >
-              <option value="">Categoria</option>
-              {categoryOptions.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </select>
-          </div>
-
-          {pageRows.length ? (
-            <>
-              <div className="financeiro-table" role="table">
-                <div className="financeiro-row financeiro-row-head" role="row">
-                  <button type="button" className="financeiro-th" onClick={() => toggleSort('description')}>Descrição</button>
-                  <span className="financeiro-th">Categoria</span>
-                  <button type="button" className="financeiro-th" onClick={() => toggleSort('value')}>Valor</button>
-                  <button type="button" className="financeiro-th" onClick={() => toggleSort('dueDate')}>Vencimento</button>
-                  <span className="financeiro-th">Status</span>
-                  <span className="financeiro-th">Ações</span>
-                </div>
-                {pageRows.map((item) => (
-                  <div className="financeiro-row" role="row" key={item.id}>
-                    <span className="financeiro-cell" data-label="Descrição">
-                      {item.description}
-                      {item.clientName ? <small>{item.clientName}</small> : null}
-                    </span>
-                    <span className="financeiro-cell" data-label="Categoria">{item.category}</span>
-                    <span className="financeiro-cell" data-label="Valor">{formatCurrency(item.value)}</span>
-                    <span className="financeiro-cell" data-label="Vencimento">{item.dueDate ? formatDate(item.dueDate) : '-'}</span>
-                    <span className="financeiro-cell" data-label="Status">
-                      <StatusBadge tone={getStatusTone(item.displayStatus, item.status === 'Pago')}>{item.displayStatus}</StatusBadge>
-                    </span>
-                    <span className="financeiro-cell financeiro-actions" data-label="Ações">
-                      <Link className="btn btn-mini btn-secondary" to={`/financeiro/${item.id}/editar`}>Editar</Link>
-                      {item.status === 'Pendente' ? (
-                        <button className="btn btn-mini" type="button" onClick={() => handleMarkPaid(item)}>Pagar</button>
-                      ) : null}
-                      {item.status !== 'Cancelado' ? (
-                        <button className="btn btn-mini btn-secondary" type="button" onClick={() => handleCancel(item)}>Cancelar</button>
-                      ) : null}
-                      <button className="btn btn-mini btn-danger" type="button" onClick={() => handleDelete(item)}>Excluir</button>
-                    </span>
-                  </div>
-                ))}
+        <section className="surface financeiro-shell">
+          <div className="financeiro-intro">
+            <div className="section-head">
+              <div>
+                <h1 className="intro-title">Financeiro</h1>
+                <p className="section-note">Receitas, despesas e fluxo do escritório</p>
               </div>
+              <Link className="btn" to="/financeiro/novo">Novo lançamento</Link>
+            </div>
 
-              {totalPages > 1 ? (
-                <div className="financeiro-pagination">
-                  <button className="btn btn-secondary btn-mini" type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Anterior</button>
-                  <span>Página {safePage} de {totalPages}</span>
-                  <button className="btn btn-secondary btn-mini" type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Próxima</button>
+            <div className="financeiro-metrics">
+              <article className="metric"><span>Recebido no mês</span><strong>{formatCurrency(dashboard.recebidoMes)}</strong></article>
+              <article className="metric"><span>A receber</span><strong>{formatCurrency(dashboard.pendente)}</strong></article>
+              <article className="metric metric-danger"><span>Atrasado</span><strong>{formatCurrency(dashboard.atrasado)}</strong></article>
+              <article className="metric"><span>Despesas no mês</span><strong>{formatCurrency(dashboard.despesasMes)}</strong></article>
+              <article className="metric"><span>Saldo estimado</span><strong>{formatCurrency(dashboard.saldo)}</strong></article>
+            </div>
+
+            <div className="financeiro-charts">
+              <CategoryDonut title="Receita por categoria" data={dashboard.receitaPorCategoria} />
+              <CategoryDonut title="Despesa por categoria" data={dashboard.despesaPorCategoria} />
+            </div>
+          </div>
+
+          <div className="financeiro-panel">
+            <div className="financeiro-tabs" role="tablist">
+              {FINANCE_TABS.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === item.key}
+                  className={`financeiro-tab${tab === item.key ? ' is-active' : ''}`}
+                  onClick={() => changeTab(item.key)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="financeiro-toolbar">
+              <PageSearch value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Buscar lançamento" />
+              <select
+                className="filter-select"
+                aria-label="Filtrar por categoria"
+                value={categoryFilter}
+                onChange={(event) => { setCategoryFilter(event.target.value); setPage(1); }}
+              >
+                <option value="">Categoria</option>
+                {categoryOptions.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+
+            {pageRows.length ? (
+              <>
+                <div className="financeiro-table" role="table">
+                  <div className="financeiro-row financeiro-row-head" role="row">
+                    <button type="button" className="financeiro-th" onClick={() => toggleSort('description')}>Descrição</button>
+                    <span className="financeiro-th">Categoria</span>
+                    <button type="button" className="financeiro-th" onClick={() => toggleSort('value')}>Valor</button>
+                    <button type="button" className="financeiro-th" onClick={() => toggleSort('dueDate')}>Vencimento</button>
+                    <span className="financeiro-th">Status</span>
+                    <span className="financeiro-th">Ações</span>
+                  </div>
+                  {pageRows.map((item) => (
+                    <div className="financeiro-row" role="row" key={item.id}>
+                      <span className="financeiro-cell" data-label="Descrição">
+                        {item.description}
+                        {item.clientName ? <small>{item.clientName}</small> : null}
+                      </span>
+                      <span className="financeiro-cell" data-label="Categoria">{item.category}</span>
+                      <span className="financeiro-cell" data-label="Valor">{formatCurrency(item.value)}</span>
+                      <span className="financeiro-cell" data-label="Vencimento">{item.dueDate ? formatDate(item.dueDate) : '-'}</span>
+                      <span className="financeiro-cell" data-label="Status">
+                        <StatusBadge tone={getStatusTone(item.displayStatus, item.status === 'Pago')}>{item.displayStatus}</StatusBadge>
+                      </span>
+                      <span className="financeiro-cell financeiro-actions" data-label="Ações">
+                        <Link className="btn btn-mini btn-secondary" to={`/financeiro/${item.id}/editar`}>Editar</Link>
+                        {item.status === 'Pendente' ? (
+                          <button className="btn btn-mini" type="button" onClick={() => handleMarkPaid(item)}>Pagar</button>
+                        ) : null}
+                        {item.status !== 'Cancelado' ? (
+                          <button className="btn btn-mini btn-secondary" type="button" onClick={() => handleCancel(item)}>Cancelar</button>
+                        ) : null}
+                        <button className="btn btn-mini btn-danger" type="button" onClick={() => handleDelete(item)}>Excluir</button>
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ) : null}
-            </>
-          ) : (
-            <EmptyState
-              title="Nenhum lançamento."
-              copy="Ajuste os filtros ou cadastre um novo lançamento."
-              actions={<Link className="btn" to="/financeiro/novo">Novo lançamento</Link>}
-            />
-          )}
+
+                {totalPages > 1 ? (
+                  <div className="financeiro-pagination">
+                    <button className="btn btn-secondary btn-mini" type="button" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Anterior</button>
+                    <span>Página {safePage} de {totalPages}</span>
+                    <button className="btn btn-secondary btn-mini" type="button" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Próxima</button>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <EmptyState
+                title="Nenhum lançamento."
+                copy="Ajuste os filtros ou cadastre um novo lançamento."
+                actions={<Link className="btn" to="/financeiro/novo">Novo lançamento</Link>}
+              />
+            )}
+          </div>
         </section>
       </div>
     </>
