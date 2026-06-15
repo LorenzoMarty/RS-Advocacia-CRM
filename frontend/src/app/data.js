@@ -10,7 +10,7 @@ export const NAV_ITEMS = [
   { key: 'prospeccao', label: 'Prospecção', mobileLabel: 'Prospect', to: '/prospeccao' },
   { key: 'financeiro', label: 'Financeiro', mobileLabel: 'Financeiro', to: '/financeiro', permission: 'financeiro.view_lancamento' },
   { key: 'auditoria', label: 'Auditoria', mobileLabel: 'Audit', to: '/auditoria' },
-  { key: 'usuarios', label: 'Usuários', mobileLabel: 'Usuários', to: '/usuarios' },
+  { key: 'usuarios', label: 'Usuários', mobileLabel: 'Usuários', to: '/usuarios', permission: 'usuarios.view_usuario' },
 ];
 
 export const PROSPECT_STATUS_COLUMNS = [

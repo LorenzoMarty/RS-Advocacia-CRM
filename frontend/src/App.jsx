@@ -99,9 +99,9 @@ function LancamentoFormRoute() {
   return <LancamentoFormPage key={lancamentoId || "lancamento-new"} />;
 }
 
-function RequireFinanceiro({ children }) {
+function RequirePermission({ permission, children }) {
   const { hasPermission } = useAppState();
-  if (!hasPermission("financeiro.view_lancamento")) {
+  if (!hasPermission(permission)) {
     return <Navigate to="/" replace />;
   }
   return children;
@@ -168,40 +168,79 @@ export default function App() {
             <Route
               path="/financeiro"
               element={
-                <RequireFinanceiro>
+                <RequirePermission permission="financeiro.view_lancamento">
                   <FinanceiroPage />
-                </RequireFinanceiro>
+                </RequirePermission>
               }
             />
             <Route
               path="/financeiro/novo"
               element={
-                <RequireFinanceiro>
+                <RequirePermission permission="financeiro.add_lancamento">
                   <LancamentoFormRoute />
-                </RequireFinanceiro>
+                </RequirePermission>
               }
             />
             <Route
               path="/financeiro/:lancamentoId/editar"
               element={
-                <RequireFinanceiro>
+                <RequirePermission permission="financeiro.change_lancamento">
                   <LancamentoFormRoute />
-                </RequireFinanceiro>
+                </RequirePermission>
               }
             />
 
             <Route path="/auditoria" element={<AuditPage />} />
 
-            <Route path="/usuarios" element={<UsersListPage />} />
-            <Route path="/usuarios/novo" element={<UserFormRoute />} />
-            <Route path="/usuarios/:userId" element={<UserDetailPage />} />
+            <Route
+              path="/usuarios"
+              element={
+                <RequirePermission permission="usuarios.view_usuario">
+                  <UsersListPage />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="/usuarios/novo"
+              element={
+                <RequirePermission permission="usuarios.add_usuario">
+                  <UserFormRoute />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="/usuarios/:userId"
+              element={
+                <RequirePermission permission="usuarios.view_usuario">
+                  <UserDetailPage />
+                </RequirePermission>
+              }
+            />
             <Route
               path="/usuarios/:userId/editar"
-              element={<UserFormRoute />}
+              element={
+                <RequirePermission permission="usuarios.change_usuario">
+                  <UserFormRoute />
+                </RequirePermission>
+              }
             />
 
-            <Route path="/cargos" element={<RolesListPage />} />
-            <Route path="/cargos/:roleId" element={<RoleDetailPage />} />
+            <Route
+              path="/cargos"
+              element={
+                <RequirePermission permission="auth.view_group">
+                  <RolesListPage />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="/cargos/:roleId"
+              element={
+                <RequirePermission permission="auth.view_group">
+                  <RoleDetailPage />
+                </RequirePermission>
+              }
+            />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -27,7 +27,8 @@ from productivity.views import (
 )
 from prospeccao.models import Prospect
 from prospeccao.views import serialize_prospect
-from usuarios.models import Usuario
+from usuarios.forms import normalize_cargo_name
+from usuarios.models import Cargo, Usuario
 from usuarios.views import (
     CARGO_LIST_PERMISSIONS,
     _get_cargos,
@@ -117,6 +118,11 @@ def inicializacao(request):
     if can_include_cargos:
         cargos = _get_cargos()
         serialized_cargos = [serialize_cargo(cargo) for cargo in cargos]
+    elif usuario_atual:
+        cargo_nome = normalize_cargo_name(usuario_atual.cargo)
+        cargo = Cargo.objects.filter(name=cargo_nome).first()
+        if cargo:
+            serialized_cargos = [serialize_cargo(cargo, include_user_count=False)]
 
     data = {
         "clientes": serialized_clientes,
@@ -138,7 +144,7 @@ def inicializacao(request):
         serialized_usuarios = serialize_usuarios(Usuario.objects.all())
         data["usuarios"] = serialized_usuarios
 
-    if can_include_cargos:
+    if serialized_cargos:
         data["cargos"] = serialized_cargos
 
     if usuario_atual and user_has_permission(request, "productivity.view_timeentry"):
