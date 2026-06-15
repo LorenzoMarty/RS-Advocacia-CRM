@@ -30,7 +30,6 @@ SUBPASTAS = ("Petições", "Documentos", "Outros")
 TEMPLATE_FOLDERS = (
     "1. DOCUMENTOS PESSOAIS",
     "2. CONTRATOS E PROCURAÇÕES",
-    "5. OUTROS",
 )
 
 # Subfolders created under each process folder.

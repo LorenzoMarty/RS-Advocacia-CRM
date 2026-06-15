@@ -470,20 +470,36 @@ export function PetitionsPage() {
   );
 }
 
-function PetitionFolderFiles({ clientId }) {
+// Nome da pasta do processo no Drive — espelha `_nome_pasta_processo` no backend.
+function processFolderName(process) {
+  return [process?.area, process?.number].map((part) => (part || '').trim()).filter(Boolean).join(' - ');
+}
+
+function PetitionFolderFiles({ clientId, process }) {
   const [state, setState] = useState({ status: 'loading', files: [] });
 
   useEffect(() => {
     let isMounted = true;
 
-    if (!clientId) {
+    if (!clientId || !process?.id) {
+      setState({ status: 'no-process', files: [] });
       return undefined;
     }
 
     async function loadFiles() {
       try {
+        // Navega: raiz do cliente → pasta do processo (<área> - <número>) → PETIÇÕES.
         const root = await listClientDrive(clientId);
-        const peticoesFolder = root.folders.find(
+        const wantedName = normalizeText(processFolderName(process));
+        const processFolder = root.folders.find(
+          (folder) => normalizeText(folder.name) === wantedName,
+        );
+        if (!processFolder) {
+          if (isMounted) setState({ status: 'empty', files: [] });
+          return;
+        }
+        const processContent = await listClientDrive(clientId, processFolder.id);
+        const peticoesFolder = processContent.folders.find(
           (folder) => normalizeText(folder.name) === normalizeText('Petições'),
         );
         if (!peticoesFolder) {
@@ -504,17 +520,19 @@ function PetitionFolderFiles({ clientId }) {
     return () => {
       isMounted = false;
     };
-  }, [clientId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId, process?.id, process?.area, process?.number]);
 
   return (
     <section className="surface petition-form-panel">
       <div className="section-head">
         <div>
           <h2 className="section-title">Arquivos na pasta Petições</h2>
-          <p className="section-note">Documentos do cliente no Google Drive</p>
+          <p className="section-note">Documentos da pasta do processo no Google Drive</p>
         </div>
       </div>
 
+      {state.status === 'no-process' ? <p className="section-note">Vincule um processo para ver os arquivos.</p> : null}
       {state.status === 'loading' ? <p className="section-note">Carregando…</p> : null}
       {state.status === 'error' ? <p className="section-note">Não foi possível listar os arquivos.</p> : null}
       {state.status === 'empty' ? <p className="section-note">Nenhum arquivo nesta pasta.</p> : null}
@@ -776,16 +794,6 @@ export function PetitionFormPage() {
                   </select>
                 </Field>
 
-                <Field id="petition-area" label="Área jurídica" note="Herdada do processo vinculado.">
-                  <input
-                    id="petition-area"
-                    value={derivedArea}
-                    readOnly
-                    disabled
-                    placeholder="Selecione um processo"
-                  />
-                </Field>
-
                 <Field id="petition-status" label="Status" error={errors.status}>
                   <select
                     id="petition-status"
@@ -844,7 +852,11 @@ export function PetitionFormPage() {
         )}
 
         {isEditing && form.clientId ? (
-          <PetitionFolderFiles key={form.clientId} clientId={form.clientId} />
+          <PetitionFolderFiles
+            key={`${form.clientId}:${form.processId}`}
+            clientId={form.clientId}
+            process={processes.find((process) => process.id === form.processId) || null}
+          />
         ) : null}
       </div>
     </>
