@@ -112,13 +112,6 @@
         border-color:rgba(212,175,55,.2);
     }
 
-    .cargo-pill,
-    .cargo-chip{
-        color:var(--text);
-        background:rgba(255,255,255,.03);
-        border-color:var(--line);
-    }
-
     .hero-summary{
         display:flex;
         flex-wrap:wrap;
@@ -275,12 +268,6 @@
     html[data-theme="light"] .role-pill{
         background:rgba(181,138,79,.1);
         border-color:rgba(181,138,79,.2);
-    }
-
-    html[data-theme="light"] .cargo-pill,
-    html[data-theme="light"] .cargo-chip{
-        background:rgba(24,30,42,.04);
-        border-color:rgba(30,34,45,.1);
     }
 
     @media (max-width:1180px){

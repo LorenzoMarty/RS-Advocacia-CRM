@@ -36,12 +36,6 @@ export function assignableUsersFromResponse(payload) {
     .filter((user) => user.id && user.name);
 }
 
-export function rolesFromResponse(payload) {
-  return collectionFromResponse(payload, 'cargos')
-    .map(roleFromApi)
-    .filter((role) => role && role.id && role.name);
-}
-
 export function clientsFromResponse(payload) {
   return collectionFromResponse(payload, 'clientes').map(clientFromApi).filter(Boolean);
 }
@@ -114,43 +108,6 @@ export function productivityGoalsFromResponse(payload) {
   return collectionFromResponse(payload, 'productivity_goals').map(productivityGoalFromApi).filter(Boolean);
 }
 
-export function permissionGroupsFromResponse(payload) {
-  return collectionFromResponse(payload, 'grupos_permissoes').map((group) => ({
-    key: group.chave || '',
-    label: group.rotulo || '',
-    permissions: (group.permissoes || []).map((permission) => ({
-      id: String(permission.id),
-      path: permission.caminho || '',
-      displayName: permission.nome || '',
-      modelLabel: permission.modelo || '',
-      app: permission.modulo || '',
-      action: {
-        criar: 'create',
-        editar: 'edit',
-        excluir: 'delete',
-        visualizar: 'view',
-      }[permission.acao] || permission.acao || 'view',
-    })),
-  }));
-}
-
-export function roleFromApi(role) {
-  if (!role) {
-    return null;
-  }
-
-  const usersCount = role.usuarios_total == null ? undefined : Number(role.usuarios_total);
-
-  return {
-    ...role,
-    id: String(role.id || role.pk || role.nome),
-    name: role.nome || '',
-    permissionIds: (role.permissoes || [])
-      .map(String),
-    usersCount: Number.isFinite(usersCount) ? usersCount : undefined,
-  };
-}
-
 export function userFromApi(user) {
   if (!user) {
     return null;
@@ -162,7 +119,9 @@ export function userFromApi(user) {
     name: user.nome || '',
     email: user.email || '',
     picture: user.foto || '',
-    roleId: String(user.cargo_id || user.cargo || ''),
+    roleId: String(user.cargo || user.cargo_id || ''),
+    roleName: user.cargo || '',
+    isAdmin: Boolean(user.admin || user.cargo === 'Administrador'),
     googleCalendarConnected: Boolean(user.google_calendar_conectado),
     googleCalendarDestination: user.google_calendar_destino || 'agenda principal do Google',
   };

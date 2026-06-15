@@ -38,10 +38,6 @@ import {
   UserFormPage,
   UserDetailPage,
 } from "./app/pages/users";
-import {
-  RolesListPage,
-  RoleDetailPage,
-} from "./app/pages/roles";
 import { ProductivityPage } from "./app/pages/productivity/ProductivityPage";
 import {
   ProspectKanbanPage,
@@ -225,22 +221,6 @@ export default function App() {
               }
             />
 
-            <Route
-              path="/cargos"
-              element={
-                <RequirePermission permission="auth.view_group">
-                  <RolesListPage />
-                </RequirePermission>
-              }
-            />
-            <Route
-              path="/cargos/:roleId"
-              element={
-                <RequirePermission permission="auth.view_group">
-                  <RoleDetailPage />
-                </RequirePermission>
-              }
-            />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
