@@ -84,6 +84,8 @@ STANDARD_CARGO_NAMES = {
 REMOVED_CARGO_REASSIGNMENTS = {
     "Assistente Jurídico": "Advogado",
     "Assistente Juridico": "Advogado",
+    "Assistente juridico": "Advogado",
+    "assistente juridico": "Advogado",
 }
 
 STANDARD_CARGO_PERMISSION_APP_LABELS = (
