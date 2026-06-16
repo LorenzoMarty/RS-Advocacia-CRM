@@ -10,6 +10,7 @@ import {
   isEventAttended,
   isPetitionDone,
 } from '../productivity-utils';
+import { Select } from './select';
 import { useAppState } from '../store';
 import { EmptyState } from '../pages/common';
 
@@ -192,11 +193,11 @@ function isTaskDone(entry, deadlines, petitions) {
 function PeriodFilter({ period, setPeriod, customStart, setCustomStart, customEnd, setCustomEnd }) {
   return (
     <div className="productivity-filters">
-      <select value={period} onChange={(event) => setPeriod(event.target.value)} aria-label="Filtrar período">
+      <Select value={period} onChange={(event) => setPeriod(event.target.value)} aria-label="Filtrar período">
         <option value="week">Esta semana</option>
         <option value="month">Este mês</option>
         <option value="custom">Período personalizado</option>
-      </select>
+      </Select>
       {period === 'custom' ? (
         <>
           <input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} aria-label="Data inicial" />
@@ -784,7 +785,7 @@ export function OfficeProductivityPage() {
               <p className="section-note">Tempo gasto em cada tarefa de cada pessoa</p>
             </div>
             {users.length ? (
-              <select
+              <Select
                 className="productivity-user-select"
                 value={selectedUserId}
                 onChange={(event) => setSelectedUserId(event.target.value)}
@@ -794,7 +795,7 @@ export function OfficeProductivityPage() {
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>{user.name}</option>
                 ))}
-              </select>
+              </Select>
             ) : null}
           </div>
 

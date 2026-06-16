@@ -24,6 +24,7 @@ import {
   isSameDay,
   normalizeText,
 } from '../utils';
+import { Select } from '../components/select';
 import { EmptyState, Field, NotFoundState } from './common';
 
 const DEADLINE_DEFAULT_STATUS = DEADLINE_STATUS_COLUMNS[0].label;
@@ -409,7 +410,7 @@ export function DeadlinesPage() {
                 />
               </label>
 
-              <select
+              <Select
                 className="filter-select"
                 aria-label="Filtrar por responsavel"
                 value={responsible}
@@ -421,9 +422,9 @@ export function DeadlinesPage() {
                     {option}
                   </option>
                 ))}
-              </select>
+              </Select>
 
-              <select
+              <Select
                 className="filter-select"
                 aria-label="Filtrar por processo"
                 value={processId}
@@ -435,7 +436,7 @@ export function DeadlinesPage() {
                     {process.number}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
         </section>
@@ -1007,7 +1008,7 @@ export function DeadlineFormPage() {
 
               <div className="form-grid">
                 <Field id="deadline-process" label="Processo" className="span-2" error={errors.processId}>
-                  <select
+                  <Select
                     id="deadline-process"
                     value={form.processId}
                     onChange={(event) => setForm((currentForm) => ({ ...currentForm, processId: event.target.value }))}
@@ -1018,11 +1019,11 @@ export function DeadlineFormPage() {
                         {process.number}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field id="deadline-responsible" label="Responsável" className="span-2" error={errors.responsible}>
-                  <select
+                  <Select
                     id="deadline-responsible"
                     value={form.responsible}
                     onChange={(event) => setForm((currentForm) => ({ ...currentForm, responsible: event.target.value }))}
@@ -1031,7 +1032,7 @@ export function DeadlineFormPage() {
                     {responsibleOptions.map((option) => (
                       <option key={option} value={option}>{option}</option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field id="deadline-description" label="Descrição opcional" className="span-2" error={errors.description}>
