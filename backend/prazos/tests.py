@@ -1,10 +1,12 @@
 import json
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from agenda.models import Evento
 from clientes.models import Cliente
@@ -13,6 +15,7 @@ from processos.models import Processo
 from usuarios.models import Usuario
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class PrazosViewsTests(TestCase):
     def setUp(self):
         self.usuario = Usuario.objects.create(
@@ -107,6 +110,49 @@ class PrazosViewsTests(TestCase):
         self.assertEqual(response.status_code, 200, response.json())
         prazo.refresh_from_db()
         self.assertEqual(prazo.tempo_decorrido_segundos, 120)
+
+    def test_iniciar_timer_prazo_move_para_em_andamento(self):
+        prazo = self._prazo(status="Pendente")
+        started_at = timezone.now().isoformat()
+
+        response = self.client.patch(
+            reverse("atualizar_timer_prazo", args=[prazo.pk]),
+            data=json.dumps(
+                {
+                    "tempo_decorrido_segundos": 0,
+                    "timer_iniciado_em": started_at,
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200, response.json())
+        prazo.refresh_from_db()
+        self.assertEqual(prazo.status, "Em andamento")
+        self.assertIsNotNone(prazo.timer_iniciado_em)
+
+    def test_timer_prazo_nunca_reduz_tempo_ja_acumulado(self):
+        started_at = timezone.now() - timedelta(minutes=10)
+        prazo = self._prazo(
+            tempo_decorrido_segundos=300,
+            timer_iniciado_em=started_at,
+        )
+
+        response = self.client.patch(
+            reverse("atualizar_timer_prazo", args=[prazo.pk]),
+            data=json.dumps(
+                {
+                    "tempo_decorrido_segundos": 120,
+                    "timer_iniciado_em": None,
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200, response.json())
+        prazo.refresh_from_db()
+        self.assertGreaterEqual(prazo.tempo_decorrido_segundos, 600)
+        self.assertIsNone(prazo.timer_iniciado_em)
 
     def test_prazo_pode_voltar_para_pendente(self):
         prazo = Prazo.objects.create(

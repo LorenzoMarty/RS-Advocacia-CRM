@@ -124,6 +124,49 @@ function elapsedSecondsForTimeEntry(entry, currentTime = Date.now()) {
   return totalSeconds + Math.max(0, Math.floor((currentTime - baseTime) / 1000));
 }
 
+function elapsedSecondsForDeadline(deadline, currentTime = Date.now()) {
+  const elapsedSeconds = Math.max(0, Math.floor(Number(deadline?.elapsedSeconds) || 0));
+
+  if (!deadline?.timerStartedAt) {
+    return elapsedSeconds;
+  }
+
+  const startedAt = new Date(deadline.timerStartedAt).getTime();
+
+  if (Number.isNaN(startedAt)) {
+    return elapsedSeconds;
+  }
+
+  return elapsedSeconds + Math.max(0, Math.floor((currentTime - startedAt) / 1000));
+}
+
+function isPendingDeadlineStatus(status) {
+  return ['pendente', 'a fazer'].includes(String(status || '').trim().toLowerCase());
+}
+
+function timeEntryWithMonotonicSeconds(previousEntry, nextEntry, currentTime = Date.now()) {
+  if (!previousEntry || !nextEntry) {
+    return nextEntry;
+  }
+
+  const previousElapsedSeconds = elapsedSecondsForTimeEntry(previousEntry, currentTime);
+  const nextElapsedSeconds = elapsedSecondsForTimeEntry(nextEntry, currentTime);
+  const totalSeconds = nextEntry.status === 'running'
+    ? Math.max(Number(previousEntry.totalSeconds) || 0, Number(nextEntry.totalSeconds) || 0)
+    : Math.max(previousElapsedSeconds, nextElapsedSeconds);
+
+  return {
+    ...nextEntry,
+    totalSeconds,
+    elapsedSeconds: Math.max(previousElapsedSeconds, nextElapsedSeconds, Number(nextEntry.elapsedSeconds) || 0),
+  };
+}
+
+function replaceTimeEntryMonotonic(entries, nextEntry) {
+  const previousEntry = entries.find((entry) => entry.id === nextEntry.id);
+  return replaceById(entries, timeEntryWithMonotonicSeconds(previousEntry, nextEntry));
+}
+
 function taskDisplayName(payload) {
   return payload.taskName || payload.title || payload.name || 'Tarefa';
 }
@@ -759,8 +802,13 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveDeadlineTimer(deadlineId, timer) {
+    const currentDeadline = deadlines.find((deadline) => deadline.id === deadlineId) || null;
+    const currentElapsedSeconds = elapsedSecondsForDeadline(currentDeadline);
     const timerPayload = {
-      elapsedSeconds: Math.max(0, Math.floor(Number(timer.elapsedSeconds) || 0)),
+      elapsedSeconds: Math.max(
+        currentElapsedSeconds,
+        Math.max(0, Math.floor(Number(timer.elapsedSeconds) || 0)),
+      ),
       timerStartedAt: timer.timerStartedAt || '',
     };
 
@@ -786,7 +834,13 @@ export function AppStateProvider({ children }) {
           return deadline;
         }
 
-        savedDeadline = { ...deadline, ...timerPayload };
+        savedDeadline = {
+          ...deadline,
+          ...timerPayload,
+          status: timerPayload.timerStartedAt && isPendingDeadlineStatus(deadline.status)
+            ? 'Em andamento'
+            : deadline.status,
+        };
         return savedDeadline;
       }),
     );
@@ -1056,7 +1110,7 @@ export function AppStateProvider({ children }) {
         const response = await api.pauseTimeEntry(entryId);
         const savedEntry = timeEntryFromResponse(response);
         if (savedEntry) {
-          setTimeEntries((currentEntries) => replaceById(currentEntries, savedEntry));
+          setTimeEntries((currentEntries) => replaceTimeEntryMonotonic(currentEntries, savedEntry));
         }
         return savedEntry;
       } catch (error) {
@@ -1096,7 +1150,10 @@ export function AppStateProvider({ children }) {
         if (savedEntry) {
           setTimeEntries((currentEntries) => replaceById(
             options.pauseExisting ? pauseRunningEntries(currentEntries, savedEntry.id) : currentEntries,
-            savedEntry,
+            timeEntryWithMonotonicSeconds(
+              currentEntries.find((entry) => entry.id === savedEntry.id),
+              savedEntry,
+            ),
           ));
         }
         return savedEntry;
@@ -1131,7 +1188,7 @@ export function AppStateProvider({ children }) {
         const response = await api.stopTimeEntry(entryId);
         const savedEntry = timeEntryFromResponse(response);
         if (savedEntry) {
-          setTimeEntries((currentEntries) => replaceById(currentEntries, savedEntry));
+          setTimeEntries((currentEntries) => replaceTimeEntryMonotonic(currentEntries, savedEntry));
         }
         return savedEntry;
       } catch (error) {

@@ -3,7 +3,7 @@ from datetime import datetime
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -20,6 +20,7 @@ def _aware(year, month, day, hour=10):
     )
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class ResumoProdutividadeTests(TestCase):
     def setUp(self):
         self.usuario = Usuario.objects.create(
@@ -179,6 +180,7 @@ class ResumoProdutividadeTests(TestCase):
 WORKER_EMAIL = "worker@example.com"
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class ProductivityTimerTests(TestCase):
     def setUp(self):
         self.usuario = Usuario.objects.create(
@@ -189,6 +191,32 @@ class ProductivityTimerTests(TestCase):
         )
         self._grant("add_timeentry", "change_timeentry", "view_timeentry")
         self.client.force_login(self.user)
+        self.cliente = Cliente.objects.create(
+            nome="Cliente",
+            email="cliente@example.com",
+            telefone="11999999999",
+            cpf="123.456.789-00",
+            tipo_cliente="esporadico",
+        )
+        self.processo = Processo.objects.create(
+            numero_processo="0001234-56.2026.8.26.0001",
+            cliente=self.cliente,
+            descricao="Processo",
+            vara="1a Vara",
+            area_juridica="Civel",
+            status="Ativo",
+            advogado_responsavel=self.usuario.nome,
+        )
+        self.prazo = Prazo.objects.create(
+            titulo="Prazo",
+            descricao="Descricao",
+            data_limite="2026-06-23",
+            processo=self.processo,
+            responsavel=self.usuario.nome,
+            status="Pendente",
+            prioridade="Alta",
+            criado_por=self.usuario.nome,
+        )
 
     def _grant(self, *codenames):
         for codename in codenames:
@@ -201,7 +229,9 @@ class ProductivityTimerTests(TestCase):
     def _iniciar(self):
         return self.client.post(
             reverse("iniciar_timer"),
-            data=json.dumps({"task_id": "10", "task_type": TimeEntry.TASK_PRAZO}),
+            data=json.dumps(
+                {"task_id": str(self.prazo.pk), "task_type": TimeEntry.TASK_PRAZO}
+            ),
             content_type="application/json",
         )
 
@@ -211,6 +241,12 @@ class ProductivityTimerTests(TestCase):
         entry = TimeEntry.objects.get()
         self.assertEqual(entry.status, TimeEntry.STATUS_RUNNING)
         self.assertEqual(entry.user_id, self.usuario.pk)
+
+    def test_iniciar_timer_promove_prazo_para_em_andamento(self):
+        response = self._iniciar()
+        self.assertEqual(response.status_code, 201, response.content)
+        self.prazo.refresh_from_db()
+        self.assertEqual(self.prazo.status, "Em andamento")
 
     def test_fluxo_iniciar_pausar_retomar_encerrar(self):
         entry_id = self._iniciar().json()["dados"]["time_entry"]["id"]
@@ -255,6 +291,7 @@ class ProductivityTimerTests(TestCase):
         self.assertEqual(response.status_code, 400)
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class ProductivityAuthTests(TestCase):
     def test_produtividade_exige_autenticacao(self):
         self.assertEqual(self.client.get(reverse("produtividade")).status_code, 401)

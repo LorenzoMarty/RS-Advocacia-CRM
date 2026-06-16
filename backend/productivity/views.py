@@ -76,6 +76,37 @@ def _elapsed_seconds(entry: TimeEntry, now=None) -> int:
     return total_seconds + max(0, int((now - base).total_seconds()))
 
 
+def _save_elapsed(entry: TimeEntry, now=None) -> int:
+    elapsed_seconds = max(int(entry.total_seconds or 0), _elapsed_seconds(entry, now=now))
+    entry.total_seconds = elapsed_seconds
+    return elapsed_seconds
+
+
+def _is_pending_task_status(status: str) -> bool:
+    return (status or "").strip().casefold() in {"pendente", "a fazer"}
+
+
+def _promote_task_to_running(task_type: str, task_id: str):
+    if task_type == TimeEntry.TASK_PRAZO:
+        updated = Prazo.objects.filter(
+            pk=task_id,
+            concluido=False,
+            status__in=["Pendente", "A fazer"],
+        ).update(status="Em andamento")
+        if not updated:
+            prazo = Prazo.objects.filter(pk=task_id, concluido=False).first()
+            if prazo and _is_pending_task_status(prazo.status):
+                prazo.status = "Em andamento"
+                prazo.save(update_fields=["status", "atualizado_em"])
+        return
+
+    if task_type in {TimeEntry.TASK_PETICAO, TimeEntry.TASK_CONTESTACAO}:
+        Peticao.objects.filter(
+            pk=task_id,
+            status=Peticao.STATUS_PENDENTE,
+        ).update(status=Peticao.STATUS_EM_ANDAMENTO)
+
+
 def _decimal_hours(value) -> float:
     return float(value or 0)
 
@@ -482,7 +513,7 @@ def iniciar_timer(request):
                 status=409,
             )
 
-        running_entry.total_seconds = _elapsed_seconds(running_entry, now=now)
+        _save_elapsed(running_entry, now=now)
         running_entry.paused_at = now
         running_entry.status = TimeEntry.STATUS_PAUSED
         running_entry.save(update_fields=["total_seconds", "paused_at", "status"])
@@ -502,6 +533,7 @@ def iniciar_timer(request):
             status=TimeEntry.STATUS_RUNNING,
         )
 
+    _promote_task_to_running(task_type, task_id)
     entry = TimeEntry.objects.select_related("user").get(pk=entry.pk)
     return resposta_sucesso(
         {
@@ -540,7 +572,7 @@ def pausar_timer(request, entry_id):
 
     now = timezone.now()
     if entry.status == TimeEntry.STATUS_RUNNING:
-        entry.total_seconds = _elapsed_seconds(entry, now=now)
+        _save_elapsed(entry, now=now)
         entry.paused_at = now
         entry.status = TimeEntry.STATUS_PAUSED
         entry.save(update_fields=["total_seconds", "paused_at", "status"])
@@ -592,7 +624,7 @@ def retomar_timer(request, entry_id):
                 },
                 status=409,
             )
-        running_entry.total_seconds = _elapsed_seconds(running_entry, now=now)
+        _save_elapsed(running_entry, now=now)
         running_entry.paused_at = now
         running_entry.status = TimeEntry.STATUS_PAUSED
         running_entry.save(update_fields=["total_seconds", "paused_at", "status"])
@@ -601,6 +633,7 @@ def retomar_timer(request, entry_id):
         entry.resumed_at = now
         entry.status = TimeEntry.STATUS_RUNNING
         entry.save(update_fields=["resumed_at", "status"])
+        _promote_task_to_running(entry.task_type, entry.task_id)
 
     return resposta_sucesso(
         {
@@ -623,7 +656,7 @@ def encerrar_timer(request, entry_id):
 
     now = timezone.now()
     if entry.status != TimeEntry.STATUS_STOPPED:
-        entry.total_seconds = _elapsed_seconds(entry, now=now)
+        _save_elapsed(entry, now=now)
         entry.ended_at = now
         entry.status = TimeEntry.STATUS_STOPPED
         entry.save(update_fields=["total_seconds", "ended_at", "status"])

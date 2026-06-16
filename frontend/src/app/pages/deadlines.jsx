@@ -597,10 +597,13 @@ export function DeadlineDetailPage() {
 
     setIsTimerSaving(true);
     try {
-      await saveDeadlineTimer(deadline.id, {
+      const savedDeadline = await saveDeadlineTimer(deadline.id, {
         elapsedSeconds,
         timerStartedAt: new Date().toISOString(),
       });
+      if (savedDeadline) {
+        setRemoteDeadline(savedDeadline);
+      }
       setCurrentTime(Date.now());
     } finally {
       setIsTimerSaving(false);
@@ -614,10 +617,13 @@ export function DeadlineDetailPage() {
 
     setIsTimerSaving(true);
     try {
-      await saveDeadlineTimer(deadline.id, {
+      const savedDeadline = await saveDeadlineTimer(deadline.id, {
         elapsedSeconds,
         timerStartedAt: '',
       });
+      if (savedDeadline) {
+        setRemoteDeadline(savedDeadline);
+      }
       setCurrentTime(Date.now());
     } finally {
       setIsTimerSaving(false);
