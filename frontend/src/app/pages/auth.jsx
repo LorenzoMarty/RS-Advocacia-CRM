@@ -28,8 +28,6 @@ export function LoginPage() {
   return (
     <main className="login-shell">
       <section className="login-card" aria-labelledby="login-title">
-        <div className="login-card-glow" aria-hidden="true" />
-
         <div className="login-brand">
           <div className="login-brand-mark" aria-hidden="true">RS</div>
           <div className="login-brand-copy">

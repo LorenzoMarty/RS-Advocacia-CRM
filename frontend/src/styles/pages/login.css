@@ -27,16 +27,6 @@
     overflow:hidden;
 }
 
-.login-card-glow{
-    position:absolute;
-    inset:-4rem auto auto -3rem;
-    width:13rem;
-    height:13rem;
-    border-radius:999px;
-    background:radial-gradient(circle, rgba(212,175,55,.16), transparent 70%);
-    pointer-events:none;
-}
-
 .login-brand,
 .login-header,
 .login-form,

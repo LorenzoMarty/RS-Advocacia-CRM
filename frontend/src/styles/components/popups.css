@@ -16,9 +16,7 @@
     padding:18px;
     border-radius:22px;
     border:1px solid var(--line-strong);
-    background:
-        radial-gradient(circle at 12% 0%, rgba(212,175,55,.12), transparent 36%),
-        linear-gradient(180deg, rgba(15,23,42,.98), rgba(2,6,23,.98));
+    background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(2,6,23,.98));
     color:var(--text);
     box-shadow:0 26px 64px rgba(0,0,0,.44);
 }
@@ -81,9 +79,7 @@ html[data-theme="light"] .popup-layer{
 }
 
 html[data-theme="light"] .popup-panel{
-    background:
-        radial-gradient(circle at 12% 0%, rgba(181,138,79,.14), transparent 36%),
-        linear-gradient(180deg, rgba(255,251,245,.98), rgba(246,241,232,.98));
+    background:linear-gradient(180deg, rgba(255,251,245,.98), rgba(246,241,232,.98));
     box-shadow:0 24px 54px rgba(58,44,20,.18);
 }
 
