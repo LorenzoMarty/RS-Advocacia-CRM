@@ -422,11 +422,6 @@ export function ProtectedLayout() {
 
   return (
     <PageChromeContext.Provider value={setChrome}>
-      <div className="ambient-light" aria-hidden="true">
-        <span className="ambient-light__blob ambient-light__blob--gold" />
-        <span className="ambient-light__blob ambient-light__blob--blue" />
-      </div>
-
       <div className="shell">
         <aside className="sidebar" id="app-sidebar" aria-label="Navegação principal">
           <button

@@ -39,10 +39,7 @@
     --bottom-nav-offset:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 18px);
     --serif:"Instrument Serif",serif;
     --sans:"Inter",sans-serif;
-    --body-bg:
-        radial-gradient(circle at 12% 10%, rgba(212,175,55,.08), transparent 28%),
-        radial-gradient(circle at 88% 0%, rgba(51,65,85,.2), transparent 24%),
-        linear-gradient(180deg, #020617, #020617 100%);
+    --body-bg:#020617;
     --sidebar-bg:transparent;
     --topbar-bg:transparent;
     --surface-bg:transparent;
@@ -78,9 +75,6 @@
     --sidebar-toggle-border-hover:rgba(212,175,55,.22);
     --sidebar-toggle-shadow:0 12px 24px rgba(0,0,0,.2);
     --sidebar-toggle-icon-color:rgba(203,213,225,.76);
-    --ambient-light-gold:#D4AF37;
-    --ambient-light-blue:#334155;
-
     /* Escala de espaçamento (base 4px) */
     --space-1:4px;
     --space-2:8px;

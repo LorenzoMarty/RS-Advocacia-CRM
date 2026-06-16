@@ -173,23 +173,6 @@
 }
 
 @media (max-width:640px){
-    .ambient-light__blob{
-        width:300px;
-        height:300px;
-        filter:blur(92px);
-        opacity:.06;
-    }
-
-    .ambient-light__blob--gold{
-        top:8%;
-        left:-4rem;
-    }
-
-    .ambient-light__blob--blue{
-        top:62%;
-        right:-4rem;
-    }
-
     .page{
         padding:0 0 var(--bottom-nav-offset);
     }
@@ -308,21 +291,6 @@
 }
 
 @media (max-width:420px){
-    .ambient-light__blob{
-        width:240px;
-        height:240px;
-        filter:blur(78px);
-        opacity:.05;
-    }
-
-    .ambient-light__blob--gold{
-        left:-5rem;
-    }
-
-    .ambient-light__blob--blue{
-        right:-5rem;
-    }
-
     .page{
         padding:0 0 var(--bottom-nav-offset);
     }
