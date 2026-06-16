@@ -15,6 +15,7 @@ import {
   updateRecording,
   uploadRecording,
 } from '../services/meetings';
+import { Select } from '../components/select';
 import { useAppState } from '../store';
 
 const EMPTY_FORM = {
@@ -750,7 +751,7 @@ export function MeetingsPage() {
                   </label>
                   <label>
                     Cliente
-                    <select
+                    <Select
                       value={form.clientId}
                       onChange={(event) => setForm((current) => ({
                         ...current,
@@ -761,7 +762,7 @@ export function MeetingsPage() {
                       {clients.map((client) => (
                         <option key={client.id} value={client.id}>{client.name}</option>
                       ))}
-                    </select>
+                    </Select>
                   </label>
                   <div className="meeting-form-actions">
                     <button className="btn" type="submit" disabled={isSaving}>

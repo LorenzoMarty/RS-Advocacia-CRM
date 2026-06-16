@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { AnimatePresence, motion as Motion } from '../motion';
+import { Select } from '../components/select';
 
 const CUSTOM_OPTION = '__custom__';
 
@@ -11,10 +12,9 @@ const FIELD_ERROR_MOTION = {
   transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
 };
 
-// Select com opção de digitar um valor novo (combobox).
-// IMPORTANTE: o <select> nunca é desmontado durante o seu próprio onChange — apenas escondido
-// (display:none) e o input é montado ao lado. Desmontar o <select> dentro do evento de seleção
-// quebrava com `removeChild` (React tentava remover um nó que o navegador já mexeu).
+// Select com opção de digitar um valor novo (combobox). Usa o <Select> custom; no modo "custom"
+// renderiza um input no lugar. O <Select> é um componente React (sem manipulação imperativa da DOM),
+// então alternar entre os dois modos é seguro — sem o antigo problema de removeChild.
 export function ComboField({
   id,
   value,
@@ -36,49 +36,45 @@ export function ComboField({
 
   const isCustom = mode === 'custom';
 
-  return (
-    <>
-      <select
-        id={id}
+  return isCustom ? (
+    <div className="type-combo">
+      <input
+        ref={inputRef}
+        id={`${id}-novo`}
         value={value}
-        style={isCustom ? { display: 'none' } : undefined}
-        onChange={(event) => {
-          if (event.target.value === CUSTOM_OPTION) {
-            setMode('custom');
-            onChange('');
-          } else {
-            onChange(event.target.value);
-          }
+        placeholder={customPlaceholder}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <button
+        type="button"
+        className="type-combo-back"
+        onClick={() => {
+          setMode('select');
+          onChange(known[0] || '');
         }}
       >
-        <option value="">{selectPlaceholder}</option>
-        {known.map((option) => (
-          <option key={option} value={option}>{option}</option>
-        ))}
-        <option value={CUSTOM_OPTION}>{customLabel}</option>
-      </select>
-      {isCustom ? (
-        <div className="type-combo">
-          <input
-            ref={inputRef}
-            id={`${id}-novo`}
-            value={value}
-            placeholder={customPlaceholder}
-            onChange={(event) => onChange(event.target.value)}
-          />
-          <button
-            type="button"
-            className="type-combo-back"
-            onClick={() => {
-              setMode('select');
-              onChange(known[0] || '');
-            }}
-          >
-            ← Selecionar
-          </button>
-        </div>
-      ) : null}
-    </>
+        ← Selecionar
+      </button>
+    </div>
+  ) : (
+    <Select
+      id={id}
+      value={value}
+      onChange={(event) => {
+        if (event.target.value === CUSTOM_OPTION) {
+          setMode('custom');
+          onChange('');
+        } else {
+          onChange(event.target.value);
+        }
+      }}
+    >
+      <option value="">{selectPlaceholder}</option>
+      {known.map((option) => (
+        <option key={option} value={option}>{option}</option>
+      ))}
+      <option value={CUSTOM_OPTION}>{customLabel}</option>
+    </Select>
   );
 }
 

@@ -9,6 +9,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { PageChrome } from "../layout";
+import { Select } from "../components/select";
 import { useAppState } from "../store";
 import {
   formatDateTimeInput,
@@ -254,7 +255,7 @@ export function EventFormPage() {
                       </button>
                     </div>
                   ) : (
-                    <select
+                    <Select
                       id="event-type"
                       value={form.type}
                       onChange={(e) => {
@@ -271,7 +272,7 @@ export function EventFormPage() {
                         <option key={option} value={option}>{option}</option>
                       ))}
                       <option value="__custom__">+ Digitar novo tipo...</option>
-                    </select>
+                    </Select>
                   )}
                 </Field>
 
@@ -280,7 +281,7 @@ export function EventFormPage() {
                   label="Prioridade"
                   error={errors.priority}
                 >
-                  <select
+                  <Select
                     id="event-priority"
                     value={form.priority}
                     onChange={(event) =>
@@ -295,7 +296,7 @@ export function EventFormPage() {
                         {option}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
               </div>
             </section>
@@ -371,7 +372,7 @@ export function EventFormPage() {
                   label="Cliente"
                   error={errors.clientId}
                 >
-                  <select
+                  <Select
                     id="event-client"
                     value={form.clientId}
                     onChange={(event) => {
@@ -397,7 +398,7 @@ export function EventFormPage() {
                         {client.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field
@@ -405,7 +406,7 @@ export function EventFormPage() {
                   label="Processo"
                   error={errors.processId}
                 >
-                  <select
+                  <Select
                     id="event-process"
                     value={form.processId}
                     onChange={(event) =>
@@ -425,7 +426,7 @@ export function EventFormPage() {
                         {process.number}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field
@@ -433,7 +434,7 @@ export function EventFormPage() {
                   label="Responsável"
                   error={errors.responsible}
                 >
-                  <select
+                  <Select
                     id="event-responsible"
                     value={form.responsible}
                     onChange={(event) =>
@@ -449,11 +450,11 @@ export function EventFormPage() {
                         {user.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field id="event-status" label="Status" error={errors.status}>
-                  <select
+                  <Select
                     id="event-status"
                     value={form.status}
                     onChange={(event) =>
@@ -472,7 +473,7 @@ export function EventFormPage() {
                         {option}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
               </div>
             </section>

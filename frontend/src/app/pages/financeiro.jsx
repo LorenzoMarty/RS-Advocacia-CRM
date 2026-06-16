@@ -14,6 +14,7 @@ import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { AnimatePresence, motion as Motion, pop, staggerContainer, staggerItem } from '../motion';
 import { useAppState } from '../store';
 import { buildSearchText, formatDate, getStatusTone, normalizeText } from '../utils';
+import { Select } from '../components/select';
 import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
 const PAGE_SIZE = 10;
@@ -276,7 +277,7 @@ export function FinanceiroPage() {
 
             <div className="financeiro-toolbar">
               <PageSearch value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Buscar lançamento" />
-              <select
+              <Select
                 className="filter-select"
                 aria-label="Filtrar por categoria"
                 value={categoryFilter}
@@ -286,7 +287,7 @@ export function FinanceiroPage() {
                 {categoryOptions.map((option) => (
                   <option key={option} value={option}>{option}</option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             {pageRows.length ? (
@@ -450,11 +451,11 @@ export function LancamentoFormPage() {
                 <input id="lanc-description" value={form.description} onChange={(event) => update('description', event.target.value)} />
               </Field>
               <Field id="lanc-type" label="Tipo">
-                <select id="lanc-type" value={form.type} onChange={(event) => update('type', event.target.value)}>
+                <Select id="lanc-type" value={form.type} onChange={(event) => update('type', event.target.value)}>
                   {FINANCE_TYPE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
-                </select>
+                </Select>
               </Field>
               <Field id="lanc-category" label="Categoria" error={errors.category}>
                 <ComboField
@@ -474,11 +475,11 @@ export function LancamentoFormPage() {
                 <input id="lanc-due" type="date" value={form.dueDate} onChange={(event) => update('dueDate', event.target.value)} />
               </Field>
               <Field id="lanc-status" label="Status">
-                <select id="lanc-status" value={form.status} onChange={(event) => update('status', event.target.value)}>
+                <Select id="lanc-status" value={form.status} onChange={(event) => update('status', event.target.value)}>
                   {FINANCE_STATUS_OPTIONS.map((option) => (
                     <option key={option} value={option}>{option}</option>
                   ))}
-                </select>
+                </Select>
               </Field>
               {form.status === 'Pago' ? (
                 <Field id="lanc-payment" label="Data de pagamento" error={errors.paymentDate}>
@@ -486,20 +487,20 @@ export function LancamentoFormPage() {
                 </Field>
               ) : null}
               <Field id="lanc-client" label="Cliente (opcional)">
-                <select id="lanc-client" value={form.clientId} onChange={(event) => update('clientId', event.target.value)}>
+                <Select id="lanc-client" value={form.clientId} onChange={(event) => update('clientId', event.target.value)}>
                   <option value="">Nenhum</option>
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>{client.name}</option>
                   ))}
-                </select>
+                </Select>
               </Field>
               <Field id="lanc-case" label="Processo (opcional)">
-                <select id="lanc-case" value={form.caseId} onChange={(event) => update('caseId', event.target.value)}>
+                <Select id="lanc-case" value={form.caseId} onChange={(event) => update('caseId', event.target.value)}>
                   <option value="">Nenhum</option>
                   {processes.map((process) => (
                     <option key={process.id} value={process.id}>{process.number}</option>
                   ))}
-                </select>
+                </Select>
               </Field>
               <Field id="lanc-notes" label="Observações" className="span-2">
                 <textarea id="lanc-notes" rows="3" value={form.notes} onChange={(event) => update('notes', event.target.value)} />

@@ -22,6 +22,7 @@ import {
   getStatusTone,
   normalizeText,
 } from '../utils';
+import { Select } from '../components/select';
 import { EmptyState, Field } from './common';
 
 const PETITION_DEFAULT_STATUS = PETITION_STATUS_COLUMNS[0].label;
@@ -420,7 +421,7 @@ export function PetitionsPage() {
               />
             </label>
 
-            <select
+            <Select
               className="filter-select"
               aria-label="Filtrar por petições ou contestações"
               value={typeFilter}
@@ -430,7 +431,7 @@ export function PetitionsPage() {
               {PETITION_TYPE_OPTIONS.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
-            </select>
+            </Select>
           </div>
         </section>
 
@@ -743,7 +744,7 @@ export function PetitionFormPage() {
             <form className="petition-form" onSubmit={handleSubmit}>
               <div className="form-grid">
                 <Field id="petition-client" label="Cliente" className="span-2" error={errors.clientId}>
-                  <select
+                  <Select
                     id="petition-client"
                     value={form.clientId}
                     onChange={(event) => {
@@ -762,11 +763,11 @@ export function PetitionFormPage() {
                     {clientOptions.map((client) => (
                       <option key={client.id} value={client.id}>{client.name}</option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field id="petition-process" label="Processo vinculado" className="span-2" error={errors.processId}>
-                  <select
+                  <Select
                     id="petition-process"
                     value={form.processId}
                     onChange={(event) => {
@@ -789,11 +790,11 @@ export function PetitionFormPage() {
                         </option>
                       );
                     })}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field id="petition-type" label="Tipo de peça" error={errors.type}>
-                  <select
+                  <Select
                     id="petition-type"
                     value={form.type}
                     onChange={(event) => setForm((currentForm) => ({ ...currentForm, type: event.target.value }))}
@@ -801,7 +802,7 @@ export function PetitionFormPage() {
                     {PETITION_TYPE_OPTIONS.map((option) => (
                       <option key={option} value={option}>{option}</option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field id="petition-adversary" label="Adverso" error={errors.adversary}>
@@ -813,7 +814,7 @@ export function PetitionFormPage() {
                 </Field>
 
                 <Field id="petition-responsible" label="Responsável pela ação" error={errors.responsible}>
-                  <select
+                  <Select
                     id="petition-responsible"
                     value={form.responsible}
                     onChange={(event) => setForm((currentForm) => ({ ...currentForm, responsible: event.target.value }))}
@@ -822,11 +823,11 @@ export function PetitionFormPage() {
                     {responsibleOptions.map((option) => (
                       <option key={option} value={option}>{option}</option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field id="petition-status" label="Status" error={errors.status}>
-                  <select
+                  <Select
                     id="petition-status"
                     value={form.status}
                     onChange={(event) => setForm((currentForm) => ({ ...currentForm, status: event.target.value }))}
@@ -834,7 +835,7 @@ export function PetitionFormPage() {
                     {PETITION_STATUS_COLUMNS.map((column) => (
                       <option key={column.key} value={column.label}>{column.label}</option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field id="petition-drive" label="Link do Drive" className="span-2" error={errors.driveLink}>

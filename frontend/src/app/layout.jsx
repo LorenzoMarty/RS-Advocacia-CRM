@@ -412,12 +412,6 @@ export function ProtectedLayout() {
     document.body.classList.remove('login-body');
   }, []);
 
-  useEffect(() => {
-    if (window.RSSelect && typeof window.RSSelect.refresh === 'function') {
-      window.RSSelect.refresh();
-    }
-  }, [location.pathname, location.search]);
-
   if (isLoading) {
     return <LoadingScreen />;
   }

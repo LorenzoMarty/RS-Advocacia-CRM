@@ -12,6 +12,7 @@ import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { motion as Motion, pop, staggerContainer } from '../motion';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, formatDate, getStatusTone, normalizeText } from '../utils';
+import { Select } from '../components/select';
 import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
 const STATUS_LABELS = PROSPECT_STATUS_COLUMNS.map((column) => column.label);
@@ -168,7 +169,7 @@ function ProspectCard({ prospect, deadlines, onDragStart, onDragEnd, isDragging,
       <div className="prospect-card-quick">
         {showInteraction ? (
           <form className="prospect-quick-form" onSubmit={submitInteraction}>
-            <select
+            <Select
               aria-label="Tipo de interação"
               value={interactionType}
               onChange={(event) => setInteractionType(event.target.value)}
@@ -176,7 +177,7 @@ function ProspectCard({ prospect, deadlines, onDragStart, onDragEnd, isDragging,
               {INTERACTION_TYPE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
-            </select>
+            </Select>
             <input
               value={interactionText}
               placeholder="Descreva a interação"
@@ -335,7 +336,7 @@ export function ProspectKanbanPage() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar por nome, e-mail ou demanda"
             />
-            <select
+            <Select
               className="filter-select"
               aria-label="Filtrar por responsável"
               value={responsibleFilter}
@@ -345,7 +346,7 @@ export function ProspectKanbanPage() {
               {responsibleOptions.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
-            </select>
+            </Select>
           </div>
         </section>
 
@@ -492,7 +493,7 @@ export function ProspectFormPage() {
                 />
               </Field>
               <Field id="prospect-responsible" label="Responsável interno">
-                <select
+                <Select
                   id="prospect-responsible"
                   value={form.responsibleId}
                   onChange={(event) => update('responsibleId', event.target.value)}
@@ -501,7 +502,7 @@ export function ProspectFormPage() {
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>{user.name}</option>
                   ))}
-                </select>
+                </Select>
               </Field>
               {form.responsibleId ? (
                 <div className={`prospect-audit span-2${audit.critical ? ' is-critical' : ''}`}>
@@ -521,11 +522,11 @@ export function ProspectFormPage() {
                 />
               </Field>
               <Field id="prospect-priority" label="Prioridade">
-                <select id="prospect-priority" value={form.priority} onChange={(event) => update('priority', event.target.value)}>
+                <Select id="prospect-priority" value={form.priority} onChange={(event) => update('priority', event.target.value)}>
                   {PROSPECT_PRIORITY_OPTIONS.map((option) => (
                     <option key={option} value={option}>{option}</option>
                   ))}
-                </select>
+                </Select>
               </Field>
               <Field id="prospect-notes" label="Observações" className="span-2">
                 <textarea id="prospect-notes" rows="3" value={form.notes} onChange={(event) => update('notes', event.target.value)} />
@@ -673,14 +674,14 @@ export function ProspectDetailPage() {
                   />
                 </Field>
                 <Field id="convert-type" label="Tipo de cliente">
-                  <select
+                  <Select
                     id="convert-type"
                     value={convertForm.tipo_cliente}
                     onChange={(event) => setConvertForm((c) => ({ ...c, tipo_cliente: event.target.value }))}
                   >
                     <option value="esporadico">Esporádico</option>
                     <option value="mensalista">Mensalista</option>
-                  </select>
+                  </Select>
                 </Field>
               </div>
               <div className="form-actions">
@@ -702,11 +703,11 @@ export function ProspectDetailPage() {
           </div>
 
           <form className="prospect-interaction-form" onSubmit={handleAddInteraction}>
-            <select value={interactionType} onChange={(event) => setInteractionType(event.target.value)}>
+            <Select value={interactionType} onChange={(event) => setInteractionType(event.target.value)}>
               {INTERACTION_TYPE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
-            </select>
+            </Select>
             <input
               value={interactionText}
               onChange={(event) => setInteractionText(event.target.value)}

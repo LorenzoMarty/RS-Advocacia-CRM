@@ -6,6 +6,7 @@ import { PageChrome, PageSearch } from '../layout';
 import { motion as Motion, staggerContainer, staggerItem } from '../motion';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, normalizeText } from '../utils';
+import { Select } from '../components/select';
 import { EmptyState, Field, NotFoundState } from './common';
 
 const USER_PROFILE_OPTIONS = ['Administrador', 'Advogado', 'Estagiário'];
@@ -219,10 +220,10 @@ export function UserFormPage() {
                 label="Perfil"
                 error={errors.roleId}
               >
-                <select id="user-role" value={form.roleId} onChange={(event) => setForm((currentForm) => ({ ...currentForm, roleId: event.target.value }))}>
+                <Select id="user-role" value={form.roleId} onChange={(event) => setForm((currentForm) => ({ ...currentForm, roleId: event.target.value }))}>
                   <option value="">Selecione o perfil</option>
                   {USER_PROFILE_OPTIONS.map((profile) => <option key={profile} value={profile}>{profile}</option>)}
-                </select>
+                </Select>
               </Field>
 
             </div>

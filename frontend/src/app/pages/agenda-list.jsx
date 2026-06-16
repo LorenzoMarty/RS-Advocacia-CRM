@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 import { useConfirmPopup } from "../hooks/use-confirm-popup";
 import { PageChrome } from "../layout";
+import { Select } from "../components/select";
 import { useAppState } from "../store";
 import {
   buildSearchText,
@@ -286,7 +287,7 @@ export function AgendaListPage() {
               </label>
 
               <div className="toolbar-filters">
-                <select
+                <Select
                   className="filter-select"
                   aria-label="Filtrar por tipo"
                   value={eventType}
@@ -298,8 +299,8 @@ export function AgendaListPage() {
                       {option}
                     </option>
                   ))}
-                </select>
-                <select
+                </Select>
+                <Select
                   className="filter-select"
                   aria-label="Filtrar por responsável"
                   value={responsible}
@@ -311,8 +312,8 @@ export function AgendaListPage() {
                       {option}
                     </option>
                   ))}
-                </select>
-                <select
+                </Select>
+                <Select
                   className="filter-select"
                   aria-label="Filtrar por status"
                   value={status}
@@ -324,8 +325,8 @@ export function AgendaListPage() {
                       {option}
                     </option>
                   ))}
-                </select>
-                <select
+                </Select>
+                <Select
                   className="filter-select"
                   aria-label="Filtrar por período"
                   value={period}
@@ -335,7 +336,7 @@ export function AgendaListPage() {
                   <option value="today">Hoje</option>
                   <option value="week">7 dias</option>
                   <option value="month">Mês</option>
-                </select>
+                </Select>
               </div>
             </div>
 

@@ -28,6 +28,7 @@ import {
   normalizeText,
   stripDocument,
 } from '../utils';
+import { Select } from '../components/select';
 import { ComboField, EmptyState, Field, NotFoundState } from './common';
 import { ClientDocuments } from '../components/client-documents';
 
@@ -137,7 +138,7 @@ export function ClientsListPage() {
 
               <div className="clients-type-filter">
                 <label className="sr-only" htmlFor="clients-type-filter">Tipo do cliente</label>
-                <select
+                <Select
                   id="clients-type-filter"
                   value={clientType}
                   onChange={(event) => setClientType(event.target.value)}
@@ -146,7 +147,7 @@ export function ClientsListPage() {
                   <option value="todos">Todos os tipos</option>
                   <option value="esporadico">Esporádicos</option>
                   <option value="mensalista">Mensalistas</option>
-                </select>
+                </Select>
               </div>
             </div>
 
@@ -337,10 +338,10 @@ export function ClientFormPage() {
                 </Field>
 
                 <Field id="client-type" label="Tipo de cliente" error={errors.clientType?.message}>
-                  <select id="client-type" {...register('clientType')}>
+                  <Select id="client-type" {...register('clientType')}>
                     <option value="esporadico">Esporádico</option>
                     <option value="mensalista">Mensalista</option>
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field id="client-partner" label="Parceria" error={errors.partner?.message} note="Origem do cliente, se veio de um parceiro.">

@@ -7,6 +7,7 @@ import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, getStatusTone, normalizeText } from '../utils';
+import { Select } from '../components/select';
 import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
 function validateProcessForm(form) {
@@ -236,7 +237,7 @@ export function ProcessFormPage() {
                 </Field>
 
                 <Field id="process-client" label="Cliente" error={errors.clientId}>
-                  <select
+                  <Select
                     id="process-client"
                     value={form.clientId}
                     onChange={(event) => setForm((currentForm) => ({ ...currentForm, clientId: event.target.value }))}
@@ -245,7 +246,7 @@ export function ProcessFormPage() {
                     {clients.map((client) => (
                       <option key={client.id} value={client.id}>{client.name}</option>
                     ))}
-                  </select>
+                  </Select>
                 </Field>
 
                 <Field id="process-owner" label="Responsável" error={errors.owner}>

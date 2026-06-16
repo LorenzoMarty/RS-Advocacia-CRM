@@ -1,12 +1,14 @@
 // Filtro de período (semana | mês | personalizado).
+import { Select } from '../../components/select';
+
 export function PeriodFilter({ period, setPeriod, customStart, setCustomStart, customEnd, setCustomEnd }) {
   return (
     <div className="productivity-filters">
-      <select value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Filtrar período">
+      <Select value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Filtrar período">
         <option value="week">Esta semana</option>
         <option value="month">Este mês</option>
         <option value="custom">Personalizado</option>
-      </select>
+      </Select>
       {period === 'custom' ? (
         <>
           <input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} aria-label="Data inicial" />
