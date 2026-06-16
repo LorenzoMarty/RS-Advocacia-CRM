@@ -43,12 +43,6 @@ export function RiskSummary({ summary, risk, period, onPeriodChange }) {
             tone={summary.clientsWithoutProcess ? 'gold' : 'success'}
             to="/clientes"
           />
-          <AlertCard
-            label="Timers ativos"
-            value={summary.runningTimers}
-            tone="gold"
-            to="/produtividade"
-          />
         </div>
       </div>
     </section>

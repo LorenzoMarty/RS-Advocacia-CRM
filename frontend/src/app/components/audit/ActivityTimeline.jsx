@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 
 import { motion } from '../../motion';
-import { StatusBadge } from '../../layout';
 import { formatDateTime } from '../../utils';
 import { EmptyState } from '../../pages/common';
 
@@ -33,21 +32,20 @@ const FIELD_LABELS = {
 };
 
 const ACTION_LABELS = {
-  criado: 'Criado',
-  atualizado: 'Atualizado',
-  excluido: 'Excluído',
-};
-
-const ACTION_TONE = {
-  criado: 'success',
-  atualizado: 'gold',
-  excluido: 'danger',
+  criado: 'criou',
+  atualizado: 'atualizou',
+  excluido: 'excluiu',
 };
 
 const ENTITY_META = {
   prazo: { label: 'Prazos', singular: 'Prazo', order: 1 },
   peticao: { label: 'Petições', singular: 'Petição', order: 2 },
   processo: { label: 'Processos', singular: 'Processo', order: 3 },
+};
+
+const FIELD_HIDE_WHEN_PRESENT = {
+  cliente_id: 'cliente_nome',
+  processo_id: 'processo_numero',
 };
 
 function fieldLabel(key) {
@@ -59,6 +57,20 @@ function formatValue(value) {
   if (value === true) return 'Sim';
   if (value === false) return 'Não';
   return String(value);
+}
+
+function changedFieldLabels(changes) {
+  const keys = Object.keys(changes || {});
+  return keys
+    .filter((key) => !keys.includes(FIELD_HIDE_WHEN_PRESENT[key]))
+    .map(fieldLabel);
+}
+
+function formatChangedFields(changes) {
+  const labels = changedFieldLabels(changes);
+  if (!labels.length) return '';
+  if (labels.length <= 3) return labels.join(', ');
+  return `${labels.slice(0, 3).join(', ')} +${labels.length - 3}`;
 }
 
 function processKeyFor(entry) {
@@ -115,7 +127,11 @@ function groupEntries(entries) {
 }
 
 function ChangeList({ changes }) {
-  const entries = Object.entries(changes || {});
+  const allEntries = Object.entries(changes || {});
+  const keys = allEntries.map(([key]) => key);
+  const entries = allEntries.filter(
+    ([key]) => !keys.includes(FIELD_HIDE_WHEN_PRESENT[key]),
+  );
   if (!entries.length) return null;
 
   return (
@@ -134,8 +150,10 @@ function ChangeList({ changes }) {
 
 function ActivityItem({ entry, index, entityLabel }) {
   const [open, setOpen] = useState(false);
-  const tone = ACTION_TONE[entry.action] || 'gold';
   const hasChanges = entry.action === 'atualizado' && Object.keys(entry.changes || {}).length > 0;
+  const actionLabel = ACTION_LABELS[entry.action] || entry.action;
+  const changedFields = formatChangedFields(entry.changes);
+  const entityName = entityLabel.toLowerCase();
 
   return (
     <MotionItem
@@ -147,13 +165,17 @@ function ActivityItem({ entry, index, entityLabel }) {
       <span className={`audit-action-badge is-${entry.action}`} aria-hidden="true" />
       <div className="audit-timeline-main">
         <div className="audit-timeline-head">
-          <StatusBadge tone={tone}>{ACTION_LABELS[entry.action] || entry.action}</StatusBadge>
-          <span className="audit-entity-chip">{entityLabel}</span>
-          <strong className="audit-timeline-label">{entry.entityLabel || '—'}</strong>
+          <strong className="audit-timeline-label">
+            {entry.author || 'Sistema'} {actionLabel} {entityName}
+          </strong>
+          <span className="audit-entity-name">{entry.entityLabel || '—'}</span>
         </div>
+        {hasChanges ? (
+          <p className="audit-timeline-summary">Alterou: {changedFields}</p>
+        ) : entry.summary ? (
+          <p className="audit-timeline-summary">{entry.summary}</p>
+        ) : null}
         <div className="audit-timeline-meta">
-          <span>{entry.author || 'Sistema'}</span>
-          <span aria-hidden="true">•</span>
           <span>{formatDateTime(entry.createdAt)}</span>
           {hasChanges ? (
             <button
@@ -161,7 +183,7 @@ function ActivityItem({ entry, index, entityLabel }) {
               className="audit-diff-toggle"
               onClick={() => setOpen((value) => !value)}
             >
-              {open ? 'Ocultar' : `${Object.keys(entry.changes).length} mudança(s)`}
+              {open ? 'Ocultar detalhes' : 'Ver detalhes'}
             </button>
           ) : null}
         </div>
@@ -179,7 +201,7 @@ export function ActivityTimeline({ entries }) {
       <div className="section-head">
         <div>
           <h2 className="section-title">Atividade recente</h2>
-          <p className="section-note">Separada por tipo e agrupada por processo</p>
+          <p className="section-note">Por tipo, agrupada pelo processo</p>
         </div>
       </div>
       {groups.length ? (

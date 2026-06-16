@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
+import { Cell, Pie, PieChart, ResponsiveContainer, Sector } from 'recharts';
 
 import { colorAt } from '../components/audit/chartTheme';
 import {
@@ -10,7 +10,7 @@ import {
 } from '../data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
-import { AnimatePresence, motion as Motion, pop, staggerContainer, staggerItem } from '../motion';
+import { AnimatePresence, motion as Motion, pop, prefersReducedMotion, staggerContainer, staggerItem } from '../motion';
 import { useAppState } from '../store';
 import { buildSearchText, formatDate, getStatusTone, normalizeText } from '../utils';
 import { Select } from '../components/select';
@@ -50,6 +50,42 @@ function formatCurrency(value) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value) || 0);
 }
 
+// Conta de um valor anterior até o alvo (easeOutCubic). Colapsa sob reduced-motion.
+function useCountUp(target, duration = 0.7) {
+  const [value, setValue] = useState(target);
+  const fromRef = useRef(target);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setValue(target);
+      fromRef.current = target;
+      return undefined;
+    }
+    const from = fromRef.current;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / (duration * 1000));
+      const eased = 1 - (1 - t) ** 3;
+      setValue(from + (target - from) * eased);
+      if (t < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        fromRef.current = target;
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+
+  return value;
+}
+
+function MetricValue({ value }) {
+  return <strong>{formatCurrency(useCountUp(value))}</strong>;
+}
+
 function todayIso() {
   const date = new Date();
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
@@ -67,8 +103,39 @@ function tabFilter(lancamento, tab) {
   return lancamento.type === 'receita' && lancamento.status === 'Pendente';
 }
 
-function CategoryDonut({ title, data }) {
+// Setor destacado (cresce + halo) renderizado para a fatia em hover/foco.
+function ActiveSlice(props) {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+  return (
+    <g>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 6}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={outerRadius + 8}
+        outerRadius={outerRadius + 11}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+        opacity={0.45}
+      />
+    </g>
+  );
+}
+
+function CategoryDonut({ title, data, onSelect }) {
+  const [activeIndex, setActiveIndex] = useState(-1);
   const total = data.reduce((sum, item) => sum + Number(item.total || item.value || 0), 0);
+  const animatedTotal = useCountUp(total);
+
   if (!data.length || total <= 0) {
     return (
       <div className="finance-chart">
@@ -77,28 +144,69 @@ function CategoryDonut({ title, data }) {
       </div>
     );
   }
+
   const chartData = data.map((item) => ({ name: item.categoria || item.name, value: Number(item.total || item.value || 0) }));
+  const active = activeIndex >= 0 ? chartData[activeIndex] : null;
+  const centerValue = active ? active.value : animatedTotal;
+  const centerLabel = active ? active.name : 'Total';
+  const percent = active ? Math.round((active.value / total) * 100) : 100;
+
   return (
     <div className="finance-chart">
       <h3>{title}</h3>
       <div className="finance-donut">
-        <div style={{ height: 160, width: 160 }}>
+        <div className="finance-donut-chart" onMouseLeave={() => setActiveIndex(-1)}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={chartData} dataKey="value" nameKey="name" innerRadius="60%" outerRadius="92%" stroke="none" isAnimationActive={false}>
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
+                innerRadius="62%"
+                outerRadius="90%"
+                paddingAngle={chartData.length > 1 ? 2 : 0}
+                stroke="none"
+                activeIndex={activeIndex >= 0 ? activeIndex : undefined}
+                activeShape={ActiveSlice}
+                isAnimationActive={!prefersReducedMotion()}
+                animationDuration={520}
+                onMouseEnter={(_, index) => setActiveIndex(index)}
+                onClick={(_, index) => onSelect?.(chartData[index].name)}
+              >
                 {chartData.map((entry, index) => (
-                  <Cell key={entry.name} fill={colorAt(index)} />
+                  <Cell
+                    key={entry.name}
+                    fill={colorAt(index)}
+                    style={{ cursor: onSelect ? 'pointer' : 'default', outline: 'none' }}
+                  />
                 ))}
               </Pie>
             </PieChart>
           </ResponsiveContainer>
+          <div className="finance-donut-center">
+            <span className="finance-donut-pct">{percent}%</span>
+            <strong>{formatCurrency(centerValue)}</strong>
+            <span className="finance-donut-label">{centerLabel}</span>
+          </div>
         </div>
         <ul className="finance-legend">
           {chartData.map((entry, index) => (
-            <li key={entry.name}>
-              <span className="finance-dot" style={{ background: colorAt(index) }} />
-              <span className="finance-legend-label">{entry.name}</span>
-              <span className="finance-legend-value">{formatCurrency(entry.value)}</span>
+            <li
+              key={entry.name}
+              className={`finance-legend-item${activeIndex === index ? ' is-active' : ''}`}
+              onMouseEnter={() => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(-1)}
+            >
+              <button
+                type="button"
+                className="finance-legend-btn"
+                onClick={() => onSelect?.(entry.name)}
+                title={onSelect ? `Filtrar por ${entry.name}` : undefined}
+              >
+                <span className="finance-dot" style={{ background: colorAt(index) }} />
+                <span className="finance-legend-label">{entry.name}</span>
+                <span className="finance-legend-value">{formatCurrency(entry.value)}</span>
+              </button>
             </li>
           ))}
         </ul>
@@ -185,6 +293,13 @@ export function FinanceiroPage() {
     setPage(1);
   }
 
+  // Clique numa fatia/legenda do donut foca a tabela na categoria.
+  function focusCategory(type, category) {
+    setTab(type === 'despesa' ? 'despesas' : 'receber');
+    setCategoryFilter(category);
+    setPage(1);
+  }
+
   function toggleSort(field) {
     setSort((current) => ({
       field,
@@ -245,16 +360,16 @@ export function FinanceiroPage() {
               initial="hidden"
               animate="visible"
             >
-              <Motion.article className="metric" variants={pop}><span>Recebido no mês</span><strong>{formatCurrency(dashboard.recebidoMes)}</strong></Motion.article>
-              <Motion.article className="metric" variants={pop}><span>A receber</span><strong>{formatCurrency(dashboard.pendente)}</strong></Motion.article>
-              <Motion.article className="metric metric-danger" variants={pop}><span>Atrasado</span><strong>{formatCurrency(dashboard.atrasado)}</strong></Motion.article>
-              <Motion.article className="metric" variants={pop}><span>Despesas no mês</span><strong>{formatCurrency(dashboard.despesasMes)}</strong></Motion.article>
-              <Motion.article className="metric" variants={pop}><span>Saldo estimado</span><strong>{formatCurrency(dashboard.saldo)}</strong></Motion.article>
+              <Motion.article className="metric" variants={pop} whileHover={{ y: -3 }}><span>Recebido no mês</span><MetricValue value={dashboard.recebidoMes} /></Motion.article>
+              <Motion.article className="metric" variants={pop} whileHover={{ y: -3 }}><span>A receber</span><MetricValue value={dashboard.pendente} /></Motion.article>
+              <Motion.article className="metric metric-danger" variants={pop} whileHover={{ y: -3 }}><span>Atrasado</span><MetricValue value={dashboard.atrasado} /></Motion.article>
+              <Motion.article className="metric" variants={pop} whileHover={{ y: -3 }}><span>Despesas no mês</span><MetricValue value={dashboard.despesasMes} /></Motion.article>
+              <Motion.article className="metric" variants={pop} whileHover={{ y: -3 }}><span>Saldo estimado</span><MetricValue value={dashboard.saldo} /></Motion.article>
             </Motion.div>
 
             <div className="financeiro-charts">
-              <CategoryDonut title="Receita por categoria" data={dashboard.receitaPorCategoria} />
-              <CategoryDonut title="Despesa por categoria" data={dashboard.despesaPorCategoria} />
+              <CategoryDonut title="Receita por categoria" data={dashboard.receitaPorCategoria} onSelect={(category) => focusCategory('receita', category)} />
+              <CategoryDonut title="Despesa por categoria" data={dashboard.despesaPorCategoria} onSelect={(category) => focusCategory('despesa', category)} />
             </div>
           </div>
 
