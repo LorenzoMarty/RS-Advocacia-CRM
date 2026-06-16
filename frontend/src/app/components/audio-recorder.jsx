@@ -145,21 +145,19 @@ export function AudioRecorder({ onUpload }) {
           <audio controls src={previewUrl} />
           <div className="capture-preview-row">
             <span className="capture-preview-name">{recording.filename}</span>
-            <div className="capture-preview-actions">
-              <button className="btn" type="button" disabled={isUploading} onClick={upload}>
-                {isUploading
-                  ? `Enviando...${uploadProgress ? ` ${uploadProgress}%` : ''}`
-                  : 'Transcrever e resumir'}
-              </button>
-              <button
-                className="btn btn-secondary"
-                type="button"
-                disabled={isUploading}
-                onClick={clearRecording}
-              >
-                Descartar
-              </button>
-            </div>
+            <button className="btn" type="button" disabled={isUploading} onClick={upload}>
+              {isUploading
+                ? `Enviando...${uploadProgress ? ` ${uploadProgress}%` : ''}`
+                : 'Transcrever e resumir'}
+            </button>
+            <button
+              className="btn btn-secondary"
+              type="button"
+              disabled={isUploading}
+              onClick={clearRecording}
+            >
+              Descartar
+            </button>
           </div>
           {isUploading && uploadProgress ? (
             <div className="capture-progress" aria-hidden="true">

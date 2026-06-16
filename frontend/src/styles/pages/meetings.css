@@ -25,23 +25,21 @@
 
 /* ---- Documento (área principal estilo Docs) ---- */
 .meetings-workspace{display:grid;gap:var(--gap-page);min-width:0}
-.meeting-doc{display:grid;gap:12px}
-.meeting-doc-bar{position:sticky;top:8px;z-index:2;display:flex;justify-content:flex-end}
-.meeting-doc-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:8px 10px;border-radius:14px;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(10px);box-shadow:var(--shadow)}
 
-.meeting-doc-sheet{display:grid;gap:22px;max-width:840px;width:100%;margin:0 auto;padding:clamp(22px,4vw,46px);border:1px solid var(--line);border-radius:22px;background:var(--panel);box-shadow:var(--shadow)}
-.meeting-doc-head{display:grid;gap:6px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.meeting-doc-sheet{display:grid;gap:22px;max-width:860px;width:100%;margin:0 auto;padding:clamp(22px,4vw,46px);border:1px solid var(--line);border-radius:22px;background:var(--panel);box-shadow:var(--shadow)}
+.meeting-doc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px 24px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.meeting-doc-head-text{display:grid;gap:6px;min-width:0}
+.meeting-doc-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .meeting-doc-eyebrow{margin:0;color:var(--gold-soft);font-size:.72rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
 .meeting-doc-title{margin:0;font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);line-height:1;font-weight:400;letter-spacing:-.04em;color:var(--text)}
 .meeting-doc-meta{margin:0;color:var(--muted);font-size:.9rem}
 
 /* ---- Banner de processamento (o que está sendo feito) ---- */
-.meeting-doc-processing{display:grid;gap:12px;padding:16px 18px;border-radius:16px;border:1px solid rgba(212,175,55,.26);background:rgba(212,175,55,.07)}
-.meeting-doc-processing-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.meeting-doc-processing-head strong{color:var(--text);font-size:.95rem}
-.meeting-doc-processing-head span{color:var(--soft);font-size:.84rem}
+.meeting-doc-processing{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 18px;border-radius:16px;border:1px solid rgba(212,175,55,.26);background:rgba(212,175,55,.07)}
+.meeting-doc-processing strong{color:var(--text);font-size:.95rem}
+.meeting-doc-processing>span:not(.capture-live-pulse){color:var(--soft);font-size:.84rem}
+.meeting-doc-processing .recording-pipeline{flex-basis:100%}
 
-.meeting-doc-summary{display:grid;gap:14px}
 .meeting-doc-empty{display:grid;gap:6px;padding:26px;border-radius:16px;border:1px dashed var(--line-strong);background:var(--ghost);text-align:center}
 .meeting-doc-empty strong{color:var(--text)}
 .meeting-doc-empty p{margin:0;color:var(--muted);font-size:.88rem}
@@ -78,7 +76,6 @@
 .capture-preview audio{width:100%}
 .capture-preview-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .capture-preview-name{flex:1;min-width:140px;color:var(--soft);font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.capture-preview-actions{display:flex;gap:8px;flex-wrap:wrap}
 .capture-progress{height:6px;border-radius:999px;background:var(--ghost);overflow:hidden}
 .capture-progress span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width var(--motion) var(--ease-out)}
 
