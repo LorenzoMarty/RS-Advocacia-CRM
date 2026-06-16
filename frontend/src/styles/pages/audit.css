@@ -128,6 +128,49 @@
 .audit-skel-hero{height:172px}
 .audit-skel-block{height:220px}
 
+/* ---------- Área de atividade (timeline) ---------- */
+.audit-activity .productivity-segmented{margin-left:auto}
+.audit-timeline{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.audit-timeline-item{
+    position:relative;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:12px;
+    padding:12px 4px 12px 0;
+    border-bottom:1px solid var(--line);
+}
+.audit-timeline-item:last-child{border-bottom:0}
+.audit-action-badge{
+    width:10px;height:10px;border-radius:50%;margin-top:6px;flex-shrink:0;
+    box-shadow:0 0 0 4px rgba(212,175,55,.08);
+    background:var(--gold);
+}
+.audit-action-badge.is-criado{background:var(--success);box-shadow:0 0 0 4px rgba(115,211,177,.1)}
+.audit-action-badge.is-atualizado{background:var(--gold);box-shadow:0 0 0 4px rgba(212,175,55,.1)}
+.audit-action-badge.is-excluido{background:var(--danger);box-shadow:0 0 0 4px rgba(239,122,122,.1)}
+.audit-timeline-main{display:grid;gap:4px;min-width:0}
+.audit-timeline-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.audit-entity-chip{
+    font-size:.64rem;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px;
+}
+.audit-timeline-label{font-size:.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-timeline-summary{margin:0;font-size:.8rem;color:var(--soft)}
+.audit-timeline-meta{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--muted)}
+.audit-diff-toggle{
+    background:none;border:0;padding:0;cursor:pointer;
+    font-size:.72rem;color:var(--gold-soft,var(--gold));text-decoration:underline;
+}
+.audit-diff{
+    list-style:none;margin:6px 0 2px;padding:8px 10px;display:grid;gap:6px;
+    border:1px solid var(--line);border-radius:8px;background:var(--ghost);
+}
+.audit-diff-row{display:flex;align-items:center;gap:8px;font-size:.76rem;flex-wrap:wrap}
+.audit-diff-field{min-width:96px;color:var(--muted)}
+.audit-diff-from{color:var(--soft);text-decoration:line-through;opacity:.75}
+.audit-diff-arrow{color:var(--muted)}
+.audit-diff-to{color:var(--success)}
+
 /* ---------- Light theme ---------- */
 html[data-theme="light"] .risk-score-inner{background:#fff}
 html[data-theme="light"] .risk-score-card,

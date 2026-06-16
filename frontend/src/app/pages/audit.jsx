@@ -1,4 +1,4 @@
-import { Component, useMemo, useState } from 'react';
+import { Component, useEffect, useMemo, useState } from 'react';
 
 import { PageChrome } from '../layout';
 import { useAppState } from '../store';
@@ -8,6 +8,7 @@ import { RiskSummary } from '../components/audit/RiskSummary';
 import { PriorityActions } from '../components/audit/PriorityActions';
 import { AuditInsightsPanel } from '../components/audit/AuditInsightsPanel';
 import { StatusDistribution } from '../components/audit/StatusDistribution';
+import { ActivityTimeline } from '../components/audit/ActivityTimeline';
 import { LoadingSkeleton } from '../components/audit/LoadingSkeleton';
 import { ErrorState } from '../components/audit/ErrorState';
 import {
@@ -22,7 +23,7 @@ import {
   startOfToday,
 } from '../lib/auditSelectors';
 
-function AuditDashboard({ clients, deadlines, processes, timeEntries }) {
+function AuditDashboard({ auditEntries, clients, deadlines, processes, timeEntries }) {
   const [period, setPeriod] = useState(7);
   const today = useMemo(() => startOfToday(), []);
 
@@ -60,6 +61,8 @@ function AuditDashboard({ clients, deadlines, processes, timeEntries }) {
         <AuditInsightsPanel insights={insights} />
       </div>
 
+      <ActivityTimeline entries={auditEntries} />
+
       <StatusDistribution data={statusData} />
     </div>
   );
@@ -67,9 +70,17 @@ function AuditDashboard({ clients, deadlines, processes, timeEntries }) {
 
 export function AuditPage() {
   const {
-    clients, currentRole, deadlines, processes, timeEntries, isLoading,
+    auditEntries, clients, currentRole, deadlines, processes, timeEntries, isLoading, loadAudit,
   } = useAppState();
   const isAdmin = currentRole?.name === 'Administrador';
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadAudit();
+    }
+    // loadAudit é estável; recarrega só quando o papel muda.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
   if (!isAdmin) {
     return (
@@ -88,6 +99,7 @@ export function AuditPage() {
       ) : (
         <AuditBoundary>
           <AuditDashboard
+            auditEntries={auditEntries}
             clients={clients}
             deadlines={deadlines}
             processes={processes}

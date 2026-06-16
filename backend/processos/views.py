@@ -1,6 +1,8 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
+from auditoria import services as auditoria_services
+from auditoria.models import RegistroAuditoria
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -94,6 +96,13 @@ def criar_processo(request):
         processo = form.save()
         processo = Processo.objects.select_related("cliente").get(pk=processo.pk)
         serialized = serialize_processo(processo)
+        auditoria_services.registrar(
+            request,
+            acao=RegistroAuditoria.ACAO_CRIADO,
+            entidade_tipo=RegistroAuditoria.ENTIDADE_PROCESSO,
+            entidade_id=processo.pk,
+            rotulo=processo.numero_processo,
+        )
         return resposta_sucesso(
             {"processo": serialized},
             mensagem="Processo criado com sucesso.",
@@ -128,6 +137,7 @@ def editar_processo(request, processo_id):
         return resposta_erro(str(exc), status=400)
 
     nome_pasta_antigo = documentos_services.nome_pasta_processo(processo)
+    antes = serialize_processo(processo)
 
     form = ProcessoForm(payload, instance=processo)
     if form.is_valid():
@@ -140,6 +150,16 @@ def editar_processo(request, processo_id):
         except _GOOGLE_ERRORS:
             pass
         serialized = serialize_processo(processo)
+        alteracoes = auditoria_services.calcular_diff(antes, serialized)
+        if alteracoes:
+            auditoria_services.registrar(
+                request,
+                acao=RegistroAuditoria.ACAO_ATUALIZADO,
+                entidade_tipo=RegistroAuditoria.ENTIDADE_PROCESSO,
+                entidade_id=processo.pk,
+                rotulo=processo.numero_processo,
+                alteracoes=alteracoes,
+            )
         return resposta_sucesso(
             {"processo": serialized},
             mensagem="Processo atualizado com sucesso.",
@@ -155,7 +175,15 @@ def excluir_processo(request, processo_id):
 
     processo = get_object_or_404(Processo, pk=processo_id)
     deleted_id = str(processo.pk)
+    rotulo = processo.numero_processo
     processo.delete()
+    auditoria_services.registrar(
+        request,
+        acao=RegistroAuditoria.ACAO_EXCLUIDO,
+        entidade_tipo=RegistroAuditoria.ENTIDADE_PROCESSO,
+        entidade_id=deleted_id,
+        rotulo=rotulo,
+    )
     return resposta_sucesso(
         {"id": deleted_id}, mensagem="Processo excluído com sucesso."
     )

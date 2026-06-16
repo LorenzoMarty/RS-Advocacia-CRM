@@ -33,6 +33,8 @@ import {
   timeEntriesFromResponse,
   timeEntryFromResponse,
   productivityGoalsFromResponse,
+  auditFromResponse,
+  auditFromListResponse,
   clientToPayload,
   processToPayload,
   eventToPayload,
@@ -138,6 +140,7 @@ export function AppStateProvider({ children }) {
   const [lancamentos, setLancamentos] = useState([]);
   const [timeEntries, setTimeEntries] = useState([]);
   const [productivityGoals, setProductivityGoals] = useState([]);
+  const [auditEntries, setAuditEntries] = useState([]);
   const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled);
   const [apiStatus, setApiStatus] = useState((isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled) ? 'loading' : 'local');
   const [isEventsLoading, setIsEventsLoading] = useState(isEventsApiEnabled);
@@ -197,6 +200,9 @@ export function AppStateProvider({ children }) {
     }
     if (Object.prototype.hasOwnProperty.call(payload, 'productivity_goals')) {
       setProductivityGoals(productivityGoalsFromResponse(payload));
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, 'auditoria')) {
+      setAuditEntries(auditFromResponse(payload));
     }
   }
 
@@ -1481,6 +1487,18 @@ export function AppStateProvider({ children }) {
     return Boolean(accessFlags[path]);
   }
 
+  async function loadAudit(filters = {}) {
+    if (!canUseApi) {
+      return;
+    }
+    try {
+      const payload = await api.listAudit(filters);
+      setAuditEntries(auditFromListResponse(payload));
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+    }
+  }
+
   const value = {
     users,
     clients,
@@ -1492,6 +1510,8 @@ export function AppStateProvider({ children }) {
     lancamentos,
     timeEntries,
     productivityGoals,
+    auditEntries,
+    loadAudit,
     currentUser,
     currentRole,
     hasPermission,

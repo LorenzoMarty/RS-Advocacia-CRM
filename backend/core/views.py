@@ -5,6 +5,8 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from agenda.models import Evento
 from agenda.views import serialize_evento
+from auditoria.models import RegistroAuditoria
+from auditoria.views import serialize_registro
 from clientes.models import Cliente
 from clientes.views import serialize_cliente
 from core.permission_utils import user_has_permission
@@ -162,6 +164,10 @@ def inicializacao(request):
         data["lancamentos"] = [
             serialize_lancamento(lancamento) for lancamento in lancamentos
         ]
+
+    if _is_admin(request, usuario_atual):
+        registros = RegistroAuditoria.objects.all()[:50]
+        data["auditoria"] = [serialize_registro(registro) for registro in registros]
 
     return resposta_sucesso(data)
 

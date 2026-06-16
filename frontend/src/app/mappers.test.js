@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  auditEntryFromApi,
+  auditFromListResponse,
+  auditFromResponse,
   clientFromApi,
   clientToPayload,
   collectionFromResponse,
@@ -47,6 +50,43 @@ describe('envelope helpers', () => {
   it('itemFromResponse unwraps the keyed item or returns null', () => {
     expect(itemFromResponse({ cliente: { id: 7 } }, 'cliente')).toEqual({ id: 7 });
     expect(itemFromResponse({}, 'cliente')).toBeNull();
+  });
+});
+
+describe('auditEntryFromApi', () => {
+  it('maps Portuguese audit fields to English UI fields', () => {
+    const entry = auditEntryFromApi({
+      id: 9,
+      acao: 'atualizado',
+      entidade_tipo: 'processo',
+      entidade_id: 4,
+      entidade_rotulo: '0001234-56',
+      autor_nome: 'Advogada',
+      resumo: 'Processo atualizado: status',
+      alteracoes: { status: { de: 'Ativo', para: 'Encerrado' } },
+      criado_em: '2026-06-15T10:00:00Z',
+    });
+
+    expect(entry).toMatchObject({
+      id: '9',
+      action: 'atualizado',
+      entityType: 'processo',
+      entityId: '4',
+      entityLabel: '0001234-56',
+      author: 'Advogada',
+      changes: { status: { de: 'Ativo', para: 'Encerrado' } },
+      createdAt: '2026-06-15T10:00:00Z',
+    });
+  });
+
+  it('defaults changes to an object and returns null for empty input', () => {
+    expect(auditEntryFromApi({ id: 1 }).changes).toEqual({});
+    expect(auditEntryFromApi(null)).toBeNull();
+  });
+
+  it('unwraps bootstrap and list envelopes', () => {
+    expect(auditFromResponse({ auditoria: [{ id: 1 }] })).toHaveLength(1);
+    expect(auditFromListResponse({ registros: [{ id: 1 }, { id: 2 }] })).toHaveLength(2);
   });
 });
 

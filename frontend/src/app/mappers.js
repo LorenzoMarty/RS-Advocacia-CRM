@@ -108,6 +108,33 @@ export function productivityGoalsFromResponse(payload) {
   return collectionFromResponse(payload, 'productivity_goals').map(productivityGoalFromApi).filter(Boolean);
 }
 
+export function auditEntryFromApi(entry) {
+  if (!entry) {
+    return null;
+  }
+
+  return {
+    ...entry,
+    id: String(entry.id || entry.pk),
+    action: entry.acao || '',
+    entityType: entry.entidade_tipo || '',
+    entityId: String(entry.entidade_id || ''),
+    entityLabel: entry.entidade_rotulo || '',
+    author: entry.autor_nome || '',
+    summary: entry.resumo || '',
+    changes: entry.alteracoes && typeof entry.alteracoes === 'object' ? entry.alteracoes : {},
+    createdAt: entry.criado_em || null,
+  };
+}
+
+export function auditFromResponse(payload) {
+  return collectionFromResponse(payload, 'auditoria').map(auditEntryFromApi).filter(Boolean);
+}
+
+export function auditFromListResponse(payload) {
+  return collectionFromResponse(payload, 'registros').map(auditEntryFromApi).filter(Boolean);
+}
+
 export function userFromApi(user) {
   if (!user) {
     return null;

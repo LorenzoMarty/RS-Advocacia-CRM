@@ -253,4 +253,10 @@ export const api = {
   marcarLancamentoPago: (id, payload) => financeiroRequest(`${id}/marcar-pago/`, jsonOptions('POST', payload)),
   cancelarLancamento: (id) => financeiroRequest(`${id}/cancelar/`, jsonOptions('POST', {})),
   dashboardFinanceiro: () => financeiroRequest('dashboard/'),
+  listAudit: (params = {}) => {
+    const query = new URLSearchParams(
+      Object.entries(params).filter(([, value]) => value != null && value !== ''),
+    ).toString();
+    return apiRequest(`/api/auditoria/${query ? `?${query}` : ''}`);
+  },
 };

@@ -74,7 +74,7 @@ export function DashboardPage() {
   const nextDeadline = upcomingDeadlines[0] || null;
 
   return (
-    <>
+    <div className="dashboard-page">
       <PageChrome label="Painel" />
 
       <section className="surface hero">
@@ -454,6 +454,6 @@ export function DashboardPage() {
           </motion.article>
         </aside>
       </motion.section>
-    </>
+    </div>
   );
 }

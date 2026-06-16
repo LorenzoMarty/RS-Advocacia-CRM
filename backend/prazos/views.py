@@ -4,6 +4,8 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 
+from auditoria import services as auditoria_services
+from auditoria.models import RegistroAuditoria
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -111,6 +113,13 @@ def criar_prazo(request):
         prazo.criado_por = _resolver_criador_prazo(request)
         prazo.save()
         prazo = Prazo.objects.select_related("processo__cliente").get(pk=prazo.pk)
+        auditoria_services.registrar(
+            request,
+            acao=RegistroAuditoria.ACAO_CRIADO,
+            entidade_tipo=RegistroAuditoria.ENTIDADE_PRAZO,
+            entidade_id=prazo.pk,
+            rotulo=prazo.titulo,
+        )
         return resposta_sucesso(
             {"prazo": serialize_prazo(prazo)},
             mensagem="Prazo criado com sucesso.",
@@ -143,10 +152,22 @@ def editar_prazo(request, prazo_id):
     except ValueError as exc:
         return resposta_erro(str(exc), status=400)
 
+    antes = serialize_prazo(prazo)
+
     form = PrazoForm(payload, instance=prazo)
     if form.is_valid():
         prazo = form.save()
         prazo = Prazo.objects.select_related("processo__cliente").get(pk=prazo.pk)
+        alteracoes = auditoria_services.calcular_diff(antes, serialize_prazo(prazo))
+        if alteracoes:
+            auditoria_services.registrar(
+                request,
+                acao=RegistroAuditoria.ACAO_ATUALIZADO,
+                entidade_tipo=RegistroAuditoria.ENTIDADE_PRAZO,
+                entidade_id=prazo.pk,
+                rotulo=prazo.titulo,
+                alteracoes=alteracoes,
+            )
         return resposta_sucesso(
             {"prazo": serialize_prazo(prazo)},
             mensagem="Prazo atualizado com sucesso.",
@@ -334,5 +355,13 @@ def excluir_prazo(request, prazo_id):
 
     prazo = get_object_or_404(Prazo, pk=prazo_id)
     deleted_id = str(prazo.pk)
+    rotulo = prazo.titulo
     prazo.delete()
+    auditoria_services.registrar(
+        request,
+        acao=RegistroAuditoria.ACAO_EXCLUIDO,
+        entidade_tipo=RegistroAuditoria.ENTIDADE_PRAZO,
+        entidade_id=deleted_id,
+        rotulo=rotulo,
+    )
     return resposta_sucesso({"id": deleted_id}, mensagem="Prazo excluido com sucesso.")
