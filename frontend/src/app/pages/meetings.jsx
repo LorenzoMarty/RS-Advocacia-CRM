@@ -647,88 +647,76 @@ export function MeetingsPage() {
     }
   }
 
+  const recordings = selectedMeeting?.recordings || [];
+  // Uma gravação ainda em processamento (não concluída nem falha) dirige o
+  // banner de status no topo do documento — "o que está sendo feito".
+  const activeRecording = recordings.find(
+    (recording) => recording.status !== 'concluida' && recording.status !== 'falhou',
+  );
+
   return (
     <>
       <PageChrome label="Reuniões" />
       {confirmPopup}
       <div className="meetings-page">
-        <section className="surface meetings-intro">
-          <div>
-            <p className="section-note">Reuniões com IA</p>
-            <h1 className="meetings-title">Gravação, transcrição e resumo.</h1>
-            <p className="meetings-copy">
-              O áudio é processado em segundo plano; a tela atualiza o resultado automaticamente.
-            </p>
-          </div>
-        </section>
-
         <div className="meetings-layout">
-          <section className="surface meetings-form-panel meetings-list-panel">
+          <aside className="surface meetings-sidebar">
             <div className="section-head">
               <div>
                 <h2 className="section-title">Reuniões</h2>
-                <p className="section-note">Lista, edição e gravações</p>
+                <p className="section-note">Gravação, transcrição e resumo por IA</p>
               </div>
-              <button className="btn" type="button" onClick={openCreateForm}>
-                Novo
+              <button className="btn btn-compact" type="button" onClick={openCreateForm}>
+                + Nova
               </button>
             </div>
 
             {isLoading ? <p className="section-note">Carregando...</p> : null}
             {!isLoading && !meetings.length ? (
               <div className="empty">
-                <strong>Nenhuma reunião cadastrada.</strong>
-                <p>Crie a primeira reunião para habilitar a gravação.</p>
+                <strong>Nenhuma reunião.</strong>
+                <p>Crie a primeira para habilitar a gravação.</p>
               </div>
             ) : (
               <div className="meeting-options">
-                {meetings.map((meeting) => (
-                  <article
-                    className={`meeting-option${meeting.id === selectedId ? ' active' : ''}`}
-                    key={meeting.id}
-                  >
+                {meetings.map((meeting) => {
+                  const done = meeting.recordings?.some((rec) => rec.status === 'concluida');
+                  const processing = meeting.recordings?.some(
+                    (rec) => rec.status !== 'concluida' && rec.status !== 'falhou',
+                  );
+                  return (
                     <button
-                      className="meeting-option-main"
+                      className={`meeting-option-main meeting-option${meeting.id === selectedId ? ' active' : ''}`}
                       type="button"
+                      key={meeting.id}
                       onClick={() => setSelectedId(meeting.id)}
                     >
-                      <strong>{meeting.title}</strong>
+                      <span className="meeting-option-title">
+                        <strong>{meeting.title}</strong>
+                        {processing ? (
+                          <StatusBadge tone="gold">Processando</StatusBadge>
+                        ) : done ? (
+                          <StatusBadge tone="success">Pronta</StatusBadge>
+                        ) : null}
+                      </span>
                       <span>{formatDateTime(meeting.meetingAt)}</span>
                       <span>{meeting.clientName || 'Sem cliente vinculado'}</span>
                     </button>
-                    <div className="meeting-option-actions">
-                      <button
-                        className="btn btn-secondary btn-compact"
-                        type="button"
-                        onClick={() => openEditForm(meeting)}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        className="btn btn-danger btn-compact"
-                        type="button"
-                        onClick={() => handleDeleteMeeting(meeting)}
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                  );
+                })}
               </div>
             )}
-          </section>
+          </aside>
 
-          <section className="surface meetings-workspace">
+          <section className="meetings-workspace">
             {isMeetingFormOpen ? (
-              <div className="meeting-editor">
+              <div className="surface meeting-editor">
                 <div className="section-head">
                   <div>
                     <h2 className="section-title">
                       {isEditingMeeting ? 'Editar reunião' : 'Nova reunião'}
                     </h2>
-                    <p className="section-note">
-                      Contexto antes da gravação
-                    </p>
+                    <p className="section-note">Contexto antes da gravação</p>
                   </div>
                 </div>
 
@@ -782,27 +770,35 @@ export function MeetingsPage() {
             ) : null}
 
             {selectedMeeting ? (
-              <div className="meeting-detail">
-                <div className="meeting-context">
-                  <div>
-                    <h2>{selectedMeeting.title}</h2>
-                    <p>
-                      {selectedMeeting.clientName || 'Sem cliente vinculado'} | {formatDateTime(selectedMeeting.meetingAt)}
-                    </p>
-                  </div>
-                  <div className="meeting-context-actions">
+              <article className="meeting-doc">
+                <div className="meeting-doc-bar">
+                  <div className="meeting-doc-actions">
                     {selectedMeeting.documentLink ? (
                       <a
-                        className="btn btn-secondary"
+                        className="btn btn-secondary btn-compact"
                         href={selectedMeeting.documentLink}
                         target="_blank"
                         rel="noreferrer"
                       >
-                        Ver documento
+                        Ver no Drive
                       </a>
                     ) : null}
                     <button
-                      className="btn"
+                      className="btn btn-secondary btn-compact"
+                      type="button"
+                      onClick={() => openEditForm(selectedMeeting)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      className="btn btn-danger btn-compact"
+                      type="button"
+                      onClick={() => handleDeleteMeeting(selectedMeeting)}
+                    >
+                      Excluir
+                    </button>
+                    <button
+                      className="btn btn-compact"
                       type="button"
                       onClick={handleFinalizeMeeting}
                       disabled={isFinalizing}
@@ -813,60 +809,74 @@ export function MeetingsPage() {
                           ? 'Atualizar documento'
                           : 'Finalizar reunião'}
                     </button>
-                    <button
-                      className="btn btn-secondary"
-                      type="button"
-                      onClick={() => openEditForm(selectedMeeting)}
-                    >
-                      Editar reunião
-                    </button>
                   </div>
                 </div>
-                <AudioRecorder onUpload={handleUpload} />
 
-                {selectedMeeting.summary ? (
-                  <div className="ai-output meeting-report">
-                    <h3>Resumo da reunião</h3>
-                    <MeetingSummary value={selectedMeeting.summary} />
-                  </div>
-                ) : null}
+                <div className="meeting-doc-sheet">
+                  <header className="meeting-doc-head">
+                    <p className="meeting-doc-eyebrow">Ata de reunião</p>
+                    <h1 className="meeting-doc-title">{selectedMeeting.title}</h1>
+                    <p className="meeting-doc-meta">
+                      {selectedMeeting.clientName || 'Sem cliente vinculado'}
+                      <span aria-hidden="true"> · </span>
+                      {formatDateTime(selectedMeeting.meetingAt)}
+                    </p>
+                  </header>
 
-                {selectedMeeting.transcript ? (
-                  <div className="transcript-panel meeting-transcript">
-                    <div className="transcript-head">
-                      <h3>Transcrição completa</h3>
+                  <AudioRecorder onUpload={handleUpload} />
+
+                  {activeRecording ? (
+                    <div className="meeting-doc-processing">
+                      <div className="meeting-doc-processing-head">
+                        <span className="capture-live-pulse" aria-hidden="true" />
+                        <strong>Processando o áudio…</strong>
+                        <span>Esta tela atualiza sozinha quando terminar.</span>
+                      </div>
+                      <RecordingPipeline status={activeRecording.status} />
                     </div>
-                    <p className="meeting-transcript-text">{selectedMeeting.transcript}</p>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                <div className="recording-results">
-                  {selectedMeeting.recordings.length ? (
-                    <>
-                      <h3 className="recording-results-title">
-                        Trechos ({selectedMeeting.recordings.length})
-                      </h3>
-                      {selectedMeeting.recordings.map((recording) => (
-                        <RecordingResult
-                          key={recording.id}
-                          onDelete={handleDeleteRecording}
-                          onSaveTranscript={handleSaveTranscript}
-                          recording={recording}
-                        />
-                      ))}
-                    </>
-                  ) : (
-                    <div className="empty">
-                      <strong>Nenhuma gravação nesta reunião.</strong>
-                      <p>Grave ou envie um áudio para gerar transcrição e resumo.</p>
+                  {selectedMeeting.summary ? (
+                    <div className="meeting-doc-summary">
+                      <MeetingSummary value={selectedMeeting.summary} />
                     </div>
-                  )}
+                  ) : !activeRecording ? (
+                    <div className="meeting-doc-empty">
+                      <strong>Ainda sem resumo.</strong>
+                      <p>Grave a reunião ou envie um arquivo de áudio para gerar o documento.</p>
+                    </div>
+                  ) : null}
+
+                  {selectedMeeting.transcript ? (
+                    <details className="meeting-doc-fold">
+                      <summary>Transcrição completa</summary>
+                      <p className="meeting-transcript-text">{selectedMeeting.transcript}</p>
+                    </details>
+                  ) : null}
+
+                  {recordings.length ? (
+                    <details className="meeting-doc-fold">
+                      <summary>Trechos gravados ({recordings.length})</summary>
+                      <div className="recording-results">
+                        {recordings.map((recording) => (
+                          <RecordingResult
+                            key={recording.id}
+                            onDelete={handleDeleteRecording}
+                            onSaveTranscript={handleSaveTranscript}
+                            recording={recording}
+                          />
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
                 </div>
-              </div>
+              </article>
             ) : !isMeetingFormOpen ? (
-              <div className="empty">
-                <strong>Selecione ou crie uma reunião.</strong>
-                <p>Use o botão Novo para iniciar um registro.</p>
+              <div className="surface meeting-doc-placeholder">
+                <div className="empty">
+                  <strong>Selecione ou crie uma reunião.</strong>
+                  <p>Use o botão Nova para iniciar um registro.</p>
+                </div>
               </div>
             ) : null}
           </section>
