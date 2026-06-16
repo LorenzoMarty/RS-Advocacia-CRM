@@ -18,6 +18,7 @@ CAMPOS_VOLATEIS = ("data_ultima_movimentacao", "atualizado_em", "criado_em", "id
 _ROTULOS_ENTIDADE = {
     RegistroAuditoria.ENTIDADE_PROCESSO: "Processo",
     RegistroAuditoria.ENTIDADE_PRAZO: "Prazo",
+    RegistroAuditoria.ENTIDADE_PETICAO: "PetiÃ§Ã£o",
 }
 _ROTULOS_ACAO = {
     RegistroAuditoria.ACAO_CRIADO: "criado",
@@ -102,6 +103,8 @@ def registrar(
     entidade_id,
     rotulo: str = "",
     alteracoes: dict | None = None,
+    processo_id=None,
+    processo_rotulo: str = "",
 ) -> RegistroAuditoria | None:
     """Cria um ``RegistroAuditoria``. Nunca levanta exceção para a view."""
     alteracoes = alteracoes or {}
@@ -117,6 +120,8 @@ def registrar(
             autor_nome=autor_nome,
             resumo=resumo,
             alteracoes=alteracoes,
+            processo_id=str(processo_id or ""),
+            processo_rotulo=processo_rotulo or "",
         )
     except Exception:  # noqa: BLE001 — auditoria nunca quebra o CRUD
         logger.exception("Falha ao registrar auditoria (%s %s)", acao, entidade_tipo)

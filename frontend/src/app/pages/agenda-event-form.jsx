@@ -57,7 +57,7 @@ export function EventFormPage() {
     clientId: eventItem?.clientId || initialClientId,
     processId: eventItem?.processId || initialProcessId,
     responsible: eventItem?.responsible || "",
-    status: eventItem?.status || initialStatus || "",
+    status: eventItem?.status || initialStatus || EVENT_STATUS_OPTIONS[0],
     location: eventItem?.location || "",
     description: eventItem?.description || "",
     notes: eventItem?.notes || "",
@@ -85,7 +85,7 @@ export function EventFormPage() {
       clientId: eventItem.clientId || "",
       processId: eventItem.processId || "",
       responsible: eventItem.responsible || "",
-      status: eventItem.status || "",
+      status: eventItem.status || EVENT_STATUS_OPTIONS[0],
       location: eventItem.location || "",
       description: eventItem.description || "",
       notes: eventItem.notes || "",
@@ -452,29 +452,6 @@ export function EventFormPage() {
                     ))}
                   </Select>
                 </Field>
-
-                <Field id="event-status" label="Status" error={errors.status}>
-                  <Select
-                    id="event-status"
-                    value={form.status}
-                    onChange={(event) =>
-                      setForm((currentForm) => ({
-                        ...currentForm,
-                        status: event.target.value,
-                      }))
-                    }
-                  >
-                    <option value="">Selecione o status</option>
-                    {form.status && !EVENT_STATUS_OPTIONS.includes(form.status) && (
-                      <option value={form.status}>{form.status}</option>
-                    )}
-                    {EVENT_STATUS_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
               </div>
             </section>
 
@@ -519,25 +496,6 @@ export function EventFormPage() {
                       setForm((currentForm) => ({
                         ...currentForm,
                         description: event.target.value,
-                      }))
-                    }
-                  />
-                </Field>
-
-                <Field
-                  id="event-notes"
-                  label="Observações"
-                  className="span-2"
-                  error={errors.notes}
-                >
-                  <textarea
-                    id="event-notes"
-                    rows="5"
-                    value={form.notes}
-                    onChange={(event) =>
-                      setForm((currentForm) => ({
-                        ...currentForm,
-                        notes: event.target.value,
                       }))
                     }
                   />

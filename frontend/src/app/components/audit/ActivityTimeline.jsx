@@ -5,10 +5,8 @@ import { StatusBadge } from '../../layout';
 import { formatDateTime } from '../../utils';
 import { EmptyState } from '../../pages/common';
 
-// motion.li como referência real (o lint do projeto não conta uso só em JSX).
 const MotionItem = motion.li;
 
-// Rótulos pt-BR para os campos que aparecem no diff (chaves = nomes de campo do backend).
 const FIELD_LABELS = {
   numero_processo: 'Número',
   cliente_id: 'Cliente',
@@ -26,6 +24,12 @@ const FIELD_LABELS = {
   observacoes: 'Observações',
   processo_id: 'Processo',
   processo_numero: 'Processo',
+  tipo: 'Tipo',
+  adverso: 'Adverso',
+  responsavel_acao: 'Responsável',
+  link_drive: 'Link do Drive',
+  drive_file_id: 'Documento',
+  motivo_pendente: 'Motivo pendente',
 };
 
 const ACTION_LABELS = {
@@ -40,9 +44,10 @@ const ACTION_TONE = {
   excluido: 'danger',
 };
 
-const ENTITY_LABELS = {
-  processo: 'Processo',
-  prazo: 'Prazo',
+const ENTITY_META = {
+  prazo: { label: 'Prazos', singular: 'Prazo', order: 1 },
+  peticao: { label: 'Petições', singular: 'Petição', order: 2 },
+  processo: { label: 'Processos', singular: 'Processo', order: 3 },
 };
 
 function fieldLabel(key) {
@@ -54,6 +59,59 @@ function formatValue(value) {
   if (value === true) return 'Sim';
   if (value === false) return 'Não';
   return String(value);
+}
+
+function processKeyFor(entry) {
+  if (entry.processId) return entry.processId;
+  if (entry.entityType === 'processo') return entry.entityId;
+  return 'sem-processo';
+}
+
+function processLabelFor(entry) {
+  if (entry.processLabel) return entry.processLabel;
+  if (entry.entityType === 'processo' && entry.entityLabel) return entry.entityLabel;
+  return 'Sem processo vinculado';
+}
+
+function groupEntries(entries) {
+  const types = new Map();
+
+  entries.forEach((entry) => {
+    const typeKey = entry.entityType || 'outro';
+    if (!types.has(typeKey)) {
+      const meta = ENTITY_META[typeKey] || {
+        label: typeKey || 'Outros',
+        singular: typeKey || 'Registro',
+        order: 99,
+      };
+      types.set(typeKey, {
+        key: typeKey,
+        ...meta,
+        count: 0,
+        processes: new Map(),
+      });
+    }
+
+    const typeGroup = types.get(typeKey);
+    const processKey = processKeyFor(entry);
+    if (!typeGroup.processes.has(processKey)) {
+      typeGroup.processes.set(processKey, {
+        key: processKey,
+        label: processLabelFor(entry),
+        entries: [],
+      });
+    }
+
+    typeGroup.count += 1;
+    typeGroup.processes.get(processKey).entries.push(entry);
+  });
+
+  return Array.from(types.values())
+    .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label, 'pt-BR'))
+    .map((typeGroup) => ({
+      ...typeGroup,
+      processes: Array.from(typeGroup.processes.values()),
+    }));
 }
 
 function ChangeList({ changes }) {
@@ -74,7 +132,7 @@ function ChangeList({ changes }) {
   );
 }
 
-function TimelineItem({ entry, index }) {
+function ActivityItem({ entry, index, entityLabel }) {
   const [open, setOpen] = useState(false);
   const tone = ACTION_TONE[entry.action] || 'gold';
   const hasChanges = entry.action === 'atualizado' && Object.keys(entry.changes || {}).length > 0;
@@ -82,18 +140,17 @@ function TimelineItem({ entry, index }) {
   return (
     <MotionItem
       className="audit-timeline-item"
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, delay: Math.min(index * 0.025, 0.4) }}
+      transition={{ duration: 0.16, delay: Math.min(index * 0.015, 0.2) }}
     >
       <span className={`audit-action-badge is-${entry.action}`} aria-hidden="true" />
       <div className="audit-timeline-main">
         <div className="audit-timeline-head">
           <StatusBadge tone={tone}>{ACTION_LABELS[entry.action] || entry.action}</StatusBadge>
-          <span className="audit-entity-chip">{ENTITY_LABELS[entry.entityType] || entry.entityType}</span>
+          <span className="audit-entity-chip">{entityLabel}</span>
           <strong className="audit-timeline-label">{entry.entityLabel || '—'}</strong>
         </div>
-        <p className="audit-timeline-summary">{entry.summary}</p>
         <div className="audit-timeline-meta">
           <span>{entry.author || 'Sistema'}</span>
           <span aria-hidden="true">•</span>
@@ -104,7 +161,7 @@ function TimelineItem({ entry, index }) {
               className="audit-diff-toggle"
               onClick={() => setOpen((value) => !value)}
             >
-              {open ? 'Ocultar mudanças' : `Ver mudanças (${Object.keys(entry.changes).length})`}
+              {open ? 'Ocultar' : `${Object.keys(entry.changes).length} mudança(s)`}
             </button>
           ) : null}
         </div>
@@ -114,53 +171,55 @@ function TimelineItem({ entry, index }) {
   );
 }
 
-const FILTERS = [
-  { key: 'all', label: 'Tudo' },
-  { key: 'processo', label: 'Processos' },
-  { key: 'prazo', label: 'Tarefas' },
-];
-
-// Área de atividade — feed cronológico de "quem fez o quê, quando" em processos e prazos.
 export function ActivityTimeline({ entries }) {
-  const [filter, setFilter] = useState('all');
-
-  const visible = useMemo(() => {
-    if (filter === 'all') return entries;
-    return entries.filter((entry) => entry.entityType === filter);
-  }, [entries, filter]);
+  const groups = useMemo(() => groupEntries(entries), [entries]);
 
   return (
     <section className="audit-card surface section-card audit-activity">
       <div className="section-head">
         <div>
           <h2 className="section-title">Atividade recente</h2>
-          <p className="section-note">O que está acontecendo com processos e tarefas</p>
-        </div>
-        <div className="productivity-segmented" role="tablist">
-          {FILTERS.map((option) => (
-            <button
-              key={option.key}
-              type="button"
-              role="tab"
-              aria-selected={filter === option.key}
-              className={filter === option.key ? 'is-active' : ''}
-              onClick={() => setFilter(option.key)}
-            >
-              {option.label}
-            </button>
-          ))}
+          <p className="section-note">Separada por tipo e agrupada por processo</p>
         </div>
       </div>
-      {visible.length ? (
-        <ol className="audit-timeline">
-          {visible.map((entry, index) => (
-            <TimelineItem key={entry.id} entry={entry} index={index} />
+      {groups.length ? (
+        <div className="audit-activity-grid">
+          {groups.map((typeGroup) => (
+            <article key={typeGroup.key} className="audit-type-card">
+              <header className="audit-type-head">
+                <div>
+                  <h3>{typeGroup.label}</h3>
+                  <span>{typeGroup.processes.length} processo(s)</span>
+                </div>
+                <strong>{typeGroup.count}</strong>
+              </header>
+              <div className="audit-process-list">
+                {typeGroup.processes.map((processGroup) => (
+                  <section key={processGroup.key} className="audit-process-group">
+                    <header className="audit-process-head">
+                      <span>{processGroup.label}</span>
+                      <strong>{processGroup.entries.length}</strong>
+                    </header>
+                    <ol className="audit-timeline">
+                      {processGroup.entries.map((entry, index) => (
+                        <ActivityItem
+                          key={entry.id}
+                          entry={entry}
+                          index={index}
+                          entityLabel={typeGroup.singular}
+                        />
+                      ))}
+                    </ol>
+                  </section>
+                ))}
+              </div>
+            </article>
           ))}
-        </ol>
+        </div>
       ) : (
         <EmptyState
           title="Sem atividade registrada."
-          copy="Criações, edições e exclusões de processos e tarefas aparecem aqui."
+          copy="Criações, edições e exclusões de processos, prazos e petições aparecem aqui."
         />
       )}
     </section>

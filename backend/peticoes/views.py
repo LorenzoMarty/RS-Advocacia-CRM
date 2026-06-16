@@ -1,5 +1,7 @@
 from django.shortcuts import get_object_or_404
 
+from auditoria import services as auditoria_services
+from auditoria.models import RegistroAuditoria
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -74,6 +76,13 @@ def serialize_peticao(peticao: Peticao):
     }
 
 
+def _rotulo_peticao(peticao: Peticao):
+    return (
+        " - ".join([parte for parte in (peticao.tipo, peticao.adverso) if parte])
+        or str(peticao.pk)
+    )
+
+
 def _peticao_api_payload(request):
     payload = ler_corpo_json(request)
     data = dict(payload)
@@ -119,6 +128,17 @@ def criar_peticao(request):
         peticao = Peticao.objects.select_related("cliente", "processo").get(
             pk=peticao.pk
         )
+        auditoria_services.registrar(
+            request,
+            acao=RegistroAuditoria.ACAO_CRIADO,
+            entidade_tipo=RegistroAuditoria.ENTIDADE_PETICAO,
+            entidade_id=peticao.pk,
+            rotulo=_rotulo_peticao(peticao),
+            processo_id=peticao.processo_id,
+            processo_rotulo=(
+                peticao.processo.numero_processo if peticao.processo_id else ""
+            ),
+        )
         return resposta_sucesso(
             {"peticao": serialize_peticao(peticao)},
             mensagem="Peticao criada com sucesso.",
@@ -144,8 +164,11 @@ def editar_peticao(request, peticao_id):
     if request.method not in {"PUT", "PATCH"}:
         return metodo_nao_permitido(["PUT", "PATCH"])
 
-    peticao = get_object_or_404(Peticao, pk=peticao_id)
+    peticao = get_object_or_404(
+        Peticao.objects.select_related("cliente", "processo"), pk=peticao_id
+    )
     processo_id_antigo = peticao.processo_id
+    antes = serialize_peticao(peticao)
 
     try:
         payload = _peticao_api_payload(request)
@@ -173,8 +196,23 @@ def editar_peticao(request, peticao_id):
                 )
             except _GOOGLE_ERRORS:
                 pass
+        serialized = serialize_peticao(peticao)
+        alteracoes = auditoria_services.calcular_diff(antes, serialized)
+        if alteracoes:
+            auditoria_services.registrar(
+                request,
+                acao=RegistroAuditoria.ACAO_ATUALIZADO,
+                entidade_tipo=RegistroAuditoria.ENTIDADE_PETICAO,
+                entidade_id=peticao.pk,
+                rotulo=_rotulo_peticao(peticao),
+                alteracoes=alteracoes,
+                processo_id=peticao.processo_id,
+                processo_rotulo=(
+                    peticao.processo.numero_processo if peticao.processo_id else ""
+                ),
+            )
         return resposta_sucesso(
-            {"peticao": serialize_peticao(peticao)},
+            {"peticao": serialized},
             mensagem="Peticao atualizada com sucesso.",
         )
 
@@ -196,6 +234,7 @@ def documento_peticao(request, peticao_id):
         Peticao.objects.select_related("cliente", "processo"), pk=peticao_id
     )
     usuario = current_usuario(request)
+    antes = serialize_peticao(peticao)
 
     if request.method == "POST":
         if not peticao.processo_id:
@@ -217,8 +256,24 @@ def documento_peticao(request, peticao_id):
         peticao.drive_file_id = meta["id"]
         peticao.link_drive = meta.get("webViewLink", "") or ""
         peticao.save(update_fields=["drive_file_id", "link_drive", "atualizado_em"])
+        peticao.refresh_from_db()
+        serialized = serialize_peticao(peticao)
+        alteracoes = auditoria_services.calcular_diff(antes, serialized)
+        if alteracoes:
+            auditoria_services.registrar(
+                request,
+                acao=RegistroAuditoria.ACAO_ATUALIZADO,
+                entidade_tipo=RegistroAuditoria.ENTIDADE_PETICAO,
+                entidade_id=peticao.pk,
+                rotulo=_rotulo_peticao(peticao),
+                alteracoes=alteracoes,
+                processo_id=peticao.processo_id,
+                processo_rotulo=(
+                    peticao.processo.numero_processo if peticao.processo_id else ""
+                ),
+            )
         return resposta_sucesso(
-            {"peticao": serialize_peticao(peticao)},
+            {"peticao": serialized},
             mensagem="Documento criado no Google Drive.",
             status=201,
         )
@@ -234,8 +289,24 @@ def documento_peticao(request, peticao_id):
     peticao.drive_file_id = ""
     peticao.link_drive = ""
     peticao.save(update_fields=["drive_file_id", "link_drive", "atualizado_em"])
+    peticao.refresh_from_db()
+    serialized = serialize_peticao(peticao)
+    alteracoes = auditoria_services.calcular_diff(antes, serialized)
+    if alteracoes:
+        auditoria_services.registrar(
+            request,
+            acao=RegistroAuditoria.ACAO_ATUALIZADO,
+            entidade_tipo=RegistroAuditoria.ENTIDADE_PETICAO,
+            entidade_id=peticao.pk,
+            rotulo=_rotulo_peticao(peticao),
+            alteracoes=alteracoes,
+            processo_id=peticao.processo_id,
+            processo_rotulo=(
+                peticao.processo.numero_processo if peticao.processo_id else ""
+            ),
+        )
     return resposta_sucesso(
-        {"peticao": serialize_peticao(peticao)},
+        {"peticao": serialized},
         mensagem="Documento removido da petição.",
     )
 
@@ -245,9 +316,23 @@ def excluir_peticao(request, peticao_id):
     if request.method != "DELETE":
         return metodo_nao_permitido(["DELETE"])
 
-    peticao = get_object_or_404(Peticao, pk=peticao_id)
+    peticao = get_object_or_404(
+        Peticao.objects.select_related("processo"), pk=peticao_id
+    )
     deleted_id = str(peticao.pk)
+    rotulo = _rotulo_peticao(peticao)
+    processo_id = peticao.processo_id
+    processo_rotulo = peticao.processo.numero_processo if peticao.processo_id else ""
     peticao.delete()
+    auditoria_services.registrar(
+        request,
+        acao=RegistroAuditoria.ACAO_EXCLUIDO,
+        entidade_tipo=RegistroAuditoria.ENTIDADE_PETICAO,
+        entidade_id=deleted_id,
+        rotulo=rotulo,
+        processo_id=processo_id,
+        processo_rotulo=processo_rotulo,
+    )
     return resposta_sucesso(
         {"id": deleted_id}, mensagem="Petição excluída com sucesso."
     )

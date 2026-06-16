@@ -102,6 +102,8 @@ def criar_processo(request):
             entidade_tipo=RegistroAuditoria.ENTIDADE_PROCESSO,
             entidade_id=processo.pk,
             rotulo=processo.numero_processo,
+            processo_id=processo.pk,
+            processo_rotulo=processo.numero_processo,
         )
         return resposta_sucesso(
             {"processo": serialized},
@@ -159,6 +161,8 @@ def editar_processo(request, processo_id):
                 entidade_id=processo.pk,
                 rotulo=processo.numero_processo,
                 alteracoes=alteracoes,
+                processo_id=processo.pk,
+                processo_rotulo=processo.numero_processo,
             )
         return resposta_sucesso(
             {"processo": serialized},
@@ -183,6 +187,8 @@ def excluir_processo(request, processo_id):
         entidade_tipo=RegistroAuditoria.ENTIDADE_PROCESSO,
         entidade_id=deleted_id,
         rotulo=rotulo,
+        processo_id=deleted_id,
+        processo_rotulo=rotulo,
     )
     return resposta_sucesso(
         {"id": deleted_id}, mensagem="Processo excluído com sucesso."

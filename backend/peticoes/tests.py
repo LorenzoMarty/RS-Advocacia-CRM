@@ -2,7 +2,7 @@ import json
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from clientes.models import Cliente
@@ -11,6 +11,7 @@ from processos.models import Processo
 from usuarios.models import Usuario
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class PeticoesViewsTests(TestCase):
     def setUp(self):
         self.usuario = Usuario.objects.create(

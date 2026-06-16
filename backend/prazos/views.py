@@ -133,6 +133,8 @@ def criar_prazo(request):
             entidade_tipo=RegistroAuditoria.ENTIDADE_PRAZO,
             entidade_id=prazo.pk,
             rotulo=prazo.titulo,
+            processo_id=prazo.processo_id,
+            processo_rotulo=prazo.processo.numero_processo if prazo.processo_id else "",
         )
         return resposta_sucesso(
             {"prazo": serialize_prazo(prazo)},
@@ -181,6 +183,10 @@ def editar_prazo(request, prazo_id):
                 entidade_id=prazo.pk,
                 rotulo=prazo.titulo,
                 alteracoes=alteracoes,
+                processo_id=prazo.processo_id,
+                processo_rotulo=(
+                    prazo.processo.numero_processo if prazo.processo_id else ""
+                ),
             )
         return resposta_sucesso(
             {"prazo": serialize_prazo(prazo)},
@@ -375,9 +381,11 @@ def excluir_prazo(request, prazo_id):
     if request.method != "DELETE":
         return metodo_nao_permitido(["DELETE"])
 
-    prazo = get_object_or_404(Prazo, pk=prazo_id)
+    prazo = get_object_or_404(Prazo.objects.select_related("processo"), pk=prazo_id)
     deleted_id = str(prazo.pk)
     rotulo = prazo.titulo
+    processo_id = prazo.processo_id
+    processo_rotulo = prazo.processo.numero_processo if prazo.processo_id else ""
     prazo.delete()
     auditoria_services.registrar(
         request,
@@ -385,5 +393,7 @@ def excluir_prazo(request, prazo_id):
         entidade_tipo=RegistroAuditoria.ENTIDADE_PRAZO,
         entidade_id=deleted_id,
         rotulo=rotulo,
+        processo_id=processo_id,
+        processo_rotulo=processo_rotulo,
     )
     return resposta_sucesso({"id": deleted_id}, mensagem="Prazo excluido com sucesso.")

@@ -20,9 +20,11 @@ class RegistroAuditoria(models.Model):
 
     ENTIDADE_PROCESSO = "processo"
     ENTIDADE_PRAZO = "prazo"
+    ENTIDADE_PETICAO = "peticao"
     ENTIDADE_CHOICES = (
         (ENTIDADE_PROCESSO, "Processo"),
         (ENTIDADE_PRAZO, "Prazo"),
+        (ENTIDADE_PETICAO, "PetiÃ§Ã£o"),
     )
 
     acao = models.CharField(max_length=20, choices=ACAO_CHOICES)
@@ -33,12 +35,17 @@ class RegistroAuditoria(models.Model):
     autor_nome = models.CharField(max_length=150, blank=True)
     resumo = models.CharField(max_length=500)
     alteracoes = models.JSONField(default=dict, blank=True)
+    processo_id = models.CharField(max_length=40, blank=True)
+    processo_rotulo = models.CharField(max_length=255, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         ordering = ("-criado_em", "-id")
         indexes = [
-            models.Index(fields=["entidade_tipo", "entidade_id"]),
+            models.Index(
+                fields=["entidade_tipo", "entidade_id"],
+                name="auditoria_r_entidad_0c3d6e_idx",
+            ),
         ]
         verbose_name = "Registro de auditoria"
         verbose_name_plural = "Registros de auditoria"

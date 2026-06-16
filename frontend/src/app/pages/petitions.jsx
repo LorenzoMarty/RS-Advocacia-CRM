@@ -97,9 +97,6 @@ function validatePetitionForm(form) {
   if (!PETITION_TYPE_OPTIONS.includes(form.type)) nextErrors.type = 'Selecione o tipo da peça.';
   if (!form.adversary.trim()) nextErrors.adversary = 'Informe o adverso.';
   if (!form.responsible.trim()) nextErrors.responsible = 'Informe o responsável pela ação.';
-  if (form.driveLink.trim() && !/^https?:\/\//i.test(form.driveLink.trim())) {
-    nextErrors.driveLink = 'Informe um link iniciado por http:// ou https://.';
-  }
 
   return nextErrors;
 }
@@ -838,24 +835,17 @@ export function PetitionFormPage() {
                   </Select>
                 </Field>
 
-                <Field id="petition-drive" label="Link do Drive" className="span-2" error={errors.driveLink}>
-                  <input
-                    id="petition-drive"
-                    type="url"
-                    value={form.driveLink}
-                    placeholder="https://drive.google.com/..."
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, driveLink: event.target.value }))}
-                  />
-                </Field>
-
-                <Field id="petition-pending-reason" label="Pendente: qual motivo?" className="span-2" error={errors.pendingReason}>
-                  <textarea
-                    id="petition-pending-reason"
-                    rows="6"
-                    value={form.pendingReason}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, pendingReason: event.target.value }))}
-                  />
-                </Field>
+                {/* Motivo da pendência só faz sentido até o protocolo; some a partir daí. */}
+                {!['protocolar', 'protocolado'].includes(petitionColumnKey({ status: form.status })) ? (
+                  <Field id="petition-pending-reason" label="Pendente: qual motivo?" className="span-2" error={errors.pendingReason}>
+                    <textarea
+                      id="petition-pending-reason"
+                      rows="6"
+                      value={form.pendingReason}
+                      onChange={(event) => setForm((currentForm) => ({ ...currentForm, pendingReason: event.target.value }))}
+                    />
+                  </Field>
+                ) : null}
               </div>
 
               <div className="form-actions">
