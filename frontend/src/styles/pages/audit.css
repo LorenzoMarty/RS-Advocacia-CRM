@@ -6,15 +6,16 @@
    da auditoria (hero de risco, prioridades, timeline).
    ============================================================ */
 
-.audit-page{display:grid;gap:var(--gap-page)}
-.audit-card .section-head{margin-bottom:16px}
+.audit-page{display:grid;gap:14px}
+.audit-card.section-card{padding:18px}
+.audit-card .section-head{margin-bottom:12px}
 .audit-card .section-note{font-size:.82rem}
 
 /* ---------- Hero de risco ---------- */
 .audit-hero-card{
     background:var(--panel);
     box-shadow:var(--shadow);
-    border-radius:22px;
+    border-radius:16px;
 }
 .audit-hero-card .intro-title{
     margin:0;
@@ -27,7 +28,7 @@
 .audit-risk-hero{
     display:grid;
     grid-template-columns:minmax(260px,330px) minmax(0,1fr);
-    gap:18px;
+    gap:12px;
     align-items:stretch;
 }
 
@@ -35,9 +36,9 @@
 .risk-score-card{
     display:flex;
     align-items:center;
-    gap:20px;
-    padding:22px;
-    border-radius:18px;
+    gap:14px;
+    padding:16px;
+    border-radius:14px;
     border:1px solid var(--line);
     background:var(--ghost);
     position:relative;
@@ -54,22 +55,22 @@
 .risk-score-card.is-healthy::before{background:var(--success)}
 
 .risk-score-ring{
-    width:116px;height:116px;border-radius:50%;
+    width:94px;height:94px;border-radius:50%;
     display:grid;place-items:center;flex-shrink:0;
     box-shadow:inset 0 0 0 1px var(--line);
 }
 .risk-score-inner{
-    width:88px;height:88px;border-radius:50%;
+    width:72px;height:72px;border-radius:50%;
     background:var(--panel,#020617);
     display:grid;place-items:center;text-align:center;line-height:1;
     box-shadow:0 8px 18px rgba(0,0,0,.25);
 }
-.risk-score-inner strong{font-size:1.9rem;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.risk-score-inner strong{font-size:1.55rem;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .risk-score-inner span{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
 
 .risk-score-body{display:grid;gap:2px;min-width:0}
-.risk-score-label{font-family:var(--serif);font-size:1.7rem;font-weight:400;line-height:1.05}
-.risk-score-drivers{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.risk-score-label{font-family:var(--serif);font-size:1.45rem;font-weight:400;line-height:1.05}
+.risk-score-drivers{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
 .risk-score-drivers li{
     display:flex;justify-content:space-between;gap:10px;
     font-size:.8rem;color:var(--soft);
@@ -78,17 +79,17 @@
 .risk-score-clean{font-size:.8rem;color:var(--soft);margin:8px 0 0}
 
 /* Faixa de KPIs (override do .productivity-kpis) */
-.audit-kpis{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.audit-kpis{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .audit-kpi{
     text-decoration:none;
     border:1px solid var(--line);
-    border-radius:14px;
+    border-radius:10px;
     transition:border-color var(--motion) var(--ease-out),background var(--motion) var(--ease-out),transform var(--motion-fast) var(--ease-out);
 }
 .audit-kpi:hover{border-color:rgba(212,175,55,.32);background:rgba(212,175,55,.07)}
 .audit-kpi:active{transform:scale(.99)}
 .audit-kpi-value{
-    font-size:1.15rem;
+    font-size:1.05rem;
     line-height:1.1;
     letter-spacing:-.02em;
     font-variant-numeric:tabular-nums;
@@ -100,14 +101,14 @@
 .audit-kpi-hint{font-size:.64rem;font-style:normal;color:var(--muted)}
 
 /* ---------- Prioridades (full-width) ---------- */
-.audit-priority-list{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.audit-priority-list{list-style:none;margin:0;padding:0;display:grid;gap:7px}
 .audit-priority-item{
     display:grid;
     grid-template-columns:4px minmax(0,1fr) auto;
-    gap:12px;
+    gap:10px;
     align-items:center;
-    padding:12px 16px 12px 0;
-    border-radius:14px;
+    padding:9px 12px 9px 0;
+    border-radius:10px;
     border:1px solid var(--line);
     background:var(--ghost);
     color:var(--text);
@@ -121,8 +122,8 @@
 .audit-priority-item.is-warn .audit-priority-rail{background:var(--warn)}
 .audit-priority-item.is-gold .audit-priority-rail{background:var(--gold)}
 .audit-priority-main{display:grid;gap:3px;min-width:0}
-.audit-priority-main strong{font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.audit-priority-main span{font-size:.77rem;color:var(--soft)}
+.audit-priority-main strong{font-size:.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-priority-main span{font-size:.72rem;color:var(--soft)}
 
 /* ---------- Skeleton ---------- */
 @keyframes audit-shimmer{0%{opacity:.5}50%{opacity:.85}100%{opacity:.5}}
@@ -134,44 +135,92 @@
 .audit-skel-block{height:220px}
 
 /* ---------- Timeline (atividade real do log) ---------- */
-.audit-activity .productivity-segmented{margin-left:auto}
-.audit-timeline{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.audit-activity-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(220px,1fr));
+    gap:10px;
+    align-items:start;
+}
+.audit-type-card{
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:var(--ghost);
+    min-width:0;
+    overflow:hidden;
+}
+.audit-type-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+    background:rgba(255,255,255,.02);
+}
+.audit-type-head h3{margin:0;font-size:.82rem;text-transform:uppercase;letter-spacing:.06em}
+.audit-type-head span{display:block;margin-top:2px;font-size:.68rem;color:var(--muted)}
+.audit-type-head strong{font-size:1rem;font-variant-numeric:tabular-nums;color:var(--gold-soft)}
+.audit-process-list{display:grid;gap:0}
+.audit-process-group{padding:9px 10px;border-bottom:1px solid var(--line)}
+.audit-process-group:last-child{border-bottom:0}
+.audit-process-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:4px;
+    font-size:.72rem;
+    color:var(--muted);
+}
+.audit-process-head span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-process-head strong{
+    min-width:20px;
+    height:20px;
+    display:grid;
+    place-items:center;
+    border-radius:999px;
+    border:1px solid var(--line);
+    color:var(--soft);
+    font-size:.68rem;
+    font-variant-numeric:tabular-nums;
+}
+.audit-timeline{list-style:none;margin:0;padding:0;display:grid;gap:0}
 .audit-timeline-item{
     position:relative;
     display:grid;
     grid-template-columns:auto 1fr;
-    gap:12px;
-    padding:13px 4px 13px 0;
+    gap:8px;
+    padding:7px 0;
     border-bottom:1px solid var(--line);
 }
 .audit-timeline-item:last-child{border-bottom:0}
 .audit-action-badge{
-    width:10px;height:10px;border-radius:50%;margin-top:6px;flex-shrink:0;
+    width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0;
     box-shadow:0 0 0 4px rgba(212,175,55,.08);
     background:var(--gold);
 }
 .audit-action-badge.is-criado{background:var(--success);box-shadow:0 0 0 4px rgba(115,211,177,.1)}
 .audit-action-badge.is-atualizado{background:var(--gold);box-shadow:0 0 0 4px rgba(212,175,55,.1)}
 .audit-action-badge.is-excluido{background:var(--danger);box-shadow:0 0 0 4px rgba(239,122,122,.1)}
-.audit-timeline-main{display:grid;gap:4px;min-width:0}
-.audit-timeline-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.audit-timeline-main{display:grid;gap:3px;min-width:0}
+.audit-timeline-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .audit-entity-chip{
-    font-size:.64rem;text-transform:uppercase;letter-spacing:.04em;
-    color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px;
+    font-size:.58rem;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 5px;
 }
-.audit-timeline-label{font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.audit-timeline-summary{margin:0;font-size:.82rem;color:var(--soft)}
-.audit-timeline-meta{display:flex;align-items:center;gap:8px;font-size:.73rem;color:var(--muted)}
+.audit-timeline-label{font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-timeline-summary{margin:0;font-size:.76rem;color:var(--soft)}
+.audit-timeline-meta{display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--muted);flex-wrap:wrap}
 .audit-diff-toggle{
     background:none;border:0;padding:0;cursor:pointer;
-    font-size:.73rem;color:var(--gold-soft,var(--gold));text-decoration:underline;
+    font-size:.68rem;color:var(--gold-soft,var(--gold));text-decoration:underline;
 }
 .audit-diff{
-    list-style:none;margin:6px 0 2px;padding:8px 10px;display:grid;gap:6px;
-    border:1px solid var(--line);border-radius:8px;background:var(--ghost);
+    list-style:none;margin:5px 0 1px;padding:7px 8px;display:grid;gap:4px;
+    border:1px solid var(--line);border-radius:7px;background:var(--panel);
 }
-.audit-diff-row{display:flex;align-items:center;gap:8px;font-size:.77rem;flex-wrap:wrap}
-.audit-diff-field{min-width:96px;color:var(--muted)}
+.audit-diff-row{display:flex;align-items:center;gap:6px;font-size:.7rem;flex-wrap:wrap}
+.audit-diff-field{min-width:78px;color:var(--muted)}
 .audit-diff-from{color:var(--soft);text-decoration:line-through;opacity:.75}
 .audit-diff-arrow{color:var(--muted)}
 .audit-diff-to{color:var(--success)}
@@ -179,7 +228,8 @@
 /* ---------- Light theme ---------- */
 html[data-theme="light"] .risk-score-inner{background:#fff}
 html[data-theme="light"] .risk-score-card,
-html[data-theme="light"] .audit-priority-item{
+html[data-theme="light"] .audit-priority-item,
+html[data-theme="light"] .audit-type-card{
     background:rgba(24,30,42,.04);border-color:rgba(30,34,45,.1);
 }
 
@@ -187,9 +237,11 @@ html[data-theme="light"] .audit-priority-item{
 @media(max-width:1080px){
     .audit-risk-hero{grid-template-columns:1fr}
     .audit-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .audit-activity-grid{grid-template-columns:repeat(2,minmax(220px,1fr))}
 }
 @media(max-width:560px){
     .audit-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .audit-activity-grid{grid-template-columns:1fr}
     .risk-score-card{flex-direction:column;text-align:center}
     .risk-score-card::before{inset:0 0 auto 0;width:auto;height:4px}
 }

@@ -120,6 +120,8 @@ export function auditEntryFromApi(entry) {
     entityType: entry.entidade_tipo || '',
     entityId: String(entry.entidade_id || ''),
     entityLabel: entry.entidade_rotulo || '',
+    processId: String(entry.processo_id || ''),
+    processLabel: entry.processo_numero || '',
     author: entry.autor_nome || '',
     summary: entry.resumo || '',
     changes: entry.alteracoes && typeof entry.alteracoes === 'object' ? entry.alteracoes : {},

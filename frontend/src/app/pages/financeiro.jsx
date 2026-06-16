@@ -5,7 +5,6 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { colorAt } from '../components/audit/chartTheme';
 import {
   FINANCE_CATEGORIES,
-  FINANCE_STATUS_OPTIONS,
   FINANCE_TABS,
   FINANCE_TYPE_OPTIONS,
 } from '../data';
@@ -394,6 +393,11 @@ export function LancamentoFormPage() {
     ...lancamentos.filter((item) => item.type === form.type).map((item) => item.category),
   ].filter(Boolean))];
 
+  // Processos disponíveis dependem do cliente selecionado (sem cliente = todos).
+  const availableCases = processes.filter(
+    (process) => !form.clientId || process.clientId === form.clientId,
+  );
+
   function update(field, value) {
     setForm((current) => {
       const next = { ...current, [field]: value };
@@ -402,6 +406,15 @@ export function LancamentoFormPage() {
       }
       if (field === 'status' && value !== 'Pago') {
         next.paymentDate = '';
+      }
+      // Troca de cliente invalida o processo que não pertence a ele.
+      if (field === 'clientId') {
+        const stillValid = processes.some(
+          (process) => process.id === current.caseId && process.clientId === value,
+        );
+        if (!stillValid) {
+          next.caseId = '';
+        }
       }
       return next;
     });
@@ -474,13 +487,6 @@ export function LancamentoFormPage() {
               <Field id="lanc-due" label="Vencimento">
                 <input id="lanc-due" type="date" value={form.dueDate} onChange={(event) => update('dueDate', event.target.value)} />
               </Field>
-              <Field id="lanc-status" label="Status">
-                <Select id="lanc-status" value={form.status} onChange={(event) => update('status', event.target.value)}>
-                  {FINANCE_STATUS_OPTIONS.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </Select>
-              </Field>
               {form.status === 'Pago' ? (
                 <Field id="lanc-payment" label="Data de pagamento" error={errors.paymentDate}>
                   <input id="lanc-payment" type="date" value={form.paymentDate} onChange={(event) => update('paymentDate', event.target.value)} />
@@ -496,8 +502,10 @@ export function LancamentoFormPage() {
               </Field>
               <Field id="lanc-case" label="Processo (opcional)">
                 <Select id="lanc-case" value={form.caseId} onChange={(event) => update('caseId', event.target.value)}>
-                  <option value="">Nenhum</option>
-                  {processes.map((process) => (
+                  <option value="">
+                    {form.clientId && !availableCases.length ? 'Nenhum processo deste cliente' : 'Nenhum'}
+                  </option>
+                  {availableCases.map((process) => (
                     <option key={process.id} value={process.id}>{process.number}</option>
                   ))}
                 </Select>

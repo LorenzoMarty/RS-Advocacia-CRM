@@ -2,13 +2,14 @@ import json
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from auditoria.models import RegistroAuditoria
 from auditoria.services import calcular_diff
 from clientes.models import Cliente
+from peticoes.models import Peticao
 from prazos.models import Prazo
 from processos.models import Processo
 from productivity.models import TimeEntry
@@ -59,6 +60,7 @@ class _AuditoriaBaseTestCase(TestCase):
         )
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class AuditoriaRegistroTests(_AuditoriaBaseTestCase):
     def test_editar_processo_registra_diff_e_autor(self):
         response = self.client.patch(
@@ -106,7 +108,32 @@ class AuditoriaRegistroTests(_AuditoriaBaseTestCase):
         )
         self.assertEqual(registro.entidade_rotulo, "Contestacao")
 
+    def test_criar_peticao_registra_com_processo(self):
+        response = self.client.post(
+            reverse("criar_peticao"),
+            data=json.dumps(
+                {
+                    "cliente": self.cliente.pk,
+                    "processo": self.processo.pk,
+                    "tipo": Peticao.TIPO_PETICAO,
+                    "adverso": "Empresa",
+                    "responsavel_acao": self.usuario.nome,
+                    "status": Peticao.STATUS_PENDENTE,
+                }
+            ),
+            content_type="application/json",
+        )
 
+        self.assertEqual(response.status_code, 201, response.json())
+        registro = RegistroAuditoria.objects.get(
+            entidade_tipo=RegistroAuditoria.ENTIDADE_PETICAO,
+            acao=RegistroAuditoria.ACAO_CRIADO,
+        )
+        self.assertEqual(registro.processo_id, str(self.processo.pk))
+        self.assertEqual(registro.processo_rotulo, self.processo.numero_processo)
+
+
+@override_settings(SECURE_SSL_REDIRECT=False)
 class AuditoriaListagemTests(_AuditoriaBaseTestCase):
     def test_listar_admin_retorna_registros(self):
         RegistroAuditoria.objects.create(
@@ -120,7 +147,10 @@ class AuditoriaListagemTests(_AuditoriaBaseTestCase):
         response = self.client.get(reverse("listar_auditoria"))
 
         self.assertEqual(response.status_code, 200, response.json())
-        self.assertEqual(len(response.json()["dados"]["registros"]), 1)
+        registros = response.json()["dados"]["registros"]
+        self.assertEqual(len(registros), 1)
+        self.assertEqual(registros[0]["processo_id"], "1")
+        self.assertEqual(registros[0]["processo_numero"], "X")
 
     def test_listar_filtra_por_entidade(self):
         RegistroAuditoria.objects.create(
@@ -172,6 +202,7 @@ class AuditoriaListagemTests(_AuditoriaBaseTestCase):
         self.assertEqual(response.status_code, 403, response.json())
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class PainelAuditoriaTests(_AuditoriaBaseTestCase):
     def _criar_prazo(self, dias, responsavel="Adv", concluido=False):
         return Prazo.objects.create(
