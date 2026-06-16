@@ -35,6 +35,7 @@ import {
   productivityGoalsFromResponse,
   auditFromResponse,
   auditFromListResponse,
+  auditPanelFromResponse,
   clientToPayload,
   processToPayload,
   eventToPayload,
@@ -184,6 +185,7 @@ export function AppStateProvider({ children }) {
   const [timeEntries, setTimeEntries] = useState([]);
   const [productivityGoals, setProductivityGoals] = useState([]);
   const [auditEntries, setAuditEntries] = useState([]);
+  const [auditPanel, setAuditPanel] = useState(null);
   const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled);
   const [apiStatus, setApiStatus] = useState((isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled) ? 'loading' : 'local');
   const [isEventsLoading, setIsEventsLoading] = useState(isEventsApiEnabled);
@@ -1556,6 +1558,18 @@ export function AppStateProvider({ children }) {
     }
   }
 
+  async function loadAuditPanel(periodo = 7) {
+    if (!canUseApi) {
+      return;
+    }
+    try {
+      const payload = await api.getAuditPanel(periodo);
+      setAuditPanel(auditPanelFromResponse(payload));
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+    }
+  }
+
   const value = {
     users,
     clients,
@@ -1568,7 +1582,9 @@ export function AppStateProvider({ children }) {
     timeEntries,
     productivityGoals,
     auditEntries,
+    auditPanel,
     loadAudit,
+    loadAuditPanel,
     currentUser,
     currentRole,
     hasPermission,

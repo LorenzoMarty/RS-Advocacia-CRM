@@ -1,4 +1,4 @@
-import { Component, useEffect, useMemo, useState } from 'react';
+import { Component, useEffect, useState } from 'react';
 
 import { PageChrome } from '../layout';
 import { useAppState } from '../store';
@@ -6,81 +6,65 @@ import { NotFoundState } from './common';
 
 import { RiskSummary } from '../components/audit/RiskSummary';
 import { PriorityActions } from '../components/audit/PriorityActions';
-import { AuditInsightsPanel } from '../components/audit/AuditInsightsPanel';
 import { StatusDistribution } from '../components/audit/StatusDistribution';
 import { ActivityTimeline } from '../components/audit/ActivityTimeline';
 import { LoadingSkeleton } from '../components/audit/LoadingSkeleton';
 import { ErrorState } from '../components/audit/ErrorState';
-import {
-  buildRiskSummary,
-  computeRiskScore,
-  buildPriorityActions,
-  statusDistribution,
-  buildInsights,
-  classifyDeadline,
-  deadlineDate,
-  daysUntil,
-  startOfToday,
-} from '../lib/auditSelectors';
 
-function AuditDashboard({ auditEntries, clients, deadlines, processes, timeEntries }) {
-  const [period, setPeriod] = useState(7);
-  const today = useMemo(() => startOfToday(), []);
+// Render-only: o painel (risco, KPIs, prioridades, distribuição) é computado no
+// backend (GET /api/auditoria/painel/). Fallback neutro enquanto carrega / em demo.
+const EMPTY_PANEL = {
+  risk: { score: 0, level: 'healthy', label: 'Saudável', drivers: [] },
+  summary: {
+    activeProcesses: 0,
+    overdue: 0,
+    dueSoon: 0,
+    stale: 0,
+    clientsWithoutProcess: 0,
+    runningTimers: 0,
+  },
+  priorityActions: [],
+  statusDistribution: [],
+};
 
-  // Prazos acionáveis dentro do horizonte selecionado (vencidos sempre incluídos).
-  const horizonDeadlines = useMemo(() => deadlines.filter((d) => {
-    const bucket = classifyDeadline(d, today);
-    if (!bucket) return false;
-    if (!period || bucket === 'overdue') return true;
-    return daysUntil(deadlineDate(d), today) <= period;
-  }), [deadlines, period, today]);
-
-  const summary = useMemo(
-    () => buildRiskSummary(processes, deadlines, timeEntries, clients, today),
-    [processes, deadlines, timeEntries, clients, today],
-  );
-  const risk = useMemo(() => computeRiskScore(summary), [summary]);
-
-  const priorityActions = useMemo(
-    () => buildPriorityActions(horizonDeadlines, processes, today),
-    [horizonDeadlines, processes, today],
-  );
-
-  const statusData = useMemo(() => statusDistribution(processes), [processes]);
-  const insights = useMemo(
-    () => buildInsights(summary, deadlines, today),
-    [summary, deadlines, today],
-  );
+function AuditDashboard({ panel, auditEntries, period, onPeriodChange }) {
+  const data = panel || EMPTY_PANEL;
 
   return (
     <div className="audit-page">
-      <RiskSummary summary={summary} risk={risk} period={period} onPeriodChange={setPeriod} />
-
-      <div className="audit-grid-focus">
-        <PriorityActions actions={priorityActions} />
-        <AuditInsightsPanel insights={insights} />
-      </div>
-
+      <RiskSummary
+        summary={data.summary}
+        risk={data.risk}
+        period={period}
+        onPeriodChange={onPeriodChange}
+      />
+      <PriorityActions actions={data.priorityActions} />
       <ActivityTimeline entries={auditEntries} />
-
-      <StatusDistribution data={statusData} />
+      <StatusDistribution data={data.statusDistribution} />
     </div>
   );
 }
 
 export function AuditPage() {
   const {
-    auditEntries, clients, currentRole, deadlines, processes, timeEntries, isLoading, loadAudit,
+    auditEntries, auditPanel, currentRole, isLoading, loadAudit, loadAuditPanel,
   } = useAppState();
   const isAdmin = currentRole?.name === 'Administrador';
+  const [period, setPeriod] = useState(7);
 
   useEffect(() => {
     if (isAdmin) {
       loadAudit();
+      loadAuditPanel(period);
     }
-    // loadAudit é estável; recarrega só quando o papel muda.
+    // loadAudit/loadAuditPanel são estáveis; recarrega só quando o papel muda.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
+
+  function handlePeriodChange(value) {
+    setPeriod(value);
+    loadAuditPanel(value);
+  }
 
   if (!isAdmin) {
     return (
@@ -99,11 +83,10 @@ export function AuditPage() {
       ) : (
         <AuditBoundary>
           <AuditDashboard
+            panel={auditPanel}
             auditEntries={auditEntries}
-            clients={clients}
-            deadlines={deadlines}
-            processes={processes}
-            timeEntries={timeEntries}
+            period={period}
+            onPeriodChange={handlePeriodChange}
           />
         </AuditBoundary>
       )}

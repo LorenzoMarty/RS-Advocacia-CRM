@@ -1,7 +1,9 @@
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpRequest
 
+from auditoria import painel
 from auditoria.models import RegistroAuditoria
+from clientes.models import Cliente
 from core.permissions import app_permissions_required
 from core.utils import (
     isoformat_ou_nulo,
@@ -9,6 +11,9 @@ from core.utils import (
     resposta_erro,
     resposta_sucesso,
 )
+from prazos.models import Prazo
+from processos.models import Processo
+from productivity.models import TimeEntry
 from usuarios.models import Usuario
 
 LIMITE_PADRAO = 100
@@ -56,6 +61,16 @@ def _is_admin(request: HttpRequest, usuario: Usuario | None = None) -> bool:
     return usuario is not None and usuario.cargo == "Administrador"
 
 
+def _exigir_admin(request: HttpRequest):
+    """Return an error response if the caller is not an admin, else None."""
+    usuario_atual = _current_usuario(request)
+    if not _is_admin(request, usuario_atual):
+        return resposta_erro(
+            {"permissao": ["Apenas administradores acessam a auditoria."]}, status=403
+        )
+    return None
+
+
 def serialize_registro(registro: RegistroAuditoria):
     return {
         "id": str(registro.pk),
@@ -86,11 +101,9 @@ def listar_auditoria(request: HttpRequest):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    usuario_atual = _current_usuario(request)
-    if not _is_admin(request, usuario_atual):
-        return resposta_erro(
-            {"permissao": ["Apenas administradores acessam a auditoria."]}, status=403
-        )
+    erro_admin = _exigir_admin(request)
+    if erro_admin is not None:
+        return erro_admin
 
     registros = RegistroAuditoria.objects.all()
 
@@ -106,3 +119,35 @@ def listar_auditoria(request: HttpRequest):
     return resposta_sucesso(
         {"registros": [serialize_registro(registro) for registro in registros]}
     )
+
+
+PERIODO_PADRAO = 7
+
+
+def _periodo(request: HttpRequest) -> int:
+    """Horizonte (em dias) para as ações prioritárias; 0 = sem corte."""
+    try:
+        periodo = int(request.GET.get("periodo", PERIODO_PADRAO))
+    except (TypeError, ValueError):
+        return PERIODO_PADRAO
+    return max(0, periodo)
+
+
+@app_permissions_required("processos.view_processo", "prazos.view_prazo")
+def painel_auditoria(request: HttpRequest):
+    if request.method != "GET":
+        return metodo_nao_permitido(["GET"])
+
+    erro_admin = _exigir_admin(request)
+    if erro_admin is not None:
+        return erro_admin
+
+    processos = list(Processo.objects.select_related("cliente"))
+    prazos = list(Prazo.objects.filter(concluido=False).select_related("processo"))
+    clientes = list(Cliente.objects.all())
+    running_timers = TimeEntry.objects.filter(status=TimeEntry.STATUS_RUNNING).count()
+
+    dados = painel.build_panel(
+        processos, prazos, clientes, running_timers, _periodo(request)
+    )
+    return resposta_sucesso(dados)

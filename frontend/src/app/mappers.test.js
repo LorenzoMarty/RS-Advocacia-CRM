@@ -4,6 +4,7 @@ import {
   auditEntryFromApi,
   auditFromListResponse,
   auditFromResponse,
+  auditPanelFromResponse,
   clientFromApi,
   clientToPayload,
   collectionFromResponse,
@@ -87,6 +88,47 @@ describe('auditEntryFromApi', () => {
   it('unwraps bootstrap and list envelopes', () => {
     expect(auditFromResponse({ auditoria: [{ id: 1 }] })).toHaveLength(1);
     expect(auditFromListResponse({ registros: [{ id: 1 }, { id: 2 }] })).toHaveLength(2);
+  });
+});
+
+describe('auditPanelFromResponse', () => {
+  it('maps the backend panel payload to camelCase UI shape', () => {
+    const panel = auditPanelFromResponse({
+      periodo: 30,
+      risk: { score: 21, level: 'healthy', label: 'Saudável', drivers: [{ key: 'overdue', label: 'Prazos vencidos', value: 1, weight: 12 }] },
+      summary: {
+        active_processes: 2,
+        overdue: 1,
+        due_soon: 3,
+        stale: 1,
+        clients_without_process: 0,
+        running_timers: 1,
+      },
+      priority_actions: [
+        { id: 'deadline-7', kind: 'deadline', title: 'X', tone: 'danger', date: '2026-06-18', to: '/prazos/7' },
+        { id: 'process-2', kind: 'process', title: 'Y', tone: 'warn', date: null, to: '/processos/2' },
+      ],
+      status_distribution: [{ status: 'Ativo', count: 2 }],
+    });
+
+    expect(panel.periodo).toBe(30);
+    expect(panel.summary).toEqual({
+      activeProcesses: 2,
+      overdue: 1,
+      dueSoon: 3,
+      stale: 1,
+      clientsWithoutProcess: 0,
+      runningTimers: 1,
+    });
+    expect(panel.risk.drivers[0].key).toBe('overdue');
+    expect(panel.priorityActions[0].date).toBe('2026-06-18T12:00:00');
+    expect(panel.priorityActions[1].date).toBeNull();
+    expect(panel.statusDistribution).toEqual([{ status: 'Ativo', count: 2 }]);
+  });
+
+  it('unwraps the dados envelope and tolerates null', () => {
+    expect(auditPanelFromResponse({ dados: { summary: { overdue: 4 } } }).summary.overdue).toBe(4);
+    expect(auditPanelFromResponse(null)).toBeNull();
   });
 });
 
