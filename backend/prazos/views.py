@@ -2,6 +2,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from auditoria import services as auditoria_services
@@ -74,6 +75,19 @@ def serialize_prazo(prazo: Prazo):
         "criado_em": isoformat_ou_nulo(prazo.criado_em),
         "atualizado_em": isoformat_ou_nulo(prazo.atualizado_em),
     }
+
+
+def _prazo_elapsed_seconds(prazo: Prazo, now=None) -> int:
+    elapsed_seconds = int(prazo.tempo_decorrido_segundos or 0)
+    if not prazo.timer_iniciado_em:
+        return elapsed_seconds
+
+    now = now or timezone.now()
+    return elapsed_seconds + max(0, int((now - prazo.timer_iniciado_em).total_seconds()))
+
+
+def _is_pending_prazo_status(status: str) -> bool:
+    return (status or "").strip().casefold() in {"pendente", "a fazer"}
 
 
 def _prazo_api_payload(request):
@@ -191,6 +205,7 @@ def atualizar_timer_prazo(request, prazo_id):
         return resposta_erro(str(exc), status=400)
 
     update_fields = ["atualizado_em"]
+    current_elapsed_seconds = _prazo_elapsed_seconds(prazo)
 
     if "tempo_decorrido_segundos" in payload:
         try:
@@ -207,7 +222,11 @@ def atualizar_timer_prazo(request, prazo_id):
                 status=400,
             )
 
-        prazo.tempo_decorrido_segundos = tempo_decorrido_segundos
+        prazo.tempo_decorrido_segundos = max(
+            int(prazo.tempo_decorrido_segundos or 0),
+            current_elapsed_seconds,
+            tempo_decorrido_segundos,
+        )
         update_fields.append("tempo_decorrido_segundos")
 
     if "timer_iniciado_em" in payload:
@@ -222,6 +241,9 @@ def atualizar_timer_prazo(request, prazo_id):
                     status=400,
                 )
             prazo.timer_iniciado_em = parsed_timer
+            if not prazo.concluido and _is_pending_prazo_status(prazo.status):
+                prazo.status = "Em andamento"
+                update_fields.append("status")
         else:
             return resposta_erro(
                 {"timer_iniciado_em": ["Informe uma data/hora valida."]},

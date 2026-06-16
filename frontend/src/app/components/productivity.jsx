@@ -44,6 +44,20 @@ function timeEntryElapsedSeconds(entry, currentTime = Date.now()) {
   return totalSeconds + Math.max(0, Math.floor((currentTime - baseTime) / 1000));
 }
 
+function taskLoggedSeconds(timeEntries, userId, taskId, taskType, currentTime = Date.now()) {
+  return (timeEntries || []).reduce((total, entry) => {
+    if (
+      entry.userId !== userId
+      || entry.taskId !== String(taskId)
+      || entry.taskType !== taskType
+    ) {
+      return total;
+    }
+
+    return total + timeEntryElapsedSeconds(entry, currentTime);
+  }, 0);
+}
+
 function dateInputValue(value = new Date()) {
   const date = new Date(value);
 
@@ -232,7 +246,7 @@ export function TaskTimer({ taskId, taskType, title, processId = '', processNumb
     && entry.status === 'running'
     && !(entry.taskId === String(taskId) && entry.taskType === taskType),
   );
-  const elapsedSeconds = timeEntryElapsedSeconds(taskEntry, now);
+  const elapsedSeconds = taskLoggedSeconds(timeEntries, currentUserId, taskId, taskType, now);
 
   useEffect(() => {
     if (!taskEntry || taskEntry.status !== 'running') {
