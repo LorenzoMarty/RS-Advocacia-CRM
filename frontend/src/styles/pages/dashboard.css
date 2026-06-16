@@ -1,8 +1,11 @@
+    .dashboard-page{
+        min-height:100%;
+        background:var(--bg);
+    }
+
     .hero{
         padding:calc(30px * var(--space-scale));
-        background:
-            radial-gradient(circle at top right, rgba(212,175,55,.12), transparent 28%),
-            linear-gradient(135deg, rgba(15,23,42,.96), rgba(2,6,23,.92));
+        background:var(--bg);
     }
 
     .hero-grid{
@@ -297,10 +300,12 @@
         letter-spacing:-.04em;
     }
 
-    html[data-theme="light"] .hero{
-        background:
-            radial-gradient(circle at top right, rgba(181,138,79,.1), transparent 30%),
-            linear-gradient(135deg, rgba(255,255,255,.9), rgba(247,242,235,.86));
+    html[data-theme="light"] .dashboard-page{
+        background:#ffffff;
+    }
+
+    html[data-theme="light"] .dashboard-page .hero{
+        background:#ffffff;
     }
 
     html[data-theme="light"] .metric,

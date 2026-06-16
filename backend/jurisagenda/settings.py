@@ -161,6 +161,7 @@ INSTALLED_APPS = [
     "productivity",
     "prospeccao",
     "financeiro",
+    "auditoria",
     "core",
     "usuarios",
     "integrations",
