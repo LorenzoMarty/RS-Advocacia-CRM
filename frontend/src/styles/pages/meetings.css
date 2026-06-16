@@ -1,63 +1,100 @@
 .meetings-page{display:grid;gap:var(--gap-page)}
-.meetings-intro,.meetings-form-panel,.meetings-workspace{padding:var(--pad-card)}
-.meetings-title{margin:8px 0 10px;font-family:var(--serif);font-size:clamp(2.2rem,4vw,3.1rem);line-height:.98;font-weight:400;letter-spacing:-.055em}
-.meetings-copy{max-width:650px;margin:0;color:var(--soft);line-height:1.65}
-.meetings-layout{display:grid;grid-template-columns:minmax(280px,.75fr) minmax(420px,1.35fr);gap:var(--gap-page);align-items:start}
+.meetings-layout{display:grid;grid-template-columns:minmax(260px,.62fr) minmax(440px,1.6fr);gap:var(--gap-page);align-items:start}
+
+/* ---- Sidebar (lista de reuniões) ---- */
+.meetings-sidebar{padding:var(--pad-card);position:sticky;top:18px}
+.meeting-options{display:grid;gap:9px}
+.meeting-option{display:grid;gap:5px;min-width:0;width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:15px;background:var(--ghost);color:var(--text);text-align:left;cursor:pointer;transition:border-color var(--motion) var(--ease-out),background var(--motion) var(--ease-out),transform var(--motion-fast) var(--ease-out)}
+.meeting-option:hover{border-color:var(--line-strong);background:var(--ghost-strong)}
+.meeting-option:active{transform:scale(.99)}
+.meeting-option span{color:var(--muted);font-size:.78rem}
+.meeting-option-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.meeting-option-title strong{font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meeting-option.active{border-color:rgba(212,175,55,.34);background:rgba(212,175,55,.1)}
+
+/* ---- Editor (form de nova/editar reunião) ---- */
+.meeting-editor{display:grid;gap:14px;margin-bottom:var(--gap-page);padding:var(--pad-card)}
 .meeting-form{display:grid;gap:14px}
 .meeting-form label{display:grid;gap:8px;color:var(--soft);font-size:.82rem;font-weight:600}
 .meeting-form input,.meeting-form select,.meeting-form textarea{width:100%;border:1px solid var(--line);border-radius:13px;background:var(--ghost);color:var(--text);padding:12px 13px;font:inherit;outline:0}
 .meeting-form input,.meeting-form select{min-height:46px}
 .meeting-form textarea{resize:vertical;line-height:1.55}
 .meeting-form input:focus,.meeting-form select:focus,.meeting-form textarea:focus{border-color:rgba(212,175,55,.28);box-shadow:0 0 0 4px rgba(212,175,55,.08)}
-.meeting-picker{padding-bottom:20px;border-bottom:1px solid var(--line)}
-.meeting-options{display:grid;gap:10px}
-.meeting-option{display:grid;gap:10px;min-width:0;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--ghost);color:var(--text);text-align:left}
-.meeting-option-main{display:grid;gap:6px;width:100%;padding:0;border:0;background:transparent;color:inherit;text-align:left}
-.meeting-option span{color:var(--muted);font-size:.78rem}
-.meeting-option-actions{display:flex;gap:8px;flex-wrap:wrap}
-.meeting-option.active{border-color:rgba(212,175,55,.3);background:rgba(212,175,55,.1)}
-.meeting-editor{display:grid;gap:14px;margin-bottom:18px;padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--ghost)}
 .meeting-form-actions{display:flex;gap:10px;flex-wrap:wrap}
-.meeting-detail{display:grid;gap:var(--gap-page);padding-top:0}
-.meeting-context{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
-.meeting-context h2{margin:0 0 6px;font-size:1.25rem}
-.meeting-context p{margin:0;color:var(--muted);font-size:.88rem}
-.meeting-context-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.btn-compact{min-height:32px;padding:0 10px;border-radius:11px;font-size:.75rem}
-.audio-recorder{display:grid;gap:14px;padding:18px;border-radius:18px;border:1px dashed var(--line-strong);background:var(--ghost)}
-.recording-actions,.recording-ready{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn-compact{min-height:32px;padding:0 12px;border-radius:11px;font-size:.78rem}
+
+/* ---- Documento (área principal estilo Docs) ---- */
+.meetings-workspace{display:grid;gap:var(--gap-page);min-width:0}
+.meeting-doc{display:grid;gap:12px}
+.meeting-doc-bar{position:sticky;top:8px;z-index:2;display:flex;justify-content:flex-end}
+.meeting-doc-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:8px 10px;border-radius:14px;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(10px);box-shadow:var(--shadow)}
+
+.meeting-doc-sheet{display:grid;gap:22px;max-width:840px;width:100%;margin:0 auto;padding:clamp(22px,4vw,46px);border:1px solid var(--line);border-radius:22px;background:var(--panel);box-shadow:var(--shadow)}
+.meeting-doc-head{display:grid;gap:6px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.meeting-doc-eyebrow{margin:0;color:var(--gold-soft);font-size:.72rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.meeting-doc-title{margin:0;font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);line-height:1;font-weight:400;letter-spacing:-.04em;color:var(--text)}
+.meeting-doc-meta{margin:0;color:var(--muted);font-size:.9rem}
+
+/* ---- Banner de processamento (o que está sendo feito) ---- */
+.meeting-doc-processing{display:grid;gap:12px;padding:16px 18px;border-radius:16px;border:1px solid rgba(212,175,55,.26);background:rgba(212,175,55,.07)}
+.meeting-doc-processing-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.meeting-doc-processing-head strong{color:var(--text);font-size:.95rem}
+.meeting-doc-processing-head span{color:var(--soft);font-size:.84rem}
+
+.meeting-doc-summary{display:grid;gap:14px}
+.meeting-doc-empty{display:grid;gap:6px;padding:26px;border-radius:16px;border:1px dashed var(--line-strong);background:var(--ghost);text-align:center}
+.meeting-doc-empty strong{color:var(--text)}
+.meeting-doc-empty p{margin:0;color:var(--muted);font-size:.88rem}
+.meeting-doc-placeholder{padding:clamp(30px,6vw,60px);display:grid;place-items:center}
+
+/* ---- Seções recolhíveis (transcrição / trechos) ---- */
+.meeting-doc-fold{border-top:1px solid var(--line);padding-top:16px}
+.meeting-doc-fold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;color:var(--gold-soft);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 0}
+.meeting-doc-fold>summary::-webkit-details-marker{display:none}
+.meeting-doc-fold>summary::before{content:"▸";display:inline-block;transition:transform var(--motion-fast) var(--ease-out);color:var(--muted)}
+.meeting-doc-fold[open]>summary::before{transform:rotate(90deg)}
+.meeting-doc-fold[open]>summary{margin-bottom:14px}
+.meeting-transcript-text{margin:0;max-height:360px;overflow:auto;color:var(--soft);font-size:.9rem;line-height:1.7;white-space:pre-wrap}
+
+/* ---- Barra de captura (Gravar reunião + Enviar arquivo) ---- */
+.capture-bar{display:grid;gap:12px;padding:16px;border-radius:18px;border:1px dashed var(--line-strong);background:var(--ghost)}
+.capture-actions{display:flex;gap:10px;flex-wrap:wrap}
+.capture-btn{display:inline-flex;align-items:center;gap:9px}
+.capture-ico{font-size:.7rem;opacity:.85}
+.capture-btn .capture-rec-dot{width:9px;height:9px;border-radius:999px;background:currentColor;animation:capture-blink 1.1s steps(2,start) infinite}
+.upload-label{position:relative;cursor:pointer}
+.upload-label.is-disabled{opacity:.5;pointer-events:none}
 .upload-label input{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0}
-.recording-live,.recording-error{margin:0;font-size:.88rem}
-.recording-live{color:var(--gold-soft)}
-.recording-error,.recording-failure{color:var(--danger)}
-.recording-preview{display:grid;gap:12px}
-.recording-preview audio{width:100%}
-.recording-ready span{flex:1;min-width:150px;color:var(--soft);font-size:.82rem;overflow:hidden;text-overflow:ellipsis}
-.recording-results{display:grid;gap:12px}
-.recording-results-title{margin:0;color:var(--gold-soft);font-size:.82rem;text-transform:uppercase;letter-spacing:.12em}
-.meeting-report,.meeting-transcript{margin-top:6px}
-.meeting-transcript-text{max-height:320px;overflow:auto}
-.recording-result{display:grid;gap:14px;padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--ghost)}
-.recording-result-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.recording-result-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
-.recording-result-head p{margin:5px 0 0;color:var(--muted);font-size:.78rem}
-.recording-pipeline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:0;padding:0;list-style:none}
-.recording-step{display:flex;align-items:center;gap:7px;font-size:.74rem;color:var(--muted)}
-.recording-step-dot{width:9px;height:9px;border-radius:999px;background:var(--line);border:1px solid var(--line);flex:none}
-.recording-step-done .recording-step-dot{background:var(--success);border-color:var(--success)}
-.recording-step-done .recording-step-label{color:var(--soft)}
-.recording-step-active .recording-step-dot{background:var(--gold-soft);border-color:var(--gold-soft);animation:recording-pulse 1.4s ease-in-out infinite}
-.recording-step-active .recording-step-label{color:var(--text);font-weight:600}
-@keyframes recording-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(212,175,55,.4)}50%{opacity:.65;box-shadow:0 0 0 4px rgba(212,175,55,0)}}
+.capture-hint{margin:0;color:var(--muted);font-size:.82rem;line-height:1.5}
+.capture-hint-ok{color:var(--success)}
+
+.capture-live{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid rgba(239,122,122,.3);background:rgba(239,122,122,.08)}
+.capture-live-text{display:grid;gap:3px}
+.capture-live-text strong{color:var(--text);font-size:.92rem}
+.capture-live-text span{color:var(--soft);font-size:.82rem;line-height:1.45}
+.capture-live-pulse{width:12px;height:12px;flex:none;border-radius:999px;background:var(--danger);box-shadow:0 0 0 0 rgba(239,122,122,.5);animation:capture-pulse 1.5s ease-out infinite}
+
+.capture-preview{display:grid;gap:10px;padding:13px;border-radius:14px;border:1px solid var(--line);background:var(--ghost-strong)}
+.capture-preview audio{width:100%}
+.capture-preview-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.capture-preview-name{flex:1;min-width:140px;color:var(--soft);font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.capture-preview-actions{display:flex;gap:8px;flex-wrap:wrap}
+.capture-progress{height:6px;border-radius:999px;background:var(--ghost);overflow:hidden}
+.capture-progress span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width var(--motion) var(--ease-out)}
+
+@keyframes capture-pulse{0%{box-shadow:0 0 0 0 rgba(239,122,122,.5)}70%{box-shadow:0 0 0 10px rgba(239,122,122,0)}100%{box-shadow:0 0 0 0 rgba(239,122,122,0)}}
+@keyframes capture-blink{0%,49%{opacity:1}50%,100%{opacity:.25}}
+
+/* ---- Resumo renderizado (reusado pelo MeetingSummary) ---- */
 .ai-output{display:grid;gap:10px}
 .ai-output h3{margin:0;color:var(--gold-soft);font-size:.88rem;text-transform:uppercase;letter-spacing:.12em}
-.summary-report{display:grid;gap:10px}
-.summary-section{display:grid;gap:10px;padding:14px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.018)),var(--ghost)}
+.summary-report{display:grid;gap:12px}
+.summary-section{display:grid;gap:10px;padding:16px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.018)),var(--ghost)}
 .summary-section-nested{padding:12px;border-radius:14px;background:rgba(255,255,255,.028)}
 .summary-section-header{display:flex;align-items:center;gap:9px}
 .summary-section-header::before{content:"";width:7px;height:7px;flex:0 0 auto;border-radius:999px;background:var(--gold-soft);box-shadow:0 0 14px rgba(212,175,55,.24)}
 .summary-section-header h4{margin:0;color:var(--text);font-size:.82rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
-.summary-section-body{display:grid;gap:9px;color:var(--soft);font-size:.9rem;line-height:1.62}
+.summary-section-body{display:grid;gap:9px;color:var(--soft);font-size:.92rem;line-height:1.66}
 .summary-section-body p{margin:0}
 .summary-list{margin:0;padding-left:18px;display:grid;gap:6px}
 .summary-list li::marker{color:var(--gold-soft)}
@@ -66,6 +103,22 @@
 .summary-checkitem span{width:15px;height:15px;flex:0 0 auto;margin-top:3px;border-radius:5px;border:1px solid rgba(212,175,55,.34);background:rgba(212,175,55,.08)}
 .summary-checkitem p{margin:0}
 .summary-subsections{display:grid;gap:8px}
+
+/* ---- Transcrição editável + trechos (RecordingResult) ---- */
+.recording-results{display:grid;gap:12px}
+.recording-result{display:grid;gap:14px;padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--ghost)}
+.recording-result-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.recording-result-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.recording-result-head p{margin:5px 0 0;color:var(--muted);font-size:.78rem}
+.recording-error,.recording-failure{color:var(--danger);margin:0;font-size:.88rem}
+.recording-pipeline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:0;padding:0;list-style:none}
+.recording-step{display:flex;align-items:center;gap:7px;font-size:.74rem;color:var(--muted)}
+.recording-step-dot{width:9px;height:9px;border-radius:999px;background:var(--line);border:1px solid var(--line);flex:none}
+.recording-step-done .recording-step-dot{background:var(--success);border-color:var(--success)}
+.recording-step-done .recording-step-label{color:var(--soft)}
+.recording-step-active .recording-step-dot{background:var(--gold-soft);border-color:var(--gold-soft);animation:recording-pulse 1.4s ease-in-out infinite}
+.recording-step-active .recording-step-label{color:var(--text);font-weight:600}
+@keyframes recording-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(212,175,55,.4)}50%{opacity:.65;box-shadow:0 0 0 4px rgba(212,175,55,0)}}
 .transcript-panel{display:grid;gap:10px;padding:14px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.028)}
 .transcript-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .transcript-head h3{margin:0;color:var(--gold-soft);font-size:.82rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
@@ -74,5 +127,18 @@
 .transcript-editor textarea{width:100%;min-height:220px;padding:13px;border-radius:14px;border:1px solid var(--line);background:var(--ghost);color:var(--text);font:inherit;font-size:.9rem;line-height:1.65;resize:vertical;outline:0}
 .transcript-editor textarea:focus{border-color:rgba(212,175,55,.28);box-shadow:0 0 0 4px rgba(212,175,55,.08)}
 .transcript-actions{display:flex;gap:10px;flex-wrap:wrap}
-@media (max-width:980px){.meetings-layout{grid-template-columns:1fr}}
-@media (max-width:640px){.meetings-intro,.meetings-form-panel,.meetings-workspace{padding:16px}.meeting-context,.recording-result-head,.transcript-head{display:grid}.meeting-form-actions .btn,.transcript-actions .btn{flex:1}.summary-section{padding:12px}.summary-section-header h4{font-size:.72rem}.recording-actions .btn,.recording-ready .btn{flex:1}}
+
+@media (max-width:980px){
+  .meetings-layout{grid-template-columns:1fr}
+  .meetings-sidebar{position:static}
+}
+@media (max-width:640px){
+  .meetings-sidebar,.meeting-editor{padding:16px}
+  .meeting-doc-sheet{padding:20px}
+  .meeting-doc-bar{position:static;justify-content:stretch}
+  .meeting-doc-actions{width:100%;justify-content:flex-start}
+  .recording-result-head,.transcript-head{display:grid}
+  .meeting-form-actions .btn,.transcript-actions .btn,.capture-actions .btn{flex:1}
+  .summary-section{padding:13px}
+  .summary-section-header h4{font-size:.72rem}
+}

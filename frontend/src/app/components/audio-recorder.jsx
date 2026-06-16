@@ -17,12 +17,9 @@ export function AudioRecorder({ onUpload }) {
   const {
     clearRecording,
     error,
-    isRecording,
     previewUrl,
     recording,
     selectFile,
-    startRecording,
-    stopRecording,
   } = useAudioRecorder();
 
   // Meeting segments upload one at a time: keeps Drive uploads ordered and the
@@ -52,7 +49,7 @@ export function AudioRecorder({ onUpload }) {
     },
   });
   const tabCaptureSupported = isTabCaptureSupported();
-  const isBusy = isRecording || meetingRecorder.isRecording;
+  const isRecording = meetingRecorder.isRecording;
 
   async function upload() {
     if (!recording) {
@@ -73,78 +70,102 @@ export function AudioRecorder({ onUpload }) {
   }
 
   return (
-    <section className="audio-recorder" aria-label="Nova gravação">
-      <div className="recording-actions">
+    <section className="capture-bar" aria-label="Captura de áudio">
+      <div className="capture-actions">
         {isRecording ? (
-          <button className="btn btn-danger" type="button" onClick={stopRecording}>
-            Encerrar gravação
-          </button>
-        ) : (
-          <button className="btn" type="button" disabled={meetingRecorder.isRecording} onClick={startRecording}>
-            Gravar microfone
-          </button>
-        )}
-        {meetingRecorder.isRecording ? (
-          <button className="btn btn-danger" type="button" onClick={meetingRecorder.stopMeetingRecording}>
-            Encerrar reunião ({formatElapsed(meetingRecorder.elapsedMs)})
+          <button
+            className="btn btn-danger capture-btn"
+            type="button"
+            onClick={meetingRecorder.stopMeetingRecording}
+          >
+            <span className="capture-rec-dot" aria-hidden="true" />
+            Encerrar gravação · {formatElapsed(meetingRecorder.elapsedMs)}
           </button>
         ) : (
           <button
-            className="btn"
+            className="btn capture-btn"
             type="button"
-            disabled={isRecording || !tabCaptureSupported}
+            disabled={!tabCaptureSupported}
             title={tabCaptureSupported
-              ? 'Compartilhe a aba do Meet com áudio para gravar todos os participantes.'
+              ? 'Compartilhe a aba da reunião com áudio para gravar todos os participantes.'
               : 'Disponível no Chrome ou Edge (captura de áudio da aba).'}
             onClick={meetingRecorder.startMeetingRecording}
           >
-            Gravar reunião (Meet)
+            <span className="capture-ico" aria-hidden="true">●</span>
+            Gravar reunião
           </button>
         )}
-        <label className="btn btn-secondary upload-label">
+
+        <label className={`btn btn-secondary capture-btn upload-label${isRecording ? ' is-disabled' : ''}`}>
+          <span className="capture-ico" aria-hidden="true">⤓</span>
           Enviar arquivo
           <input
             ref={inputRef}
             type="file"
             accept=".mp3,.mp4,.mpeg,.mpga,.m4a,.wav,.webm,audio/*"
-            disabled={isBusy}
+            disabled={isRecording}
             onChange={(event) => selectFile(event.target.files?.[0])}
           />
         </label>
       </div>
 
-      {error ? <p className="recording-error">{error}</p> : null}
-      {meetingRecorder.error ? <p className="recording-error">{meetingRecorder.error}</p> : null}
-      {isRecording ? <p className="recording-live">Gravando. Fale normalmente e encerre ao finalizar.</p> : null}
-      {meetingRecorder.isRecording ? (
-        <p className="recording-live">
-          Gravando a reunião (aba + microfone) há {formatElapsed(meetingRecorder.elapsedMs)}. Cada
-          5 min vira um trecho transcrito automaticamente — pode durar o quanto precisar.
-          {meetingRecorder.segmentCount > 0
-            ? ` Trechos capturados: ${meetingRecorder.segmentCount}.`
-            : ''}
+      {!tabCaptureSupported && !isRecording ? (
+        <p className="capture-hint">
+          Para gravar a reunião inteira (todos os participantes) use o Chrome ou Edge. Você ainda
+          pode enviar um arquivo de áudio.
         </p>
       ) : null}
-      {!meetingRecorder.isRecording && segmentsSent > 0 ? (
-        <p className="recording-live">
+
+      {error ? <p className="recording-error">{error}</p> : null}
+      {meetingRecorder.error ? <p className="recording-error">{meetingRecorder.error}</p> : null}
+
+      {isRecording ? (
+        <div className="capture-live" role="status">
+          <span className="capture-live-pulse" aria-hidden="true" />
+          <div className="capture-live-text">
+            <strong>Gravando reunião · {formatElapsed(meetingRecorder.elapsedMs)}</strong>
+            <span>
+              Aba + microfone. A cada 5 min vira um trecho transcrito automaticamente.
+              {meetingRecorder.segmentCount > 0
+                ? ` Trechos capturados: ${meetingRecorder.segmentCount}.`
+                : ''}
+            </span>
+          </div>
+        </div>
+      ) : null}
+
+      {!isRecording && segmentsSent > 0 ? (
+        <p className="capture-hint capture-hint-ok">
           {segmentsSent} trecho(s) enviado(s) para transcrição.
         </p>
       ) : null}
 
       {recording ? (
-        <div className="recording-preview">
+        <div className="capture-preview">
           <audio controls src={previewUrl} />
-          <div className="recording-ready">
-            <span>{recording.filename}</span>
-            <button className="btn" type="button" disabled={isUploading} onClick={upload}>
-              {isUploading
-                ? `Enviando...${uploadProgress ? ` ${uploadProgress}%` : ''}`
-                : 'Transcrever e resumir'}
-            </button>
-            <button className="btn btn-secondary" type="button" disabled={isUploading} onClick={clearRecording}>
-              Descartar
-            </button>
+          <div className="capture-preview-row">
+            <span className="capture-preview-name">{recording.filename}</span>
+            <div className="capture-preview-actions">
+              <button className="btn" type="button" disabled={isUploading} onClick={upload}>
+                {isUploading
+                  ? `Enviando...${uploadProgress ? ` ${uploadProgress}%` : ''}`
+                  : 'Transcrever e resumir'}
+              </button>
+              <button
+                className="btn btn-secondary"
+                type="button"
+                disabled={isUploading}
+                onClick={clearRecording}
+              >
+                Descartar
+              </button>
+            </div>
           </div>
+          {isUploading && uploadProgress ? (
+            <div className="capture-progress" aria-hidden="true">
+              <span style={{ width: `${uploadProgress}%` }} />
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>
