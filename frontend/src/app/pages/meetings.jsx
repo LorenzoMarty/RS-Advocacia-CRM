@@ -770,8 +770,17 @@ export function MeetingsPage() {
             ) : null}
 
             {selectedMeeting ? (
-              <article className="meeting-doc">
-                <div className="meeting-doc-bar">
+              <section className="meeting-doc-sheet">
+                <header className="meeting-doc-head">
+                  <div className="meeting-doc-head-text">
+                    <p className="meeting-doc-eyebrow">Ata de reunião</p>
+                    <h1 className="meeting-doc-title">{selectedMeeting.title}</h1>
+                    <p className="meeting-doc-meta">
+                      {selectedMeeting.clientName || 'Sem cliente vinculado'}
+                      <span aria-hidden="true"> · </span>
+                      {formatDateTime(selectedMeeting.meetingAt)}
+                    </p>
+                  </div>
                   <div className="meeting-doc-actions">
                     {selectedMeeting.documentLink ? (
                       <a
@@ -810,67 +819,51 @@ export function MeetingsPage() {
                           : 'Finalizar reunião'}
                     </button>
                   </div>
-                </div>
+                </header>
 
-                <div className="meeting-doc-sheet">
-                  <header className="meeting-doc-head">
-                    <p className="meeting-doc-eyebrow">Ata de reunião</p>
-                    <h1 className="meeting-doc-title">{selectedMeeting.title}</h1>
-                    <p className="meeting-doc-meta">
-                      {selectedMeeting.clientName || 'Sem cliente vinculado'}
-                      <span aria-hidden="true"> · </span>
-                      {formatDateTime(selectedMeeting.meetingAt)}
-                    </p>
-                  </header>
+                <AudioRecorder onUpload={handleUpload} />
 
-                  <AudioRecorder onUpload={handleUpload} />
+                {activeRecording ? (
+                  <div className="meeting-doc-processing">
+                    <span className="capture-live-pulse" aria-hidden="true" />
+                    <strong>Processando o áudio…</strong>
+                    <span>Esta tela atualiza sozinha quando terminar.</span>
+                    <RecordingPipeline status={activeRecording.status} />
+                  </div>
+                ) : null}
 
-                  {activeRecording ? (
-                    <div className="meeting-doc-processing">
-                      <div className="meeting-doc-processing-head">
-                        <span className="capture-live-pulse" aria-hidden="true" />
-                        <strong>Processando o áudio…</strong>
-                        <span>Esta tela atualiza sozinha quando terminar.</span>
-                      </div>
-                      <RecordingPipeline status={activeRecording.status} />
+                {selectedMeeting.summary ? (
+                  <MeetingSummary value={selectedMeeting.summary} />
+                ) : !activeRecording ? (
+                  <div className="meeting-doc-empty">
+                    <strong>Ainda sem resumo.</strong>
+                    <p>Grave a reunião ou envie um arquivo de áudio para gerar o documento.</p>
+                  </div>
+                ) : null}
+
+                {selectedMeeting.transcript ? (
+                  <details className="meeting-doc-fold">
+                    <summary>Transcrição completa</summary>
+                    <p className="meeting-transcript-text">{selectedMeeting.transcript}</p>
+                  </details>
+                ) : null}
+
+                {recordings.length ? (
+                  <details className="meeting-doc-fold">
+                    <summary>Trechos gravados ({recordings.length})</summary>
+                    <div className="recording-results">
+                      {recordings.map((recording) => (
+                        <RecordingResult
+                          key={recording.id}
+                          onDelete={handleDeleteRecording}
+                          onSaveTranscript={handleSaveTranscript}
+                          recording={recording}
+                        />
+                      ))}
                     </div>
-                  ) : null}
-
-                  {selectedMeeting.summary ? (
-                    <div className="meeting-doc-summary">
-                      <MeetingSummary value={selectedMeeting.summary} />
-                    </div>
-                  ) : !activeRecording ? (
-                    <div className="meeting-doc-empty">
-                      <strong>Ainda sem resumo.</strong>
-                      <p>Grave a reunião ou envie um arquivo de áudio para gerar o documento.</p>
-                    </div>
-                  ) : null}
-
-                  {selectedMeeting.transcript ? (
-                    <details className="meeting-doc-fold">
-                      <summary>Transcrição completa</summary>
-                      <p className="meeting-transcript-text">{selectedMeeting.transcript}</p>
-                    </details>
-                  ) : null}
-
-                  {recordings.length ? (
-                    <details className="meeting-doc-fold">
-                      <summary>Trechos gravados ({recordings.length})</summary>
-                      <div className="recording-results">
-                        {recordings.map((recording) => (
-                          <RecordingResult
-                            key={recording.id}
-                            onDelete={handleDeleteRecording}
-                            onSaveTranscript={handleSaveTranscript}
-                            recording={recording}
-                          />
-                        ))}
-                      </div>
-                    </details>
-                  ) : null}
-                </div>
-              </article>
+                  </details>
+                ) : null}
+              </section>
             ) : !isMeetingFormOpen ? (
               <div className="surface meeting-doc-placeholder">
                 <div className="empty">
