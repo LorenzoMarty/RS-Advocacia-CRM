@@ -259,4 +259,5 @@ export const api = {
     ).toString();
     return apiRequest(`/api/auditoria/${query ? `?${query}` : ''}`);
   },
+  getAuditPanel: (periodo = 7) => apiRequest(`/api/auditoria/painel/?periodo=${periodo}`),
 };

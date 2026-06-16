@@ -1,14 +1,17 @@
 import json
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from auditoria.models import RegistroAuditoria
 from auditoria.services import calcular_diff
 from clientes.models import Cliente
 from prazos.models import Prazo
 from processos.models import Processo
+from productivity.models import TimeEntry
 from usuarios.models import Usuario
 
 
@@ -166,4 +169,117 @@ class AuditoriaListagemTests(_AuditoriaBaseTestCase):
 
         response = self.client.get(reverse("listar_auditoria"))
 
+        self.assertEqual(response.status_code, 403, response.json())
+
+
+class PainelAuditoriaTests(_AuditoriaBaseTestCase):
+    def _criar_prazo(self, dias, responsavel="Adv", concluido=False):
+        return Prazo.objects.create(
+            titulo=f"Prazo {dias}",
+            data_limite=timezone.localdate() + timedelta(days=dias),
+            processo=self.processo,
+            responsavel=responsavel,
+            status="Pendente",
+            concluido=concluido,
+        )
+
+    def _tornar_parado(self, processo):
+        # data_ultima_movimentacao é auto_now; um UPDATE direto evita o bump.
+        Processo.objects.filter(pk=processo.pk).update(
+            data_ultima_movimentacao=timezone.now() - timedelta(days=40)
+        )
+
+    def test_painel_calcula_risco_kpis_e_prioridades(self):
+        self._criar_prazo(-1)  # vencido
+        self._criar_prazo(2)  # vence em 3 dias (dueSoon, dentro do horizonte 7)
+        self._criar_prazo(20)  # later — fora do dueSoon e do horizonte
+        self._criar_prazo(-1, concluido=True)  # concluído → ignorado
+
+        parado = Processo.objects.create(
+            numero_processo="0009999-00.2026.8.26.0001",
+            cliente=self.cliente,
+            descricao="",
+            vara="2a Vara",
+            area_juridica="Civel",
+            status="Ativo",
+            advogado_responsavel="",  # sem dono → severidade 50
+        )
+        self._tornar_parado(parado)
+
+        TimeEntry.objects.create(
+            user=self.usuario,
+            task_id="1",
+            task_type=TimeEntry.TASK_PRAZO,
+            started_at=timezone.now(),
+            status=TimeEntry.STATUS_RUNNING,
+        )
+
+        response = self.client.get(reverse("painel_auditoria"))
+        self.assertEqual(response.status_code, 200, response.json())
+        dados = response.json()["dados"]
+
+        self.assertEqual(dados["periodo"], 7)
+        self.assertEqual(
+            dados["summary"],
+            {
+                "active_processes": 2,
+                "overdue": 1,
+                "due_soon": 1,
+                "stale": 1,
+                "clients_without_process": 0,
+                "running_timers": 1,
+            },
+        )
+        # raw = 1*12 + 1*4 + 1*5 = 21 → saudável
+        self.assertEqual(dados["risk"]["score"], 21)
+        self.assertEqual(dados["risk"]["level"], "healthy")
+        self.assertEqual(
+            [d["key"] for d in dados["risk"]["drivers"]],
+            ["overdue", "stale", "dueSoon"],
+        )
+
+        acoes = dados["priority_actions"]
+        # vencido(90) > dueSoon soon3(60) > processo parado sem dono(50); +20 excluído
+        self.assertEqual([a["severity"] for a in acoes], [90, 60, 50])
+        self.assertEqual(acoes[0]["tone"], "danger")
+        self.assertEqual(acoes[0]["action"], "Resolver agora")
+        self.assertEqual(acoes[2]["kind"], "process")
+
+    def test_painel_horizonte_filtra_prioridades(self):
+        self._criar_prazo(-1)  # vencido — sempre entra
+        self._criar_prazo(5)  # vence em 5 dias (bucket soon7)
+
+        em2 = self.client.get(reverse("painel_auditoria"), {"periodo": 2}).json()[
+            "dados"
+        ]
+        em7 = self.client.get(reverse("painel_auditoria"), {"periodo": 7}).json()[
+            "dados"
+        ]
+
+        self.assertEqual(len(em2["priority_actions"]), 1)  # só o vencido (5 > 2)
+        self.assertEqual(len(em7["priority_actions"]), 2)  # vencido + 5 dias
+
+    def test_painel_nao_admin_recebe_403(self):
+        usuario_comum = Usuario.objects.create(
+            nome="Estagiario",
+            email="estagiario2@example.com",
+            cargo="Estagiario",
+        )
+        from django.contrib.auth.models import Permission
+
+        auth_user = get_user_model().objects.create_user(
+            username=usuario_comum.email,
+            email=usuario_comum.email,
+            password="x",
+        )
+        auth_user.user_permissions.add(
+            Permission.objects.get(codename="view_processo"),
+            Permission.objects.get(codename="view_prazo"),
+        )
+        self.client.force_login(auth_user)
+        session = self.client.session
+        session["usuario_id"] = usuario_comum.pk
+        session.save()
+
+        response = self.client.get(reverse("painel_auditoria"))
         self.assertEqual(response.status_code, 403, response.json())

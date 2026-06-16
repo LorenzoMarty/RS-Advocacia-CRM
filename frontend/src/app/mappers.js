@@ -135,6 +135,35 @@ export function auditFromListResponse(payload) {
   return collectionFromResponse(payload, 'registros').map(auditEntryFromApi).filter(Boolean);
 }
 
+// Painel de risco computado no backend (GET /api/auditoria/painel/). Apenas
+// converte snake_case → as chaves camelCase que os componentes já consomem.
+export function auditPanelFromResponse(payload) {
+  const panel = payload?.dados || payload;
+  if (!panel) {
+    return null;
+  }
+
+  const summary = panel.summary || {};
+  return {
+    periodo: panel.periodo ?? 7,
+    risk: panel.risk || { score: 0, level: 'healthy', label: '', drivers: [] },
+    summary: {
+      activeProcesses: summary.active_processes || 0,
+      overdue: summary.overdue || 0,
+      dueSoon: summary.due_soon || 0,
+      stale: summary.stale || 0,
+      clientsWithoutProcess: summary.clients_without_process || 0,
+      runningTimers: summary.running_timers || 0,
+    },
+    priorityActions: (panel.priority_actions || []).map((action) => ({
+      ...action,
+      // 'YYYY-MM-DD' → meia-dia local, evitando drift de fuso ao formatar.
+      date: action.date ? `${action.date}T12:00:00` : null,
+    })),
+    statusDistribution: panel.status_distribution || [],
+  };
+}
+
 export function userFromApi(user) {
   if (!user) {
     return null;
