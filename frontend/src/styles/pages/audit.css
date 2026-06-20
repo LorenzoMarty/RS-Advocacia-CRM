@@ -233,7 +233,7 @@
 .audit-process-status-grid{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
 @media(max-width:640px){.audit-process-status-grid{grid-template-columns:1fr}}
 .audit-status-list{list-style:none;margin:0;padding:0;display:grid;gap:5px}
-.audit-status-row{display:grid;grid-template-columns:140px 1fr 28px;align-items:center;gap:8px;font-size:.78rem}
+.audit-status-row{display:grid;grid-template-columns:minmax(0,140px) 1fr 28px;align-items:center;gap:8px;font-size:.78rem}
 .audit-status-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--soft)}
 .audit-status-bar-wrap{height:6px;border-radius:3px;background:var(--ghost);overflow:hidden}
 .audit-status-bar{height:100%;border-radius:3px;background:var(--gold-soft,var(--gold));transition:width .4s var(--ease-out)}
@@ -311,7 +311,13 @@
     grid-template-columns:120px 1fr 70px 38px;
     align-items:center;gap:8px;font-size:.78rem;
 }
-@media(max-width:560px){.audit-prod-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}}
+@media(max-width:560px){
+    .audit-prod-row{grid-template-columns:1fr auto;grid-template-rows:auto auto;gap:4px 8px}
+    .audit-prod-name{grid-column:1;grid-row:1}
+    .audit-prod-pct{grid-column:2;grid-row:1}
+    .audit-prod-bar-wrap{grid-column:1;grid-row:2}
+    .audit-prod-hours{grid-column:2;grid-row:2;align-self:center}
+}
 .audit-prod-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
 .audit-prod-bar-wrap{height:6px;border-radius:3px;background:var(--ghost);overflow:hidden}
 .audit-prod-bar{height:100%;border-radius:3px;background:var(--gold-soft,var(--gold));transition:width .4s var(--ease-out)}
@@ -373,6 +379,8 @@ html[data-theme="light"] .audit-type-card{
 /* ---------- Responsivo ---------- */
 @media(max-width:1080px){
     .audit-risk-hero{grid-template-columns:1fr}
+}
+@media(max-width:720px){
     .audit-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:640px){
@@ -385,8 +393,10 @@ html[data-theme="light"] .audit-type-card{
     .audit-diff-row{flex-direction:column;align-items:flex-start;gap:2px}
     .audit-diff-field{min-width:unset}
     .audit-priority-main strong{white-space:normal}
+    .audit-filter-select{min-width:100px}
 }
 @media(max-width:420px){
     .audit-kpis{grid-template-columns:1fr}
     .audit-priority-item{grid-template-columns:4px minmax(0,1fr) auto;gap:8px}
+    .audit-filter-select{min-width:unset;width:100%}
 }
