@@ -4,6 +4,8 @@ import {
   auditEntryFromApi,
   auditFromListResponse,
   auditFromResponse,
+  auditOverviewFromResponse,
+  auditPaginationFromResponse,
   auditPanelFromResponse,
   clientFromApi,
   clientToPayload,
@@ -599,5 +601,121 @@ describe('productivity mappers', () => {
       configured: false,
     });
     expect(productivityGoalFromApi({ id: 1, daily_hours: 0 }).dailyHours).toBe(0);
+  });
+});
+
+describe('auditPaginationFromResponse', () => {
+  it('maps pagination fields', () => {
+    const pag = auditPaginationFromResponse({
+      dados: { paginacao: { offset: 50, limit: 50, total: 120, tem_mais: true } },
+    });
+    expect(pag).toEqual({ offset: 50, limit: 50, total: 120, temMais: true });
+  });
+
+  it('returns safe defaults on null payload', () => {
+    expect(auditPaginationFromResponse(null)).toEqual({
+      offset: 0,
+      limit: 100,
+      total: 0,
+      temMais: false,
+    });
+  });
+
+  it('returns safe defaults on missing paginacao key', () => {
+    expect(auditPaginationFromResponse({ dados: {} })).toEqual({
+      offset: 0,
+      limit: 100,
+      total: 0,
+      temMais: false,
+    });
+  });
+});
+
+describe('auditOverviewFromResponse', () => {
+  const fullPayload = {
+    dados: {
+      periodo: 14,
+      risk: { score: 40, level: 'warning', label: 'Atenção', drivers: [] },
+      summary: {
+        active_processes: 5,
+        overdue: 2,
+        due_soon: 3,
+        stale: 1,
+        clients_without_process: 0,
+        running_timers: 1,
+      },
+      priority_actions: [{ id: 'deadline-1', date: '2026-06-20', tone: 'danger' }],
+      status_distribution: [{ status: 'Ativo', count: 4 }],
+      processos_por_status: [{ status: 'Ativo', count: 4 }],
+      processos_parados: { count: 1, itens: [{ id: '7', numero: '001', dias_parado: 35, cliente_nome: 'CLI' }] },
+      prazos: { overdue: 2, today: 0, due_soon: 3, done: 10 },
+      eventos: {
+        proximos: [{ id: '1', titulo: 'Audiência', data_inicio: '2026-06-25T10:00:00', data_fim: '2026-06-25T11:00:00', tipo_evento: 'Audiência', responsavel_nome: 'Ana', processo_numero: '001', cliente_nome: 'CLI' }],
+        atrasados: [],
+        total_pendentes: 1,
+      },
+      peticoes_por_status: [
+        { status: 'Pendente', count: 2 },
+        { status: 'Em andamento', count: 1 },
+        { status: 'Protocolar', count: 0 },
+        { status: 'Protocolado', count: 3 },
+      ],
+      produtividade: {
+        semana_inicio: '2026-06-17',
+        por_usuario: [{ user_id: '1', user_name: 'Ana', horas: 5.5, meta_horas: 30, pct: 18.3 }],
+        timers_ativos: 1,
+      },
+    },
+  };
+
+  it('returns null on null payload', () => {
+    expect(auditOverviewFromResponse(null)).toBeNull();
+  });
+
+  it('maps risk panel fields', () => {
+    const result = auditOverviewFromResponse(fullPayload);
+    expect(result.periodo).toBe(14);
+    expect(result.risk.score).toBe(40);
+    expect(result.summary.activeProcesses).toBe(5);
+    expect(result.summary.overdue).toBe(2);
+    expect(result.priorityActions[0].date).toBe('2026-06-20T12:00:00');
+    expect(result.statusDistribution).toEqual([{ status: 'Ativo', count: 4 }]);
+  });
+
+  it('maps macro overview sections', () => {
+    const result = auditOverviewFromResponse(fullPayload);
+    expect(result.processStatus).toEqual([{ status: 'Ativo', count: 4 }]);
+    expect(result.staleProcesses.count).toBe(1);
+    expect(result.staleProcesses.itens[0].id).toBe('7');
+    expect(result.prazos).toEqual({ overdue: 2, today: 0, dueSoon: 3, done: 10 });
+    expect(result.eventos.totalPendentes).toBe(1);
+    expect(result.eventos.proximos[0].tipoEvento).toBe('Audiência');
+    expect(result.petitionFunnel).toHaveLength(4);
+    expect(result.petitionFunnel[0]).toEqual({ status: 'Pendente', count: 2 });
+  });
+
+  it('maps productivity section', () => {
+    const result = auditOverviewFromResponse(fullPayload);
+    expect(result.productivity.semanaInicio).toBe('2026-06-17');
+    expect(result.productivity.timersAtivos).toBe(1);
+    expect(result.productivity.porUsuario[0]).toEqual({
+      userId: '1',
+      userName: 'Ana',
+      horas: 5.5,
+      metaHoras: 30,
+      pct: 18.3,
+    });
+  });
+
+  it('handles empty/missing sections gracefully', () => {
+    const minimal = { dados: { risk: {}, summary: {} } };
+    const result = auditOverviewFromResponse(minimal);
+    expect(result.processStatus).toEqual([]);
+    expect(result.staleProcesses).toEqual({ count: 0, itens: [] });
+    expect(result.prazos).toEqual({ overdue: 0, today: 0, dueSoon: 0, done: 0 });
+    expect(result.eventos.proximos).toEqual([]);
+    expect(result.petitionFunnel).toEqual([]);
+    expect(result.productivity.porUsuario).toEqual([]);
+    expect(result.productivity.timersAtivos).toBe(0);
   });
 });

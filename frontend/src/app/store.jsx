@@ -36,6 +36,8 @@ import {
   auditFromResponse,
   auditFromListResponse,
   auditPanelFromResponse,
+  auditPaginationFromResponse,
+  auditOverviewFromResponse,
   clientToPayload,
   processToPayload,
   eventToPayload,
@@ -186,6 +188,9 @@ export function AppStateProvider({ children }) {
   const [productivityGoals, setProductivityGoals] = useState([]);
   const [auditEntries, setAuditEntries] = useState([]);
   const [auditPanel, setAuditPanel] = useState(null);
+  const [auditOverview, setAuditOverview] = useState(null);
+  const [auditPagination, setAuditPagination] = useState({ offset: 0, limit: 100, total: 0, temMais: false });
+  const [auditFilters, setAuditFilters] = useState({});
   const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled);
   const [apiStatus, setApiStatus] = useState((isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled) ? 'loading' : 'local');
   const [isEventsLoading, setIsEventsLoading] = useState(isEventsApiEnabled);
@@ -1551,8 +1556,27 @@ export function AppStateProvider({ children }) {
       return;
     }
     try {
-      const payload = await api.listAudit(filters);
+      const params = { limit: 50, offset: 0, ...filters };
+      const payload = await api.listAudit(params);
       setAuditEntries(auditFromListResponse(payload));
+      setAuditPagination(auditPaginationFromResponse(payload));
+      setAuditFilters(filters);
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+    }
+  }
+
+  async function loadMoreAudit() {
+    if (!canUseApi) {
+      return;
+    }
+    try {
+      const nextOffset = auditPagination.offset + auditPagination.limit;
+      const params = { ...auditFilters, limit: auditPagination.limit, offset: nextOffset };
+      const payload = await api.listAudit(params);
+      const newEntries = auditFromListResponse(payload);
+      setAuditEntries((prev) => [...prev, ...newEntries]);
+      setAuditPagination(auditPaginationFromResponse(payload));
     } catch (error) {
       addFlash(errorMessage(error), 'error');
     }
@@ -1565,6 +1589,18 @@ export function AppStateProvider({ children }) {
     try {
       const payload = await api.getAuditPanel(periodo);
       setAuditPanel(auditPanelFromResponse(payload));
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+    }
+  }
+
+  async function loadAuditOverview(periodo = 7) {
+    if (!canUseApi) {
+      return;
+    }
+    try {
+      const payload = await api.getAuditOverview(periodo);
+      setAuditOverview(auditOverviewFromResponse(payload));
     } catch (error) {
       addFlash(errorMessage(error), 'error');
     }
@@ -1583,8 +1619,12 @@ export function AppStateProvider({ children }) {
     productivityGoals,
     auditEntries,
     auditPanel,
+    auditOverview,
+    auditPagination,
     loadAudit,
+    loadMoreAudit,
     loadAuditPanel,
+    loadAuditOverview,
     currentUser,
     currentRole,
     hasPermission,

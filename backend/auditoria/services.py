@@ -18,7 +18,8 @@ CAMPOS_VOLATEIS = ("data_ultima_movimentacao", "atualizado_em", "criado_em", "id
 _ROTULOS_ENTIDADE = {
     RegistroAuditoria.ENTIDADE_PROCESSO: "Processo",
     RegistroAuditoria.ENTIDADE_PRAZO: "Prazo",
-    RegistroAuditoria.ENTIDADE_PETICAO: "PetiÃ§Ã£o",
+    RegistroAuditoria.ENTIDADE_PETICAO: "Petição",
+    RegistroAuditoria.ENTIDADE_EVENTO: "Evento",
 }
 _ROTULOS_ACAO = {
     RegistroAuditoria.ACAO_CRIADO: "criado",
