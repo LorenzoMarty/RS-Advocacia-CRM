@@ -136,6 +136,7 @@ Campos opcionais mas recomendados:
 - `GOOGLE_DRIVE_ROOT_FOLDER_ID` — para armazenar documentos
 - `OPENAI_API_KEY` — para transcricao/resumo de reunioes
 
+
 ### 5.3 Subir os containers
 
 ```bash
