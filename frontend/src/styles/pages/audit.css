@@ -225,6 +225,143 @@
 .audit-diff-arrow{color:var(--muted)}
 .audit-diff-to{color:var(--success)}
 
+/* ---------- Macro overview grid ---------- */
+.audit-macro-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:860px){.audit-macro-grid{grid-template-columns:1fr}}
+
+/* ---------- Process status panel ---------- */
+.audit-process-status-grid{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+@media(max-width:640px){.audit-process-status-grid{grid-template-columns:1fr}}
+.audit-status-list{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.audit-status-row{display:grid;grid-template-columns:140px 1fr 28px;align-items:center;gap:8px;font-size:.78rem}
+.audit-status-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--soft)}
+.audit-status-bar-wrap{height:6px;border-radius:3px;background:var(--ghost);overflow:hidden}
+.audit-status-bar{height:100%;border-radius:3px;background:var(--gold-soft,var(--gold));transition:width .4s var(--ease-out)}
+.audit-status-count{font-variant-numeric:tabular-nums;color:var(--text);text-align:right}
+
+.audit-stale-panel{min-width:160px}
+.audit-stale-header{display:flex;align-items:center;gap:6px;font-size:.76rem;color:var(--muted);margin-bottom:6px}
+.audit-stale-badge{
+    min-width:22px;height:22px;border-radius:999px;
+    display:grid;place-items:center;
+    background:rgba(239,122,122,.15);color:var(--danger);
+    font-size:.72rem;font-variant-numeric:tabular-nums;font-weight:600;
+}
+.audit-stale-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.audit-stale-item{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.audit-stale-link{display:grid;gap:1px;text-decoration:none;min-width:0}
+.audit-stale-link strong{font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-stale-link span{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-stale-days{font-size:.7rem;color:var(--danger);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- Deadlines panel ---------- */
+.audit-deadline-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:560px){.audit-deadline-grid{grid-template-columns:repeat(2,1fr)}}
+.audit-deadline-tile{
+    display:grid;gap:4px;padding:10px 12px;border-radius:10px;
+    background:var(--ghost);text-align:center;
+}
+.audit-deadline-value{font-size:1.5rem;font-variant-numeric:tabular-nums;letter-spacing:-.03em;line-height:1}
+.audit-deadline-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.audit-deadline-tile.is-danger .audit-deadline-value{color:var(--danger)}
+.audit-deadline-tile.is-warn .audit-deadline-value{color:var(--warn)}
+.audit-deadline-tile.is-gold .audit-deadline-value{color:var(--gold-soft,var(--gold))}
+.audit-deadline-tile.is-success .audit-deadline-value{color:var(--success)}
+.audit-deadline-tile.is-neutral .audit-deadline-value{color:var(--soft)}
+
+/* ---------- Events panel ---------- */
+.audit-events-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.audit-events-grid{grid-template-columns:1fr}}
+.audit-events-col-head{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--muted);margin:0 0 6px;font-weight:400;
+}
+.audit-events-col-head span{
+    font-variant-numeric:tabular-nums;
+    background:var(--ghost);border-radius:999px;
+    padding:1px 7px;font-size:.68rem;color:var(--soft);
+}
+.audit-events-col-head.is-danger{color:var(--danger)}
+.audit-event-list{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.audit-event-item{
+    padding:7px 10px;border-radius:8px;
+    background:var(--ghost);display:grid;gap:2px;
+}
+.audit-event-title{font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-event-meta{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audit-event-date{font-size:.68rem;color:var(--soft)}
+
+/* ---------- Petition funnel ---------- */
+.audit-funnel{display:grid;gap:6px}
+.audit-funnel-step{display:grid;gap:4px}
+.audit-funnel-bar-wrap{height:8px;border-radius:4px;background:var(--ghost);overflow:hidden}
+.audit-funnel-bar{height:100%;border-radius:4px;background:var(--gold-soft,var(--gold));transition:width .4s var(--ease-out)}
+.audit-funnel-step.is-success .audit-funnel-bar{background:var(--success)}
+.audit-funnel-step.is-danger .audit-funnel-bar{background:var(--danger)}
+.audit-funnel-step.is-warn .audit-funnel-bar{background:var(--warn)}
+.audit-funnel-info{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.audit-funnel-status{font-size:.76rem;color:var(--soft)}
+.audit-funnel-count{font-size:.82rem;font-variant-numeric:tabular-nums}
+
+/* ---------- Productivity panel ---------- */
+.audit-prod-list{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.audit-prod-row{
+    display:grid;
+    grid-template-columns:120px 1fr 70px 38px;
+    align-items:center;gap:8px;font-size:.78rem;
+}
+@media(max-width:560px){.audit-prod-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}}
+.audit-prod-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.audit-prod-bar-wrap{height:6px;border-radius:3px;background:var(--ghost);overflow:hidden}
+.audit-prod-bar{height:100%;border-radius:3px;background:var(--gold-soft,var(--gold));transition:width .4s var(--ease-out)}
+.audit-prod-bar.is-success{background:var(--success)}
+.audit-prod-bar.is-warn{background:var(--warn)}
+.audit-prod-bar.is-danger{background:var(--danger)}
+.audit-prod-hours{font-variant-numeric:tabular-nums;color:var(--soft);white-space:nowrap}
+.audit-prod-pct{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.audit-prod-pct.is-success{color:var(--success)}
+.audit-prod-pct.is-warn{color:var(--warn)}
+.audit-prod-pct.is-danger{color:var(--danger)}
+.audit-timers-badge{color:var(--success)}
+
+/* ---------- Activity filters ---------- */
+.audit-filters{display:grid;gap:6px;margin-bottom:10px}
+.audit-filter-search{
+    width:100%;padding:7px 10px;border-radius:7px;
+    border:1px solid var(--line);background:var(--ghost);
+    color:var(--text);font-size:.82rem;
+}
+.audit-filter-search:focus{outline:0;border-color:rgba(212,175,55,.4)}
+.audit-filter-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.audit-filter-select{
+    padding:5px 8px;border-radius:6px;
+    border:1px solid var(--line);background:var(--ghost);
+    color:var(--text);font-size:.78rem;
+    flex:1;min-width:120px;max-width:200px;
+}
+.audit-filter-select:focus{outline:0;border-color:rgba(212,175,55,.4)}
+.audit-filter-clear{
+    padding:5px 10px;border-radius:6px;border:1px solid var(--line);
+    background:none;color:var(--muted);font-size:.76rem;cursor:pointer;
+    white-space:nowrap;
+}
+.audit-filter-clear:hover{color:var(--text)}
+
+/* ---------- Load more ---------- */
+.audit-load-more{display:flex;justify-content:center;padding:12px 0}
+.audit-load-more-btn{
+    padding:7px 18px;border-radius:7px;border:1px solid var(--line);
+    background:var(--ghost);color:var(--soft);font-size:.8rem;cursor:pointer;
+    transition:background var(--motion) var(--ease-out),color var(--motion) var(--ease-out);
+}
+.audit-load-more-btn:hover{background:var(--ghost-strong);color:var(--text)}
+
+/* ---------- Generic empty note ---------- */
+.audit-empty-note{font-size:.8rem;color:var(--muted);padding:8px 0}
+.section-action{font-size:.76rem;color:var(--gold-soft,var(--gold));text-decoration:none;white-space:nowrap}
+.section-action:hover{text-decoration:underline}
+
 /* ---------- Light theme ---------- */
 html[data-theme="light"] .risk-score-inner{background:#fff}
 html[data-theme="light"] .risk-score-card,
@@ -238,9 +375,18 @@ html[data-theme="light"] .audit-type-card{
     .audit-risk-hero{grid-template-columns:1fr}
     .audit-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-@media(max-width:560px){
-    .audit-kpis{grid-template-columns:1fr 1fr}
-    .audit-activity-grid{grid-template-columns:1fr}
-    .risk-score-card{flex-direction:column;text-align:center}
+@media(max-width:640px){
+    .audit-card .section-head{flex-wrap:wrap;gap:8px}
+    .risk-score-card{flex-direction:column;align-items:flex-start;gap:10px}
     .risk-score-card::before{inset:0 0 auto 0;width:auto;height:4px}
+    .risk-score-ring{width:72px;height:72px}
+    .risk-score-inner{width:54px;height:54px}
+    .risk-score-inner strong{font-size:1.25rem}
+    .audit-diff-row{flex-direction:column;align-items:flex-start;gap:2px}
+    .audit-diff-field{min-width:unset}
+    .audit-priority-main strong{white-space:normal}
+}
+@media(max-width:420px){
+    .audit-kpis{grid-template-columns:1fr}
+    .audit-priority-item{grid-template-columns:4px minmax(0,1fr) auto;gap:8px}
 }

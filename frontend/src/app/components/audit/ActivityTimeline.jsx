@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { motion } from '../../motion';
 import { formatDateTime } from '../../utils';
@@ -29,6 +29,14 @@ const FIELD_LABELS = {
   link_drive: 'Link do Drive',
   drive_file_id: 'Documento',
   motivo_pendente: 'Motivo pendente',
+  // Evento fields
+  data_inicio: 'Início',
+  data_fim: 'Fim',
+  tipo_evento: 'Tipo',
+  local: 'Local',
+  responsavel_nome: 'Responsável',
+  criado_por: 'Criado por',
+  lembrete_em: 'Lembrete',
 };
 
 const ACTION_LABELS = {
@@ -41,7 +49,23 @@ const ENTITY_META = {
   prazo: { label: 'Prazos', singular: 'Prazo', order: 1 },
   peticao: { label: 'Petições', singular: 'Petição', order: 2 },
   processo: { label: 'Processos', singular: 'Processo', order: 3 },
+  evento: { label: 'Compromissos', singular: 'Compromisso', order: 4 },
 };
+
+const ENTITY_OPTIONS = [
+  { value: '', label: 'Todos os tipos' },
+  { value: 'processo', label: 'Processos' },
+  { value: 'prazo', label: 'Prazos' },
+  { value: 'peticao', label: 'Petições' },
+  { value: 'evento', label: 'Compromissos' },
+];
+
+const ACTION_OPTIONS = [
+  { value: '', label: 'Qualquer ação' },
+  { value: 'criado', label: 'Criação' },
+  { value: 'atualizado', label: 'Edição' },
+  { value: 'excluido', label: 'Exclusão' },
+];
 
 const FIELD_HIDE_WHEN_PRESENT = {
   cliente_id: 'cliente_nome',
@@ -193,7 +217,90 @@ function ActivityItem({ entry, index, entityLabel }) {
   );
 }
 
-export function ActivityTimeline({ entries }) {
+function ActivityFilters({ filters, onChange }) {
+  const debounceRef = useRef(null);
+
+  function handleChange(key, value) {
+    const next = { ...filters, [key]: value };
+    onChange(next);
+  }
+
+  function handleQ(e) {
+    const value = e.target.value;
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => handleChange('q', value), 350);
+  }
+
+  return (
+    <div className="audit-filters">
+      <input
+        type="text"
+        className="audit-filter-search"
+        placeholder="Buscar por resumo, responsável, processo…"
+        defaultValue={filters.q || ''}
+        onChange={handleQ}
+        aria-label="Buscar no log"
+      />
+      <div className="audit-filter-row">
+        <select
+          className="audit-filter-select"
+          value={filters.entidade_tipo || ''}
+          onChange={(e) => handleChange('entidade_tipo', e.target.value)}
+          aria-label="Tipo de entidade"
+        >
+          {ENTITY_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        <select
+          className="audit-filter-select"
+          value={filters.acao || ''}
+          onChange={(e) => handleChange('acao', e.target.value)}
+          aria-label="Tipo de ação"
+        >
+          {ACTION_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        <input
+          type="text"
+          className="audit-filter-select"
+          placeholder="Responsável"
+          value={filters.autor_nome || ''}
+          onChange={(e) => handleChange('autor_nome', e.target.value)}
+          aria-label="Filtrar por responsável"
+        />
+        <input
+          type="date"
+          className="audit-filter-select"
+          value={filters.desde || ''}
+          onChange={(e) => handleChange('desde', e.target.value)}
+          aria-label="A partir de"
+          title="A partir de"
+        />
+        <input
+          type="date"
+          className="audit-filter-select"
+          value={filters.ate || ''}
+          onChange={(e) => handleChange('ate', e.target.value)}
+          aria-label="Até"
+          title="Até"
+        />
+        {Object.values(filters).some(Boolean) && (
+          <button
+            type="button"
+            className="audit-filter-clear"
+            onClick={() => onChange({})}
+          >
+            Limpar
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function ActivityTimeline({ entries, filters, pagination, onFilterChange, onLoadMore }) {
   const groups = useMemo(() => groupEntries(entries), [entries]);
 
   return (
@@ -201,47 +308,62 @@ export function ActivityTimeline({ entries }) {
       <div className="section-head">
         <div>
           <h2 className="section-title">Atividade recente</h2>
-          <p className="section-note">Por tipo, agrupada pelo processo</p>
+          <p className="section-note">
+            Por tipo, agrupada pelo processo
+            {pagination?.total > 0 ? ` — ${pagination.total} registros` : ''}
+          </p>
         </div>
       </div>
+      {onFilterChange && (
+        <ActivityFilters filters={filters || {}} onChange={onFilterChange} />
+      )}
       {groups.length ? (
-        <div className="audit-activity-grid">
-          {groups.map((typeGroup) => (
-            <article key={typeGroup.key} className="audit-type-card">
-              <header className="audit-type-head">
-                <div>
-                  <h3>{typeGroup.label}</h3>
-                  <span>{typeGroup.processes.length} processo(s)</span>
+        <>
+          <div className="audit-activity-grid">
+            {groups.map((typeGroup) => (
+              <article key={typeGroup.key} className="audit-type-card">
+                <header className="audit-type-head">
+                  <div>
+                    <h3>{typeGroup.label}</h3>
+                    <span>{typeGroup.processes.length} processo(s)</span>
+                  </div>
+                  <strong>{typeGroup.count}</strong>
+                </header>
+                <div className="audit-process-list">
+                  {typeGroup.processes.map((processGroup) => (
+                    <section key={processGroup.key} className="audit-process-group">
+                      <header className="audit-process-head">
+                        <span>{processGroup.label}</span>
+                        <strong>{processGroup.entries.length}</strong>
+                      </header>
+                      <ol className="audit-timeline">
+                        {processGroup.entries.map((entry, index) => (
+                          <ActivityItem
+                            key={entry.id}
+                            entry={entry}
+                            index={index}
+                            entityLabel={typeGroup.singular}
+                          />
+                        ))}
+                      </ol>
+                    </section>
+                  ))}
                 </div>
-                <strong>{typeGroup.count}</strong>
-              </header>
-              <div className="audit-process-list">
-                {typeGroup.processes.map((processGroup) => (
-                  <section key={processGroup.key} className="audit-process-group">
-                    <header className="audit-process-head">
-                      <span>{processGroup.label}</span>
-                      <strong>{processGroup.entries.length}</strong>
-                    </header>
-                    <ol className="audit-timeline">
-                      {processGroup.entries.map((entry, index) => (
-                        <ActivityItem
-                          key={entry.id}
-                          entry={entry}
-                          index={index}
-                          entityLabel={typeGroup.singular}
-                        />
-                      ))}
-                    </ol>
-                  </section>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
+              </article>
+            ))}
+          </div>
+          {pagination?.temMais && onLoadMore && (
+            <div className="audit-load-more">
+              <button type="button" className="audit-load-more-btn" onClick={onLoadMore}>
+                Carregar mais
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <EmptyState
           title="Sem atividade registrada."
-          copy="Criações, edições e exclusões de processos, prazos e petições aparecem aqui."
+          copy="Criações, edições e exclusões de processos, prazos, petições e compromissos aparecem aqui."
         />
       )}
     </section>

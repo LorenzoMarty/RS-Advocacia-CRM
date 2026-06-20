@@ -4,6 +4,8 @@ from django.shortcuts import get_object_or_404
 
 from agenda.forms import EventoForm
 from agenda.models import Evento
+from auditoria import services as auditoria_services
+from auditoria.models import RegistroAuditoria
 from core.permissions import app_permissions_required
 from core.utils import (
     converter_campos_datahora,
@@ -133,6 +135,16 @@ def criar_evento(request):
         evento = Evento.objects.select_related("cliente", "processo", "responsavel").get(pk=evento.pk)
         serialized = serialize_evento(evento)
 
+        auditoria_services.registrar(
+            request,
+            acao=RegistroAuditoria.ACAO_CRIADO,
+            entidade_tipo=RegistroAuditoria.ENTIDADE_EVENTO,
+            entidade_id=evento.pk,
+            rotulo=evento.titulo or "",
+            processo_id=evento.processo_id or "",
+            processo_rotulo=evento.processo.numero_processo if evento.processo_id else "",
+        )
+
         return resposta_sucesso(
             {"evento": serialized, "sincronizacao_google": google_sync},
             mensagem="Evento criado com sucesso.",
@@ -160,7 +172,11 @@ def editar_evento(request, evento_id):
     if request.method not in {"PUT", "PATCH"}:
         return metodo_nao_permitido(["PUT", "PATCH"])
 
-    evento = get_object_or_404(_eventos_compromisso_queryset(), pk=evento_id)
+    evento = get_object_or_404(
+        _eventos_compromisso_queryset().select_related("cliente", "processo", "responsavel"),
+        pk=evento_id,
+    )
+    antes = serialize_evento(evento)
 
     try:
         payload = _evento_api_payload(request)
@@ -175,6 +191,20 @@ def editar_evento(request, evento_id):
 
         evento = Evento.objects.select_related("cliente", "processo", "responsavel").get(pk=evento.pk)
         serialized = serialize_evento(evento)
+
+        alteracoes = auditoria_services.calcular_diff(antes, serialized)
+        if alteracoes:
+            auditoria_services.registrar(
+                request,
+                acao=RegistroAuditoria.ACAO_ATUALIZADO,
+                entidade_tipo=RegistroAuditoria.ENTIDADE_EVENTO,
+                entidade_id=evento.pk,
+                rotulo=evento.titulo or "",
+                alteracoes=alteracoes,
+                processo_id=evento.processo_id or "",
+                processo_rotulo=evento.processo.numero_processo if evento.processo_id else "",
+            )
+
         return resposta_sucesso(
             {"evento": serialized, "sincronizacao_google": google_sync},
             mensagem="Evento atualizado com sucesso.",
@@ -188,7 +218,14 @@ def excluir_evento(request, evento_id):
     if request.method != "DELETE":
         return metodo_nao_permitido(["DELETE"])
 
-    evento = get_object_or_404(_eventos_compromisso_queryset(), pk=evento_id)
+    evento = get_object_or_404(
+        _eventos_compromisso_queryset().select_related("processo"),
+        pk=evento_id,
+    )
+    deleted_id = str(evento.pk)
+    deleted_titulo = evento.titulo or ""
+    deleted_processo_id = evento.processo_id or ""
+    deleted_processo_rotulo = evento.processo.numero_processo if evento.processo_id else ""
 
     try:
         delete_remote_event(_usuario_google_atual(request), evento)
@@ -201,8 +238,17 @@ def excluir_evento(request, evento_id):
             status=502,
         )
 
-    deleted_id = str(evento.pk)
     evento.delete()
+
+    auditoria_services.registrar(
+        request,
+        acao=RegistroAuditoria.ACAO_EXCLUIDO,
+        entidade_tipo=RegistroAuditoria.ENTIDADE_EVENTO,
+        entidade_id=deleted_id,
+        rotulo=deleted_titulo,
+        processo_id=deleted_processo_id,
+        processo_rotulo=deleted_processo_rotulo,
+    )
 
     return resposta_sucesso({"id": deleted_id}, mensagem="Evento excluído com sucesso.")
 

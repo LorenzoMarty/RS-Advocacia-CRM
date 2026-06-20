@@ -137,6 +137,20 @@ export function auditFromListResponse(payload) {
   return collectionFromResponse(payload, 'registros').map(auditEntryFromApi).filter(Boolean);
 }
 
+export function auditPaginationFromResponse(payload) {
+  const dados = payload?.dados || payload;
+  const pag = dados?.paginacao;
+  if (!pag) {
+    return { offset: 0, limit: 100, total: 0, temMais: false };
+  }
+  return {
+    offset: pag.offset ?? 0,
+    limit: pag.limit ?? 100,
+    total: pag.total ?? 0,
+    temMais: Boolean(pag.tem_mais),
+  };
+}
+
 // Painel de risco computado no backend (GET /api/auditoria/painel/). Apenas
 // converte snake_case → as chaves camelCase que os componentes já consomem.
 export function auditPanelFromResponse(payload) {
@@ -163,6 +177,85 @@ export function auditPanelFromResponse(payload) {
       date: action.date ? `${action.date}T12:00:00` : null,
     })),
     statusDistribution: panel.status_distribution || [],
+  };
+}
+
+export function auditOverviewFromResponse(payload) {
+  const dados = payload?.dados || payload;
+  if (!dados) {
+    return null;
+  }
+
+  const prazos = dados.prazos || {};
+  const eventos = dados.eventos || {};
+  const prod = dados.produtividade || {};
+
+  return {
+    // Risk panel (from build_panel — same keys as auditPanelFromResponse)
+    periodo: dados.periodo ?? 7,
+    risk: dados.risk || { score: 0, level: 'healthy', label: '', drivers: [] },
+    summary: {
+      activeProcesses: (dados.summary || {}).active_processes || 0,
+      overdue: (dados.summary || {}).overdue || 0,
+      dueSoon: (dados.summary || {}).due_soon || 0,
+      stale: (dados.summary || {}).stale || 0,
+      clientsWithoutProcess: (dados.summary || {}).clients_without_process || 0,
+      runningTimers: (dados.summary || {}).running_timers || 0,
+    },
+    priorityActions: (dados.priority_actions || []).map((action) => ({
+      ...action,
+      date: action.date ? `${action.date}T12:00:00` : null,
+    })),
+    statusDistribution: dados.status_distribution || [],
+
+    // Macro overview sections
+    processStatus: dados.processos_por_status || [],
+    staleProcesses: {
+      count: (dados.processos_parados || {}).count || 0,
+      itens: (dados.processos_parados || {}).itens || [],
+    },
+    prazos: {
+      overdue: prazos.overdue || 0,
+      today: prazos.today || 0,
+      dueSoon: prazos.due_soon || 0,
+      done: prazos.done || 0,
+    },
+    eventos: {
+      proximos: (eventos.proximos || []).map((e) => ({
+        ...e,
+        dataInicio: e.data_inicio || null,
+        dataFim: e.data_fim || null,
+        responsavelNome: e.responsavel_nome || '',
+        processoNumero: e.processo_numero || '',
+        clienteNome: e.cliente_nome || '',
+        tipoEvento: e.tipo_evento || '',
+      })),
+      atrasados: (eventos.atrasados || []).map((e) => ({
+        ...e,
+        dataInicio: e.data_inicio || null,
+        dataFim: e.data_fim || null,
+        responsavelNome: e.responsavel_nome || '',
+        processoNumero: e.processo_numero || '',
+        clienteNome: e.cliente_nome || '',
+        tipoEvento: e.tipo_evento || '',
+      })),
+      totalPendentes: eventos.total_pendentes || 0,
+    },
+    petitionFunnel: (dados.peticoes_por_status || []).map((item) => ({
+      status: item.status || '',
+      count: item.count || 0,
+    })),
+    productivity: {
+      semanaInicio: prod.semana_inicio || null,
+      porUsuario: (prod.por_usuario || []).map((u) => ({
+        userId: u.user_id || '',
+        userName: u.user_name || '',
+        horas: u.horas || 0,
+        metaHoras: u.meta_horas || 30,
+        pct: u.pct || 0,
+      })),
+      timersAtivos: prod.timers_ativos || 0,
+    },
   };
 }
 

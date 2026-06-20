@@ -1,4 +1,4 @@
-import { Component, useEffect, useState } from 'react';
+import { Component, useCallback, useEffect, useState } from 'react';
 
 import { PageChrome } from '../layout';
 import { useAppState } from '../store';
@@ -10,10 +10,14 @@ import { StatusDistribution } from '../components/audit/StatusDistribution';
 import { ActivityTimeline } from '../components/audit/ActivityTimeline';
 import { LoadingSkeleton } from '../components/audit/LoadingSkeleton';
 import { ErrorState } from '../components/audit/ErrorState';
+import { ProcessStatusPanel } from '../components/audit/ProcessStatusPanel';
+import { DeadlinesPanel } from '../components/audit/DeadlinesPanel';
+import { EventsPanel } from '../components/audit/EventsPanel';
+import { PetitionFunnel } from '../components/audit/PetitionFunnel';
+import { ProductivityPanel } from '../components/audit/ProductivityPanel';
 
-// Render-only: o painel (risco, KPIs, prioridades, distribuição) é computado no
-// backend (GET /api/auditoria/painel/). Fallback neutro enquanto carrega / em demo.
-const EMPTY_PANEL = {
+// Fallback neutro enquanto o overview não carregou.
+const EMPTY_OVERVIEW = {
   risk: { score: 0, level: 'healthy', label: 'Saudável', drivers: [] },
   summary: {
     activeProcesses: 0,
@@ -25,10 +29,25 @@ const EMPTY_PANEL = {
   },
   priorityActions: [],
   statusDistribution: [],
+  processStatus: [],
+  staleProcesses: { count: 0, itens: [] },
+  prazos: { overdue: 0, today: 0, dueSoon: 0, done: 0 },
+  eventos: { proximos: [], atrasados: [], totalPendentes: 0 },
+  petitionFunnel: [],
+  productivity: { semanaInicio: null, porUsuario: [], timersAtivos: 0 },
 };
 
-function AuditDashboard({ panel, auditEntries, period, onPeriodChange }) {
-  const data = panel || EMPTY_PANEL;
+function AuditDashboard({
+  overview,
+  auditEntries,
+  period,
+  onPeriodChange,
+  auditFilters,
+  auditPagination,
+  onFilterChange,
+  onLoadMore,
+}) {
+  const data = overview || EMPTY_OVERVIEW;
 
   return (
     <div className="audit-page">
@@ -39,7 +58,32 @@ function AuditDashboard({ panel, auditEntries, period, onPeriodChange }) {
         onPeriodChange={onPeriodChange}
       />
       <PriorityActions actions={data.priorityActions} />
-      <ActivityTimeline entries={auditEntries} />
+
+      {/* Macro overview sections */}
+      <div className="audit-macro-grid">
+        <ProcessStatusPanel
+          processStatus={data.processStatus}
+          staleProcesses={data.staleProcesses}
+        />
+        <DeadlinesPanel prazos={data.prazos} />
+      </div>
+
+      <EventsPanel eventos={data.eventos} />
+
+      <div className="audit-macro-grid">
+        <PetitionFunnel petitionFunnel={data.petitionFunnel} />
+        <ProductivityPanel productivity={data.productivity} />
+      </div>
+
+      {/* Activity log */}
+      <ActivityTimeline
+        entries={auditEntries}
+        filters={auditFilters}
+        pagination={auditPagination}
+        onFilterChange={onFilterChange}
+        onLoadMore={onLoadMore}
+      />
+
       <StatusDistribution data={data.statusDistribution} />
     </div>
   );
@@ -47,24 +91,40 @@ function AuditDashboard({ panel, auditEntries, period, onPeriodChange }) {
 
 export function AuditPage() {
   const {
-    auditEntries, auditPanel, currentRole, isLoading, loadAudit, loadAuditPanel,
+    auditEntries,
+    auditOverview,
+    auditPagination,
+    currentRole,
+    isLoading,
+    loadAudit,
+    loadMoreAudit,
+    loadAuditOverview,
   } = useAppState();
   const isAdmin = currentRole?.name === 'Administrador';
   const [period, setPeriod] = useState(7);
+  const [auditFilters, setAuditFilters] = useState({});
 
   useEffect(() => {
     if (isAdmin) {
-      loadAudit();
-      loadAuditPanel(period);
+      loadAudit({});
+      loadAuditOverview(period);
     }
-    // loadAudit/loadAuditPanel são estáveis; recarrega só quando o papel muda.
+    // loadAudit/loadAuditOverview estáveis; recarrega só quando o papel muda.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
   function handlePeriodChange(value) {
     setPeriod(value);
-    loadAuditPanel(value);
+    loadAuditOverview(value);
   }
+
+  const handleFilterChange = useCallback(
+    (filters) => {
+      setAuditFilters(filters);
+      loadAudit(filters);
+    },
+    [loadAudit],
+  );
 
   if (!isAdmin) {
     return (
@@ -83,10 +143,14 @@ export function AuditPage() {
       ) : (
         <AuditBoundary>
           <AuditDashboard
-            panel={auditPanel}
+            overview={auditOverview}
             auditEntries={auditEntries}
             period={period}
             onPeriodChange={handlePeriodChange}
+            auditFilters={auditFilters}
+            auditPagination={auditPagination}
+            onFilterChange={handleFilterChange}
+            onLoadMore={loadMoreAudit}
           />
         </AuditBoundary>
       )}
