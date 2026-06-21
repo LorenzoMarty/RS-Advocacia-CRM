@@ -255,6 +255,22 @@
     line-height:1.6;
 }
 
+.login-footer p + p{
+    margin-top:6px;
+}
+
+.login-policy-link{
+    color:var(--muted);
+    font-size:.78rem;
+    text-decoration:underline;
+    text-underline-offset:3px;
+    transition:color .15s;
+}
+
+.login-policy-link:hover{
+    color:var(--text);
+}
+
 html[data-theme="light"] .login-card{
     background:
         linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.78)),

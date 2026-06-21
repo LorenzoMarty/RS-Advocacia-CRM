@@ -49,6 +49,7 @@ import { AuditPage } from "./app/pages/audit";
 import { useAppState } from "./app/store";
 import { ApiTestPage } from "./app/pages/api-test";
 import { MeetingsPage } from "./app/pages/meetings";
+import { PrivacyPolicyPage } from "./app/pages/privacy-policy";
 
 function ClientFormRoute() {
   const { clientId } = useParams();
@@ -222,6 +223,8 @@ export default function App() {
             />
 
           </Route>
+
+          <Route path="/politica-privacidade" element={<PrivacyPolicyPage />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
