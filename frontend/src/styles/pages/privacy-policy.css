@@ -74,13 +74,11 @@
   text-underline-offset: 3px;
 }
 
-.policy-body section a:hover {
-  opacity: .8;
-}
+.policy-body section a:hover { opacity: .8; }
 
 .policy-body code {
   font-size: .82rem;
-  background: rgba(148, 163, 184, .1);
+  background: rgba(148,163,184,.1);
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 1px 6px;
@@ -110,17 +108,11 @@
   text-transform: uppercase;
   letter-spacing: .05em;
   color: var(--muted);
-  background: rgba(148, 163, 184, .05);
+  background: rgba(148,163,184,.05);
 }
 
-.policy-table td {
-  color: var(--soft);
-}
-
-.policy-table td:first-child {
-  white-space: nowrap;
-  color: var(--text);
-}
+.policy-table td { color: var(--soft); }
+.policy-table td:first-child { color: var(--text); white-space: nowrap; }
 
 .policy-footer {
   margin-top: 56px;
@@ -135,6 +127,4 @@
   transition: color .15s;
 }
 
-.policy-back-link:hover {
-  color: var(--text);
-}
+.policy-back-link:hover { color: var(--text); }

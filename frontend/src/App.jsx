@@ -225,7 +225,6 @@ export default function App() {
           </Route>
 
           <Route path="/politica-privacidade" element={<PrivacyPolicyPage />} />
-
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </HashRouter>
