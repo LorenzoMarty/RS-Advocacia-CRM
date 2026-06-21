@@ -62,8 +62,14 @@ export const PETITION_STATUS_COLUMNS = [
   { key: 'protocolado', label: 'Protocolado' },
 ];
 export const EVENT_STATUS_OPTIONS = [
-  'Pendente',
+  'Agendado',
   'Confirmado',
+  'Aguardando',
+  'Em andamento',
+  'Concluído',
+  'Adiado',
+  'Cancelado',
+  'Atrasado',
 ];
 export const CLIENT_TYPE_OPTIONS = [
   { value: 'esporadico', label: 'Esporádico' },
