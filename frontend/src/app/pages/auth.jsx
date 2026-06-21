@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { api, isApiEnabled } from '../api';
 
@@ -64,11 +64,6 @@ export function LoginPage() {
 
         <footer className="login-footer" id="login-help">
           <p>Depois do login, você volta automaticamente para o painel.</p>
-          <p>
-            <Link to="/politica-privacidade" className="login-policy-link">
-              Política de Privacidade
-            </Link>
-          </p>
         </footer>
       </section>
     </main>
