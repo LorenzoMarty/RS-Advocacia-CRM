@@ -6,7 +6,6 @@ import { NotFoundState } from './common';
 
 import { RiskSummary } from '../components/audit/RiskSummary';
 import { PriorityActions } from '../components/audit/PriorityActions';
-import { StatusDistribution } from '../components/audit/StatusDistribution';
 import { ActivityTimeline } from '../components/audit/ActivityTimeline';
 import { LoadingSkeleton } from '../components/audit/LoadingSkeleton';
 import { ErrorState } from '../components/audit/ErrorState';
@@ -84,7 +83,6 @@ function AuditDashboard({
         onLoadMore={onLoadMore}
       />
 
-      <StatusDistribution data={data.statusDistribution} />
     </div>
   );
 }
@@ -103,12 +101,14 @@ export function AuditPage() {
   const isAdmin = currentRole?.name === 'Administrador';
   const [period, setPeriod] = useState(7);
   const [auditFilters, setAuditFilters] = useState({});
+  const [auditDataLoading, setAuditDataLoading] = useState(false);
 
   useEffect(() => {
-    if (isAdmin) {
-      loadAudit({});
-      loadAuditOverview(period);
-    }
+    if (!isAdmin) return;
+    setAuditDataLoading(true);
+    Promise.all([loadAudit({}), loadAuditOverview(period)]).finally(() => {
+      setAuditDataLoading(false);
+    });
     // loadAudit/loadAuditOverview estáveis; recarrega só quando o papel muda.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
@@ -138,7 +138,7 @@ export function AuditPage() {
   return (
     <>
       <PageChrome label="Auditoria" />
-      {isLoading ? (
+      {isLoading || auditDataLoading ? (
         <LoadingSkeleton />
       ) : (
         <AuditBoundary>

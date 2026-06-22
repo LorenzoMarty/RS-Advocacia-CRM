@@ -1,7 +1,7 @@
-# Worker stack for meeting-recording processing (runs on the always-on VM).
+# Worker stack for meeting-recording processing (runs on the always-on GCP VM).
 #
-# - redis: Celery broker. Only the TLS port (6380) is published so Vercel can
-#   enqueue; the worker talks to it over the internal compose network.
+# - redis: Celery broker. Only the TLS port (6380) is published externally;
+#   the worker talks to it over the internal compose network.
 # - worker: Celery worker consuming `processar_gravacao` tasks.
 #
 # First-time setup:
