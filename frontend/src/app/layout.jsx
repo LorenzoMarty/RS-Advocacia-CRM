@@ -8,6 +8,7 @@ import { NAV_ITEMS } from './data';
 import { useAppState } from './store';
 import { useAppearanceState } from './use-appearance';
 import { formatTime, normalizeText } from './utils';
+import { useNotifications } from './hooks/use-notifications';
 
 const PageChromeContext = createContext(() => {});
 const PAGE_CHROME_DEFAULT = { label: 'Painel', actions: null };
@@ -399,6 +400,75 @@ export function GuestLayout() {
   return <Outlet />;
 }
 
+function NotificationBell() {
+  const { notificacoes, totalNaoLidas, marcarLida, marcarTodasLidas } = useNotifications();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="notification-bell" style={{ position: 'relative' }}>
+      <button
+        type="button"
+        className="nav-link"
+        aria-label={`Notificações${totalNaoLidas ? ` (${totalNaoLidas} não lidas)` : ''}`}
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
+        style={{ position: 'relative' }}
+      >
+        <span className="nav-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+          </svg>
+        </span>
+        {totalNaoLidas > 0 && (
+          <span className="notification-badge" aria-hidden="true">{totalNaoLidas > 9 ? '9+' : totalNaoLidas}</span>
+        )}
+      </button>
+
+      {open && (
+        <div
+          className="notification-dropdown"
+          role="dialog"
+          aria-label="Notificações"
+        >
+          <div className="notification-header">
+            <strong>Notificações</strong>
+            {totalNaoLidas > 0 && (
+              <button type="button" className="notification-mark-all" onClick={marcarTodasLidas}>
+                Marcar todas como lidas
+              </button>
+            )}
+          </div>
+
+          {notificacoes.length === 0 ? (
+            <div className="notification-empty">Nenhuma notificação pendente.</div>
+          ) : (
+            <ul className="notification-list" role="list">
+              {notificacoes.map((n) => (
+                <li key={n.id} className="notification-item">
+                  <div className="notification-content">
+                    <strong className="notification-title">{n.titulo}</strong>
+                    {n.mensagem && <p className="notification-msg">{n.mensagem}</p>}
+                  </div>
+                  <button
+                    type="button"
+                    className="notification-dismiss"
+                    aria-label="Marcar como lida"
+                    onClick={() => marcarLida(n.id)}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ProtectedLayout() {
   const { addFlash, currentUser, deadlines, events, isLoading, sair } = useAppState();
   const location = useLocation();
@@ -422,6 +492,7 @@ export function ProtectedLayout() {
 
   return (
     <PageChromeContext.Provider value={setChrome}>
+      <a href="#main-content" className="skip-link">Ir para o conteúdo</a>
       <div className="shell">
         <aside className="sidebar" id="app-sidebar" aria-label="Navegação principal">
           <button
@@ -465,6 +536,8 @@ export function ProtectedLayout() {
                 </div>
               </div>
 
+              <NotificationBell />
+
               <AppearanceTrigger
                 className="nav-link sidebar-appearance"
                 label="Aparência"
@@ -486,7 +559,7 @@ export function ProtectedLayout() {
 
         <div className="page">
           <div className="page-wrap">
-            <main className="main">
+            <main className="main" id="main-content">
               <AnimatePresence mode="wait" initial={false}>
                 <MotionPage key={location.pathname} className="page-motion">
                   <Outlet />

@@ -157,6 +157,7 @@ INSTALLED_APPS = [
     "ai",
     "meetings",
     "documentos",
+    "notificacoes",
 ]
 
 MIDDLEWARE = [

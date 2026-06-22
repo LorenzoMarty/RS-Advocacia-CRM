@@ -9,6 +9,7 @@ import {
 
 import { GuestLayout, ProtectedLayout } from "./app/layout";
 import { AppStateProvider } from "./app/store";
+import { AppErrorBoundary } from "./app/components/ErrorBoundary";
 import { LoginPage } from "./app/pages/auth";
 import { DashboardPage } from "./app/pages/dashboard";
 import {
@@ -105,7 +106,8 @@ function RequirePermission({ permission, children }) {
 
 export default function App() {
   return (
-    <AppStateProvider>
+    <AppErrorBoundary>
+      <AppStateProvider>
       <HashRouter>
         <Routes>
           <Route element={<GuestLayout />}>
@@ -226,6 +228,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </HashRouter>
-    </AppStateProvider>
+      </AppStateProvider>
+    </AppErrorBoundary>
   );
 }

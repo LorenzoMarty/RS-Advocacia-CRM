@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { APPEARANCE, APPEARANCE_GROUPS } from '../preferences';
+import { useFocusTrap } from '../hooks/use-focus-trap';
 
 function GearIcon() {
   return (
@@ -28,6 +29,9 @@ export function AppearanceTrigger({ onOpen, className = '', label = 'Aparência'
 }
 
 export function AppearancePanel({ appearance, setOption, reset, open, onClose }) {
+  const panelRef = useRef(null);
+  useFocusTrap(panelRef, open);
+
   useEffect(() => {
     if (!open) {
       return undefined;
@@ -55,7 +59,7 @@ export function AppearancePanel({ appearance, setOption, reset, open, onClose })
       aria-label="Preferências de aparência"
       onClick={onClose}
     >
-      <div className="popup-panel appearance-panel" onClick={(event) => event.stopPropagation()}>
+      <div ref={panelRef} className="popup-panel appearance-panel" onClick={(event) => event.stopPropagation()}>
         <div className="appearance-head">
           <div className="popup-copy">
             <p className="popup-kicker">Aparência</p>
