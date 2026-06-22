@@ -6,15 +6,11 @@
    da auditoria (hero de risco, prioridades, timeline).
    ============================================================ */
 
-.audit-page{display:grid;gap:8px}
+.audit-page{display:grid}
 .audit-card.section-card{
-    padding:12px 0;
-    outline:0;
-    border:0;
-    background:transparent;
-    box-shadow:none;
+    padding:var(--pad-card);
 }
-.audit-card .section-head{margin-bottom:8px}
+.audit-card .section-head{margin-bottom:var(--gap-page)}
 .audit-card .section-note{font-size:.82rem}
 
 /* ---------- Hero de risco ---------- */
@@ -34,7 +30,7 @@
 .audit-risk-hero{
     display:grid;
     grid-template-columns:minmax(260px,330px) minmax(0,1fr);
-    gap:10px;
+    gap:var(--gap-grid);
     align-items:stretch;
 }
 
@@ -85,7 +81,7 @@
 .risk-score-clean{font-size:.8rem;color:var(--soft);margin:8px 0 0}
 
 /* Faixa de KPIs (override do .productivity-kpis) */
-.audit-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.audit-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap-list)}
 .audit-kpi{
     text-decoration:none;
     border:0;
@@ -108,7 +104,7 @@
 .audit-kpi-hint{font-size:.64rem;font-style:normal;color:var(--muted)}
 
 /* ---------- Prioridades (full-width) ---------- */
-.audit-priority-list{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.audit-priority-list{list-style:none;margin:0;padding:0;display:grid;gap:var(--gap-list)}
 .audit-priority-item{
     display:grid;
     grid-template-columns:4px minmax(0,1fr) auto;
@@ -226,7 +222,7 @@
 .audit-diff-to{color:var(--success)}
 
 /* ---------- Macro overview grid ---------- */
-.audit-macro-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.audit-macro-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-grid)}
 @media(max-width:860px){.audit-macro-grid{grid-template-columns:1fr}}
 
 /* ---------- Process status panel ---------- */
@@ -332,7 +328,7 @@
 .audit-timers-badge{color:var(--success)}
 
 /* ---------- Activity filters ---------- */
-.audit-filters{display:grid;gap:6px;margin-bottom:10px}
+.audit-filters{display:grid;gap:6px;margin-bottom:var(--gap-list)}
 .audit-filter-search{
     width:100%;padding:7px 10px;border-radius:7px;
     border:1px solid var(--line);background:var(--ghost);
@@ -370,6 +366,9 @@
 
 /* ---------- Light theme ---------- */
 html[data-theme="light"] .risk-score-inner{background:#fff}
+html[data-theme="light"] .audit-card.section-card{
+    background:#ffffff;
+}
 html[data-theme="light"] .risk-score-card,
 html[data-theme="light"] .audit-priority-item,
 html[data-theme="light"] .audit-type-card{
