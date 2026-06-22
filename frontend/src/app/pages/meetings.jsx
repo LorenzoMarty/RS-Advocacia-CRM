@@ -660,7 +660,7 @@ export function MeetingsPage() {
       {confirmPopup}
       <div className="meetings-page">
         <div className="meetings-layout">
-          <aside className="surface meetings-sidebar">
+          <aside className="surface section-card meetings-sidebar">
             <div className="section-head">
               <div>
                 <h2 className="section-title">Reuniões</h2>
@@ -710,7 +710,7 @@ export function MeetingsPage() {
 
           <section className="meetings-workspace">
             {isMeetingFormOpen ? (
-              <div className="surface meeting-editor">
+              <div className="surface section-card meeting-editor">
                 <div className="section-head">
                   <div>
                     <h2 className="section-title">
@@ -770,7 +770,7 @@ export function MeetingsPage() {
             ) : null}
 
             {selectedMeeting ? (
-              <section className="meeting-doc-sheet">
+              <section className="surface section-card meeting-doc-sheet">
                 <header className="meeting-doc-head">
                   <div className="meeting-doc-head-text">
                     <p className="meeting-doc-eyebrow">Ata de reunião</p>

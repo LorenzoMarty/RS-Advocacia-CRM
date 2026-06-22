@@ -1,20 +1,20 @@
 .meetings-page{display:grid;gap:var(--gap-page)}
-.meetings-layout{display:grid;grid-template-columns:minmax(260px,.62fr) minmax(440px,1.6fr);gap:var(--gap-page);align-items:start}
+.meetings-layout{display:grid;grid-template-columns:minmax(260px,.55fr) minmax(0,1.6fr);gap:var(--gap-grid);align-items:start}
 
 /* ---- Sidebar (lista de reuniões) ---- */
 .meetings-sidebar{padding:var(--pad-card);position:sticky;top:18px}
-.meeting-options{display:grid;gap:9px}
-.meeting-option{display:grid;gap:5px;min-width:0;width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:15px;background:var(--ghost);color:var(--text);text-align:left;cursor:pointer;transition:border-color var(--motion) var(--ease-out),background var(--motion) var(--ease-out),transform var(--motion-fast) var(--ease-out)}
+.meeting-options{display:grid;gap:var(--gap-list)}
+.meeting-option{display:grid;gap:6px;min-width:0;width:100%;padding:14px 16px;border:1px solid var(--line);border-radius:15px;background:var(--ghost);color:var(--text);text-align:left;cursor:pointer;transition:border-color var(--motion) var(--ease-out),background var(--motion) var(--ease-out),transform var(--motion-fast) var(--ease-out)}
 .meeting-option:hover{border-color:var(--line-strong);background:var(--ghost-strong)}
 .meeting-option:active{transform:scale(.99)}
-.meeting-option span{color:var(--muted);font-size:.78rem}
+.meeting-option span{color:var(--muted);font-size:.78rem;line-height:1.45}
 .meeting-option-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.meeting-option-title strong{font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meeting-option-title strong{font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .meeting-option.active{border-color:rgba(212,175,55,.34);background:rgba(212,175,55,.1)}
 
 /* ---- Editor (form de nova/editar reunião) ---- */
-.meeting-editor{display:grid;gap:14px;margin-bottom:var(--gap-page);padding:var(--pad-card)}
-.meeting-form{display:grid;gap:14px}
+.meeting-editor{display:grid;gap:var(--gap-page);padding:var(--pad-card)}
+.meeting-form{display:grid;gap:var(--gap-list)}
 .meeting-form label{display:grid;gap:8px;color:var(--soft);font-size:.82rem;font-weight:600}
 .meeting-form input,.meeting-form select,.meeting-form textarea{width:100%;border:1px solid var(--line);border-radius:13px;background:var(--ghost);color:var(--text);padding:12px 13px;font:inherit;outline:0}
 .meeting-form input,.meeting-form select{min-height:46px}
@@ -23,10 +23,10 @@
 .meeting-form-actions{display:flex;gap:10px;flex-wrap:wrap}
 .btn-compact{min-height:32px;padding:0 12px;border-radius:11px;font-size:.78rem}
 
-/* ---- Documento (área principal estilo Docs) ---- */
+/* ---- Documento (área principal) ---- */
 .meetings-workspace{display:grid;gap:var(--gap-page);min-width:0}
 
-.meeting-doc-sheet{display:grid;gap:22px;max-width:860px;width:100%;margin:0 auto;padding:clamp(22px,4vw,46px);border:1px solid var(--line);border-radius:22px;background:var(--panel);box-shadow:var(--shadow)}
+.meeting-doc-sheet{display:grid;gap:var(--gap-page);max-width:860px;width:100%;margin:0 auto;padding:var(--pad-card)}
 .meeting-doc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px 24px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--line)}
 .meeting-doc-head-text{display:grid;gap:6px;min-width:0}
 .meeting-doc-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -34,13 +34,13 @@
 .meeting-doc-title{margin:0;font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);line-height:1;font-weight:400;letter-spacing:-.04em;color:var(--text)}
 .meeting-doc-meta{margin:0;color:var(--muted);font-size:.9rem}
 
-/* ---- Banner de processamento (o que está sendo feito) ---- */
-.meeting-doc-processing{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 18px;border-radius:16px;border:1px solid rgba(212,175,55,.26);background:rgba(212,175,55,.07)}
+/* ---- Banner de processamento ---- */
+.meeting-doc-processing{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 18px;border-radius:14px;border:1px solid rgba(212,175,55,.26);background:rgba(212,175,55,.07)}
 .meeting-doc-processing strong{color:var(--text);font-size:.95rem}
 .meeting-doc-processing>span:not(.capture-live-pulse){color:var(--soft);font-size:.84rem}
 .meeting-doc-processing .recording-pipeline{flex-basis:100%}
 
-.meeting-doc-empty{display:grid;gap:6px;padding:26px;border-radius:16px;border:1px dashed var(--line-strong);background:var(--ghost);text-align:center}
+.meeting-doc-empty{display:grid;gap:6px;padding:26px;border-radius:14px;border:1px dashed var(--line-strong);background:var(--ghost);text-align:center}
 .meeting-doc-empty strong{color:var(--text)}
 .meeting-doc-empty p{margin:0;color:var(--muted);font-size:.88rem}
 .meeting-doc-placeholder{padding:clamp(30px,6vw,60px);display:grid;place-items:center}
@@ -54,8 +54,8 @@
 .meeting-doc-fold[open]>summary{margin-bottom:14px}
 .meeting-transcript-text{margin:0;max-height:360px;overflow:auto;color:var(--soft);font-size:.9rem;line-height:1.7;white-space:pre-wrap}
 
-/* ---- Barra de captura (Gravar reunião + Enviar arquivo) ---- */
-.capture-bar{display:grid;gap:12px;padding:16px;border-radius:18px;border:1px dashed var(--line-strong);background:var(--ghost)}
+/* ---- Barra de captura ---- */
+.capture-bar{display:grid;gap:var(--gap-list);padding:18px;border-radius:16px;border:1px dashed var(--line-strong);background:var(--ghost)}
 .capture-actions{display:flex;gap:10px;flex-wrap:wrap}
 .capture-btn{display:inline-flex;align-items:center;gap:9px}
 .capture-ico{font-size:.7rem;opacity:.85}
@@ -66,13 +66,13 @@
 .capture-hint{margin:0;color:var(--muted);font-size:.82rem;line-height:1.5}
 .capture-hint-ok{color:var(--success)}
 
-.capture-live{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid rgba(239,122,122,.3);background:rgba(239,122,122,.08)}
+.capture-live{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid rgba(239,122,122,.3);background:rgba(239,122,122,.08)}
 .capture-live-text{display:grid;gap:3px}
 .capture-live-text strong{color:var(--text);font-size:.92rem}
 .capture-live-text span{color:var(--soft);font-size:.82rem;line-height:1.45}
 .capture-live-pulse{width:12px;height:12px;flex:none;border-radius:999px;background:var(--danger);box-shadow:0 0 0 0 rgba(239,122,122,.5);animation:capture-pulse 1.5s ease-out infinite}
 
-.capture-preview{display:grid;gap:10px;padding:13px;border-radius:14px;border:1px solid var(--line);background:var(--ghost-strong)}
+.capture-preview{display:grid;gap:10px;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--ghost-strong)}
 .capture-preview audio{width:100%}
 .capture-preview-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .capture-preview-name{flex:1;min-width:140px;color:var(--soft);font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -83,11 +83,11 @@
 @keyframes capture-blink{0%,49%{opacity:1}50%,100%{opacity:.25}}
 
 /* ---- Resumo renderizado (reusado pelo MeetingSummary) ---- */
-.ai-output{display:grid;gap:10px}
+.ai-output{display:grid;gap:var(--gap-list)}
 .ai-output h3{margin:0;color:var(--gold-soft);font-size:.88rem;text-transform:uppercase;letter-spacing:.12em}
-.summary-report{display:grid;gap:12px}
-.summary-section{display:grid;gap:10px;padding:16px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.018)),var(--ghost)}
-.summary-section-nested{padding:12px;border-radius:14px;background:rgba(255,255,255,.028)}
+.summary-report{display:grid;gap:var(--gap-list)}
+.summary-section{display:grid;gap:var(--gap-list);padding:16px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.018)),var(--ghost)}
+.summary-section-nested{padding:12px;border-radius:12px;background:rgba(255,255,255,.028)}
 .summary-section-header{display:flex;align-items:center;gap:9px}
 .summary-section-header::before{content:"";width:7px;height:7px;flex:0 0 auto;border-radius:999px;background:var(--gold-soft);box-shadow:0 0 14px rgba(212,175,55,.24)}
 .summary-section-header h4{margin:0;color:var(--text);font-size:.82rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
@@ -102,8 +102,8 @@
 .summary-subsections{display:grid;gap:8px}
 
 /* ---- Transcrição editável + trechos (RecordingResult) ---- */
-.recording-results{display:grid;gap:12px}
-.recording-result{display:grid;gap:14px;padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--ghost)}
+.recording-results{display:grid;gap:var(--gap-list)}
+.recording-result{display:grid;gap:var(--gap-list);padding:16px;border-radius:14px;border:1px solid var(--line);background:var(--ghost)}
 .recording-result-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .recording-result-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .recording-result-head p{margin:5px 0 0;color:var(--muted);font-size:.78rem}
@@ -116,170 +116,28 @@
 .recording-step-active .recording-step-dot{background:var(--gold-soft);border-color:var(--gold-soft);animation:recording-pulse 1.4s ease-in-out infinite}
 .recording-step-active .recording-step-label{color:var(--text);font-weight:600}
 @keyframes recording-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(212,175,55,.4)}50%{opacity:.65;box-shadow:0 0 0 4px rgba(212,175,55,0)}}
-.transcript-panel{display:grid;gap:10px;padding:14px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.028)}
+.transcript-panel{display:grid;gap:var(--gap-list);padding:14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.028)}
 .transcript-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .transcript-head h3{margin:0;color:var(--gold-soft);font-size:.82rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
 .transcript-panel p{margin:0;color:var(--soft);font-size:.9rem;line-height:1.7;white-space:pre-wrap}
 .transcript-editor{display:grid;gap:10px}
-.transcript-editor textarea{width:100%;min-height:220px;padding:13px;border-radius:14px;border:1px solid var(--line);background:var(--ghost);color:var(--text);font:inherit;font-size:.9rem;line-height:1.65;resize:vertical;outline:0}
+.transcript-editor textarea{width:100%;min-height:220px;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--ghost);color:var(--text);font:inherit;font-size:.9rem;line-height:1.65;resize:vertical;outline:0}
 .transcript-editor textarea:focus{border-color:rgba(212,175,55,.28);box-shadow:0 0 0 4px rgba(212,175,55,.08)}
 .transcript-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ---- Light theme ---- */
+html[data-theme="light"] .meeting-doc-sheet{background:#ffffff}
 
 @media (max-width:980px){
   .meetings-layout{grid-template-columns:1fr}
   .meetings-sidebar{position:static}
 }
 @media (max-width:640px){
-  .meetings-sidebar,.meeting-editor{padding:16px}
-  .meeting-doc-sheet{padding:20px}
+  .meetings-sidebar,.meeting-editor{padding:var(--pad-card-mobile)}
+  .meeting-option{padding:12px 14px}
+  .meeting-doc-sheet{padding:var(--pad-card-mobile)}
   .meeting-doc-bar{position:static;justify-content:stretch}
   .meeting-doc-actions{width:100%;justify-content:flex-start}
   .recording-result-head,.transcript-head{display:grid}
   .meeting-form-actions .btn,.transcript-actions .btn,.capture-actions .btn{flex:1}
-  .summary-section{padding:13px}
-  .summary-section-header h4{font-size:.72rem}
-}
-
-/* ---- Espaçamento ampliado para leitura confortável ---- */
-.meetings-layout{
-  grid-template-columns:minmax(320px,420px) minmax(0,1fr);
-  gap:clamp(34px,4vw,72px);
-  max-width:1520px;
-  width:100%;
-  margin:0 auto;
-}
-.meetings-sidebar{padding:clamp(22px,2.5vw,32px)}
-.meeting-options{gap:14px}
-.meeting-option{
-  gap:10px;
-  padding:20px 22px;
-  border-radius:16px;
-}
-.meeting-option span{
-  font-size:.8rem;
-  line-height:1.45;
-}
-.meeting-option-title{gap:12px}
-
-.meeting-editor{
-  gap:22px;
-  padding:clamp(24px,3vw,36px);
-}
-.meeting-form{gap:18px}
-.meeting-form input,
-.meeting-form select,
-.meeting-form textarea{padding:14px 15px}
-.meeting-form input,
-.meeting-form select{min-height:50px}
-.meeting-form-actions{gap:12px}
-
-.meeting-doc-sheet{
-  gap:30px;
-  max-width:1040px;
-  padding:clamp(34px,4.8vw,68px);
-  border-radius:24px;
-}
-.meeting-doc-head{
-  gap:24px 36px;
-  padding-bottom:28px;
-}
-.meeting-doc-head-text{gap:10px}
-.meeting-doc-actions{gap:10px}
-.meeting-doc-meta{
-  font-size:.92rem;
-  line-height:1.5;
-}
-.meeting-doc-processing{
-  gap:12px 16px;
-  padding:22px 24px;
-  border-radius:18px;
-}
-.meeting-doc-empty{
-  gap:10px;
-  padding:34px;
-  border-radius:18px;
-}
-.meeting-doc-fold{padding-top:24px}
-.meeting-doc-fold[open]>summary{margin-bottom:20px}
-.meeting-transcript-text{
-  max-height:420px;
-  font-size:.92rem;
-  line-height:1.8;
-}
-
-.capture-bar{
-  gap:18px;
-  padding:24px;
-  border-radius:20px;
-}
-.capture-actions{gap:12px}
-.capture-live{
-  gap:14px;
-  padding:16px 18px;
-  border-radius:16px;
-}
-.capture-preview{
-  gap:14px;
-  padding:18px;
-  border-radius:16px;
-}
-
-.summary-report{gap:18px}
-.summary-section{
-  gap:16px;
-  padding:24px;
-  border-radius:18px;
-}
-.summary-section-nested{
-  padding:18px;
-  border-radius:16px;
-}
-.summary-section-header{gap:11px}
-.summary-section-body{
-  gap:13px;
-  font-size:.94rem;
-  line-height:1.78;
-}
-.summary-list{
-  gap:10px;
-  padding-left:20px;
-}
-.summary-checklist{gap:10px}
-.summary-checkitem{gap:11px}
-.summary-subsections{gap:12px}
-
-.recording-results{gap:18px}
-.recording-result{
-  gap:18px;
-  padding:22px;
-  border-radius:20px;
-}
-.recording-result-head{gap:18px}
-.recording-result-actions{gap:10px}
-.recording-pipeline{gap:8px 18px}
-.transcript-panel{
-  gap:14px;
-  padding:20px;
-  border-radius:18px;
-}
-
-@media (max-width:980px){
-  .meetings-layout{
-    grid-template-columns:1fr;
-    max-width:none;
-  }
-}
-@media (max-width:640px){
-  .meetings-layout{gap:22px}
-  .meetings-sidebar,
-  .meeting-editor{padding:18px}
-  .meeting-option{padding:16px}
-  .meeting-doc-sheet{
-    gap:22px;
-    padding:22px;
-  }
-  .capture-bar,
-  .summary-section,
-  .recording-result,
-  .transcript-panel{padding:16px}
 }
