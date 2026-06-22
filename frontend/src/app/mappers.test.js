@@ -559,8 +559,8 @@ describe('lancamento mappers', () => {
 });
 
 describe('productivity mappers', () => {
-  it('maps time entries accepting snake_case and camelCase', () => {
-    const fromSnake = timeEntryFromApi({
+  it('maps time entries from snake_case (backend format)', () => {
+    const entry = timeEntryFromApi({
       id: 30,
       user_id: 1,
       task_id: 2,
@@ -571,7 +571,7 @@ describe('productivity mappers', () => {
       status: 'running',
     });
 
-    expect(fromSnake).toMatchObject({
+    expect(entry).toMatchObject({
       id: '30',
       userId: '1',
       taskId: '2',
@@ -580,12 +580,6 @@ describe('productivity mappers', () => {
       totalSeconds: 120,
       elapsedSeconds: 150,
       status: 'running',
-    });
-
-    expect(timeEntryFromApi({ id: 30, userId: 1, totalSeconds: 60 })).toMatchObject({
-      userId: '1',
-      totalSeconds: 60,
-      status: 'stopped',
     });
   });
 

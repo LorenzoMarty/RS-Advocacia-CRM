@@ -3,10 +3,6 @@ const rawApiBaseUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/
 const apiBaseUrl = (rawApiBaseUrl || DEFAULT_API_BASE_URL).replace(/\/+$/, '');
 
 export const isApiEnabled = Boolean(apiBaseUrl);
-export const isEventsApiEnabled = isApiEnabled;
-export const isDeadlinesApiEnabled = isApiEnabled;
-export const isPetitionsApiEnabled = isApiEnabled;
-export const isProductivityApiEnabled = isApiEnabled;
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE']);
 
@@ -60,7 +56,7 @@ async function ensureCsrfToken(baseUrl = apiBaseUrl) {
 }
 
 function errorMessageFromPayload(payload, status) {
-  const error = payload.erros || payload.erro || `Falha na API (${status}).`;
+  const error = payload.erros || `Falha na API (${status}).`;
 
   if (typeof error === 'string') {
     return error;

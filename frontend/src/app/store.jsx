@@ -5,10 +5,6 @@ import { toast } from 'sonner';
 import {
   api,
   isApiEnabled,
-  isDeadlinesApiEnabled,
-  isEventsApiEnabled,
-  isPetitionsApiEnabled,
-  isProductivityApiEnabled,
 } from './api';
 
 import {
@@ -127,49 +123,6 @@ function elapsedSecondsForTimeEntry(entry, currentTime = Date.now()) {
   return totalSeconds + Math.max(0, Math.floor((currentTime - baseTime) / 1000));
 }
 
-function elapsedSecondsForDeadline(deadline, currentTime = Date.now()) {
-  const elapsedSeconds = Math.max(0, Math.floor(Number(deadline?.elapsedSeconds) || 0));
-
-  if (!deadline?.timerStartedAt) {
-    return elapsedSeconds;
-  }
-
-  const startedAt = new Date(deadline.timerStartedAt).getTime();
-
-  if (Number.isNaN(startedAt)) {
-    return elapsedSeconds;
-  }
-
-  return elapsedSeconds + Math.max(0, Math.floor((currentTime - startedAt) / 1000));
-}
-
-function isPendingDeadlineStatus(status) {
-  return ['pendente', 'a fazer'].includes(String(status || '').trim().toLowerCase());
-}
-
-function timeEntryWithMonotonicSeconds(previousEntry, nextEntry, currentTime = Date.now()) {
-  if (!previousEntry || !nextEntry) {
-    return nextEntry;
-  }
-
-  const previousElapsedSeconds = elapsedSecondsForTimeEntry(previousEntry, currentTime);
-  const nextElapsedSeconds = elapsedSecondsForTimeEntry(nextEntry, currentTime);
-  const totalSeconds = nextEntry.status === 'running'
-    ? Math.max(Number(previousEntry.totalSeconds) || 0, Number(nextEntry.totalSeconds) || 0)
-    : Math.max(previousElapsedSeconds, nextElapsedSeconds);
-
-  return {
-    ...nextEntry,
-    totalSeconds,
-    elapsedSeconds: Math.max(previousElapsedSeconds, nextElapsedSeconds, Number(nextEntry.elapsedSeconds) || 0),
-  };
-}
-
-function replaceTimeEntryMonotonic(entries, nextEntry) {
-  const previousEntry = entries.find((entry) => entry.id === nextEntry.id);
-  return replaceById(entries, timeEntryWithMonotonicSeconds(previousEntry, nextEntry));
-}
-
 function taskDisplayName(payload) {
   return payload.taskName || payload.title || payload.name || 'Tarefa';
 }
@@ -191,19 +144,13 @@ export function AppStateProvider({ children }) {
   const [auditOverview, setAuditOverview] = useState(null);
   const [auditPagination, setAuditPagination] = useState({ offset: 0, limit: 100, total: 0, temMais: false });
   const [auditFilters, setAuditFilters] = useState({});
-  const [isLoading, setIsLoading] = useState(isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled);
-  const [apiStatus, setApiStatus] = useState((isApiEnabled || isEventsApiEnabled || isDeadlinesApiEnabled || isPetitionsApiEnabled || isProductivityApiEnabled) ? 'loading' : 'local');
-  const [isEventsLoading, setIsEventsLoading] = useState(isEventsApiEnabled);
-  const [isDeadlinesLoading, setIsDeadlinesLoading] = useState(isDeadlinesApiEnabled);
-  const [isPetitionsLoading, setIsPetitionsLoading] = useState(isPetitionsApiEnabled);
+  const [isLoading, setIsLoading] = useState(isApiEnabled);
+  const [apiStatus, setApiStatus] = useState(isApiEnabled ? 'loading' : 'local');
+  const [isEventsLoading, setIsEventsLoading] = useState(isApiEnabled);
+  const [isDeadlinesLoading, setIsDeadlinesLoading] = useState(isApiEnabled);
+  const [isPetitionsLoading, setIsPetitionsLoading] = useState(isApiEnabled);
   const [currentSessionUser, setCurrentSessionUser] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem('rs-advocacia-user') || null);
-  const isDemoMode = false;
-  const canUseApi = isApiEnabled && !isDemoMode;
-  const canUseEventsApi = isEventsApiEnabled && !isDemoMode;
-  const canUseDeadlinesApi = isDeadlinesApiEnabled && !isDemoMode;
-  const canUsePetitionsApi = isPetitionsApiEnabled && !isDemoMode;
-  const canUseProductivityApi = isProductivityApiEnabled && !isDemoMode;
 
   function syncCurrentUser(user) {
     if (!user) {
@@ -322,17 +269,6 @@ export function AppStateProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
 
-    if (!isApiEnabled) {
-      setApiStatus('offline');
-      setIsLoading(false);
-      setIsEventsLoading(false);
-      setIsDeadlinesLoading(false);
-      setIsPetitionsLoading(false);
-      return () => {
-        isMounted = false;
-      };
-    }
-
     async function loadRemoteState() {
       try {
         const currentUser = await loadCurrentUser();
@@ -390,12 +326,10 @@ export function AppStateProvider({ children }) {
   }
 
   async function sair() {
-    if (canUseApi) {
-      try {
-        await api.sair();
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-      }
+    try {
+      await api.sair();
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
     }
 
     setCurrentSessionUser(null);
@@ -415,102 +349,57 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveClient(payload) {
-    if (canUseApi) {
-      try {
-        const response = payload.id
-          ? await api.updateClient(payload.id, clientToPayload(payload))
-          : await api.createClient(clientToPayload(payload));
-        const savedClient = clientFromResponse(response);
-        if (!savedClient) {
-          throw new Error('Resposta inválida da API de clientes.');
-        }
-        setClients((currentClients) => sortByName(replaceById(currentClients, savedClient)));
-        addFlash(payload.id ? 'Cliente atualizado.' : 'Cliente salvo.', 'success');
-        return savedClient;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = payload.id
+        ? await api.updateClient(payload.id, clientToPayload(payload))
+        : await api.createClient(clientToPayload(payload));
+      const savedClient = clientFromResponse(response);
+      if (!savedClient) {
+        throw new Error('Resposta inválida da API de clientes.');
       }
+      setClients((currentClients) => sortByName(replaceById(currentClients, savedClient)));
+      addFlash(payload.id ? 'Cliente atualizado.' : 'Cliente salvo.', 'success');
+      return savedClient;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    if (payload.id) {
-      setClients((currentClients) =>
-        currentClients.map((client) => (client.id === payload.id ? { ...client, ...payload } : client)),
-      );
-      addFlash('Cliente atualizado.', 'success');
-      return payload;
-    }
-
-    const nextClient = { ...payload, id: nextId('client') };
-    setClients((currentClients) => sortByName([...currentClients, nextClient]));
-    addFlash('Cliente salvo.', 'success');
-    return nextClient;
   }
 
   async function saveProcess(payload) {
-    if (canUseApi) {
-      try {
-        const response = payload.id
-          ? await api.updateProcess(payload.id, processToPayload(payload))
-          : await api.createProcess(processToPayload(payload));
-        const savedProcess = processFromResponse(response);
-        if (!savedProcess) {
-          throw new Error('Resposta inválida da API de processos.');
-        }
-        setProcesses((currentProcesses) => replaceById(currentProcesses, savedProcess));
-        addFlash(payload.id ? 'Processo atualizado.' : 'Processo salvo.', 'success');
-        return savedProcess;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = payload.id
+        ? await api.updateProcess(payload.id, processToPayload(payload))
+        : await api.createProcess(processToPayload(payload));
+      const savedProcess = processFromResponse(response);
+      if (!savedProcess) {
+        throw new Error('Resposta inválida da API de processos.');
       }
+      setProcesses((currentProcesses) => replaceById(currentProcesses, savedProcess));
+      addFlash(payload.id ? 'Processo atualizado.' : 'Processo salvo.', 'success');
+      return savedProcess;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    if (payload.id) {
-      setProcesses((currentProcesses) =>
-        currentProcesses.map((process) => (process.id === payload.id ? { ...process, ...payload } : process)),
-      );
-      addFlash('Processo atualizado.', 'success');
-      return payload;
-    }
-
-    const nextProcess = { ...payload, id: nextId('process') };
-    setProcesses((currentProcesses) => [...currentProcesses, nextProcess]);
-    addFlash('Processo salvo.', 'success');
-    return nextProcess;
   }
 
   async function saveEvent(payload) {
-    if (canUseEventsApi) {
-      try {
-        const response = payload.id
-          ? await api.updateEvent(payload.id, eventToPayload(payload))
-          : await api.createEvent(eventToPayload(payload));
-        const savedEvent = eventFromResponse(response);
-        if (!savedEvent) {
-          throw new Error('Resposta inválida da API de eventos.');
-        }
-        setEvents((currentEvents) => replaceById(currentEvents, savedEvent));
-        addFlash(payload.id ? 'Compromisso atualizado.' : 'Compromisso salvo.', 'success');
-        return savedEvent;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = payload.id
+        ? await api.updateEvent(payload.id, eventToPayload(payload))
+        : await api.createEvent(eventToPayload(payload));
+      const savedEvent = eventFromResponse(response);
+      if (!savedEvent) {
+        throw new Error('Resposta inválida da API de eventos.');
       }
+      setEvents((currentEvents) => replaceById(currentEvents, savedEvent));
+      addFlash(payload.id ? 'Compromisso atualizado.' : 'Compromisso salvo.', 'success');
+      return savedEvent;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    if (payload.id) {
-      setEvents((currentEvents) =>
-        currentEvents.map((event) => (event.id === payload.id ? { ...event, ...payload } : event)),
-      );
-      addFlash('Compromisso atualizado.', 'success');
-      return payload;
-    }
-
-    const nextEvent = { ...payload, id: nextId('event') };
-    setEvents((currentEvents) => [...currentEvents, nextEvent]);
-    addFlash('Compromisso salvo.', 'success');
-    return nextEvent;
   }
 
   // Move de drag-and-drop no calendário: atualiza start/end mantendo o resto.
@@ -526,10 +415,6 @@ export function AppStateProvider({ children }) {
     setEvents((currentEvents) =>
       currentEvents.map((event) => (event.id === eventId ? moved : event)),
     );
-
-    if (!canUseEventsApi) {
-      return moved;
-    }
 
     try {
       const response = await api.updateEvent(eventId, eventToPayload(moved));
@@ -550,42 +435,23 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveDeadline(payload, options = {}) {
-    if (canUseDeadlinesApi) {
-      try {
-        const response = payload.id
-          ? await api.updateDeadline(payload.id, deadlineToPayload(payload))
-          : await api.createDeadline(deadlineToPayload(payload));
-        const savedDeadline = deadlineFromResponse(response);
-        if (!savedDeadline) {
-          throw new Error('Resposta inválida da API de prazos.');
-        }
-        setDeadlines((currentDeadlines) => replaceById(currentDeadlines, savedDeadline));
-        if (!options.silent) {
-          addFlash(payload.id ? 'Prazo atualizado.' : 'Prazo salvo.', 'success');
-        }
-        return savedDeadline;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = payload.id
+        ? await api.updateDeadline(payload.id, deadlineToPayload(payload))
+        : await api.createDeadline(deadlineToPayload(payload));
+      const savedDeadline = deadlineFromResponse(response);
+      if (!savedDeadline) {
+        throw new Error('Resposta inválida da API de prazos.');
       }
-    }
-
-    if (payload.id) {
-      setDeadlines((currentDeadlines) =>
-        currentDeadlines.map((deadline) => (deadline.id === payload.id ? { ...deadline, ...payload } : deadline)),
-      );
+      setDeadlines((currentDeadlines) => replaceById(currentDeadlines, savedDeadline));
       if (!options.silent) {
-        addFlash('Prazo atualizado.', 'success');
+        addFlash(payload.id ? 'Prazo atualizado.' : 'Prazo salvo.', 'success');
       }
-      return payload;
+      return savedDeadline;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    const nextDeadline = { ...payload, id: nextId('deadline') };
-    setDeadlines((currentDeadlines) => [...currentDeadlines, nextDeadline]);
-    if (!options.silent) {
-      addFlash('Prazo salvo.', 'success');
-    }
-    return nextDeadline;
   }
 
   function applyDeadlineFromResponse(response) {
@@ -597,10 +463,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function createDeadlineDocument(deadlineId) {
-    if (!canUseDeadlinesApi) {
-      addFlash('Disponível apenas com a API e o Google Drive configurados.', 'error');
-      return null;
-    }
     try {
       const saved = applyDeadlineFromResponse(await api.createDeadlineDocument(deadlineId));
       addFlash('Documento criado no Google Drive.', 'success');
@@ -612,10 +474,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function uploadDeadlineDocument(deadlineId, file) {
-    if (!canUseDeadlinesApi) {
-      addFlash('Disponível apenas com a API e o Google Drive configurados.', 'error');
-      return null;
-    }
     try {
       const data = new FormData();
       data.append('arquivo', file, file.name);
@@ -629,9 +487,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function removeDeadlineDocument(deadlineId, { deleteFile = false } = {}) {
-    if (!canUseDeadlinesApi) {
-      return null;
-    }
     try {
       const saved = applyDeadlineFromResponse(
         await api.removeDeadlineDocument(deadlineId, { deleteFile }),
@@ -645,49 +500,26 @@ export function AppStateProvider({ children }) {
   }
 
   async function savePetition(payload, options = {}) {
-    if (canUsePetitionsApi) {
-      try {
-        const response = payload.id
-          ? await api.updatePetition(payload.id, petitionToPayload(payload))
-          : await api.createPetition(petitionToPayload(payload));
-        const savedPetition = petitionFromResponse(response);
-        if (!savedPetition) {
-          throw new Error('Resposta inválida da API de petições.');
-        }
-        setPetitions((currentPetitions) => replaceById(currentPetitions, savedPetition));
-        if (!options.silent) {
-          addFlash(payload.id ? 'Petição atualizada.' : 'Petição salva.', 'success');
-        }
-        return savedPetition;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = payload.id
+        ? await api.updatePetition(payload.id, petitionToPayload(payload))
+        : await api.createPetition(petitionToPayload(payload));
+      const savedPetition = petitionFromResponse(response);
+      if (!savedPetition) {
+        throw new Error('Resposta inválida da API de petições.');
       }
-    }
-
-    if (payload.id) {
-      setPetitions((currentPetitions) =>
-        currentPetitions.map((petition) => (petition.id === payload.id ? { ...petition, ...payload } : petition)),
-      );
+      setPetitions((currentPetitions) => replaceById(currentPetitions, savedPetition));
       if (!options.silent) {
-        addFlash('Petição atualizada.', 'success');
+        addFlash(payload.id ? 'Petição atualizada.' : 'Petição salva.', 'success');
       }
-      return payload;
+      return savedPetition;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    const nextPetition = { ...payload, id: nextId('petition') };
-    setPetitions((currentPetitions) => [...currentPetitions, nextPetition]);
-    if (!options.silent) {
-      addFlash('Petição salva.', 'success');
-    }
-    return nextPetition;
   }
 
   async function createPetitionDocument(petitionId) {
-    if (!canUsePetitionsApi) {
-      addFlash('Disponível apenas com a API e o Google Drive configurados.', 'error');
-      return null;
-    }
     try {
       const response = await api.createPetitionDocument(petitionId);
       const savedPetition = petitionFromResponse(response);
@@ -703,9 +535,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function removePetitionDocument(petitionId, { deleteFile = false } = {}) {
-    if (!canUsePetitionsApi) {
-      return null;
-    }
     try {
       const response = await api.removePetitionDocument(petitionId, { deleteFile });
       const savedPetition = petitionFromResponse(response);
@@ -721,10 +550,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadEvent(eventId) {
-    if (!canUseEventsApi) {
-      return events.find((event) => event.id === eventId) || null;
-    }
-
     setIsEventsLoading(true);
 
     try {
@@ -743,10 +568,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadDeadline(deadlineId) {
-    if (!canUseDeadlinesApi) {
-      return deadlines.find((deadline) => deadline.id === deadlineId) || null;
-    }
-
     setIsDeadlinesLoading(true);
 
     try {
@@ -765,10 +586,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadPetition(petitionId) {
-    if (!canUsePetitionsApi) {
-      return petitions.find((petition) => petition.id === petitionId) || null;
-    }
-
     setIsPetitionsLoading(true);
 
     try {
@@ -787,11 +604,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function syncGoogleCalendarEvents({ silent = false } = {}) {
-    if (!canUseEventsApi) {
-      addFlash('API de eventos não configurada.', 'error');
-      return null;
-    }
-
     try {
       const response = await api.syncGoogleCalendar();
       const syncedEvents = eventsFromResponse(response);
@@ -809,152 +621,112 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveDeadlineTimer(deadlineId, timer) {
-    const currentDeadline = deadlines.find((deadline) => deadline.id === deadlineId) || null;
-    const currentElapsedSeconds = elapsedSecondsForDeadline(currentDeadline);
     const timerPayload = {
-      elapsedSeconds: Math.max(
-        currentElapsedSeconds,
-        Math.max(0, Math.floor(Number(timer.elapsedSeconds) || 0)),
-      ),
+      elapsedSeconds: Math.max(0, Math.floor(Number(timer.elapsedSeconds) || 0)),
       timerStartedAt: timer.timerStartedAt || '',
     };
 
-    if (canUseDeadlinesApi) {
-      try {
-        const response = await api.updateDeadlineTimer(deadlineId, deadlineTimerToPayload(timerPayload));
-        const savedDeadline = deadlineFromResponse(response);
-        if (!savedDeadline) {
-          throw new Error('Resposta inválida da API de prazos.');
-        }
-        setDeadlines((currentDeadlines) => replaceById(currentDeadlines, savedDeadline));
-        return savedDeadline;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = await api.updateDeadlineTimer(deadlineId, deadlineTimerToPayload(timerPayload));
+      const savedDeadline = deadlineFromResponse(response);
+      if (!savedDeadline) {
+        throw new Error('Resposta inválida da API de prazos.');
       }
+      setDeadlines((currentDeadlines) => replaceById(currentDeadlines, savedDeadline));
+      return savedDeadline;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    let savedDeadline = null;
-    setDeadlines((currentDeadlines) =>
-      currentDeadlines.map((deadline) => {
-        if (deadline.id !== deadlineId) {
-          return deadline;
-        }
-
-        savedDeadline = {
-          ...deadline,
-          ...timerPayload,
-          status: timerPayload.timerStartedAt && isPendingDeadlineStatus(deadline.status)
-            ? 'Em andamento'
-            : deadline.status,
-        };
-        return savedDeadline;
-      }),
-    );
-    return savedDeadline;
   }
 
   async function saveUser(payload) {
-    if (canUseApi) {
-      try {
-        const response = payload.id
-          ? await api.updateUser(payload.id, userToPayload(payload))
-          : await api.createUser(userToPayload(payload));
-        const savedUser = userFromResponse(response);
-        if (!savedUser) {
-          throw new Error('Resposta inválida da API de usuários.');
-        }
-        setUsers((currentUsers) => sortByName(replaceById(currentUsers, savedUser)));
-        if (savedUser.id === currentUserId) {
-          setCurrentSessionUser(savedUser);
-        }
-        addFlash(payload.id ? 'Usuário atualizado.' : 'Usuário criado.', 'success');
-        return savedUser;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = payload.id
+        ? await api.updateUser(payload.id, userToPayload(payload))
+        : await api.createUser(userToPayload(payload));
+      const savedUser = userFromResponse(response);
+      if (!savedUser) {
+        throw new Error('Resposta inválida da API de usuários.');
       }
+      setUsers((currentUsers) => sortByName(replaceById(currentUsers, savedUser)));
+      if (savedUser.id === currentUserId) {
+        setCurrentSessionUser(savedUser);
+      }
+      addFlash(payload.id ? 'Usuário atualizado.' : 'Usuário criado.', 'success');
+      return savedUser;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    if (!payload.id) {
-      const nextUser = { ...payload, id: nextId('user') };
-      setUsers((currentUsers) => sortByName([...currentUsers, nextUser]));
-      addFlash('Usuário criado.', 'success');
-      return nextUser;
-    }
-
-    let savedUser = null;
-    setUsers((currentUsers) =>
-      sortByName(currentUsers.map((user) => {
-        if (user.id !== payload.id) {
-          return user;
-        }
-
-        savedUser = { ...user, ...payload };
-        return savedUser;
-      })),
-    );
-    addFlash('Usuário atualizado.', 'success');
-    return savedUser || payload;
   }
 
   async function deleteClient(clientId) {
-    if (canUseApi) {
-      try {
-        await api.deleteClient(clientId);
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return false;
-      }
+    try {
+      await api.deleteClient(clientId);
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return false;
     }
 
-    const relatedProcessIds = processes
-      .filter((process) => process.clientId === clientId)
-      .map((process) => process.id);
-
-    setClients((currentClients) => currentClients.filter((client) => client.id !== clientId));
-    setProcesses((currentProcesses) => currentProcesses.filter((process) => process.clientId !== clientId));
-    setEvents((currentEvents) =>
-      currentEvents.filter((event) => event.clientId !== clientId && !relatedProcessIds.includes(event.processId)),
-    );
-    setDeadlines((currentDeadlines) =>
-      currentDeadlines.filter((deadline) => deadline.clientId !== clientId && !relatedProcessIds.includes(deadline.processId)),
-    );
-    setPetitions((currentPetitions) => currentPetitions.filter((petition) => petition.clientId !== clientId));
+    // Remove client immediately; backend cascades to processes/events/deadlines/petitions.
+    setClients((current) => current.filter((c) => c.id !== clientId));
     addFlash('Cliente deletado.', 'success');
+
+    // Refetch affected collections so local state reflects backend cascades.
+    try {
+      const [procRes, evtRes, dlRes, petRes] = await Promise.all([
+        api.listProcesses(),
+        api.listEvents(),
+        api.listDeadlines(),
+        api.listPetitions(),
+      ]);
+      setProcesses(processesFromResponse(procRes));
+      setEvents(eventsFromResponse(evtRes));
+      setDeadlines(deadlinesFromResponse(dlRes));
+      setPetitions(petitionsFromResponse(petRes));
+    } catch {
+      // Best effort — user can reload if inconsistent
+    }
+
     return true;
   }
 
   async function deleteProcess(processId) {
-    if (canUseApi) {
-      try {
-        await api.deleteProcess(processId);
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return false;
-      }
+    try {
+      await api.deleteProcess(processId);
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return false;
     }
 
-    setProcesses((currentProcesses) => currentProcesses.filter((process) => process.id !== processId));
-    setEvents((currentEvents) => currentEvents.filter((event) => event.processId !== processId));
-    setDeadlines((currentDeadlines) => currentDeadlines.filter((deadline) => deadline.processId !== processId));
-    setPetitions((currentPetitions) =>
-      currentPetitions.map((petition) =>
-        petition.processId === processId ? { ...petition, processId: '', processNumber: '' } : petition,
-      ),
-    );
+    // Remove process immediately; backend cascades to events/deadlines and detaches petitions.
+    setProcesses((current) => current.filter((p) => p.id !== processId));
     addFlash('Processo deletado.', 'success');
+
+    // Refetch affected collections so local state reflects backend cascades.
+    try {
+      const [evtRes, dlRes, petRes] = await Promise.all([
+        api.listEvents(),
+        api.listDeadlines(),
+        api.listPetitions(),
+      ]);
+      setEvents(eventsFromResponse(evtRes));
+      setDeadlines(deadlinesFromResponse(dlRes));
+      setPetitions(petitionsFromResponse(petRes));
+    } catch {
+      // Best effort — user can reload if inconsistent
+    }
+
     return true;
   }
 
   async function deleteEvent(eventId) {
-    if (canUseEventsApi) {
-      try {
-        await api.deleteEvent(eventId);
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return false;
-      }
+    try {
+      await api.deleteEvent(eventId);
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return false;
     }
 
     setEvents((currentEvents) => currentEvents.filter((event) => event.id !== eventId));
@@ -963,13 +735,11 @@ export function AppStateProvider({ children }) {
   }
 
   async function deleteDeadline(deadlineId) {
-    if (canUseDeadlinesApi) {
-      try {
-        await api.deleteDeadline(deadlineId);
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return false;
-      }
+    try {
+      await api.deleteDeadline(deadlineId);
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return false;
     }
 
     setDeadlines((currentDeadlines) => currentDeadlines.filter((deadline) => deadline.id !== deadlineId));
@@ -978,13 +748,11 @@ export function AppStateProvider({ children }) {
   }
 
   async function deletePetition(petitionId) {
-    if (canUsePetitionsApi) {
-      try {
-        await api.deletePetition(petitionId);
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return false;
-      }
+    try {
+      await api.deletePetition(petitionId);
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return false;
     }
 
     setPetitions((currentPetitions) => currentPetitions.filter((petition) => petition.id !== petitionId));
@@ -993,13 +761,11 @@ export function AppStateProvider({ children }) {
   }
 
   async function deleteUser(userId) {
-    if (canUseApi) {
-      try {
-        await api.deleteUser(userId);
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return false;
-      }
+    try {
+      await api.deleteUser(userId);
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return false;
     }
 
     setUsers((currentUsers) => currentUsers.filter((user) => user.id !== userId));
@@ -1039,55 +805,10 @@ export function AppStateProvider({ children }) {
       return null;
     }
 
-    if (canUseProductivityApi) {
-      // Entrada provisória: a UI reage na hora; reconcilia com a resposta da API.
-      const optimisticId = nextId('time-entry-pending');
-      const optimisticEntry = {
-        id: optimisticId,
-        userId: currentUser.id,
-        userName: currentUser.name,
-        taskId: String(payload.taskId),
-        taskType: payload.taskType,
-        taskName: taskDisplayName(payload),
-        processId: payload.processId || '',
-        processNumber: payload.processNumber || '',
-        startedAt,
-        pausedAt: '',
-        resumedAt: '',
-        endedAt: '',
-        totalSeconds: 0,
-        elapsedSeconds: 0,
-        status: 'running',
-      };
-      setTimeEntries((currentEntries) => replaceById(
-        options.pauseExisting ? pauseRunningEntries(currentEntries, optimisticId) : currentEntries,
-        optimisticEntry,
-      ));
-
-      try {
-        const response = await api.startTimeEntry({
-          task_id: payload.taskId,
-          task_type: payload.taskType,
-          pause_existing: Boolean(options.pauseExisting),
-        });
-        const savedEntry = timeEntryFromResponse(response);
-        if (!savedEntry) {
-          throw new Error('Resposta inválida da API de produtividade.');
-        }
-        setTimeEntries((currentEntries) => replaceById(
-          currentEntries.filter((entry) => entry.id !== optimisticId),
-          savedEntry,
-        ));
-        return savedEntry;
-      } catch (error) {
-        setTimeEntries((currentEntries) => currentEntries.filter((entry) => entry.id !== optimisticId));
-        addFlash(errorMessage(error), 'error');
-        return null;
-      }
-    }
-
-    const nextEntry = {
-      id: nextId('time-entry'),
+    // Entrada provisória: a UI reage na hora; reconcilia com a resposta da API.
+    const optimisticId = nextId('time-entry-pending');
+    const optimisticEntry = {
+      id: optimisticId,
       userId: currentUser.id,
       userName: currentUser.name,
       taskId: String(payload.taskId),
@@ -1103,125 +824,76 @@ export function AppStateProvider({ children }) {
       elapsedSeconds: 0,
       status: 'running',
     };
-
     setTimeEntries((currentEntries) => replaceById(
-      options.pauseExisting ? pauseRunningEntries(currentEntries, nextEntry.id) : currentEntries,
-      nextEntry,
+      options.pauseExisting ? pauseRunningEntries(currentEntries, optimisticId) : currentEntries,
+      optimisticEntry,
     ));
-    return nextEntry;
+
+    try {
+      const response = await api.startTimeEntry({
+        task_id: payload.taskId,
+        task_type: payload.taskType,
+        pause_existing: Boolean(options.pauseExisting),
+      });
+      const savedEntry = timeEntryFromResponse(response);
+      if (!savedEntry) {
+        throw new Error('Resposta inválida da API de produtividade.');
+      }
+      setTimeEntries((currentEntries) => replaceById(
+        currentEntries.filter((entry) => entry.id !== optimisticId),
+        savedEntry,
+      ));
+      return savedEntry;
+    } catch (error) {
+      setTimeEntries((currentEntries) => currentEntries.filter((entry) => entry.id !== optimisticId));
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
   }
 
   async function pauseTimeEntry(entryId) {
-    if (canUseProductivityApi) {
-      try {
-        const response = await api.pauseTimeEntry(entryId);
-        const savedEntry = timeEntryFromResponse(response);
-        if (savedEntry) {
-          setTimeEntries((currentEntries) => replaceTimeEntryMonotonic(currentEntries, savedEntry));
-        }
-        return savedEntry;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = await api.pauseTimeEntry(entryId);
+      const savedEntry = timeEntryFromResponse(response);
+      if (savedEntry) {
+        setTimeEntries((currentEntries) => replaceById(currentEntries, savedEntry));
       }
-    }
-
-    const currentTime = Date.now();
-    const pausedAt = new Date(currentTime).toISOString();
-    let savedEntry = null;
-    setTimeEntries((currentEntries) => currentEntries.map((entry) => {
-      if (entry.id !== entryId || entry.status !== 'running') {
-        return entry;
-      }
-
-      savedEntry = {
-        ...entry,
-        status: 'paused',
-        pausedAt,
-        totalSeconds: elapsedSecondsForTimeEntry(entry, currentTime),
-        elapsedSeconds: elapsedSecondsForTimeEntry(entry, currentTime),
-      };
       return savedEntry;
-    }));
-    return savedEntry;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
   }
 
   async function resumeTimeEntry(entryId, options = {}) {
-    const currentTime = Date.now();
-    const resumedAt = new Date(currentTime).toISOString();
-
-    if (canUseProductivityApi) {
-      try {
-        const response = await api.resumeTimeEntry(entryId, { pause_existing: Boolean(options.pauseExisting) });
-        const savedEntry = timeEntryFromResponse(response);
-        if (savedEntry) {
-          setTimeEntries((currentEntries) => replaceById(
-            options.pauseExisting ? pauseRunningEntries(currentEntries, savedEntry.id) : currentEntries,
-            timeEntryWithMonotonicSeconds(
-              currentEntries.find((entry) => entry.id === savedEntry.id),
-              savedEntry,
-            ),
-          ));
-        }
-        return savedEntry;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = await api.resumeTimeEntry(entryId, { pause_existing: Boolean(options.pauseExisting) });
+      const savedEntry = timeEntryFromResponse(response);
+      if (savedEntry) {
+        setTimeEntries((currentEntries) => replaceById(
+          options.pauseExisting ? pauseRunningEntries(currentEntries, savedEntry.id) : currentEntries,
+          savedEntry,
+        ));
       }
+      return savedEntry;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    let savedEntry = null;
-    setTimeEntries((currentEntries) => {
-      const preparedEntries = options.pauseExisting ? pauseRunningEntries(currentEntries, entryId) : currentEntries;
-      return preparedEntries.map((entry) => {
-        if (entry.id !== entryId || entry.status !== 'paused') {
-          return entry;
-        }
-
-        savedEntry = {
-          ...entry,
-          status: 'running',
-          resumedAt,
-        };
-        return savedEntry;
-      });
-    });
-    return savedEntry;
   }
 
   async function stopTimeEntry(entryId) {
-    if (canUseProductivityApi) {
-      try {
-        const response = await api.stopTimeEntry(entryId);
-        const savedEntry = timeEntryFromResponse(response);
-        if (savedEntry) {
-          setTimeEntries((currentEntries) => replaceTimeEntryMonotonic(currentEntries, savedEntry));
-        }
-        return savedEntry;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = await api.stopTimeEntry(entryId);
+      const savedEntry = timeEntryFromResponse(response);
+      if (savedEntry) {
+        setTimeEntries((currentEntries) => replaceById(currentEntries, savedEntry));
       }
-    }
-
-    const currentTime = Date.now();
-    const endedAt = new Date(currentTime).toISOString();
-    let savedEntry = null;
-    setTimeEntries((currentEntries) => currentEntries.map((entry) => {
-      if (entry.id !== entryId || entry.status === 'stopped') {
-        return entry;
-      }
-
-      savedEntry = {
-        ...entry,
-        status: 'stopped',
-        endedAt,
-        totalSeconds: elapsedSecondsForTimeEntry(entry, currentTime),
-        elapsedSeconds: elapsedSecondsForTimeEntry(entry, currentTime),
-      };
       return savedEntry;
-    }));
-    return savedEntry;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
   }
 
   async function saveProductivityGoals(payload) {
@@ -1241,87 +913,42 @@ export function AppStateProvider({ children }) {
       }),
     };
 
-    if (canUseProductivityApi) {
-      try {
-        const response = await api.saveProductivityGoals(apiPayload);
-        const savedGoals = productivityGoalsFromResponse(response);
-        setProductivityGoals(savedGoals);
-        addFlash('Metas atualizadas.', 'success');
-        return savedGoals;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
-      }
+    try {
+      const response = await api.saveProductivityGoals(apiPayload);
+      const savedGoals = productivityGoalsFromResponse(response);
+      setProductivityGoals(savedGoals);
+      addFlash('Metas atualizadas.', 'success');
+      return savedGoals;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    setProductivityGoals((currentGoals) => {
-      let nextGoals = currentGoals;
-      goalsPayload.forEach((goalPayload) => {
-        const targetUsers = payload.applyAll && !(goalPayload.userId || goalPayload.user_id)
-          ? users
-          : users.filter((user) => user.id === String(goalPayload.userId || goalPayload.user_id));
-        targetUsers.forEach((user) => {
-          nextGoals = replaceById(nextGoals, {
-            id: currentGoals.find((goal) => goal.userId === user.id)?.id || `goal-${user.id}`,
-            userId: user.id,
-            dailyHours: Number(goalPayload.dailyHours ?? goalPayload.daily_hours ?? 6),
-            weeklyHours: Number(goalPayload.weeklyHours ?? goalPayload.weekly_hours ?? 30),
-            configured: true,
-          });
-        });
-      });
-      return nextGoals;
-    });
-    addFlash('Metas atualizadas.', 'success');
-    return productivityGoals;
   }
 
   async function saveProspect(payload) {
-    if (canUseApi) {
-      try {
-        const response = payload.id
-          ? await api.updateProspect(payload.id, prospectToPayload(payload))
-          : await api.createProspect(prospectToPayload(payload));
-        const savedProspect = prospectFromResponse(response);
-        if (!savedProspect) {
-          throw new Error('Resposta inválida da API de prospecção.');
-        }
-        setProspects((current) => replaceById(current, savedProspect));
-        addFlash(payload.id ? 'Prospect atualizado.' : 'Prospect salvo.', 'success');
-        return savedProspect;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = payload.id
+        ? await api.updateProspect(payload.id, prospectToPayload(payload))
+        : await api.createProspect(prospectToPayload(payload));
+      const savedProspect = prospectFromResponse(response);
+      if (!savedProspect) {
+        throw new Error('Resposta inválida da API de prospecção.');
       }
+      setProspects((current) => replaceById(current, savedProspect));
+      addFlash(payload.id ? 'Prospect atualizado.' : 'Prospect salvo.', 'success');
+      return savedProspect;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    if (payload.id) {
-      let saved = null;
-      setProspects((current) =>
-        current.map((item) => {
-          if (item.id !== payload.id) return item;
-          saved = { ...item, ...payload };
-          return saved;
-        }),
-      );
-      addFlash('Prospect atualizado.', 'success');
-      return saved || payload;
-    }
-
-    const nextProspect = { ...payload, id: nextId('prospect'), interactions: [], interactionsCount: 0 };
-    setProspects((current) => [nextProspect, ...current]);
-    addFlash('Prospect salvo.', 'success');
-    return nextProspect;
   }
 
   async function deleteProspect(prospectId) {
-    if (canUseApi) {
-      try {
-        await api.deleteProspect(prospectId);
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return false;
-      }
+    try {
+      await api.deleteProspect(prospectId);
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return false;
     }
 
     setProspects((current) => current.filter((item) => item.id !== prospectId));
@@ -1330,148 +957,71 @@ export function AppStateProvider({ children }) {
   }
 
   async function addInteracao(prospectId, payload) {
-    if (canUseApi) {
-      try {
-        const response = await api.createInteracao(prospectId, interactionToPayload(payload));
-        const savedInteraction = interactionFromResponse(response);
-        setProspects((current) =>
-          current.map((item) => {
-            if (item.id !== prospectId) return item;
-            return {
-              ...item,
-              lastContact: (savedInteraction?.date || '').slice(0, 10) || item.lastContact,
-              interactionsCount: (item.interactionsCount || 0) + 1,
-              interactions: [savedInteraction, ...(item.interactions || [])],
-            };
-          }),
-        );
-        addFlash('Interação registrada.', 'success');
-        return savedInteraction;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
-      }
+    try {
+      const response = await api.createInteracao(prospectId, interactionToPayload(payload));
+      const savedInteraction = interactionFromResponse(response);
+      setProspects((current) =>
+        current.map((item) => {
+          if (item.id !== prospectId) return item;
+          return {
+            ...item,
+            lastContact: (savedInteraction?.date || '').slice(0, 10) || item.lastContact,
+            interactionsCount: (item.interactionsCount || 0) + 1,
+            interactions: [savedInteraction, ...(item.interactions || [])],
+          };
+        }),
+      );
+      addFlash('Interação registrada.', 'success');
+      return savedInteraction;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    const nextInteraction = {
-      ...payload,
-      id: nextId('interacao'),
-      prospectId,
-      date: payload.date || new Date().toISOString(),
-    };
-    setProspects((current) =>
-      current.map((item) => {
-        if (item.id !== prospectId) return item;
-        return {
-          ...item,
-          lastContact: nextInteraction.date.slice(0, 10),
-          interactionsCount: (item.interactionsCount || 0) + 1,
-          interactions: [nextInteraction, ...(item.interactions || [])],
-        };
-      }),
-    );
-    addFlash('Interação registrada.', 'success');
-    return nextInteraction;
   }
 
   async function convertProspect(prospectId, payload = {}) {
-    if (canUseApi) {
-      try {
-        const response = await api.convertProspect(prospectId, payload);
-        const savedProspect = prospectFromResponse(response);
-        const savedClient = clientFromResponse(response);
-        if (savedProspect) {
-          setProspects((current) => replaceById(current, savedProspect));
-        }
-        if (savedClient) {
-          setClients((current) => sortByName(replaceById(current, savedClient)));
-        }
-        addFlash('Prospect convertido em cliente.', 'success');
-        return { prospect: savedProspect, client: savedClient };
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = await api.convertProspect(prospectId, payload);
+      const savedProspect = prospectFromResponse(response);
+      const savedClient = clientFromResponse(response);
+      if (savedProspect) {
+        setProspects((current) => replaceById(current, savedProspect));
       }
-    }
-
-    const prospect = prospects.find((item) => item.id === prospectId) || null;
-    if (!prospect) return null;
-    if (prospect.convertedClientId) {
-      addFlash('Este prospect já foi convertido.', 'error');
+      if (savedClient) {
+        setClients((current) => sortByName(replaceById(current, savedClient)));
+      }
+      addFlash('Prospect convertido em cliente.', 'success');
+      return { prospect: savedProspect, client: savedClient };
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
       return null;
     }
-
-    let client = payload.cliente_id ? clients.find((item) => item.id === String(payload.cliente_id)) : null;
-    if (!client) {
-      client = {
-        id: nextId('client'),
-        name: payload.nome || prospect.name,
-        email: payload.email || prospect.email,
-        phone: payload.telefone || prospect.phone,
-        document: payload.cpf || '',
-        clientType: payload.tipo_cliente || 'esporadico',
-        notes: prospect.caseDescription || '',
-      };
-      setClients((current) => sortByName([...current, client]));
-    }
-
-    const updatedProspect = {
-      ...prospect,
-      convertedClientId: client.id,
-      convertedAt: new Date().toISOString(),
-      status: 'Convertido',
-    };
-    setProspects((current) => replaceById(current, updatedProspect));
-    addFlash('Prospect convertido em cliente.', 'success');
-    return { prospect: updatedProspect, client };
   }
 
   async function saveLancamento(payload) {
-    if (canUseApi) {
-      try {
-        const response = payload.id
-          ? await api.updateLancamento(payload.id, lancamentoToPayload(payload))
-          : await api.createLancamento(lancamentoToPayload(payload));
-        const saved = lancamentoFromResponse(response);
-        if (!saved) {
-          throw new Error('Resposta inválida da API financeira.');
-        }
-        setLancamentos((current) => replaceById(current, saved));
-        addFlash(payload.id ? 'Lançamento atualizado.' : 'Lançamento salvo.', 'success');
-        return saved;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = payload.id
+        ? await api.updateLancamento(payload.id, lancamentoToPayload(payload))
+        : await api.createLancamento(lancamentoToPayload(payload));
+      const saved = lancamentoFromResponse(response);
+      if (!saved) {
+        throw new Error('Resposta inválida da API financeira.');
       }
+      setLancamentos((current) => replaceById(current, saved));
+      addFlash(payload.id ? 'Lançamento atualizado.' : 'Lançamento salvo.', 'success');
+      return saved;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    if (payload.id) {
-      let saved = null;
-      setLancamentos((current) =>
-        current.map((item) => {
-          if (item.id !== payload.id) return item;
-          saved = { ...item, ...payload };
-          return saved;
-        }),
-      );
-      addFlash('Lançamento atualizado.', 'success');
-      return saved || payload;
-    }
-
-    const nextLancamento = { ...payload, id: nextId('lancamento') };
-    setLancamentos((current) => [nextLancamento, ...current]);
-    addFlash('Lançamento salvo.', 'success');
-    return nextLancamento;
   }
 
   async function deleteLancamento(lancamentoId) {
-    if (canUseApi) {
-      try {
-        await api.deleteLancamento(lancamentoId);
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return false;
-      }
+    try {
+      await api.deleteLancamento(lancamentoId);
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return false;
     }
 
     setLancamentos((current) => current.filter((item) => item.id !== lancamentoId));
@@ -1480,59 +1030,33 @@ export function AppStateProvider({ children }) {
   }
 
   async function marcarLancamentoPago(lancamentoId, paymentDate) {
-    if (canUseApi) {
-      try {
-        const response = await api.marcarLancamentoPago(lancamentoId, { data_pagamento: paymentDate });
-        const saved = lancamentoFromResponse(response);
-        if (saved) {
-          setLancamentos((current) => replaceById(current, saved));
-        }
-        addFlash('Lançamento marcado como pago.', 'success');
-        return saved;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = await api.marcarLancamentoPago(lancamentoId, { data_pagamento: paymentDate });
+      const saved = lancamentoFromResponse(response);
+      if (saved) {
+        setLancamentos((current) => replaceById(current, saved));
       }
+      addFlash('Lançamento marcado como pago.', 'success');
+      return saved;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    let saved = null;
-    setLancamentos((current) =>
-      current.map((item) => {
-        if (item.id !== lancamentoId) return item;
-        saved = { ...item, status: 'Pago', displayStatus: 'Pago', overdue: false, paymentDate };
-        return saved;
-      }),
-    );
-    addFlash('Lançamento marcado como pago.', 'success');
-    return saved;
   }
 
   async function cancelarLancamento(lancamentoId) {
-    if (canUseApi) {
-      try {
-        const response = await api.cancelarLancamento(lancamentoId);
-        const saved = lancamentoFromResponse(response);
-        if (saved) {
-          setLancamentos((current) => replaceById(current, saved));
-        }
-        addFlash('Lançamento cancelado.', 'info');
-        return saved;
-      } catch (error) {
-        addFlash(errorMessage(error), 'error');
-        return null;
+    try {
+      const response = await api.cancelarLancamento(lancamentoId);
+      const saved = lancamentoFromResponse(response);
+      if (saved) {
+        setLancamentos((current) => replaceById(current, saved));
       }
+      addFlash('Lançamento cancelado.', 'info');
+      return saved;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
     }
-
-    let saved = null;
-    setLancamentos((current) =>
-      current.map((item) => {
-        if (item.id !== lancamentoId) return item;
-        saved = { ...item, status: 'Cancelado', displayStatus: 'Cancelado', overdue: false, paymentDate: '' };
-        return saved;
-      }),
-    );
-    addFlash('Lançamento cancelado.', 'info');
-    return saved;
   }
 
   const currentUser = users.find((user) => user.id === currentUserId) || currentSessionUser;
@@ -1542,9 +1066,6 @@ export function AppStateProvider({ children }) {
   } : null;
 
   function hasPermission(path) {
-    if (isDemoMode) {
-      return true;
-    }
     if (currentUser?.isAdmin || currentRole?.name === 'Administrador') {
       return true;
     }
@@ -1552,9 +1073,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadAudit(filters = {}) {
-    if (!canUseApi) {
-      return;
-    }
     try {
       const params = { limit: 50, offset: 0, ...filters };
       const payload = await api.listAudit(params);
@@ -1567,9 +1085,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadMoreAudit() {
-    if (!canUseApi) {
-      return;
-    }
     try {
       const nextOffset = auditPagination.offset + auditPagination.limit;
       const params = { ...auditFilters, limit: auditPagination.limit, offset: nextOffset };
@@ -1583,9 +1098,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadAuditPanel(periodo = 7) {
-    if (!canUseApi) {
-      return;
-    }
     try {
       const payload = await api.getAuditPanel(periodo);
       setAuditPanel(auditPanelFromResponse(payload));
@@ -1595,9 +1107,6 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadAuditOverview(periodo = 7) {
-    if (!canUseApi) {
-      return;
-    }
     try {
       const payload = await api.getAuditOverview(periodo);
       setAuditOverview(auditOverviewFromResponse(payload));
@@ -1634,7 +1143,6 @@ export function AppStateProvider({ children }) {
     isDeadlinesLoading,
     isPetitionsLoading,
     apiStatus,
-    isDemoMode,
     addFlash,
     sair,
     saveClient,

@@ -59,6 +59,7 @@ class EventoForm(forms.ModelForm):
         queryset=Usuario.objects.all(),
         label="Responsável",
         empty_label="Selecione o responsável",
+        required=False,  # model is null=True blank=True (SET_NULL on delete)
     )
     status = forms.ChoiceField(choices=(), label="Status")
 

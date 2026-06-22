@@ -91,8 +91,8 @@ export async function finalizeMeeting(meetingId) {
   return meetingFromApi(payload.reuniao);
 }
 
-// Vercel functions reject bodies over ~4.5 MB, so the multipart endpoint only
-// works for small blobs; real recordings go straight from the browser to Drive.
+// Multipart endpoint only works for small blobs; real recordings go straight
+// from the browser to Drive via resumable session.
 export const MULTIPART_FALLBACK_MAX_BYTES = 4 * 1024 * 1024;
 
 export function chooseUploadStrategy({ sessionErrorStatus, blobSize }) {

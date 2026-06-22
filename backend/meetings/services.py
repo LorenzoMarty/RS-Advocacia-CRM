@@ -3,8 +3,8 @@
 Mirrors the pattern of :mod:`documentos.services`: talks to Drive exclusively
 through :mod:`integrations.google.drive` and never imports the Drive SDK.
 
-Upload flow (Vercel functions cap request bodies at ~4.5 MB, so the audio
-never passes through the backend):
+Upload flow (audio never passes through the backend — uploaded directly to Drive
+by the browser for efficiency and to avoid server memory pressure):
 
 1. ``criar_sessao_upload`` opens a Drive resumable session with the uploader's
    OAuth token and returns the session URL to the browser.

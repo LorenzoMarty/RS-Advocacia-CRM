@@ -47,7 +47,6 @@ import {
 import { FinanceiroPage, LancamentoFormPage } from "./app/pages/financeiro";
 import { AuditPage } from "./app/pages/audit";
 import { useAppState } from "./app/store";
-import { ApiTestPage } from "./app/pages/api-test";
 import { MeetingsPage } from "./app/pages/meetings";
 import { PrivacyPolicyPage } from "./app/pages/privacy-policy";
 
@@ -115,7 +114,6 @@ export default function App() {
 
           <Route element={<ProtectedLayout />}>
             <Route index element={<DashboardPage />} />
-            <Route path="/api-test" element={<ApiTestPage />} />
 
             <Route path="/clientes" element={<ClientsListPage />} />
             <Route path="/clientes/novo" element={<ClientFormRoute />} />
