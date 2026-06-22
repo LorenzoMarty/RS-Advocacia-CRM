@@ -69,50 +69,47 @@ celery -A jurisagenda worker -l INFO
 
 No Windows, use `celery -A jurisagenda worker -l INFO --pool=solo`.
 
-Em producao na Vercel, o backend HTTP nao executa worker Celery persistente.
-Use Redis externo e rode o worker em um servico separado (ver secao abaixo).
+Em producao o backend HTTP nao executa worker Celery persistente.
+Use Redis externo e rode o worker no mesmo servidor GCP (ver secao abaixo).
 Sem worker ativo, a gravacao fica presa no status "enviada".
 
 Se nao houver Redis, configure `MEETINGS_PROCESSING_MODE=inline`. Nesse modo a
 transcricao e o resumo rodam na propria requisicao de upload; funciona para
-audios curtos, mas pode estourar o limite de tempo da Vercel em gravacoes longas.
+audios curtos.
 
 ### Upload de gravacoes em producao (Drive direto)
 
-Funcoes da Vercel limitam o body a ~4,5 MB, entao o audio real nunca passa pelo
-backend: o navegador pede uma sessao de upload resumable
+O audio nunca passa pelo backend: o navegador pede uma sessao de upload resumable
 (`POST /api/reunioes/<id>/gravacoes/sessao-upload/`), envia o blob direto ao
 Google Drive (PUT na URL da sessao, sem token no navegador) e confirma
 (`POST /api/reunioes/<id>/gravacoes/confirmar/`). O arquivo fica em
 `<GOOGLE_DRIVE_ROOT_FOLDER_ID>/<Cliente>/Reuniões/` (ou `<root>/Reuniões avulsas`)
 e o worker baixa do Drive com o token de quem enviou (`Gravacao.enviada_por`).
 O endpoint multipart antigo (`POST /api/reunioes/<id>/gravacoes/`) segue valido
-para dev local/inline e blobs de ate ~4 MB.
+para dev local/inline e blobs pequenos.
 
-## Worker de gravacoes (VM)
+## Worker de gravacoes (GCP)
 
-O worker Celery + Redis rodam numa VM always-on via Docker Compose
-(`deploy/worker/`). A Vercel enfileira no Redis da VM pela porta TLS 6380;
-o worker consome pela rede interna do compose.
+O worker Celery + Redis rodam na VM GCP via Docker Compose (`deploy/gcp-free/`).
+O backend enfileira no Redis pela porta TLS 6380; o worker consome pela rede
+interna do compose.
 
-Primeira instalacao (na VM, com Docker instalado):
+Primeira instalacao (na VM GCP, com Docker instalado):
 
 ```bash
-git clone <repo> && cd Agenda-Juri/deploy/worker
+git clone <repo> && cd Agenda-Juri/deploy/gcp-free
 cp .env.example .env       # preencher DATABASE_URL, OPENAI_API_KEY, GOOGLE_*, SECRET_KEY, REDIS_PASSWORD
 ./redis/gen-certs.sh       # certificados TLS self-signed do Redis
 docker compose up -d
 ```
 
-Na Vercel, configure (e faca redeploy):
+No backend (GCP), configure as variaveis de ambiente:
 
-- `CELERY_BROKER_URL=rediss://:<REDIS_PASSWORD>@<host-da-vm>:6380/0?ssl_cert_reqs=CERT_NONE`
+- `CELERY_BROKER_URL=rediss://:<REDIS_PASSWORD>@localhost:6380/0?ssl_cert_reqs=CERT_NONE`
 - `MEETINGS_PROCESSING_MODE=celery`
-- **Nao** defina `REDIS_URL` na Vercel: ela tambem ativaria o cache Django via
-  Redis remoto em todo request. So `CELERY_BROKER_URL`.
+- **Nao** defina `REDIS_URL` se nao quiser que o cache Django use Redis em todo request.
 
-Liberar a porta 6380/TCP no firewall da VM (apenas ela). Atualizacao apos
-`git pull`: `docker compose up -d --build worker`. Alternativa sem Docker:
+Atualizacao apos `git pull`: `docker compose up -d --build worker`. Alternativa sem Docker:
 `deploy/worker/systemd/agenda-juri-worker.service`.
 
 Troubleshooting:
@@ -143,9 +140,9 @@ Troubleshooting:
 - O usuario que autoriza o Google precisa ter permissao de edicao nessa agenda.
 - Configure `GOOGLE_TOKEN_ENCRYPTION_KEY` com uma chave Fernet estavel em producao antes de aplicar as migracoes.
 - Callback exato do backend em producao:
-  `https://agenda-juri-backend.vercel.app/api/auth/google/callback`
+  `https://api.203.0.113.10.sslip.io/api/auth/google/callback`
 - Origin do frontend publicado atualmente:
-  `https://agenda-juri-orcin.vercel.app`
+  `https://rs-advocacia.pages.dev`
 - O mesmo `GOOGLE_CLIENT_ID` deve ser usado no backend que inicia o OAuth e no projeto do Google Cloud onde os test users foram cadastrados.
 - `GOOGLE_ALLOWED_HOSTED_DOMAIN` e opcional e aceita somente dominio do Google Workspace, como `empresa.com`. Para contas Gmail ou contas especificas, use `GOOGLE_ALLOWED_EMAILS`, separado por virgula.
 
@@ -165,7 +162,7 @@ Troubleshooting:
 - Em producao mantenha `CORS_ALLOW_ALL_ORIGINS=false` e configure `CORS_ALLOWED_ORIGINS` e `CSRF_TRUSTED_ORIGINS` com a URL HTTPS exata do React.
 - Se React e Django usarem origens HTTPS distintas, mantenha `SESSION_COOKIE_SAMESITE=None`, `SESSION_COOKIE_SECURE=true`, `CSRF_COOKIE_SAMESITE=None` e `CSRF_COOKIE_SECURE=true`.
 - Para maior previsibilidade de sessao em navegadores que bloqueiam cookies entre sites, publique frontend e API sob o mesmo site ou use um proxy `/api` no dominio do frontend.
-- Configure `GOOGLE_CALENDAR_WEBHOOK_URL=https://agenda-juri-backend.vercel.app/api/integracoes/google/calendar/webhook` para ativar push notifications do Google Calendar.
+- Configure `GOOGLE_CALENDAR_WEBHOOK_URL=https://api.203.0.113.10.sslip.io/api/integracoes/google/calendar/webhook` para ativar push notifications do Google Calendar.
 
 ## Autor
 

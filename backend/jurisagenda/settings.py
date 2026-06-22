@@ -107,7 +107,7 @@ def _database_url_from_env() -> str:
 # SECURITY WARNING: don't run with debug turned on in production!
 _debug_env = os.getenv("DEBUG")
 if _debug_env is None:
-    DEBUG = not bool(os.getenv("VERCEL"))
+    DEBUG = False  # safe default; set DEBUG=true for local dev
 else:
     DEBUG = _debug_env.strip().lower() in {"1", "true", "yes", "on"}
 
@@ -120,24 +120,13 @@ if not SECRET_KEY:
         )
     else:
         raise ImproperlyConfigured(
-            "Defina SECRET_KEY nas variaveis de ambiente da Vercel."
+            "Defina SECRET_KEY nas variaveis de ambiente de producao."
         )
 
 ALLOWED_HOSTS = sorted(
     {
         "127.0.0.1",
         "localhost",
-        "agenda-juri.vercel.app",
-        "agenda-juri-backend.vercel.app",
-        "agenda-juri-orcin.vercel.app",
-        *(
-            _clean_host(host)
-            for host in (
-                os.getenv("VERCEL_URL", ""),
-                os.getenv("VERCEL_PROJECT_PRODUCTION_URL", ""),
-            )
-            if _clean_host(host)
-        ),
         *_split_env_hosts(os.getenv("ALLOWED_HOSTS", "")),
     }
 )
@@ -255,11 +244,7 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
-_VERCEL_MEDIA_ROOT = (
-    "/tmp/media"  # nosec B108 - Vercel serverless only allows writes under /tmp
-)
-_media_default = _VERCEL_MEDIA_ROOT if os.getenv("VERCEL") else str(BASE_DIR / "media")
-MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", _media_default))
+MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(BASE_DIR / "media")))
 
 WHITENOISE_USE_FINDERS = DEBUG
 
@@ -275,7 +260,7 @@ if not DEBUG:
 
 # CORS/CSRF para a interface React. Mantenha esta lista explícita em produção.
 DEFAULT_REACT_ORIGINS = [
-    "https://agenda-juri-orcin.vercel.app",
+    "https://rs-advocacia.pages.dev",
     "http://localhost",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -412,8 +397,8 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_flag(
 SECURE_HSTS_PRELOAD = _env_flag("SECURE_HSTS_PRELOAD", default=not DEBUG)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# Logging: stdout é o canal correto em ambientes efêmeros/serverless (Vercel,
-# containers) — o coletor da plataforma captura. Nível dos apps via LOG_LEVEL.
+# Logging: stdout é o canal correto em containers/VMs — o coletor da plataforma captura.
+# Nível dos apps via LOG_LEVEL.
 LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG" if DEBUG else "INFO").strip().upper()
 APP_LOGGERS = [
     "agenda",

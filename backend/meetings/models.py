@@ -57,7 +57,7 @@ class Gravacao(models.Model):
     # lets transcription seed the next chunk with the tail of the previous one.
     ordem = models.PositiveIntegerField(default=0)
     # Legacy/dev path: file stored in MEDIA_ROOT. New uploads go straight to
-    # Google Drive and only fill drive_file_id (MEDIA_ROOT is ephemeral on Vercel).
+    # Google Drive and only fill drive_file_id.
     arquivo_audio = models.FileField(upload_to=recording_upload_path, blank=True)
     drive_file_id = models.CharField(max_length=128, blank=True, default="")
     enviada_por = models.ForeignKey(

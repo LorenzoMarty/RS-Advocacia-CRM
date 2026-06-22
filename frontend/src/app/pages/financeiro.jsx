@@ -8,6 +8,7 @@ import {
   FINANCE_TABS,
   FINANCE_TYPE_OPTIONS,
 } from '../data';
+import { api } from '../api';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { AnimatePresence, motion as Motion, pop, prefersReducedMotion, staggerContainer, staggerItem } from '../motion';
@@ -215,6 +216,25 @@ function CategoryDonut({ title, data, onSelect }) {
   );
 }
 
+const DASHBOARD_EMPTY = {
+  recebidoMes: 0, despesasMes: 0, pendente: 0, atrasado: 0, saldo: 0,
+  receitaPorCategoria: [], despesaPorCategoria: [],
+};
+
+function dashboardFromApi(data) {
+  const toCategoryList = (list) =>
+    (list || []).map(({ categoria, total }) => ({ name: categoria, value: Number(total) || 0 }));
+  return {
+    recebidoMes: Number(data.recebido_mes) || 0,
+    despesasMes: Number(data.despesas_mes) || 0,
+    pendente: Number(data.pendente) || 0,
+    atrasado: Number(data.atrasado) || 0,
+    saldo: Number(data.saldo_estimado) || 0,
+    receitaPorCategoria: toCategoryList(data.receita_por_categoria),
+    despesaPorCategoria: toCategoryList(data.despesa_por_categoria),
+  };
+}
+
 export function FinanceiroPage() {
   const { lancamentos, marcarLancamentoPago, cancelarLancamento, deleteLancamento } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
@@ -223,38 +243,21 @@ export function FinanceiroPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [sort, setSort] = useState({ field: 'dueDate', dir: 'desc' });
   const [page, setPage] = useState(1);
+  const [dashboard, setDashboard] = useState(DASHBOARD_EMPTY);
 
-  const dashboard = useMemo(() => {
-    const today = todayIso();
-    const active = lancamentos.filter((item) => item.status !== 'Cancelado');
-    const receitas = active.filter((item) => item.type === 'receita');
-    const despesas = active.filter((item) => item.type === 'despesa');
-    const isThisMonth = (value) => {
-      if (!value) return false;
-      const d = new Date(value);
-      const now = new Date();
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    };
-    const sum = (list) => list.reduce((acc, item) => acc + Number(item.value || 0), 0);
-
-    const recebidoMes = sum(receitas.filter((item) => item.status === 'Pago' && isThisMonth(item.paymentDate)));
-    const despesasMes = sum(despesas.filter((item) => item.status === 'Pago' && isThisMonth(item.paymentDate)));
-    const pendente = sum(receitas.filter((item) => item.status === 'Pendente'));
-    const atrasado = sum(receitas.filter((item) => item.status === 'Pendente' && item.dueDate && item.dueDate < today));
-    const saldo = sum(receitas) - sum(despesas);
-
-    const byCategory = (list) => {
-      const map = new Map();
-      list.forEach((item) => {
-        map.set(item.category, (map.get(item.category) || 0) + Number(item.value || 0));
+  // Recarrega o dashboard do servidor após qualquer mutação (store atualiza lancamentos).
+  useEffect(() => {
+    let active = true;
+    api
+      .dashboardFinanceiro()
+      .then((data) => {
+        if (active) setDashboard(dashboardFromApi(data.dados ?? data));
+      })
+      .catch(() => {
+        // Non-fatal: table still works without dashboard metrics.
       });
-      return [...map.entries()].map(([categoria, total]) => ({ categoria, total })).sort((a, b) => b.total - a.total);
-    };
-
-    return {
-      recebidoMes, despesasMes, pendente, atrasado, saldo,
-      receitaPorCategoria: byCategory(receitas),
-      despesaPorCategoria: byCategory(despesas),
+    return () => {
+      active = false;
     };
   }, [lancamentos]);
 

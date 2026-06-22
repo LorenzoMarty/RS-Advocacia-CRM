@@ -47,7 +47,7 @@ def _erros_configuracao_processamento():
     if not settings.OPENAI_API_KEY:
         erros["openai"] = [
             "OPENAI_API_KEY não configurada no backend. "
-            "Defina a variavel na Vercel e faca novo deploy."
+            "Defina a variavel de ambiente e reinicie o servidor."
         ]
     if modo not in PROCESSING_MODES:
         erros["processamento"] = [
@@ -56,7 +56,7 @@ def _erros_configuracao_processamento():
     if modo == "celery" and not settings.CELERY_BROKER_URL:
         erros["fila"] = [
             "Redis/Celery não configurado. Defina REDIS_URL ou CELERY_BROKER_URL "
-            "e mantenha um worker Celery rodando fora da Vercel, ou use "
+            "e mantenha um worker Celery rodando, ou use "
             "MEETINGS_PROCESSING_MODE=inline."
         ]
     return erros
@@ -78,7 +78,7 @@ def _resposta_falha_processamento_inline(gravacao, exc):
     gravacao.refresh_from_db()
     mensagem = (
         "Não foi possível transcrever/resumir a gravação nesta requisição. "
-        "Verifique OPENAI_API_KEY, tamanho do audio e limite de execucao da Vercel."
+        "Verifique OPENAI_API_KEY e tamanho do audio."
     )
     logger.exception("Falha ao processar gravacao %s em modo inline.", gravacao.pk)
     return resposta_erro(
@@ -518,8 +518,8 @@ def _processar_ou_enfileirar(gravacao):
 def criar_sessao_upload_gravacao(request, reuniao_id):
     """Open a Drive resumable session so the browser uploads straight to Google.
 
-    Vercel functions cap request bodies at ~4.5 MB, so real recordings cannot
-    travel through the backend; only this session handshake does.
+    Audio is sent directly from the browser to Drive for efficiency; only this
+    session handshake travels through the backend.
     """
     if request.method != "POST":
         return metodo_nao_permitido(["POST"])

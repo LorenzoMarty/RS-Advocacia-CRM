@@ -1,85 +1,124 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { api } from '../../api';
+import { timeEntryFromApi } from '../../mappers';
 import { useAppState } from '../../store';
-import {
-  aggregateEntries,
-  buildDaySeries,
-  computeDeliverables,
-  isEntryInRange,
-  periodBounds,
-  previousBounds,
-  timeEntryElapsedSeconds,
-  variationPercent,
-} from './productivity-data';
+import { computeDeliverables, periodBounds } from './productivity-data';
 
-// Deriva os agregados de produtividade do usuário logado a partir das coleções
-// já carregadas no store (timeEntries, deadlines, petitions, events). Funciona
-// igual em modo demo e com API. O endpoint /api/produtividade/resumo/ existe
-// para agregação server-side quando o volume justificar.
+// Maps backend por_tipo item to UI shape.
+function byTypeFromApi(pt) {
+  return {
+    taskType: pt.task_type || '',
+    seconds: pt.segundos || 0,
+    count: pt.entradas || 0,
+  };
+}
+
+// Maps backend por_tarefa item to UI shape.
+function byTaskFromApi(pt) {
+  return {
+    taskId: String(pt.task_id || ''),
+    taskType: pt.task_type || '',
+    key: `${pt.task_type}:${pt.task_id}`,
+    label: pt.task_name || '',
+    processId: String(pt.process_id || ''),
+    processNumber: pt.process_number || '',
+    seconds: pt.segundos || 0,
+    count: pt.entradas || 0,
+  };
+}
+
+const RESUMO_EMPTY = {
+  tempo_total_segundos: 0,
+  tempo_periodo_anterior_segundos: 0,
+  variacao_percentual: null,
+  por_tipo: [],
+  por_tarefa: [],
+  por_processo: [],
+  por_dia: [],
+  timers_ativos: [],
+};
+
 export function useProductivityData({ period, customStart, customEnd }) {
-  const { timeEntries, deadlines, petitions, events, currentUser } = useAppState();
+  const { deadlines, petitions, events, currentUser } = useAppState();
   const [now, setNow] = useState(() => Date.now());
+  const [resumo, setResumo] = useState(null);
 
-  const hasRunning = timeEntries.some(
-    (entry) => entry.status === 'running' && entry.userId === currentUser?.id,
-  );
+  // Build query params matching the backend _period_bounds signature.
+  const params = useMemo(() => {
+    const p = { periodo: period };
+    if (period === 'custom' && customStart && customEnd) {
+      p.inicio = customStart;
+      p.fim = customEnd;
+    }
+    return p;
+  }, [period, customStart, customEnd]);
+
+  // Fetch server-side aggregation whenever the period changes.
+  useEffect(() => {
+    let active = true;
+    api
+      .getProductivityResumo(params)
+      .then((response) => {
+        if (active) setResumo(response.dados ?? response ?? RESUMO_EMPTY);
+      })
+      .catch(() => {
+        // Non-fatal: UI shows empty state.
+        if (active) setResumo(RESUMO_EMPTY);
+      });
+    return () => {
+      active = false;
+    };
+  }, [params]);
+
+  // Live tick for running entries (display only, not persisted).
+  const timersAtivos = resumo?.timers_ativos ?? [];
+  const hasRunning = timersAtivos.some((e) => e.status === 'running');
   useEffect(() => {
     if (!hasRunning) return undefined;
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, [hasRunning]);
 
+  // Period bounds: prefer backend dates for consistency; fall back locally.
+  const bounds = useMemo(() => {
+    if (resumo?.inicio && resumo?.fim) {
+      return { start: new Date(resumo.inicio), end: new Date(resumo.fim) };
+    }
+    return periodBounds(period, customStart, customEnd);
+  }, [resumo, period, customStart, customEnd]);
+
+  // Deliverables derived from store collections (backend resumo does not cover them).
+  const deliverables = useMemo(
+    () => computeDeliverables(bounds, { deadlines, petitions, events, user: currentUser, now }),
+    [bounds, deadlines, petitions, events, currentUser, now],
+  );
+
   return useMemo(() => {
-    const userId = currentUser?.id;
-    const scopedEntries = timeEntries.filter((entry) => entry.userId === userId);
-
-    const bounds = periodBounds(period, customStart, customEnd);
-    const prev = previousBounds(bounds);
-
-    const currentEntries = scopedEntries.filter((entry) => isEntryInRange(entry, bounds));
-    const previousEntries = scopedEntries.filter((entry) => isEntryInRange(entry, prev));
-
-    const agg = aggregateEntries(currentEntries, now);
-    const previousTotal = previousEntries.reduce((sum, e) => sum + timeEntryElapsedSeconds(e, now), 0);
-
-    const activeEntries = scopedEntries
-      .filter((entry) => entry.status === 'running' || entry.status === 'paused')
-      .sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt));
-
-    const stoppedEntries = scopedEntries
-      .filter((entry) => entry.status === 'stopped' && isEntryInRange(entry, bounds))
-      .sort((a, b) => new Date(b.endedAt || b.startedAt) - new Date(a.endedAt || a.startedAt));
-
-    const deliverables = computeDeliverables(bounds, {
-      deadlines, petitions, events, user: currentUser, now,
-    });
-
-    const processIds = new Set([
-      ...currentEntries.map((e) => e.processId),
-      ...deliverables.doneDeadlines.map((d) => d.processId),
-      ...deliverables.donePetitions.map((p) => p.processId),
-      ...deliverables.attendedEvents.map((e) => e.processId),
-    ].filter(Boolean));
-
-    const taskCount = agg.byTask.length;
-    const averageTaskSeconds = taskCount ? Math.round(agg.totalSeconds / taskCount) : 0;
+    const data = resumo ?? RESUMO_EMPTY;
+    const byType = (data.por_tipo || []).map(byTypeFromApi);
+    const byTask = (data.por_tarefa || []).map(byTaskFromApi);
+    const totalSeconds = data.tempo_total_segundos || 0;
+    const taskCount = byTask.length;
+    const averageTaskSeconds = taskCount ? Math.round(totalSeconds / taskCount) : 0;
+    const processCount = (data.por_processo || []).filter((p) => p.process_id).length;
+    const activeEntries = (data.timers_ativos || []).map(timeEntryFromApi).filter(Boolean);
 
     return {
       bounds,
-      totalSeconds: agg.totalSeconds,
-      previousTotalSeconds: previousTotal,
-      variation: variationPercent(agg.totalSeconds, previousTotal),
-      daySeries: buildDaySeries(bounds, agg.byDay),
-      byType: agg.byType,
-      byProcess: agg.byProcess,
-      byTask: agg.byTask,
+      totalSeconds,
+      previousTotalSeconds: data.tempo_periodo_anterior_segundos || 0,
+      variation: data.variacao_percentual != null ? Number(data.variacao_percentual) : NaN,
+      byType,
+      byProcess: data.por_processo || [],
+      byTask,
       activeEntries,
-      stoppedEntries,
+      stoppedEntries: [],
       averageTaskSeconds,
       deliverables,
-      processCount: processIds.size,
-      runningCount: scopedEntries.filter((e) => e.status === 'running').length,
+      processCount,
+      runningCount: activeEntries.filter((e) => e.status === 'running').length,
       now,
     };
-  }, [timeEntries, deadlines, petitions, events, currentUser, period, customStart, customEnd, now]);
+  }, [resumo, bounds, deliverables, now]);
 }

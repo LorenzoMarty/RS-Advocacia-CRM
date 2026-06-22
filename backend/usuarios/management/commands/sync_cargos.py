@@ -64,7 +64,7 @@ class Command(BaseCommand):
             raise CommandError(
                 "Nao consegui conectar ao banco. "
                 "Verifique rede/VPN/firewall, DATABASE_URL e se o host/porta do "
-                "Supabase esta acessivel a partir desta maquina. "
+                "banco esta acessivel a partir desta maquina. "
                 f"Erro original: {exc}"
             ) from exc
         self._write("Conexao aberta. Sincronizando cargos e usuarios...")
