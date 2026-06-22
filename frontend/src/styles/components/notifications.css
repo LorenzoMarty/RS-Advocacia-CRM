@@ -1,37 +1,4 @@
-.notification-bell{
-    position:relative;
-}
-
-.notification-badge{
-    position:absolute;
-    top:2px;
-    right:2px;
-    min-width:16px;
-    height:16px;
-    padding:0 3px;
-    border-radius:8px;
-    background:var(--accent,#d4af37);
-    color:#000;
-    font-size:10px;
-    font-weight:700;
-    line-height:16px;
-    text-align:center;
-    pointer-events:none;
-}
-
-.notification-dropdown{
-    position:absolute;
-    bottom:calc(100% + 8px);
-    left:0;
-    width:320px;
-    max-height:400px;
-    overflow-y:auto;
-    background:var(--surface,#1e293b);
-    border:1px solid rgba(148,163,184,.16);
-    border-radius:10px;
-    box-shadow:0 8px 32px rgba(0,0,0,.4);
-    z-index:200;
-}
+/* ---- Notification list (inside ProfileMenu dropdown) ---- */
 
 .notification-header{
     display:flex;
@@ -47,18 +14,16 @@
     border:none;
     color:var(--accent,#d4af37);
     cursor:pointer;
-    font-size:.75rem;
+    font-size:.74rem;
     padding:0;
+    white-space:nowrap;
 }
-
-.notification-mark-all:hover{
-    text-decoration:underline;
-}
+.notification-mark-all:hover{text-decoration:underline}
 
 .notification-empty{
     padding:20px 14px;
     text-align:center;
-    color:var(--text-secondary,#94a3b8);
+    color:var(--muted,#94a3b8);
     font-size:.8125rem;
 }
 
@@ -66,53 +31,207 @@
     list-style:none;
     margin:0;
     padding:4px 0;
+    max-height:280px;
+    overflow-y:auto;
+    overscroll-behavior:contain;
 }
 
 .notification-item{
     display:flex;
     align-items:flex-start;
-    gap:8px;
+    gap:10px;
     padding:10px 14px;
     border-bottom:1px solid rgba(148,163,184,.06);
+    transition:background var(--motion,200ms) ease;
 }
+.notification-item:last-child{border-bottom:none}
+.notification-item:hover{background:rgba(255,255,255,.04)}
 
-.notification-item:last-child{
-    border-bottom:none;
+/* Type icon */
+.notification-type-icon{
+    flex:0 0 auto;
+    width:28px;
+    height:28px;
+    display:grid;
+    place-items:center;
+    border-radius:8px;
+    margin-top:1px;
+    background:rgba(148,163,184,.1);
+    color:var(--muted,#94a3b8);
 }
+.notif-tipo-prazo .notification-type-icon{background:rgba(239,122,122,.12);color:#ef7a7a}
+.notif-tipo-evento .notification-type-icon{background:rgba(212,175,55,.12);color:var(--gold-soft,#c9a227)}
+.notif-tipo-reuniao .notification-type-icon{background:rgba(96,165,250,.12);color:#60a5fa}
+.notif-tipo-sistema .notification-type-icon{background:rgba(148,163,184,.1);color:var(--muted,#94a3b8)}
 
+/* Content */
 .notification-content{
     flex:1;
     min-width:0;
+    display:grid;
+    gap:3px;
 }
 
 .notification-title{
     display:block;
-    font-size:.8125rem;
+    font-size:.8rem;
     font-weight:600;
     color:var(--text,#e5e7eb);
-    margin-bottom:2px;
+    line-height:1.35;
 }
 
 .notification-msg{
     margin:0;
     font-size:.75rem;
-    color:var(--text-secondary,#94a3b8);
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+    color:var(--muted,#94a3b8);
+    line-height:1.45;
+    word-break:break-word;
 }
 
+.notification-time{
+    font-size:.7rem;
+    color:var(--soft,#94a3b8);
+    opacity:.7;
+}
+
+/* Dismiss */
 .notification-dismiss{
+    flex:0 0 auto;
     background:none;
     border:none;
-    color:var(--text-secondary,#94a3b8);
+    color:var(--muted,#94a3b8);
     cursor:pointer;
     font-size:1.1rem;
     line-height:1;
-    padding:0 2px;
-    flex-shrink:0;
+    padding:2px 4px;
+    border-radius:5px;
+    transition:color var(--motion,200ms) ease,background var(--motion,200ms) ease;
 }
-
 .notification-dismiss:hover{
     color:var(--text,#e5e7eb);
+    background:rgba(148,163,184,.1);
+}
+
+/* ---- Profile menu wrapper ---- */
+.profile-menu{
+    position:relative;
+    width:100%;
+}
+
+/* Profile button */
+.sidebar-profile-btn{
+    width:100%;
+    text-align:left;
+    cursor:pointer;
+    border:none;
+    transition:background var(--motion,200ms) ease,border-color var(--motion,200ms) ease;
+}
+.sidebar-profile-btn:hover{
+    background:var(--ghost-strong,rgba(255,255,255,.08));
+    border-color:var(--line-strong,rgba(148,163,184,.2));
+}
+.sidebar-profile-btn[aria-expanded="true"]{
+    border-color:rgba(212,175,55,.3);
+    background:rgba(212,175,55,.06);
+}
+
+/* Notification badge on profile */
+.profile-notif-badge{
+    flex:0 0 auto;
+    min-width:18px;
+    height:18px;
+    padding:0 4px;
+    border-radius:9px;
+    background:var(--accent,#d4af37);
+    color:#000;
+    font-size:.68rem;
+    font-weight:700;
+    line-height:18px;
+    text-align:center;
+}
+
+/* Chevron */
+.profile-chevron{
+    flex:0 0 auto;
+    color:var(--muted,#94a3b8);
+    transition:transform var(--motion,200ms) ease;
+}
+.profile-chevron.is-open{transform:rotate(180deg)}
+
+/* ---- Dropdown panel ---- */
+.profile-dropdown{
+    position:absolute;
+    bottom:calc(100% + 8px);
+    left:0;
+    right:0;
+    min-width:280px;
+    max-width:min(360px,calc(100vw - 24px));
+    max-height:min(520px,calc(100vh - 120px));
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    background:var(--surface,#1e293b);
+    border:1px solid rgba(148,163,184,.16);
+    border-radius:14px;
+    box-shadow:0 -4px 32px rgba(0,0,0,.4),0 2px 8px rgba(0,0,0,.2);
+    z-index:300;
+}
+
+.profile-dropdown-sep{
+    height:1px;
+    background:rgba(148,163,184,.1);
+    margin:4px 0;
+}
+
+/* Action links (Settings, Appearance, Logout) */
+.profile-dropdown-actions{
+    display:grid;
+    padding:6px 0;
+}
+
+.profile-dropdown-action{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 14px;
+    font-size:.82rem;
+    font-family:var(--sans);
+    color:var(--soft,#cbd5e1);
+    background:none;
+    border:none;
+    cursor:pointer;
+    text-decoration:none;
+    transition:background var(--motion,200ms) ease,color var(--motion,200ms) ease;
+}
+.profile-dropdown-action:hover{
+    background:rgba(255,255,255,.05);
+    color:var(--text,#e5e7eb);
+}
+.profile-dropdown-action svg{flex:0 0 auto;color:var(--muted,#94a3b8)}
+.profile-dropdown-action:hover svg{color:inherit}
+
+.profile-dropdown-action--danger{color:#ffdede}
+.profile-dropdown-action--danger:hover{background:rgba(239,122,122,.08);color:#fff1f1}
+.profile-dropdown-action--danger svg{color:#ef7a7a}
+
+/* Light theme overrides */
+html[data-theme="light"] .profile-dropdown{
+    background:#ffffff;
+    border-color:rgba(0,0,0,.1);
+    box-shadow:0 -4px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.08);
+}
+html[data-theme="light"] .sidebar-profile-btn:hover{background:rgba(24,30,42,.06)}
+html[data-theme="light"] .sidebar-profile-btn[aria-expanded="true"]{background:rgba(212,175,55,.08)}
+html[data-theme="light"] .profile-dropdown-action:hover{background:rgba(0,0,0,.04);color:var(--text)}
+html[data-theme="light"] .notification-item:hover{background:rgba(0,0,0,.03)}
+
+/* Mobile: fixed sheet above bottom nav */
+@media (max-width:640px){
+    .profile-dropdown{
+        position:fixed;
+        bottom:80px;
+        left:12px;
+        right:12px;
+        max-width:none;
+        border-radius:18px;
+    }
 }

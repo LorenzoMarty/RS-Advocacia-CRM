@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
@@ -400,56 +400,122 @@ export function GuestLayout() {
   return <Outlet />;
 }
 
-function NotificationBell() {
+function formatRelTime(iso) {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60_000);
+  if (min < 1) return 'agora';
+  if (min < 60) return `há ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `há ${h}h`;
+  if (h < 48) return 'ontem';
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(iso));
+}
+
+function NotifTypeIcon({ tipo }) {
+  if (tipo === 'prazo') return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+    </svg>
+  );
+  if (tipo === 'evento') return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  );
+  if (tipo === 'reuniao') return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8" />
+    </svg>
+  );
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" /><path d="M12 8h.01M12 12v4" />
+    </svg>
+  );
+}
+
+function ProfileMenu({ onOpenAppearance }) {
+  const { currentUser, currentRole, sair } = useAppState();
   const { notificacoes, totalNaoLidas, marcarLida, marcarTodasLidas } = useNotifications();
   const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onOutside);
+    return () => document.removeEventListener('mousedown', onOutside);
+  }, [open]);
+
+  function handleAction(fn) {
+    setOpen(false);
+    fn?.();
+  }
 
   return (
-    <div className="notification-bell" style={{ position: 'relative' }}>
+    <div className="profile-menu" ref={menuRef}>
       <button
         type="button"
-        className="nav-link"
-        aria-label={`Notificações${totalNaoLidas ? ` (${totalNaoLidas} não lidas)` : ''}`}
-        aria-haspopup="true"
+        className="profile sidebar-profile sidebar-profile-btn"
         aria-expanded={open}
-        onClick={() => setOpen((prev) => !prev)}
-        style={{ position: 'relative' }}
+        aria-haspopup="dialog"
+        aria-label={`Menu do usuário${totalNaoLidas ? ` — ${totalNaoLidas} notificações` : ''}`}
+        onClick={() => setOpen((p) => !p)}
       >
-        <span className="nav-icon" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-          </svg>
-        </span>
+        <div className="avatar" aria-hidden="true">
+          {currentUser.name.slice(0, 1).toUpperCase()}
+        </div>
+        <div className="profile-copy">
+          <strong>{currentUser.name}</strong>
+          <span>{currentRole?.name || 'Usuário'}</span>
+        </div>
         {totalNaoLidas > 0 && (
-          <span className="notification-badge" aria-hidden="true">{totalNaoLidas > 9 ? '9+' : totalNaoLidas}</span>
+          <span className="profile-notif-badge" aria-hidden="true">
+            {totalNaoLidas > 9 ? '9+' : totalNaoLidas}
+          </span>
         )}
+        <svg
+          className={`profile-chevron${open ? ' is-open' : ''}`}
+          width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m18 15-6-6-6 6" />
+        </svg>
       </button>
 
       {open && (
-        <div
-          className="notification-dropdown"
-          role="dialog"
-          aria-label="Notificações"
-        >
+        <div className="profile-dropdown" role="dialog" aria-label="Menu do usuário">
+          {/* Notifications */}
           <div className="notification-header">
             <strong>Notificações</strong>
             {totalNaoLidas > 0 && (
               <button type="button" className="notification-mark-all" onClick={marcarTodasLidas}>
-                Marcar todas como lidas
+                Marcar todas lidas
               </button>
             )}
           </div>
 
           {notificacoes.length === 0 ? (
-            <div className="notification-empty">Nenhuma notificação pendente.</div>
+            <div className="notification-empty">Sem notificações pendentes.</div>
           ) : (
             <ul className="notification-list" role="list">
               {notificacoes.map((n) => (
-                <li key={n.id} className="notification-item">
+                <li key={n.id} className={`notification-item notif-tipo-${n.tipo || 'sistema'}`}>
+                  <span className="notification-type-icon">
+                    <NotifTypeIcon tipo={n.tipo} />
+                  </span>
                   <div className="notification-content">
                     <strong className="notification-title">{n.titulo}</strong>
                     {n.mensagem && <p className="notification-msg">{n.mensagem}</p>}
+                    {n.criada_em && (
+                      <time className="notification-time" dateTime={n.criada_em}>
+                        {formatRelTime(n.criada_em)}
+                      </time>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -463,6 +529,37 @@ function NotificationBell() {
               ))}
             </ul>
           )}
+
+          <div className="profile-dropdown-sep" />
+
+          <nav className="profile-dropdown-actions" aria-label="Ações do usuário">
+            <Link to="/usuarios" className="profile-dropdown-action" onClick={() => setOpen(false)}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              Configurações
+            </Link>
+            {onOpenAppearance && (
+              <button type="button" className="profile-dropdown-action" onClick={() => handleAction(onOpenAppearance)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+                Aparência
+              </button>
+            )}
+            <button
+              type="button"
+              className="profile-dropdown-action profile-dropdown-action--danger"
+              onClick={() => handleAction(sair)}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="m16 17 5-5-5-5M21 12H9M13 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" />
+              </svg>
+              Sair
+            </button>
+          </nav>
         </div>
       )}
     </div>
@@ -470,7 +567,7 @@ function NotificationBell() {
 }
 
 export function ProtectedLayout() {
-  const { addFlash, currentUser, deadlines, events, isLoading, sair } = useAppState();
+  const { addFlash, currentUser, deadlines, events, isLoading } = useAppState();
   const location = useLocation();
   const [, setChrome] = useState(PAGE_CHROME_DEFAULT);
   const { sidebarCollapsed, toggleSidebar } = useShellPreferences();
@@ -528,31 +625,7 @@ export function ProtectedLayout() {
             <SidebarNavigation />
 
             <div className="sidebar-footer">
-              <div className="profile sidebar-profile">
-                <div className="avatar">{currentUser.name.slice(0, 1).toUpperCase()}</div>
-                <div className="profile-copy">
-                  <strong>{currentUser.name}</strong>
-                  <span>{new Intl.DateTimeFormat('pt-BR').format(new Date())}</span>
-                </div>
-              </div>
-
-              <NotificationBell />
-
-              <AppearanceTrigger
-                className="nav-link sidebar-appearance"
-                label="Aparência"
-                onOpen={() => appearance.setOpen(true)}
-              />
-
-              <button className="nav-link sidebar-logout" type="button" aria-label="Sair" title="Sair" onClick={sair}>
-                <span className="nav-icon" aria-hidden="true">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m16 17 5-5-5-5" />
-                    <path d="M21 12H9" />
-                    <path d="M13 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" />
-                  </svg>
-                </span>
-              </button>
+              <ProfileMenu onOpenAppearance={() => appearance.setOpen(true)} />
             </div>
           </div>
         </aside>
