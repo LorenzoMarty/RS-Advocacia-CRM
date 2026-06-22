@@ -1,8 +1,0 @@
-{$DOMAIN} {
-    encode zstd gzip
-
-    @backend path /api/* /admin* /static/* /media/* /health/ /ready/
-    reverse_proxy @backend web:8000
-
-    reverse_proxy frontend:80
-}

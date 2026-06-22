@@ -33,7 +33,6 @@ import {
   productivityGoalsFromResponse,
   auditFromResponse,
   auditFromListResponse,
-  auditPanelFromResponse,
   auditPaginationFromResponse,
   auditOverviewFromResponse,
   clientToPayload,
@@ -142,7 +141,6 @@ export function AppStateProvider({ children }) {
   const [timeEntries, setTimeEntries] = useState([]);
   const [productivityGoals, setProductivityGoals] = useState([]);
   const [auditEntries, setAuditEntries] = useState([]);
-  const [auditPanel, setAuditPanel] = useState(null);
   const [auditOverview, setAuditOverview] = useState(null);
   const [auditPagination, setAuditPagination] = useState({ offset: 0, limit: 100, total: 0, temMais: false });
   const [auditFilters, setAuditFilters] = useState({});
@@ -1041,15 +1039,6 @@ export function AppStateProvider({ children }) {
     }
   }
 
-  async function loadAuditPanel(periodo = 7) {
-    try {
-      const payload = await api.getAuditPanel(periodo);
-      setAuditPanel(auditPanelFromResponse(payload));
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-    }
-  }
-
   async function loadAuditOverview(periodo = 7) {
     try {
       const payload = await api.getAuditOverview(periodo);
@@ -1071,12 +1060,10 @@ export function AppStateProvider({ children }) {
     timeEntries,
     productivityGoals,
     auditEntries,
-    auditPanel,
     auditOverview,
     auditPagination,
     loadAudit,
     loadMoreAudit,
-    loadAuditPanel,
     loadAuditOverview,
     currentUser,
     currentRole,

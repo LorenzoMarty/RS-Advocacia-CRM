@@ -35,7 +35,20 @@ services:
     command: celery -A jurisagenda worker --loglevel=info --concurrency=1
     env_file: .env
     environment:
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  beat:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile.prod
+    command: celery -A jurisagenda beat --loglevel=info
+    env_file: .env
+    environment:
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
     depends_on:

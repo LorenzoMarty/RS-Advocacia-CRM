@@ -29,9 +29,8 @@ function CountUp({ value, duration = 0.9 }) {
 
   useEffect(() => {
     if (prefersReducedMotion()) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDisplay(target);
-      return undefined;
+      const id = setTimeout(() => setDisplay(target), 0);
+      return () => clearTimeout(id);
     }
 
     const ease = (t) => 1 - Math.pow(1 - t, 3);
