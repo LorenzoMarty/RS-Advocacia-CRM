@@ -623,10 +623,10 @@ export function ProtectedLayout() {
             </Link>
 
             <SidebarNavigation />
+          </div>
 
-            <div className="sidebar-footer">
-              <ProfileMenu onOpenAppearance={() => appearance.setOpen(true)} />
-            </div>
+          <div className="sidebar-footer">
+            <ProfileMenu onOpenAppearance={() => appearance.setOpen(true)} />
           </div>
         </aside>
 
