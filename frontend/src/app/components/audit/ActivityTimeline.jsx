@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 import { motion } from '../../motion';
 import { formatDateTime } from '../../utils';
 import { EmptyState } from '../../pages/common';
+import { Select } from '../select';
 
 const MotionItem = motion.li;
 
@@ -242,8 +243,7 @@ function ActivityFilters({ filters, onChange }) {
         aria-label="Buscar no log"
       />
       <div className="audit-filter-row">
-        <select
-          className="audit-filter-select"
+        <Select
           value={filters.entidade_tipo || ''}
           onChange={(e) => handleChange('entidade_tipo', e.target.value)}
           aria-label="Tipo de entidade"
@@ -251,9 +251,8 @@ function ActivityFilters({ filters, onChange }) {
           {ENTITY_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
-        </select>
-        <select
-          className="audit-filter-select"
+        </Select>
+        <Select
           value={filters.acao || ''}
           onChange={(e) => handleChange('acao', e.target.value)}
           aria-label="Tipo de ação"
@@ -261,10 +260,10 @@ function ActivityFilters({ filters, onChange }) {
           {ACTION_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
-        </select>
+        </Select>
         <input
           type="text"
-          className="audit-filter-select"
+          className="audit-filter-input"
           placeholder="Responsável"
           value={filters.autor_nome || ''}
           onChange={(e) => handleChange('autor_nome', e.target.value)}
@@ -272,7 +271,7 @@ function ActivityFilters({ filters, onChange }) {
         />
         <input
           type="date"
-          className="audit-filter-select"
+          className="audit-filter-input"
           value={filters.desde || ''}
           onChange={(e) => handleChange('desde', e.target.value)}
           aria-label="A partir de"
@@ -280,7 +279,7 @@ function ActivityFilters({ filters, onChange }) {
         />
         <input
           type="date"
-          className="audit-filter-select"
+          className="audit-filter-input"
           value={filters.ate || ''}
           onChange={(e) => handleChange('ate', e.target.value)}
           aria-label="Até"
@@ -289,7 +288,7 @@ function ActivityFilters({ filters, onChange }) {
         {Object.values(filters).some(Boolean) && (
           <button
             type="button"
-            className="audit-filter-clear"
+            className="btn btn-secondary btn-compact"
             onClick={() => onChange({})}
           >
             Limpar
