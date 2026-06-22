@@ -1,6 +1,7 @@
 @media (min-width:1201px){
     .sidebar{
-        display:block;
+        display:flex;
+        flex-direction:column;
     }
 
     .topbar-profile-mobile,

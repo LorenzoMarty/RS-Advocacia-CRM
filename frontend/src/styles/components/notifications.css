@@ -116,6 +116,7 @@
 .profile-menu{
     position:relative;
     width:100%;
+    overflow:visible;
 }
 
 /* Profile button */

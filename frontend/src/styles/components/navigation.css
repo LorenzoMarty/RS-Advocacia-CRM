@@ -114,9 +114,12 @@
 }
 
 .sidebar-footer{
-    margin-top:auto;
-    padding-top:12px;
+    flex:0 0 auto;
+    padding:12px 18px 18px;
     border-top:1px solid var(--line);
+    position:relative;
+    z-index:2;
+    background:var(--sidebar-bg);
 }
 
 .sidebar-profile{
