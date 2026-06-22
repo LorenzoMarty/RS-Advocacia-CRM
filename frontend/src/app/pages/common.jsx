@@ -40,7 +40,7 @@ export function ComboField({
     <div className="type-combo">
       <input
         ref={inputRef}
-        id={`${id}-novo`}
+        id={id}
         value={value}
         placeholder={customPlaceholder}
         onChange={(event) => onChange(event.target.value)}

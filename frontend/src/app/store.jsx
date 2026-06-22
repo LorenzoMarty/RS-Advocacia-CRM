@@ -7,6 +7,8 @@ import {
   isApiEnabled,
 } from './api';
 
+import { saveEntity, deleteEntity } from './store-helpers';
+
 import {
   usersFromResponse,
   userFromResponse,
@@ -252,14 +254,20 @@ export function AppStateProvider({ children }) {
     }
 
     const results = await Promise.allSettled(loaders.map(({ load }) => load()));
+    let partialFailure = false;
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         loaders[index].apply(result.value);
         loadedRemoteData = true;
       } else {
         lastError = result.reason;
+        partialFailure = true;
       }
     });
+
+    if (partialFailure && loadedRemoteData) {
+      addFlash('Alguns dados não carregaram. Recarregue a página se necessário.', 'warning');
+    }
 
     if (!loadedRemoteData && lastError) {
       throw lastError;
@@ -282,14 +290,14 @@ export function AppStateProvider({ children }) {
         }
 
         setApiStatus('ready');
-      } catch (error) {
+      } catch {
         if (!isMounted) {
           return;
         }
 
         syncCurrentUser(null);
         setApiStatus('error');
-        addFlash(`API indisponivel: ${errorMessage(error)}`, 'error');
+        addFlash('Não foi possível conectar ao servidor. Verifique sua internet.', 'error');
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -349,57 +357,42 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveClient(payload) {
-    try {
-      const response = payload.id
-        ? await api.updateClient(payload.id, clientToPayload(payload))
-        : await api.createClient(clientToPayload(payload));
-      const savedClient = clientFromResponse(response);
-      if (!savedClient) {
-        throw new Error('Resposta inválida da API de clientes.');
-      }
-      setClients((currentClients) => sortByName(replaceById(currentClients, savedClient)));
-      addFlash(payload.id ? 'Cliente atualizado.' : 'Cliente salvo.', 'success');
-      return savedClient;
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return null;
-    }
+    return saveEntity({
+      id: payload.id,
+      createFn: () => api.createClient(clientToPayload(payload)),
+      updateFn: (id) => api.updateClient(id, clientToPayload(payload)),
+      fromResponse: clientFromResponse,
+      onSuccess: (saved) => setClients((current) => sortByName(replaceById(current, saved))),
+      addFlash,
+      createMsg: 'Cliente salvo.',
+      updateMsg: 'Cliente atualizado.',
+    });
   }
 
   async function saveProcess(payload) {
-    try {
-      const response = payload.id
-        ? await api.updateProcess(payload.id, processToPayload(payload))
-        : await api.createProcess(processToPayload(payload));
-      const savedProcess = processFromResponse(response);
-      if (!savedProcess) {
-        throw new Error('Resposta inválida da API de processos.');
-      }
-      setProcesses((currentProcesses) => replaceById(currentProcesses, savedProcess));
-      addFlash(payload.id ? 'Processo atualizado.' : 'Processo salvo.', 'success');
-      return savedProcess;
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return null;
-    }
+    return saveEntity({
+      id: payload.id,
+      createFn: () => api.createProcess(processToPayload(payload)),
+      updateFn: (id) => api.updateProcess(id, processToPayload(payload)),
+      fromResponse: processFromResponse,
+      onSuccess: (saved) => setProcesses((current) => replaceById(current, saved)),
+      addFlash,
+      createMsg: 'Processo salvo.',
+      updateMsg: 'Processo atualizado.',
+    });
   }
 
   async function saveEvent(payload) {
-    try {
-      const response = payload.id
-        ? await api.updateEvent(payload.id, eventToPayload(payload))
-        : await api.createEvent(eventToPayload(payload));
-      const savedEvent = eventFromResponse(response);
-      if (!savedEvent) {
-        throw new Error('Resposta inválida da API de eventos.');
-      }
-      setEvents((currentEvents) => replaceById(currentEvents, savedEvent));
-      addFlash(payload.id ? 'Compromisso atualizado.' : 'Compromisso salvo.', 'success');
-      return savedEvent;
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return null;
-    }
+    return saveEntity({
+      id: payload.id,
+      createFn: () => api.createEvent(eventToPayload(payload)),
+      updateFn: (id) => api.updateEvent(id, eventToPayload(payload)),
+      fromResponse: eventFromResponse,
+      onSuccess: (saved) => setEvents((current) => replaceById(current, saved)),
+      addFlash,
+      createMsg: 'Compromisso salvo.',
+      updateMsg: 'Compromisso atualizado.',
+    });
   }
 
   // Move de drag-and-drop no calendário: atualiza start/end mantendo o resto.
@@ -435,23 +428,16 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveDeadline(payload, options = {}) {
-    try {
-      const response = payload.id
-        ? await api.updateDeadline(payload.id, deadlineToPayload(payload))
-        : await api.createDeadline(deadlineToPayload(payload));
-      const savedDeadline = deadlineFromResponse(response);
-      if (!savedDeadline) {
-        throw new Error('Resposta inválida da API de prazos.');
-      }
-      setDeadlines((currentDeadlines) => replaceById(currentDeadlines, savedDeadline));
-      if (!options.silent) {
-        addFlash(payload.id ? 'Prazo atualizado.' : 'Prazo salvo.', 'success');
-      }
-      return savedDeadline;
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return null;
-    }
+    return saveEntity({
+      id: payload.id,
+      createFn: () => api.createDeadline(deadlineToPayload(payload)),
+      updateFn: (id) => api.updateDeadline(id, deadlineToPayload(payload)),
+      fromResponse: deadlineFromResponse,
+      onSuccess: (saved) => setDeadlines((current) => replaceById(current, saved)),
+      addFlash,
+      createMsg: options.silent ? null : 'Prazo salvo.',
+      updateMsg: options.silent ? null : 'Prazo atualizado.',
+    });
   }
 
   function applyDeadlineFromResponse(response) {
@@ -500,23 +486,16 @@ export function AppStateProvider({ children }) {
   }
 
   async function savePetition(payload, options = {}) {
-    try {
-      const response = payload.id
-        ? await api.updatePetition(payload.id, petitionToPayload(payload))
-        : await api.createPetition(petitionToPayload(payload));
-      const savedPetition = petitionFromResponse(response);
-      if (!savedPetition) {
-        throw new Error('Resposta inválida da API de petições.');
-      }
-      setPetitions((currentPetitions) => replaceById(currentPetitions, savedPetition));
-      if (!options.silent) {
-        addFlash(payload.id ? 'Petição atualizada.' : 'Petição salva.', 'success');
-      }
-      return savedPetition;
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return null;
-    }
+    return saveEntity({
+      id: payload.id,
+      createFn: () => api.createPetition(petitionToPayload(payload)),
+      updateFn: (id) => api.updatePetition(id, petitionToPayload(payload)),
+      fromResponse: petitionFromResponse,
+      onSuccess: (saved) => setPetitions((current) => replaceById(current, saved)),
+      addFlash,
+      createMsg: options.silent ? null : 'Petição salva.',
+      updateMsg: options.silent ? null : 'Petição atualizada.',
+    });
   }
 
   async function createPetitionDocument(petitionId) {
@@ -641,24 +620,21 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveUser(payload) {
-    try {
-      const response = payload.id
-        ? await api.updateUser(payload.id, userToPayload(payload))
-        : await api.createUser(userToPayload(payload));
-      const savedUser = userFromResponse(response);
-      if (!savedUser) {
-        throw new Error('Resposta inválida da API de usuários.');
-      }
-      setUsers((currentUsers) => sortByName(replaceById(currentUsers, savedUser)));
-      if (savedUser.id === currentUserId) {
-        setCurrentSessionUser(savedUser);
-      }
-      addFlash(payload.id ? 'Usuário atualizado.' : 'Usuário criado.', 'success');
-      return savedUser;
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return null;
-    }
+    return saveEntity({
+      id: payload.id,
+      createFn: () => api.createUser(userToPayload(payload)),
+      updateFn: (id) => api.updateUser(id, userToPayload(payload)),
+      fromResponse: userFromResponse,
+      onSuccess: (saved) => {
+        setUsers((current) => sortByName(replaceById(current, saved)));
+        if (saved.id === currentUserId) {
+          setCurrentSessionUser(saved);
+        }
+      },
+      addFlash,
+      createMsg: 'Usuário criado.',
+      updateMsg: 'Usuário atualizado.',
+    });
   }
 
   async function deleteClient(clientId) {
@@ -721,59 +697,45 @@ export function AppStateProvider({ children }) {
     return true;
   }
 
-  async function deleteEvent(eventId) {
-    try {
-      await api.deleteEvent(eventId);
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return false;
-    }
-
-    setEvents((currentEvents) => currentEvents.filter((event) => event.id !== eventId));
-    addFlash('Compromisso deletado.', 'success');
-    return true;
+  function deleteEvent(eventId) {
+    return deleteEntity({
+      deleteFn: () => api.deleteEvent(eventId),
+      onSuccess: () => setEvents((current) => current.filter((e) => e.id !== eventId)),
+      addFlash,
+      successMsg: 'Compromisso deletado.',
+    });
   }
 
-  async function deleteDeadline(deadlineId) {
-    try {
-      await api.deleteDeadline(deadlineId);
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return false;
-    }
-
-    setDeadlines((currentDeadlines) => currentDeadlines.filter((deadline) => deadline.id !== deadlineId));
-    addFlash('Prazo deletado.', 'success');
-    return true;
+  function deleteDeadline(deadlineId) {
+    return deleteEntity({
+      deleteFn: () => api.deleteDeadline(deadlineId),
+      onSuccess: () => setDeadlines((current) => current.filter((d) => d.id !== deadlineId)),
+      addFlash,
+      successMsg: 'Prazo deletado.',
+    });
   }
 
-  async function deletePetition(petitionId) {
-    try {
-      await api.deletePetition(petitionId);
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return false;
-    }
-
-    setPetitions((currentPetitions) => currentPetitions.filter((petition) => petition.id !== petitionId));
-    addFlash('Petição deletada.', 'success');
-    return true;
+  function deletePetition(petitionId) {
+    return deleteEntity({
+      deleteFn: () => api.deletePetition(petitionId),
+      onSuccess: () => setPetitions((current) => current.filter((p) => p.id !== petitionId)),
+      addFlash,
+      successMsg: 'Petição deletada.',
+    });
   }
 
-  async function deleteUser(userId) {
-    try {
-      await api.deleteUser(userId);
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return false;
-    }
-
-    setUsers((currentUsers) => currentUsers.filter((user) => user.id !== userId));
-    if (userId === currentUserId) {
-      setCurrentUserId(null);
-    }
-    addFlash('Usuário deletado.', 'success');
-    return true;
+  function deleteUser(userId) {
+    return deleteEntity({
+      deleteFn: () => api.deleteUser(userId),
+      onSuccess: () => {
+        setUsers((current) => current.filter((u) => u.id !== userId));
+        if (userId === currentUserId) {
+          setCurrentUserId(null);
+        }
+      },
+      addFlash,
+      successMsg: 'Usuário deletado.',
+    });
   }
 
   function pauseRunningEntries(entries, exceptEntryId = '') {
@@ -926,34 +888,25 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveProspect(payload) {
-    try {
-      const response = payload.id
-        ? await api.updateProspect(payload.id, prospectToPayload(payload))
-        : await api.createProspect(prospectToPayload(payload));
-      const savedProspect = prospectFromResponse(response);
-      if (!savedProspect) {
-        throw new Error('Resposta inválida da API de prospecção.');
-      }
-      setProspects((current) => replaceById(current, savedProspect));
-      addFlash(payload.id ? 'Prospect atualizado.' : 'Prospect salvo.', 'success');
-      return savedProspect;
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return null;
-    }
+    return saveEntity({
+      id: payload.id,
+      createFn: () => api.createProspect(prospectToPayload(payload)),
+      updateFn: (id) => api.updateProspect(id, prospectToPayload(payload)),
+      fromResponse: prospectFromResponse,
+      onSuccess: (saved) => setProspects((current) => replaceById(current, saved)),
+      addFlash,
+      createMsg: 'Prospect salvo.',
+      updateMsg: 'Prospect atualizado.',
+    });
   }
 
-  async function deleteProspect(prospectId) {
-    try {
-      await api.deleteProspect(prospectId);
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return false;
-    }
-
-    setProspects((current) => current.filter((item) => item.id !== prospectId));
-    addFlash('Prospect deletado.', 'success');
-    return true;
+  function deleteProspect(prospectId) {
+    return deleteEntity({
+      deleteFn: () => api.deleteProspect(prospectId),
+      onSuccess: () => setProspects((current) => current.filter((item) => item.id !== prospectId)),
+      addFlash,
+      successMsg: 'Prospect deletado.',
+    });
   }
 
   async function addInteracao(prospectId, payload) {
@@ -999,34 +952,25 @@ export function AppStateProvider({ children }) {
   }
 
   async function saveLancamento(payload) {
-    try {
-      const response = payload.id
-        ? await api.updateLancamento(payload.id, lancamentoToPayload(payload))
-        : await api.createLancamento(lancamentoToPayload(payload));
-      const saved = lancamentoFromResponse(response);
-      if (!saved) {
-        throw new Error('Resposta inválida da API financeira.');
-      }
-      setLancamentos((current) => replaceById(current, saved));
-      addFlash(payload.id ? 'Lançamento atualizado.' : 'Lançamento salvo.', 'success');
-      return saved;
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return null;
-    }
+    return saveEntity({
+      id: payload.id,
+      createFn: () => api.createLancamento(lancamentoToPayload(payload)),
+      updateFn: (id) => api.updateLancamento(id, lancamentoToPayload(payload)),
+      fromResponse: lancamentoFromResponse,
+      onSuccess: (saved) => setLancamentos((current) => replaceById(current, saved)),
+      addFlash,
+      createMsg: 'Lançamento salvo.',
+      updateMsg: 'Lançamento atualizado.',
+    });
   }
 
-  async function deleteLancamento(lancamentoId) {
-    try {
-      await api.deleteLancamento(lancamentoId);
-    } catch (error) {
-      addFlash(errorMessage(error), 'error');
-      return false;
-    }
-
-    setLancamentos((current) => current.filter((item) => item.id !== lancamentoId));
-    addFlash('Lançamento deletado.', 'success');
-    return true;
+  function deleteLancamento(lancamentoId) {
+    return deleteEntity({
+      deleteFn: () => api.deleteLancamento(lancamentoId),
+      onSuccess: () => setLancamentos((current) => current.filter((item) => item.id !== lancamentoId)),
+      addFlash,
+      successMsg: 'Lançamento deletado.',
+    });
   }
 
   async function marcarLancamentoPago(lancamentoId, paymentDate) {

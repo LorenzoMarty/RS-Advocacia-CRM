@@ -234,7 +234,8 @@
 }
 
 .rs-select-option:hover,
-.rs-select-option:focus-visible{
+.rs-select-option:focus-visible,
+.rs-select-option.is-highlighted{
     outline:0;
     background:var(--select-option-hover);
     border-color:rgba(255,255,255,.06);

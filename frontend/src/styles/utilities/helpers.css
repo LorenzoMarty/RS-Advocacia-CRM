@@ -10,6 +10,32 @@
     box-shadow:var(--sidebar-toggle-shadow), 0 0 0 4px rgba(212,175,55,.1);
 }
 
+.skip-link{
+    position:absolute;
+    left:-999px;
+    top:auto;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    z-index:9999;
+    padding:0;
+}
+
+.skip-link:focus{
+    left:0;
+    top:0;
+    width:auto;
+    height:auto;
+    overflow:visible;
+    padding:0.5rem 1rem;
+    background:var(--surface, #fff);
+    color:var(--text, #111);
+    border:2px solid var(--accent, #d4af37);
+    border-radius:0 0 0.25rem 0;
+    text-decoration:none;
+    font-weight:600;
+}
+
 .sr-only{
     position:absolute;
     width:1px;

@@ -9,6 +9,7 @@
 @import url("./components/popups.css");
 @import url("./components/appearance.css");
 @import url("./components/loading.css");
+@import url("./components/notifications.css");
 @import url("./utilities/helpers.css");
 @import url("./utilities/responsive.css");
 @import url("./pages/meetings.css");

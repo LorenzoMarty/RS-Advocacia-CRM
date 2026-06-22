@@ -18,4 +18,5 @@ urlpatterns = [
     path("", include("usuarios.urls")),
     path("", include("meetings.urls")),
     path("", include("documentos.urls")),
+    path("", include("notificacoes.urls")),
 ]

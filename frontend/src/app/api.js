@@ -55,7 +55,7 @@ async function ensureCsrfToken(baseUrl = apiBaseUrl) {
   return getCookie('csrftoken') || payload.dados?.csrf_token || payload.csrf_token || '';
 }
 
-function errorMessageFromPayload(payload, status) {
+export function errorMessageFromPayload(payload, status) {
   const error = payload.erros || `Falha na API (${status}).`;
 
   if (typeof error === 'string') {
@@ -93,12 +93,29 @@ export async function apiRequest(path, options = {}, { baseUrl = apiBaseUrl, req
     ...options.headers,
   };
 
-  const response = await fetch(buildUrl(path, baseUrl), {
-    ...options,
-    method,
-    headers,
-    credentials: 'include',
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30_000);
+
+  let response;
+  try {
+    response = await fetch(buildUrl(path, baseUrl), {
+      ...options,
+      method,
+      headers,
+      credentials: 'include',
+      signal: controller.signal,
+    });
+  } catch (networkError) {
+    clearTimeout(timeoutId);
+    if (networkError.name === 'AbortError') {
+      throw new Error('A requisição demorou demais. Tente novamente.');
+    }
+    if (networkError instanceof TypeError) {
+      throw new Error('Sem conexão com o servidor. Verifique sua internet e tente novamente.');
+    }
+    throw networkError;
+  }
+  clearTimeout(timeoutId);
 
   if (response.status === 204) {
     return null;
@@ -257,4 +274,7 @@ export const api = {
   },
   getAuditPanel: (periodo = 7) => apiRequest(`/api/auditoria/painel/?periodo=${periodo}`),
   getAuditOverview: (periodo = 7) => apiRequest(`/api/auditoria/visao-geral/?periodo=${periodo}`),
+  listNotificacoes: () => apiRequest('/api/notificacoes/'),
+  marcarNotificacaoLida: (id) => apiRequest(`/api/notificacoes/${id}/ler/`, { method: 'POST' }),
+  marcarTodasLidas: () => apiRequest('/api/notificacoes/ler-todas/', { method: 'POST' }),
 };

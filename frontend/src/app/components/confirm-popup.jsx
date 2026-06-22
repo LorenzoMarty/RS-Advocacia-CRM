@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useFocusTrap } from '../hooks/use-focus-trap';
 
 export function ConfirmPopup({
   cancelLabel = 'Cancelar',
@@ -11,6 +12,8 @@ export function ConfirmPopup({
   tone = 'danger',
 }) {
   const cancelButtonRef = useRef(null);
+  const panelRef = useRef(null);
+  useFocusTrap(panelRef);
 
   useEffect(() => {
     cancelButtonRef.current?.focus();
@@ -40,6 +43,7 @@ export function ConfirmPopup({
       onMouseDown={handleLayerClick}
     >
       <section
+        ref={panelRef}
         aria-labelledby="confirm-popup-title"
         aria-modal="true"
         className={`popup-panel popup-panel-${tone}`}

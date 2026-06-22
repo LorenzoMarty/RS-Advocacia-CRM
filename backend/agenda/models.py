@@ -25,6 +25,7 @@ class Evento(models.Model):
     local = models.CharField(max_length=200)
     observacoes = models.TextField(blank=True)
     lembrete_em = models.DateTimeField(blank=True, null=True)
+    lembrete_enviado = models.BooleanField(default=False)
     concluido = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 

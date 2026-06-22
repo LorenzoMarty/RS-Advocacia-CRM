@@ -95,6 +95,7 @@ export const Select = forwardRef(function Select(
   const [open, setOpen] = useState(false);
   const [side, setSide] = useState('bottom');
   const [currentValue, setCurrentValue] = useState('');
+  const [highlighted, setHighlighted] = useState(null);
 
   const { flat, groups } = readOptions(children);
   const selected = flat.find((entry) => entry.value === currentValue) || null;
@@ -169,11 +170,13 @@ export const Select = forwardRef(function Select(
     if (disabled) {
       return;
     }
+    setHighlighted(currentValue || enabledValues[0] || null);
     setOpen(true);
   }
 
   function closeDropdown() {
     setOpen(false);
+    setHighlighted(null);
   }
 
   function toggleDropdown() {
@@ -223,15 +226,16 @@ export const Select = forwardRef(function Select(
 
   const enabledValues = flat.filter((entry) => !entry.disabled && !entry.hidden).map((entry) => entry.value);
 
-  function moveSelection(direction) {
+  function moveHighlight(direction) {
     if (!enabledValues.length) {
       return;
     }
-    const index = enabledValues.indexOf(currentValue);
+    const base = highlighted || currentValue;
+    const index = enabledValues.indexOf(base);
     const nextIndex = index === -1
       ? (direction > 0 ? 0 : enabledValues.length - 1)
       : Math.min(Math.max(index + direction, 0), enabledValues.length - 1);
-    commitValue(enabledValues[nextIndex]);
+    setHighlighted(enabledValues[nextIndex]);
   }
 
   function handleTriggerKeyDown(event) {
@@ -241,20 +245,24 @@ export const Select = forwardRef(function Select(
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       if (open) {
-        moveSelection(1);
+        moveHighlight(1);
       } else {
         openDropdown();
       }
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
       if (open) {
-        moveSelection(-1);
+        moveHighlight(-1);
       } else {
         openDropdown();
       }
     } else if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      toggleDropdown();
+      if (open && highlighted !== null) {
+        commitValue(highlighted);
+      } else {
+        toggleDropdown();
+      }
     } else if (event.key === 'Escape' && open) {
       event.preventDefault();
       closeDropdown();
@@ -262,11 +270,16 @@ export const Select = forwardRef(function Select(
   }
 
   const ariaLabel = rest['aria-label'];
+  const ariaLabelledBy = rest['aria-labelledby'];
+  const listboxId = `${shellId}-listbox`;
+  const activeDescendant = open && highlighted ? `${shellId}-opt-${CSS.escape(highlighted)}` : undefined;
+
+  const { id: _id, 'aria-label': _al, 'aria-labelledby': _all, ...nativeRest } = rest;
 
   return (
     <div className={`rs-select${open ? ' is-open' : ''}${isEmpty ? ' is-empty' : ''}${disabled ? ' is-disabled' : ''}`}>
       <select
-        {...rest}
+        {...nativeRest}
         ref={setNativeRef}
         onChange={(event) => {
           syncFromNative();
@@ -291,12 +304,14 @@ export const Select = forwardRef(function Select(
 
       <button
         type="button"
+        id={shellId}
         ref={triggerRef}
         className="rs-select-trigger"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-controls={`${shellId}-dropdown`}
+        aria-controls={listboxId}
         aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
         disabled={disabled}
         onClick={toggleDropdown}
         onKeyDown={handleTriggerKeyDown}
@@ -314,7 +329,14 @@ export const Select = forwardRef(function Select(
           hidden={!open}
           role="presentation"
         >
-          <div className="rs-select-list" role="listbox" aria-label={ariaLabel}>
+          <div
+            id={listboxId}
+            className="rs-select-list"
+            role="listbox"
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
+            aria-activedescendant={activeDescendant}
+          >
             {flat.length === 0 ? (
               <div className="rs-select-empty-state">Sem opções disponíveis.</div>
             ) : (
@@ -326,9 +348,12 @@ export const Select = forwardRef(function Select(
                       {node.options.map((option) => (
                         <Option
                           key={option.value}
+                          shellId={shellId}
                           option={option}
                           selected={option.value === currentValue}
+                          highlighted={option.value === highlighted}
                           onPick={commitValue}
+                          onHover={setHighlighted}
                         />
                       ))}
                     </div>
@@ -337,9 +362,12 @@ export const Select = forwardRef(function Select(
                 return (
                   <Option
                     key={node.option.value}
+                    shellId={shellId}
                     option={node.option}
                     selected={node.option.value === currentValue}
+                    highlighted={node.option.value === highlighted}
                     onPick={commitValue}
+                    onHover={setHighlighted}
                   />
                 );
               })
@@ -352,20 +380,26 @@ export const Select = forwardRef(function Select(
   );
 });
 
-function Option({ option, selected, onPick }) {
+function Option({ shellId, option, selected, highlighted, onPick, onHover }) {
   if (option.hidden) {
     return null;
   }
   return (
     <button
       type="button"
+      id={`${shellId}-opt-${CSS.escape(option.value)}`}
       role="option"
       aria-selected={selected}
       tabIndex={-1}
-      className={`rs-select-option${selected ? ' is-selected' : ''}${option.disabled ? ' is-disabled' : ''}`}
+      className={`rs-select-option${selected ? ' is-selected' : ''}${highlighted ? ' is-highlighted' : ''}${option.disabled ? ' is-disabled' : ''}`}
       onClick={() => {
         if (!option.disabled) {
           onPick(option.value);
+        }
+      }}
+      onMouseEnter={() => {
+        if (!option.disabled) {
+          onHover(option.value);
         }
       }}
     >
