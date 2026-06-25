@@ -70,6 +70,8 @@ export const EVENT_STATUS_OPTIONS = [
   'Adiado',
   'Cancelado',
   'Atrasado',
+  'Compareceu',
+  'Não compareceu',
 ];
 export const CLIENT_TYPE_OPTIONS = [
   { value: 'esporadico', label: 'Esporádico' },

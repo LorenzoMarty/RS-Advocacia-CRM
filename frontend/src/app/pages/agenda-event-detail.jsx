@@ -19,6 +19,7 @@ import {
   getStatusTone,
   isOverdueEvent,
   formatDateTime,
+  normalizeText,
 } from "../utils";
 import { NotFoundState } from "./common";
 
@@ -67,8 +68,9 @@ export function EventDetailPage() {
   const process =
     processes.find((item) => item.id === eventItem.processId) || null;
 
-  async function handleConfirmEvent() {
-    const updated = await saveEvent({ ...eventItem, status: 'Confirmado' });
+  async function handleMarkAttendance(attended) {
+    const status = attended ? 'Compareceu' : 'Não compareceu';
+    const updated = await saveEvent({ ...eventItem, status, completed: true });
     if (updated) {
       setRemoteEvent(updated);
     }
@@ -99,14 +101,23 @@ export function EventDetailPage() {
         label="Compromisso"
         actions={
           <>
-            {eventItem.status === 'Pendente' && (
-              <button
-                className="btn"
-                type="button"
-                onClick={handleConfirmEvent}
-              >
-                Confirmar
-              </button>
+            {!eventItem.completed && !normalizeText(eventItem.status).includes('compareceu') && (
+              <>
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() => handleMarkAttendance(true)}
+                >
+                  Compareceu
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  onClick={() => handleMarkAttendance(false)}
+                >
+                  Não compareceu
+                </button>
+              </>
             )}
             <Link
               className="btn btn-secondary"

@@ -108,7 +108,9 @@ export function getStatusTone(value, completed = false) {
 
   if (completed || normalized.includes('conclu')) return 'success';
   if (normalized.includes('confirma')) return 'success';
-  if (normalized.includes('cancel') || normalized.includes('atras') || normalized.includes('urg')) return 'danger';
+  // "nao compareceu" must be checked before "compareceu" (substring match order)
+  if (normalized.includes('nao compareceu') || normalized.includes('cancel') || normalized.includes('atras') || normalized.includes('urg')) return 'danger';
+  if (normalized.includes('compareceu')) return 'success';
   if (normalized.includes('aguard') || normalized.includes('penden') || normalized.includes('media')) return 'warn';
   return 'gold';
 }
@@ -121,7 +123,12 @@ export function getEventTypeKey(value) {
 }
 
 export function isOverdueEvent(event) {
-  return new Date(event.end) < new Date() && !event.completed && normalizeText(event.status).includes('penden');
+  const normalized = normalizeText(event.status);
+  const isClosed = normalized.includes('conclu')
+    || normalized.includes('cancel')
+    || normalized.includes('adiad')
+    || normalized.includes('compareceu');
+  return new Date(event.end) < new Date() && !event.completed && !isClosed;
 }
 
 export function buildSearchText(parts) {

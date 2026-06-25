@@ -19,9 +19,7 @@ import { useAppState } from '../store';
 import {
   buildSearchText,
   formatCount,
-  formatDate,
   getStatusTone,
-  isSameDay,
   normalizeText,
 } from '../utils';
 import { Select } from '../components/select';
@@ -194,8 +192,6 @@ function DeadlineCard({
 
 export function DeadlinesPage() {
   const { addFlash, clients, deadlines, processes, saveDeadline, timeEntries } = useAppState();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedDate, setSelectedDate] = useState(() => dateInputValue(searchParams.get('data') || new Date()));
   const [search, setSearch] = useState('');
   const [responsible, setResponsible] = useState('');
   const [processId, setProcessId] = useState('');
@@ -205,7 +201,6 @@ export function DeadlinesPage() {
 
   const allDeadlines = [...deadlines]
     .sort((left, right) => new Date(deadlineMoment(left)) - new Date(deadlineMoment(right)));
-  const selectedDateObject = dateFromInput(selectedDate);
   const processOptions = processes
     .filter((process) => allDeadlines.some((deadline) => deadline.processId === process.id))
     .sort((left, right) => left.number.localeCompare(right.number, 'pt-BR'));
@@ -224,10 +219,6 @@ export function DeadlinesPage() {
       process?.area,
       client?.name,
     ]);
-
-    if (selectedDateObject && !isSameDay(deadlineMoment(deadline), selectedDateObject)) {
-      return false;
-    }
 
     if (search && !haystack.includes(normalizeText(search))) {
       return false;
@@ -298,19 +289,6 @@ export function DeadlinesPage() {
     }
   }
 
-  function updateSelectedDate(nextDate) {
-    const nextValue = typeof nextDate === 'function' ? nextDate(selectedDate) : nextDate;
-    setSelectedDate(nextValue);
-
-    const nextSearchParams = new URLSearchParams(searchParams);
-    if (nextValue) {
-      nextSearchParams.set('data', nextValue);
-    } else {
-      nextSearchParams.delete('data');
-    }
-    setSearchParams(nextSearchParams, { replace: true });
-  }
-
   function handleDragStart(event, deadlineId) {
     setDraggingDeadlineId(deadlineId);
     setDragOverColumnKey('');
@@ -378,24 +356,13 @@ export function DeadlinesPage() {
               <span className="badge gold">
                 {formatCount(filteredDeadlines.length, 'prazo', 'prazos')}
               </span>
-              <Link className="btn" to={deadlineCreatePath(selectedDate)}>
+              <Link className="btn" to={deadlineCreatePath()}>
                 Novo prazo
               </Link>
             </div>
           </div>
 
           <div className="deadlines-toolbar">
-            <div className="deadline-day-control">
-              <label className="deadline-date-field">
-                <span>Dia</span>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(event) => updateSelectedDate(event.target.value)}
-                />
-              </label>
-            </div>
-
             <div className="deadline-filter-grid">
               <label className="toolbar-search" aria-label="Buscar prazos">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -512,7 +479,7 @@ export function DeadlinesPage() {
             <EmptyState
               title="Nenhum prazo cadastrado."
               copy="Crie uma tarefa de prazo para organiza-la no Kanban."
-              actions={<Link className="btn" to={deadlineCreatePath(selectedDate)}>Novo prazo</Link>}
+              actions={<Link className="btn" to={deadlineCreatePath()}>Novo prazo</Link>}
             />
           </section>
         )}
@@ -723,9 +690,7 @@ export function DeadlineDetailPage() {
           <div className="deadline-detail-head">
             <div>
               <h1 className="intro-title">{deadlineTitle}</h1>
-              <p className="section-note">
-                Tarefa do dia {formatDate(deadlineMoment(deadline))}
-              </p>
+              <p className="section-note">Prazo fatal do processo</p>
             </div>
             <StatusBadge tone={getStatusTone(statusLabel, deadline.completed)}>
               {statusLabel}
@@ -997,9 +962,7 @@ export function DeadlineFormPage() {
 
             <div>
               <h1 className="intro-title">{isEditing ? 'Editar prazo' : 'Novo prazo'}</h1>
-              <p className="intro-note">
-                Tarefa do dia {formatDate(dateFromInput(form.date))}.
-              </p>
+              <p className="intro-note">Preencha os campos do prazo.</p>
             </div>
           </div>
         </section>
