@@ -14,6 +14,8 @@ STATUS_CHOICES = (
     "Adiado",
     "Cancelado",
     "Atrasado",
+    "Compareceu",
+    "Não compareceu",
 )
 
 
