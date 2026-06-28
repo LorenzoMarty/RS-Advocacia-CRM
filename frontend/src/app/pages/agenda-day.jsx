@@ -14,6 +14,7 @@ import {
   getEventTypeKey,
   isOverdueEvent,
   isSameDay,
+  normalizeText,
 } from "../utils";
 import { NotFoundState } from "./common";
 import {
@@ -27,7 +28,7 @@ const DAY_HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 07–22
 export function AgendaDayPage() {
   const params = useParams();
   const navigate = useNavigate();
-  const { clients, deleteEvent, events, moveEvent, processes } = useAppState();
+  const { clients, deleteEvent, events, moveEvent, processes, saveEvent } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [draggingEventId, setDraggingEventId] = useState("");
   const [dragOverHour, setDragOverHour] = useState(null);
@@ -108,6 +109,11 @@ export function AgendaDayPage() {
     }
 
     await moveEvent(eventId, { start: toLocalIso(newStart), end: newEnd });
+  }
+
+  async function handleQuickAttendance(e, event, attended) {
+    e.stopPropagation();
+    await saveEvent({ ...event, status: attended ? 'Compareceu' : 'Não compareceu', completed: true });
   }
 
   function goDay(offset) {
@@ -239,6 +245,26 @@ export function AgendaDayPage() {
                               <span className="meta-chip">{event.responsibleName}</span>
                             ) : null}
                           </div>
+                          {!event.completed && !normalizeText(event.status || '').includes('compareceu') && (
+                            <div className="timeline-event-attend">
+                              <button
+                                type="button"
+                                className="timeline-event-attend-yes"
+                                aria-label="Marcar como compareceu"
+                                onClick={(e) => handleQuickAttendance(e, event, true)}
+                              >
+                                Compareceu
+                              </button>
+                              <button
+                                type="button"
+                                className="timeline-event-attend-no"
+                                aria-label="Marcar como não compareceu"
+                                onClick={(e) => handleQuickAttendance(e, event, false)}
+                              >
+                                Não compareceu
+                              </button>
+                            </div>
+                          )}
                           <button
                             className="timeline-event-delete"
                             type="button"
