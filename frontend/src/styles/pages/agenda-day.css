@@ -113,6 +113,33 @@
 .timeline-event:hover .timeline-event-delete{opacity:1}
 .timeline-event-delete:hover{background:rgba(239,122,122,.36)}
 
+.timeline-event-attend{
+    display:none;
+    gap:6px;
+    margin-top:8px;
+}
+.timeline-event:hover .timeline-event-attend{display:flex}
+.timeline-event-attend-yes,
+.timeline-event-attend-no{
+    padding:4px 10px;
+    border-radius:8px;
+    border:none;
+    font-size:.75rem;
+    font-weight:500;
+    cursor:pointer;
+    transition:background .15s ease,color .15s ease;
+}
+.timeline-event-attend-yes{
+    background:rgba(74,222,128,.15);
+    color:var(--success,#4ade80);
+}
+.timeline-event-attend-yes:hover{background:rgba(74,222,128,.3)}
+.timeline-event-attend-no{
+    background:rgba(239,122,122,.15);
+    color:var(--danger);
+}
+.timeline-event-attend-no:hover{background:rgba(239,122,122,.3)}
+
 .timeline-event-time{
     display:inline-flex;
     align-items:center;
