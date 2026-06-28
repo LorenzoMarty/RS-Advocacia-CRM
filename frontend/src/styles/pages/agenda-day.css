@@ -114,11 +114,17 @@
 .timeline-event-delete:hover{background:rgba(239,122,122,.36)}
 
 .timeline-event-attend{
-    display:none;
+    display:flex;
     gap:6px;
     margin-top:8px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .15s ease;
 }
-.timeline-event:hover .timeline-event-attend{display:flex}
+.timeline-event:hover .timeline-event-attend{
+    opacity:1;
+    pointer-events:auto;
+}
 .timeline-event-attend-yes,
 .timeline-event-attend-no{
     padding:4px 10px;
