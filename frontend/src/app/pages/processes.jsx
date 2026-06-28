@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { motion as Motion, staggerContainer, staggerItem } from '../motion';
@@ -26,15 +26,19 @@ export function ProcessesListPage() {
   const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
 
-  const filteredProcesses = processes.filter((process) =>
-    buildSearchText([
-      process.number,
-      clients.find((client) => client.id === process.clientId)?.name,
-      process.area,
-      process.court,
-      process.owner,
-      process.status,
-    ]).includes(normalizeText(search)),
+  const filteredProcesses = useMemo(
+    () =>
+      processes.filter((process) =>
+        buildSearchText([
+          process.number,
+          clients.find((client) => client.id === process.clientId)?.name,
+          process.area,
+          process.court,
+          process.owner,
+          process.status,
+        ]).includes(normalizeText(search)),
+      ),
+    [clients, processes, search],
   );
 
   async function handleDeleteProcess(process) {

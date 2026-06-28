@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { DEADLINE_STATUS_COLUMNS } from '../data';
@@ -199,50 +199,71 @@ export function DeadlinesPage() {
   const [dragOverColumnKey, setDragOverColumnKey] = useState('');
   const [movingDeadlineId, setMovingDeadlineId] = useState('');
 
-  const allDeadlines = [...deadlines]
-    .sort((left, right) => new Date(deadlineMoment(left)) - new Date(deadlineMoment(right)));
-  const processOptions = processes
-    .filter((process) => allDeadlines.some((deadline) => deadline.processId === process.id))
-    .sort((left, right) => left.number.localeCompare(right.number, 'pt-BR'));
-  const responsibleOptions = [
-    ...new Set(allDeadlines.map((deadline) => deadline.responsible).filter(Boolean)),
-  ].sort((left, right) => left.localeCompare(right, 'pt-BR'));
+  const allDeadlines = useMemo(
+    () =>
+      [...deadlines].sort(
+        (left, right) => new Date(deadlineMoment(left)) - new Date(deadlineMoment(right)),
+      ),
+    [deadlines],
+  );
 
-  const filteredDeadlines = allDeadlines.filter((deadline) => {
-    const process = processes.find((item) => item.id === deadline.processId) || null;
-    const client = clients.find((item) => item.id === deadline.clientId) || null;
-    const haystack = buildSearchText([
-      deadline.title,
-      deadline.status,
-      deadline.responsible,
-      process?.number,
-      process?.area,
-      client?.name,
-    ]);
+  const processOptions = useMemo(
+    () =>
+      processes
+        .filter((process) => allDeadlines.some((deadline) => deadline.processId === process.id))
+        .sort((left, right) => left.number.localeCompare(right.number, 'pt-BR')),
+    [allDeadlines, processes],
+  );
 
-    if (search && !haystack.includes(normalizeText(search))) {
-      return false;
-    }
+  const responsibleOptions = useMemo(
+    () =>
+      [...new Set(allDeadlines.map((deadline) => deadline.responsible).filter(Boolean))].sort(
+        (left, right) => left.localeCompare(right, 'pt-BR'),
+      ),
+    [allDeadlines],
+  );
 
-    if (responsible && normalizeText(deadline.responsible) !== normalizeText(responsible)) {
-      return false;
-    }
+  const filteredDeadlines = useMemo(
+    () =>
+      allDeadlines.filter((deadline) => {
+        const process = processes.find((item) => item.id === deadline.processId) || null;
+        const client = clients.find((item) => item.id === deadline.clientId) || null;
+        const haystack = buildSearchText([
+          deadline.title,
+          deadline.status,
+          deadline.responsible,
+          process?.number,
+          process?.area,
+          client?.name,
+        ]);
 
-    if (processId && deadline.processId !== processId) {
-      return false;
-    }
+        if (search && !haystack.includes(normalizeText(search))) {
+          return false;
+        }
 
-    return true;
-  });
+        if (responsible && normalizeText(deadline.responsible) !== normalizeText(responsible)) {
+          return false;
+        }
 
-  const deadlinesByColumn = DEADLINE_STATUS_COLUMNS.reduce((columns, column) => {
-    columns[column.key] = [];
+        if (processId && deadline.processId !== processId) {
+          return false;
+        }
+
+        return true;
+      }),
+    [allDeadlines, clients, processId, processes, responsible, search],
+  );
+
+  const deadlinesByColumn = useMemo(() => {
+    const columns = DEADLINE_STATUS_COLUMNS.reduce((cols, column) => {
+      cols[column.key] = [];
+      return cols;
+    }, {});
+    filteredDeadlines.forEach((deadline) => {
+      columns[deadlineColumnKey(deadline)].push(deadline);
+    });
     return columns;
-  }, {});
-
-  filteredDeadlines.forEach((deadline) => {
-    deadlinesByColumn[deadlineColumnKey(deadline)].push(deadline);
-  });
+  }, [filteredDeadlines]);
 
   async function promoteDeadlineToActive(deadline) {
     if (deadlineColumnKey(deadline) !== 'a_fazer') {
