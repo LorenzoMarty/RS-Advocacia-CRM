@@ -63,7 +63,7 @@ class EventoForm(forms.ModelForm):
         empty_label="Selecione o responsável",
         required=False,  # model is null=True blank=True (SET_NULL on delete)
     )
-    status = forms.ChoiceField(choices=(), label="Status")
+    status = forms.CharField(max_length=50, label="Status")
 
     class Meta:
         model = Evento
@@ -114,13 +114,6 @@ class EventoForm(forms.ModelForm):
             if isinstance(field, forms.DateTimeField):
                 field.input_formats = datetime_formats
 
-        instance = getattr(self, "instance", None)
-        current_status = getattr(instance, "status", "")
-        existing_events = Evento.objects.exclude(tipo_evento__icontains="prazo")
-        existing_statuses = existing_events.exclude(
-            status__in=("A fazer", "Protocolar", "Protocolado")
-        ).values_list("status", flat=True)
-
         cliente_field = self.fields.get("cliente")
         processo_field = self.fields.get("processo")
 
@@ -135,9 +128,3 @@ class EventoForm(forms.ModelForm):
             ).order_by("numero_processo")
 
         self.fields["responsavel"].queryset = Usuario.objects.order_by("nome")
-        self.fields["status"].choices = _build_choices(
-            "Selecione o status",
-            [current_status],
-            STATUS_CHOICES,
-            existing_statuses,
-        )
