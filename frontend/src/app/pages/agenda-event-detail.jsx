@@ -97,49 +97,31 @@ export function EventDetailPage() {
   return (
     <>
       {confirmPopup}
-      <PageChrome
-        label="Compromisso"
-        actions={
-          <>
-            {!eventItem.completed && !normalizeText(eventItem.status).includes('compareceu') && (
-              <>
-                <button
-                  className="btn"
-                  type="button"
-                  onClick={() => handleMarkAttendance(true)}
-                >
-                  Compareceu
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  type="button"
-                  onClick={() => handleMarkAttendance(false)}
-                >
-                  Não compareceu
-                </button>
-              </>
-            )}
-            <Link
-              className="btn btn-secondary"
-              to={`/agenda/${eventItem.id}/editar`}
-            >
-              Editar
-            </Link>
-            <button
-              className="btn btn-danger"
-              type="button"
-              onClick={handleDeleteEvent}
-            >
-              Excluir
-            </button>
-          </>
-        }
-      />
+      <PageChrome label="Compromisso" />
 
       <div className="event-page">
         <section className="surface event-hero">
           <div className="crumbs">
             <Link to="/agenda">Agenda</Link>
+          </div>
+
+          <div className="event-hero-actions">
+            {!eventItem.completed && !normalizeText(eventItem.status || '').includes('compareceu') && (
+              <>
+                <button className="btn" type="button" onClick={() => handleMarkAttendance(true)}>
+                  Compareceu
+                </button>
+                <button className="btn btn-secondary" type="button" onClick={() => handleMarkAttendance(false)}>
+                  Não compareceu
+                </button>
+              </>
+            )}
+            <Link className="btn btn-secondary" to={`/agenda/${eventItem.id}/editar`}>
+              Editar
+            </Link>
+            <button className="btn btn-danger" type="button" onClick={handleDeleteEvent}>
+              Excluir
+            </button>
           </div>
 
           <div className="event-hero-grid">

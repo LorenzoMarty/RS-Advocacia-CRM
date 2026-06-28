@@ -8,6 +8,13 @@
         padding:var(--pad-card);
     }
 
+    .event-hero-actions{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        margin-bottom:20px;
+    }
+
     .event-hero-grid{
         display:grid;
         grid-template-columns:minmax(0, 1fr);
