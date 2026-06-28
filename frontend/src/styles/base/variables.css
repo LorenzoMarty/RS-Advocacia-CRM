@@ -38,7 +38,7 @@
     --bottom-nav-height:88px;
     --bottom-nav-offset:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 18px);
     --serif:"Instrument Serif",serif;
-    --sans:"Inter",sans-serif;
+    --sans:"Inter Variable","Inter",sans-serif;
     --body-bg:#020617;
     --sidebar-bg:transparent;
     --topbar-bg:transparent;

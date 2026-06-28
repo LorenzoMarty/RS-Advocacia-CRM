@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Children, cloneElement, useEffect, useRef, useState } from 'react';
 
 import { AnimatePresence, motion as Motion } from '../motion';
 import { Select } from '../components/select';
@@ -99,6 +99,18 @@ export function Field({
   headLink = null,
   note = null,
 }) {
+  const errorId = error && id ? `${id}-error` : undefined;
+  let content = children;
+  if (errorId) {
+    try {
+      content = cloneElement(Children.only(children), {
+        'aria-invalid': 'true',
+        'aria-describedby': errorId,
+      });
+    } catch {
+      content = children;
+    }
+  }
   return (
     <div className={`field${error ? ' has-error' : ''}${className ? ` ${className}` : ''}`}>
       {headLink ? (
@@ -109,12 +121,13 @@ export function Field({
       ) : (
         <label htmlFor={id}>{label}</label>
       )}
-      {children}
+      {content}
       {note ? <p className="field-help">{note}</p> : null}
       <AnimatePresence initial={false}>
         {error ? (
           <Motion.div
             key="field-error"
+            id={errorId}
             className="field-error"
             role="alert"
             style={{ overflow: 'hidden' }}

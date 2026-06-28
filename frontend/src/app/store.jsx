@@ -643,25 +643,13 @@ export function AppStateProvider({ children }) {
       return false;
     }
 
-    // Remove client immediately; backend cascades to processes/events/deadlines/petitions.
+    // Remove client and all cascade-deleted entities from local state immediately.
     setClients((current) => current.filter((c) => c.id !== clientId));
+    setProcesses((current) => current.filter((p) => p.clientId !== clientId));
+    setEvents((current) => current.filter((e) => e.clientId !== clientId));
+    setDeadlines((current) => current.filter((d) => d.clientId !== clientId));
+    setPetitions((current) => current.filter((p) => p.clientId !== clientId));
     addFlash('Cliente deletado.', 'success');
-
-    // Refetch affected collections so local state reflects backend cascades.
-    try {
-      const [procRes, evtRes, dlRes, petRes] = await Promise.all([
-        api.listProcesses(),
-        api.listEvents(),
-        api.listDeadlines(),
-        api.listPetitions(),
-      ]);
-      setProcesses(processesFromResponse(procRes));
-      setEvents(eventsFromResponse(evtRes));
-      setDeadlines(deadlinesFromResponse(dlRes));
-      setPetitions(petitionsFromResponse(petRes));
-    } catch {
-      // Best effort — user can reload if inconsistent
-    }
 
     return true;
   }
@@ -674,23 +662,14 @@ export function AppStateProvider({ children }) {
       return false;
     }
 
-    // Remove process immediately; backend cascades to events/deadlines and detaches petitions.
+    // Remove process and cascade-deleted entities; detach petitions that referenced this process.
     setProcesses((current) => current.filter((p) => p.id !== processId));
+    setEvents((current) => current.filter((e) => e.processId !== processId));
+    setDeadlines((current) => current.filter((d) => d.processId !== processId));
+    setPetitions((current) =>
+      current.map((p) => (p.processId === processId ? { ...p, processId: '' } : p)),
+    );
     addFlash('Processo deletado.', 'success');
-
-    // Refetch affected collections so local state reflects backend cascades.
-    try {
-      const [evtRes, dlRes, petRes] = await Promise.all([
-        api.listEvents(),
-        api.listDeadlines(),
-        api.listPetitions(),
-      ]);
-      setEvents(eventsFromResponse(evtRes));
-      setDeadlines(deadlinesFromResponse(dlRes));
-      setPetitions(petitionsFromResponse(petRes));
-    } catch {
-      // Best effort — user can reload if inconsistent
-    }
 
     return true;
   }

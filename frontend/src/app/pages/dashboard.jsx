@@ -11,7 +11,7 @@ import {
   prefersReducedMotion,
 } from "../motion";
 import { useAppState } from "../store";
-import { formatDate, formatTime, getStatusTone, isSameDay } from "../utils";
+import { formatTime, getStatusTone, isSameDay } from "../utils";
 import { EmptyState } from "./common";
 
 const MotionLink = motion(Link);
@@ -58,18 +58,9 @@ function CountUp({ value, duration = 0.9 }) {
 export function DashboardPage() {
   const { clients, deadlines, events, processes } = useAppState();
   const today = new Date();
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const eventsToday = events.filter((event) => isSameDay(event.start, today));
-  const deadlinesToday = deadlines.filter((deadline) => (
-    deadline.date ? isSameDay(new Date(`${deadline.date}T12:00:00`), today) : false
-  ));
-  const upcomingDeadlines = [...deadlines]
-    .filter((deadline) => {
-      const deadlineDate = deadline.date ? new Date(`${deadline.date}T12:00:00`) : null;
-      return deadlineDate && deadlineDate >= todayStart && !deadline.completed;
-    })
-    .sort((left, right) => new Date(`${left.date}T12:00:00`) - new Date(`${right.date}T12:00:00`))
-    .slice(0, 5);
+  const pendingDeadlines = deadlines.filter((deadline) => !deadline.completed);
+  const upcomingDeadlines = pendingDeadlines.slice(0, 5);
   const nextDeadline = upcomingDeadlines[0] || null;
 
   return (
@@ -101,7 +92,7 @@ export function DashboardPage() {
             >
               <motion.article className="metric" variants={staggerItem}>
                 <span>Prazos</span>
-                <strong><CountUp value={deadlinesToday.length} /></strong>
+                <strong><CountUp value={pendingDeadlines.length} /></strong>
               </motion.article>
               <motion.article className="metric" variants={staggerItem}>
                 <span>Compromissos</span>
@@ -123,9 +114,6 @@ export function DashboardPage() {
             {nextDeadline ? (
               <>
                 <h2>{nextDeadline.title}</h2>
-                <p className="focus-time">
-                  {formatDate(new Date(`${nextDeadline.date}T12:00:00`))}
-                </p>
                 <div className="focus-meta">
                   {nextDeadline.clientId ? (
                     <span>
@@ -152,9 +140,9 @@ export function DashboardPage() {
               </>
             ) : (
               <>
-                <h2>Sem prazos futuros.</h2>
+                <h2>Sem prazos pendentes.</h2>
                 <p className="focus-time">
-                  O proximo prazo aparece aqui.
+                  Prazos aparecem aqui.
                 </p>
               </>
             )}
@@ -244,7 +232,7 @@ export function DashboardPage() {
             <div className="section-head">
               <div>
                 <h2 className="section-title">Prazos</h2>
-                <p className="section-note">Próximos</p>
+                <p className="section-note">Pendentes</p>
               </div>
               <motion.span
                 className="badge warn"
@@ -265,10 +253,6 @@ export function DashboardPage() {
                     to={`/prazos/${deadline.id}`}
                     {...cardHover}
                   >
-                    <div className="item-time">
-                      {formatDate(new Date(`${deadline.date}T12:00:00`)).slice(0, 5)}
-                    </div>
-
                     <div>
                       <h3 className="item-title">{deadline.title}</h3>
                       <div className="item-meta">
