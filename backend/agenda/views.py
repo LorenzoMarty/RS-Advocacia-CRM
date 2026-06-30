@@ -102,6 +102,25 @@ def _evento_api_payload(request):
     return converter_campos_datahora(payload, EVENTO_DATETIME_FIELDS)
 
 
+def _evento_form_payload(evento: Evento):
+    return {
+        "titulo": evento.titulo,
+        "tipo_evento": evento.tipo_evento,
+        "prioridade": evento.prioridade,
+        "descricao": evento.descricao,
+        "data_inicio": evento.data_inicio,
+        "data_fim": evento.data_fim,
+        "lembrete_em": evento.lembrete_em,
+        "cliente": evento.cliente_id,
+        "processo": evento.processo_id,
+        "responsavel": evento.responsavel_id,
+        "status": evento.status,
+        "local": evento.local,
+        "observacoes": evento.observacoes,
+        "concluido": evento.concluido,
+    }
+
+
 @app_permissions_required("agenda.view_evento")
 def listar_eventos(request):
     if request.method != "GET":
@@ -182,6 +201,9 @@ def editar_evento(request, evento_id):
         payload = _evento_api_payload(request)
     except ValueError as exc:
         return resposta_erro(str(exc), status=400)
+
+    if request.method == "PATCH":
+        payload = {**_evento_form_payload(evento), **payload}
 
     form = EventoForm(payload, instance=evento)
     if form.is_valid():

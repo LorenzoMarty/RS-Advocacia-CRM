@@ -215,6 +215,7 @@ export const api = {
   getEvent: (id) => eventRequest(`${id}/`),
   createEvent: (payload) => eventRequest('criar/', jsonOptions('POST', payload)),
   updateEvent: (id, payload) => eventRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
+  patchEvent: (id, payload) => eventRequest(`${id}/editar/`, jsonOptions('PATCH', payload)),
   deleteEvent: (id) => eventRequest(`${id}/excluir/`, { method: 'DELETE' }),
   listDeadlines: () => deadlineRequest(),
   getDeadline: (id) => deadlineRequest(`${id}/`),

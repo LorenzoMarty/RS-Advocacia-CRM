@@ -26,7 +26,7 @@ import { NotFoundState } from "./common";
 export function EventDetailPage() {
   const navigate = useNavigate();
   const params = useParams();
-  const { clients, deleteEvent, events, loadEvent, processes, saveEvent } = useAppState();
+  const { clients, deleteEvent, events, loadEvent, markEventAttendance, processes } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [remoteEvent, setRemoteEvent] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(true);
@@ -69,8 +69,7 @@ export function EventDetailPage() {
     processes.find((item) => item.id === eventItem.processId) || null;
 
   async function handleMarkAttendance(attended) {
-    const status = attended ? 'Compareceu' : 'Não compareceu';
-    const updated = await saveEvent({ ...eventItem, status, completed: true });
+    const updated = await markEventAttendance(eventItem.id, attended);
     if (updated) {
       setRemoteEvent(updated);
     }
