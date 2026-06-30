@@ -116,6 +116,36 @@ class AgendaIntegrationViewsTests(TestCase):
         self.assertTrue(evento.concluido)
         sync_local_event.assert_called_once()
 
+    @patch("agenda.views.sync_local_event", return_value=1)
+    def test_put_evento_parcial_aceita_alias_completed(self, sync_local_event):
+        evento = Evento.objects.create(
+            titulo="Audiencia",
+            descricao="Descricao",
+            data_inicio="2026-06-23T09:00:00-03:00",
+            data_fim="2026-06-23T10:00:00-03:00",
+            tipo_evento="Audiencia",
+            status="Agendado",
+            prioridade="Alta",
+            cliente=self.cliente,
+            processo=self.processo,
+            responsavel=self.usuario,
+            criado_por=self.usuario.nome,
+            local="Forum",
+            observacoes="",
+        )
+
+        response = self.client.put(
+            reverse("editar_evento", args=[evento.pk]),
+            data=json.dumps({"status": "Não compareceu", "completed": True}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200, response.json())
+        evento.refresh_from_db()
+        self.assertEqual(evento.status, "Não compareceu")
+        self.assertTrue(evento.concluido)
+        sync_local_event.assert_called_once()
+
     @patch("agenda.views.sync_local_event")
     def test_criar_prazo_como_evento_e_bloqueado(self, sync_local_event):
         payload = self.payload()

@@ -25,6 +25,22 @@ from integrations.google.exceptions import GoogleAuthorizationRequired
 from integrations.google.oauth import current_usuario
 
 EVENTO_DATETIME_FIELDS = ("data_inicio", "data_fim", "lembrete_em")
+EVENTO_FORM_FIELDS = {
+    "titulo",
+    "tipo_evento",
+    "prioridade",
+    "descricao",
+    "data_inicio",
+    "data_fim",
+    "lembrete_em",
+    "cliente",
+    "processo",
+    "responsavel",
+    "status",
+    "local",
+    "observacoes",
+    "concluido",
+}
 logger = logging.getLogger(__name__)
 
 
@@ -99,6 +115,8 @@ def serialize_evento(evento: Evento):
 
 def _evento_api_payload(request):
     payload = ler_corpo_json(request)
+    if "completed" in payload and "concluido" not in payload:
+        payload["concluido"] = payload["completed"]
     return converter_campos_datahora(payload, EVENTO_DATETIME_FIELDS)
 
 
@@ -119,6 +137,10 @@ def _evento_form_payload(evento: Evento):
         "observacoes": evento.observacoes,
         "concluido": evento.concluido,
     }
+
+
+def _is_partial_evento_payload(payload):
+    return not EVENTO_FORM_FIELDS.issubset(payload.keys())
 
 
 @app_permissions_required("agenda.view_evento")
@@ -202,7 +224,7 @@ def editar_evento(request, evento_id):
     except ValueError as exc:
         return resposta_erro(str(exc), status=400)
 
-    if request.method == "PATCH":
+    if request.method == "PATCH" or _is_partial_evento_payload(payload):
         payload = {**_evento_form_payload(evento), **payload}
 
     form = EventoForm(payload, instance=evento)
