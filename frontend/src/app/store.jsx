@@ -394,9 +394,11 @@ export function AppStateProvider({ children }) {
   }
 
   async function markEventAttendance(eventId, attended) {
+    const attendanceStatus = attended ? 'Compareceu' : 'Não compareceu';
+
     try {
       const response = await api.updateEventAttendance(eventId, {
-        status: attended ? 'Compareceu' : 'Não compareceu',
+        status: attendanceStatus,
       });
       const savedEvent = eventFromResponse(response);
       if (!savedEvent) {
@@ -406,6 +408,13 @@ export function AppStateProvider({ children }) {
       addFlash('Compromisso atualizado.', 'success');
       return savedEvent;
     } catch (error) {
+      if (error?.status === 404) {
+        const currentEvent = events.find((event) => event.id === eventId);
+        if (currentEvent) {
+          const legacyStatus = attended ? 'Concluído' : 'Cancelado';
+          return saveEvent({ ...currentEvent, status: legacyStatus, completed: true });
+        }
+      }
       addFlash(errorMessage(error), 'error');
       return null;
     }
