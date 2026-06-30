@@ -393,6 +393,25 @@ export function AppStateProvider({ children }) {
     });
   }
 
+  async function markEventAttendance(eventId, attended) {
+    try {
+      const response = await api.patchEvent(eventId, {
+        status: attended ? 'Compareceu' : 'Não compareceu',
+        concluido: true,
+      });
+      const savedEvent = eventFromResponse(response);
+      if (!savedEvent) {
+        throw new Error('Resposta inválida da API de eventos.');
+      }
+      setEvents((currentEvents) => replaceById(currentEvents, savedEvent));
+      addFlash('Compromisso atualizado.', 'success');
+      return savedEvent;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
+  }
+
   // Move de drag-and-drop no calendário: atualiza start/end mantendo o resto.
   // Otimista (move na hora) com rollback se a API falhar. A re-sincronização
   // com o Google Calendar é feita pelo backend no editar_evento.
@@ -1058,6 +1077,7 @@ export function AppStateProvider({ children }) {
     saveClient,
     saveProcess,
     saveEvent,
+    markEventAttendance,
     moveEvent,
     saveDeadline,
     createDeadlineDocument,

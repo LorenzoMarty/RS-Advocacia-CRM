@@ -28,7 +28,7 @@ const DAY_HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 07–22
 export function AgendaDayPage() {
   const params = useParams();
   const navigate = useNavigate();
-  const { clients, deleteEvent, events, moveEvent, processes, saveEvent } = useAppState();
+  const { clients, deleteEvent, events, markEventAttendance, moveEvent, processes } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [draggingEventId, setDraggingEventId] = useState("");
   const [dragOverHour, setDragOverHour] = useState(null);
@@ -112,8 +112,9 @@ export function AgendaDayPage() {
   }
 
   async function handleQuickAttendance(e, event, attended) {
+    e.preventDefault();
     e.stopPropagation();
-    await saveEvent({ ...event, status: attended ? 'Compareceu' : 'Não compareceu', completed: true });
+    await markEventAttendance(event.id, attended);
   }
 
   function goDay(offset) {
