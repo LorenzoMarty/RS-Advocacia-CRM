@@ -393,13 +393,18 @@ export function AppStateProvider({ children }) {
     });
   }
 
-  async function markEventAttendance(eventId, attended) {
-    const attendanceStatus = attended ? 'Compareceu' : 'Não compareceu';
-
+  async function markEventAttendance(eventId) {
     try {
-      const response = await api.updateEventAttendance(eventId, {
-        status: attendanceStatus,
-      });
+      const currentEvent = events.find((event) => event.id === eventId);
+      const eventToUpdate = currentEvent || await loadEvent(eventId);
+      if (!eventToUpdate) {
+        throw new Error('Compromisso não encontrado.');
+      }
+
+      const response = await api.updateEvent(
+        eventId,
+        eventToPayload({ ...eventToUpdate, completed: true }),
+      );
       const savedEvent = eventFromResponse(response);
       if (!savedEvent) {
         throw new Error('Resposta inválida da API de eventos.');
@@ -408,13 +413,6 @@ export function AppStateProvider({ children }) {
       addFlash('Compromisso atualizado.', 'success');
       return savedEvent;
     } catch (error) {
-      if (error?.status === 404) {
-        const currentEvent = events.find((event) => event.id === eventId);
-        if (currentEvent) {
-          const legacyStatus = attended ? 'Concluído' : 'Cancelado';
-          return saveEvent({ ...currentEvent, status: legacyStatus, completed: true });
-        }
-      }
       addFlash(errorMessage(error), 'error');
       return null;
     }
