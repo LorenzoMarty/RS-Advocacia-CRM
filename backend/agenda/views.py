@@ -25,6 +25,7 @@ from integrations.google.exceptions import GoogleAuthorizationRequired
 from integrations.google.oauth import current_usuario
 
 EVENTO_DATETIME_FIELDS = ("data_inicio", "data_fim", "lembrete_em")
+ATTENDANCE_STATUS = {"Compareceu", "Não compareceu"}
 EVENTO_FORM_FIELDS = {
     "titulo",
     "tipo_evento",
@@ -206,6 +207,56 @@ def detalhes_evento(request, evento_id):
     )
     serialized = serialize_evento(evento)
     return resposta_sucesso({"evento": serialized})
+
+
+@app_permissions_required("agenda.change_evento")
+def marcar_comparecimento(request, evento_id):
+    if request.method not in {"POST", "PATCH", "PUT"}:
+        return metodo_nao_permitido(["POST", "PATCH", "PUT"])
+
+    evento = get_object_or_404(
+        _eventos_compromisso_queryset().select_related("cliente", "processo", "responsavel"),
+        pk=evento_id,
+    )
+    antes = serialize_evento(evento)
+
+    try:
+        payload = _evento_api_payload(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    status = (payload.get("status") or "").strip()
+    if status not in ATTENDANCE_STATUS:
+        return resposta_erro(
+            {"status": ["Use Compareceu ou Não compareceu."]},
+            status=400,
+        )
+
+    evento.status = status
+    evento.concluido = True
+    evento.save(update_fields=["status", "concluido", "updated_at"])
+
+    google_sync = _sincronizar_evento_se_conectado(request, evento)
+
+    evento = Evento.objects.select_related("cliente", "processo", "responsavel").get(pk=evento.pk)
+    serialized = serialize_evento(evento)
+    alteracoes = auditoria_services.calcular_diff(antes, serialized)
+    if alteracoes:
+        auditoria_services.registrar(
+            request,
+            acao=RegistroAuditoria.ACAO_ATUALIZADO,
+            entidade_tipo=RegistroAuditoria.ENTIDADE_EVENTO,
+            entidade_id=evento.pk,
+            rotulo=evento.titulo or "",
+            alteracoes=alteracoes,
+            processo_id=evento.processo_id or "",
+            processo_rotulo=evento.processo.numero_processo if evento.processo_id else "",
+        )
+
+    return resposta_sucesso(
+        {"evento": serialized, "sincronizacao_google": google_sync},
+        mensagem="Comparecimento atualizado com sucesso.",
+    )
 
 
 @app_permissions_required("agenda.change_evento")

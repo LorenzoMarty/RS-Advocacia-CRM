@@ -117,6 +117,39 @@ class AgendaIntegrationViewsTests(TestCase):
         sync_local_event.assert_called_once()
 
     @patch("agenda.views.sync_local_event", return_value=1)
+    def test_endpoint_comparecimento_nao_depende_do_formulario_de_edicao(
+        self, sync_local_event
+    ):
+        evento = Evento.objects.create(
+            titulo="Audiencia",
+            descricao="Descricao",
+            data_inicio="2026-06-23T09:00:00-03:00",
+            data_fim="2026-06-23T10:00:00-03:00",
+            tipo_evento="Audiencia",
+            status="Agendado",
+            prioridade="Alta",
+            cliente=self.cliente,
+            processo=self.processo,
+            responsavel=self.usuario,
+            criado_por=self.usuario.nome,
+            local="Forum",
+            observacoes="",
+        )
+
+        response = self.client.post(
+            reverse("marcar_comparecimento", args=[evento.pk]),
+            data=json.dumps({"status": "Compareceu"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200, response.json())
+        evento.refresh_from_db()
+        self.assertEqual(evento.status, "Compareceu")
+        self.assertTrue(evento.concluido)
+        self.assertEqual(response.json()["dados"]["evento"]["status"], "Compareceu")
+        sync_local_event.assert_called_once()
+
+    @patch("agenda.views.sync_local_event", return_value=1)
     def test_put_evento_parcial_aceita_alias_completed(self, sync_local_event):
         evento = Evento.objects.create(
             titulo="Audiencia",

@@ -395,9 +395,8 @@ export function AppStateProvider({ children }) {
 
   async function markEventAttendance(eventId, attended) {
     try {
-      const response = await api.patchEvent(eventId, {
+      const response = await api.updateEventAttendance(eventId, {
         status: attended ? 'Compareceu' : 'Não compareceu',
-        concluido: true,
       });
       const savedEvent = eventFromResponse(response);
       if (!savedEvent) {
