@@ -15,6 +15,11 @@ urlpatterns = [
     ),
     path("api/eventos/<int:evento_id>/", views.detalhes_evento, name="detalhes_evento"),
     path(
+        "api/eventos/<int:evento_id>/comparecimento/",
+        views.marcar_comparecimento,
+        name="marcar_comparecimento",
+    ),
+    path(
         "api/eventos/<int:evento_id>/editar/", views.editar_evento, name="editar_evento"
     ),
     path(
