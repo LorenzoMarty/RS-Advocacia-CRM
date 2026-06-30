@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, isApiEnabled } from '../api';
 
 const POLL_INTERVAL_MS = 30_000;
+const NOTIFICATIONS_ENABLED = false;
 
 export function useNotifications() {
   const [notificacoes, setNotificacoes] = useState([]);
@@ -13,7 +14,7 @@ export function useNotifications() {
     activeRef.current = true;
 
     async function poll() {
-      if (!isApiEnabled) return;
+      if (!isApiEnabled || !NOTIFICATIONS_ENABLED) return;
       try {
         const data = await api.listNotificacoes();
         if (activeRef.current) {
