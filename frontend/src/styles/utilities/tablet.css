@@ -1,0 +1,247 @@
+@media (min-width: 768px) and (max-width: 1024px) {
+  .page,
+  .page-wrap,
+  .main,
+  .page-motion,
+  .main > *,
+  .page-motion > * {
+    min-width: 0;
+  }
+
+  .bottom-nav-shell {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .bottom-nav {
+    width: min(100%, 940px);
+    padding: 8px;
+    border-radius: 24px;
+  }
+
+  .bottom-nav-track {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+
+  .bottom-nav-track::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .bottom-nav-track::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .bottom-nav-track::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb);
+    border-radius: 999px;
+  }
+
+  .bottom-nav-link {
+    flex: 1 0 68px;
+  }
+
+  .bottom-nav-pill {
+    min-height: 58px;
+    padding: 8px 6px;
+    border-radius: 18px;
+  }
+
+  .bottom-nav-label {
+    font-size: .63rem;
+  }
+
+  .btn,
+  .btn-secondary,
+  .btn-danger,
+  .action-link,
+  .financeiro-tab,
+  .timer-btn,
+  .btn-mini,
+  .deadline-move,
+  .deadline-edit,
+  .petition-card-actions a,
+  .petition-card-actions button,
+  .productivity-inline-actions button,
+  .productivity-pagination button,
+  .prospect-card-actions .btn,
+  .prospect-quick-form-actions .btn {
+    min-height: 44px;
+  }
+
+  .icon-control,
+  .theme-toggle,
+  .topbar-icon-link,
+  .appearance-fab,
+  .appearance-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .page-search input,
+  .toolbar-search input,
+  .filter-select,
+  .rs-select-trigger,
+  .field input,
+  .field select,
+  .field textarea,
+  .meeting-form input,
+  .meeting-form select,
+  .meeting-form textarea,
+  .deadline-date-field input,
+  .audit-filter-search,
+  .audit-filter-input,
+  .productivity-filters select,
+  .productivity-filters input,
+  .productivity-user-select,
+  .prospect-quick-form select,
+  .prospect-quick-form input,
+  .prospect-interaction-form input {
+    min-height: 48px;
+  }
+
+  .rs-select-dropdown {
+    max-width: calc(100vw - 32px);
+    max-height: min(360px, calc(100dvh - 48px));
+  }
+
+  .popup-layer {
+    padding: 24px;
+  }
+
+  .popup-panel,
+  .appearance-panel {
+    max-height: calc(100dvh - 48px);
+    overflow: auto;
+  }
+
+  .profile-dropdown {
+    max-width: calc(100vw - 32px);
+    max-height: calc(100dvh - 96px);
+    overflow: auto;
+  }
+
+  .list-intro-toolbar,
+  .clients-intro-toolbar,
+  .agenda-toolbar,
+  .deadlines-toolbar,
+  .petitions-toolbar,
+  .financeiro-toolbar,
+  .prospeccao-toolbar {
+    min-width: 0;
+  }
+
+  .clients-filters,
+  .deadline-filter-grid,
+  .toolbar-filters {
+    min-width: 0;
+  }
+
+  .client-row,
+  .process-row,
+  .user-row,
+  .deadline-column,
+  .petition-column,
+  .prospect-column,
+  .meeting-option,
+  .recording-result,
+  .summary-section,
+  .audit-priority-item {
+    min-width: 0;
+  }
+
+  .client-actions,
+  .process-actions,
+  .user-actions,
+  .toolbar-actions,
+  .deadlines-head-actions,
+  .petitions-head-actions,
+  .meeting-form-actions,
+  .recording-result-actions,
+  .capture-actions,
+  .transcript-actions,
+  .form-actions,
+  .prospect-card-actions,
+  .prospect-quick-form-actions {
+    row-gap: 8px;
+  }
+
+  .calendar-frame,
+  .petitions-board,
+  .deadlines-board {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+
+  .calendar-frame::-webkit-scrollbar,
+  .petitions-board::-webkit-scrollbar,
+  .deadlines-board::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .calendar-frame::-webkit-scrollbar-track,
+  .petitions-board::-webkit-scrollbar-track,
+  .deadlines-board::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .calendar-frame::-webkit-scrollbar-thumb,
+  .petitions-board::-webkit-scrollbar-thumb,
+  .deadlines-board::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb);
+    border-radius: 999px;
+  }
+
+  .client-documents .document-item,
+  .client-documents .document-upload,
+  .capture-preview-row,
+  .meeting-doc-processing,
+  .recording-pipeline,
+  .audit-filter-row {
+    min-width: 0;
+  }
+}
+
+@media (min-width: 881px) and (max-width: 1024px) {
+  .financeiro-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+
+  .financeiro-table::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .financeiro-table::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .financeiro-table::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb);
+    border-radius: 999px;
+  }
+
+  .financeiro-row {
+    min-width: 920px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 820px) {
+  .petitions-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .petition-form .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

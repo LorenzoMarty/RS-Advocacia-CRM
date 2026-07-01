@@ -1,0 +1,61 @@
+/* Tema do popover do driver.js ajustado ao contraste e foco visível do app. */
+.onboarding-popover.driver-popover {
+  background: #0f172a;
+  color: #e5e7eb;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 12px;
+  font-family: var(--sans);
+}
+
+.onboarding-popover .driver-popover-title {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.onboarding-popover .driver-popover-description {
+  color: #cbd5e1;
+}
+
+.onboarding-popover .driver-popover-footer button {
+  text-shadow: none;
+  background: #1e293b;
+  color: #e5e7eb;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 8px;
+}
+
+.onboarding-popover .driver-popover-footer button:hover {
+  background: #334155;
+}
+
+.onboarding-popover .driver-popover-footer .driver-popover-next-btn {
+  background: var(--accent, #2563eb);
+  border-color: transparent;
+  color: #fff;
+}
+
+.onboarding-popover .driver-popover-close-btn:focus-visible,
+.onboarding-popover .driver-popover-footer button:focus-visible,
+.driver-active-element:focus-visible {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 2px;
+}
+
+.onboarding-checklist ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.onboarding-checklist label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.onboarding-checklist input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 2px;
+}
