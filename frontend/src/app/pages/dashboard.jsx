@@ -13,7 +13,6 @@ import {
 import { useAppState } from "../store";
 import { formatTime, getStatusTone, isSameDay } from "../utils";
 import { EmptyState } from "./common";
-import { OnboardingChecklist } from "../components/onboarding-checklist";
 
 const MotionLink = motion(Link);
 
@@ -436,8 +435,6 @@ export function DashboardPage() {
               </motion.div>
             </div>
           </motion.article>
-
-          <OnboardingChecklist />
         </aside>
       </motion.section>
     </div>
