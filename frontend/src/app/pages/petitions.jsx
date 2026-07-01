@@ -398,7 +398,7 @@ export function PetitionsPage() {
               <span className="badge gold">
                 {formatCount(filteredPetitions.length, 'peça', 'peças')}
               </span>
-              <Link className="btn" to="/peticoes-contestacoes/novo">
+              <Link className="btn" to="/peticoes-contestacoes/novo" data-tour="page-primary-action">
                 Nova peça
               </Link>
             </div>

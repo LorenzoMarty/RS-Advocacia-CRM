@@ -77,7 +77,7 @@ export function ProcessesListPage() {
               onChange={(event) => setSearch(event.target.value)}
               label="Buscar processos"
             />
-            <Link className="btn list-intro-action" to="/processos/novo">Novo</Link>
+            <Link className="btn list-intro-action" to="/processos/novo" data-tour="page-primary-action">Novo</Link>
           </div>
         </section>
 

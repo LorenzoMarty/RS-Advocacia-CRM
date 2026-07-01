@@ -377,7 +377,7 @@ export function DeadlinesPage() {
               <span className="badge gold">
                 {formatCount(filteredDeadlines.length, 'prazo', 'prazos')}
               </span>
-              <Link className="btn" to={deadlineCreatePath()}>
+              <Link className="btn" to={deadlineCreatePath()} data-tour="page-primary-action">
                 Novo prazo
               </Link>
             </div>

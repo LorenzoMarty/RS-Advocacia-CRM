@@ -314,7 +314,7 @@ export function ProspectKanbanPage() {
               <h1 className="intro-title">Prospecção</h1>
               <p className="section-note">Funil de captação de clientes</p>
             </div>
-            <Link className="btn" to="/prospeccao/novo">Novo prospect</Link>
+            <Link className="btn" to="/prospeccao/novo" data-tour="page-primary-action">Novo prospect</Link>
           </div>
 
           <Motion.div
