@@ -13,6 +13,7 @@ import {
 import { useAppState } from "../store";
 import { formatTime, getStatusTone, isSameDay } from "../utils";
 import { EmptyState } from "./common";
+import { OnboardingChecklist } from "../components/onboarding-checklist";
 
 const MotionLink = motion(Link);
 
@@ -66,6 +67,8 @@ export function DashboardPage() {
   return (
     <div className="dashboard-page">
       <PageChrome label="Painel" />
+
+      <OnboardingChecklist />
 
       <section className="surface hero">
         <div className="hero-grid">
@@ -312,7 +315,7 @@ export function DashboardPage() {
                 initial="hidden"
                 animate="visible"
               >
-                <MotionLink className="shortcut is-clickable" to="/agenda/novo" variants={staggerItem} {...cardHover}>
+                <MotionLink className="shortcut is-clickable" to="/agenda/novo" data-tour="shortcut-novo-compromisso" variants={staggerItem} {...cardHover}>
                   <div className="shortcut-copy">
                     <strong>Compromisso</strong>
                     <span>Novo compromisso</span>
@@ -334,7 +337,7 @@ export function DashboardPage() {
                   </span>
                 </MotionLink>
 
-                <MotionLink className="shortcut is-clickable" to="/clientes/novo" variants={staggerItem} {...cardHover}>
+                <MotionLink className="shortcut is-clickable" to="/clientes/novo" data-tour="shortcut-novo-cliente" variants={staggerItem} {...cardHover}>
                   <div className="shortcut-copy">
                     <strong>Cliente</strong>
                     <span>Novo cliente</span>
@@ -358,7 +361,7 @@ export function DashboardPage() {
                   </span>
                 </MotionLink>
 
-                <MotionLink className="shortcut is-clickable" to="/processos/novo" variants={staggerItem} {...cardHover}>
+                <MotionLink className="shortcut is-clickable" to="/processos/novo" data-tour="shortcut-novo-processo" variants={staggerItem} {...cardHover}>
                   <div className="shortcut-copy">
                     <strong>Processo</strong>
                     <span>Novo processo</span>
@@ -382,7 +385,7 @@ export function DashboardPage() {
                   </span>
                 </MotionLink>
 
-                <MotionLink className="shortcut is-clickable" to="/prazos/novo" variants={staggerItem} {...cardHover}>
+                <MotionLink className="shortcut is-clickable" to="/prazos/novo" data-tour="shortcut-novo-prazo" variants={staggerItem} {...cardHover}>
                   <div className="shortcut-copy">
                     <strong>Prazo</strong>
                     <span>Novo prazo</span>
@@ -408,7 +411,7 @@ export function DashboardPage() {
                   </span>
                 </MotionLink>
 
-                <MotionLink className="shortcut is-clickable" to="/peticoes-contestacoes" variants={staggerItem} {...cardHover}>
+                <MotionLink className="shortcut is-clickable" to="/peticoes-contestacoes" data-tour="shortcut-peticoes" variants={staggerItem} {...cardHover}>
                   <div className="shortcut-copy">
                     <strong>Petições</strong>
                     <span>Petições ou contestações</span>

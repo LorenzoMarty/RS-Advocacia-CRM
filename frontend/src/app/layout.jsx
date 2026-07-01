@@ -3,6 +3,7 @@ import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
 import { AppearancePanel, AppearanceTrigger } from './components/appearance-panel';
+import { useOnboardingLauncher } from './components/onboarding-launcher';
 import { AnimatePresence, MotionPage } from './motion';
 import { NAV_ITEMS } from './data';
 import { useAppState } from './store';
@@ -222,6 +223,7 @@ function SidebarNavigation() {
           className={({ isActive }) => createNavClass(isActive, 'nav-link')}
           aria-label={item.label}
           title={item.label}
+          data-tour={`nav-${item.key}`}
         >
           <span className="nav-icon" aria-hidden="true">
             <NavigationIcon icon={item.key} />
@@ -435,7 +437,7 @@ function NotifTypeIcon({ tipo }) {
   );
 }
 
-function ProfileMenu({ onOpenAppearance }) {
+function ProfileMenu({ onOpenAppearance, onStartTour }) {
   const { currentUser, currentRole, sair } = useAppState();
   const { notificacoes, totalNaoLidas, marcarLida, marcarTodasLidas } = useNotifications();
   const [open, setOpen] = useState(false);
@@ -542,6 +544,21 @@ function ProfileMenu({ onOpenAppearance }) {
                 Aparência
               </button>
             )}
+            {onStartTour && (
+              <button
+                type="button"
+                className="profile-dropdown-action"
+                data-tour="rever-tour"
+                onClick={() => handleAction(onStartTour)}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.5 9a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 2-2.4 3.6" />
+                  <path d="M12 17h.01" />
+                </svg>
+                Rever tour
+              </button>
+            )}
             <button
               type="button"
               className="profile-dropdown-action profile-dropdown-action--danger"
@@ -565,6 +582,7 @@ export function ProtectedLayout() {
   const [, setChrome] = useState(PAGE_CHROME_DEFAULT);
   const { sidebarCollapsed, toggleSidebar } = useShellPreferences();
   const appearance = useAppearanceState();
+  const { startTour, hasTour } = useOnboardingLauncher();
 
   useReminderToasts({ addFlash, currentUser, deadlines, events, isLoading });
 
@@ -619,7 +637,10 @@ export function ProtectedLayout() {
           </div>
 
           <div className="sidebar-footer">
-            <ProfileMenu onOpenAppearance={() => appearance.setOpen(true)} />
+            <ProfileMenu
+              onOpenAppearance={() => appearance.setOpen(true)}
+              onStartTour={hasTour ? startTour : undefined}
+            />
           </div>
         </aside>
 
