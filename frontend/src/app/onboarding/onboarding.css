@@ -41,12 +41,36 @@
   outline-offset: 2px;
 }
 
+.onboarding-checklist {
+  display: block;
+  margin: 0 0 var(--gap-page, 20px);
+  padding: 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: var(--surface-bg);
+}
+
+.onboarding-checklist h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
 .onboarding-checklist ul {
   list-style: none;
-  margin: 0;
+  margin: 0 0 1rem;
   padding: 0;
   display: grid;
   gap: 0.5rem;
+}
+
+.onboarding-checklist li a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.onboarding-checklist li a:hover {
+  text-decoration: underline;
 }
 
 .onboarding-checklist label {
