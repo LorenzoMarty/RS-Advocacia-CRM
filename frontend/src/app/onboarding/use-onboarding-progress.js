@@ -4,50 +4,27 @@ function storageKey(userId) {
   return `onboarding:${userId}`;
 }
 
-function readState(userId) {
-  if (!userId) return { completed: [], dismissed: false, tourSeen: false };
+function readTourSeen(userId) {
+  if (!userId) return false;
   try {
     const raw = localStorage.getItem(storageKey(userId));
-    if (!raw) return { completed: [], dismissed: false, tourSeen: false };
-    const parsed = JSON.parse(raw);
-    return {
-      completed: Array.isArray(parsed.completed) ? parsed.completed : [],
-      dismissed: Boolean(parsed.dismissed),
-      tourSeen: Boolean(parsed.tourSeen),
-    };
+    return raw ? Boolean(JSON.parse(raw).tourSeen) : false;
   } catch {
-    return { completed: [], dismissed: false, tourSeen: false };
+    return false;
   }
 }
 
 export function useOnboardingProgress(userId) {
-  const [state, setState] = useState(() => readState(userId));
+  const [tourSeen, setTourSeen] = useState(() => readTourSeen(userId));
 
   useEffect(() => {
-    setState(readState(userId));
+    setTourSeen(readTourSeen(userId));
   }, [userId]);
 
-  const persist = useCallback(
-    (next) => {
-      setState(next);
-      if (userId) localStorage.setItem(storageKey(userId), JSON.stringify(next));
-    },
-    [userId],
-  );
+  const markTourSeen = useCallback(() => {
+    setTourSeen(true);
+    if (userId) localStorage.setItem(storageKey(userId), JSON.stringify({ tourSeen: true }));
+  }, [userId]);
 
-  const toggle = useCallback(
-    (itemId) => {
-      const completed = state.completed.includes(itemId)
-        ? state.completed.filter((id) => id !== itemId)
-        : [...state.completed, itemId];
-      persist({ ...state, completed });
-    },
-    [state, persist],
-  );
-
-  const dismiss = useCallback(() => persist({ ...state, dismissed: true }), [state, persist]);
-
-  const markTourSeen = useCallback(() => persist({ ...state, tourSeen: true }), [state, persist]);
-
-  return { ...state, toggle, dismiss, markTourSeen };
+  return { tourSeen, markTourSeen };
 }

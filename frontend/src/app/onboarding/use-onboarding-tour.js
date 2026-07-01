@@ -25,6 +25,28 @@ function waitForElement(selector) {
   });
 }
 
+// Páginas entram com animação (framer-motion): o botão só chega na posição
+// final alguns ms depois de montar. Espera o retângulo do elemento parar de
+// mudar antes de deixar o driver.js medir onde destacar.
+function waitForStablePosition(element) {
+  return new Promise((resolve) => {
+    let lastRect = element.getBoundingClientRect();
+    let stableTicks = 0;
+    let checks = 0;
+    const interval = setInterval(() => {
+      checks += 1;
+      const rect = element.getBoundingClientRect();
+      const moved = Math.abs(rect.top - lastRect.top) > 0.5 || Math.abs(rect.left - lastRect.left) > 0.5;
+      lastRect = rect;
+      stableTicks = moved ? 0 : stableTicks + 1;
+      if (stableTicks >= 2 || checks >= 20) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 30);
+  });
+}
+
 // Tour com passos que podem viver em páginas diferentes: quando um passo tem
 // `route`, navega até lá antes de destacar o elemento (a lib driver.js só sabe
 // destacar elementos já presentes no DOM).
@@ -46,9 +68,11 @@ export function useOnboardingTour() {
         const step = steps[index];
         if (step.route && step.route !== currentPath()) {
           navigate(step.route);
-          await waitForElement(step.element);
+          const element = await waitForElement(step.element);
+          if (element) await waitForStablePosition(element);
         }
         driverObj.drive(index);
+        driverObj.refresh();
       }
 
       driverObj = driver({
