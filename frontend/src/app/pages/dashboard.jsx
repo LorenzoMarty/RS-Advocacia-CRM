@@ -68,8 +68,6 @@ export function DashboardPage() {
     <div className="dashboard-page">
       <PageChrome label="Painel" />
 
-      <OnboardingChecklist />
-
       <section className="surface hero">
         <div className="hero-grid">
           <div className="hero-copy">
@@ -152,6 +150,8 @@ export function DashboardPage() {
           </aside>
         </div>
       </section>
+
+      <OnboardingChecklist />
 
       <motion.section
         className="dashboard-grid"

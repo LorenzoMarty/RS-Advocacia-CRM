@@ -13,8 +13,8 @@ export function OnboardingChecklist() {
   if (!items.length || dismissed || completed.length === items.length) return null;
 
   return (
-    <section className="onboarding-checklist surface" aria-label="Primeiros passos">
-      <h2 className="section-title">Primeiros passos</h2>
+    <section className="onboarding-checklist" aria-label="Primeiros passos">
+      <h2>Primeiros passos</h2>
       <ul>
         {items.map((item) => (
           <li key={item.id}>
