@@ -151,8 +151,6 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <OnboardingChecklist />
-
       <motion.section
         className="dashboard-grid"
         variants={staggerContainer}
@@ -438,6 +436,8 @@ export function DashboardPage() {
               </motion.div>
             </div>
           </motion.article>
+
+          <OnboardingChecklist />
         </aside>
       </motion.section>
     </div>

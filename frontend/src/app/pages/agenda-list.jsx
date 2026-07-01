@@ -342,7 +342,7 @@ export function AgendaListPage() {
 
             <div className="toolbar-side">
               <div className="toolbar-actions">
-                <Link className="btn" to="/agenda/novo">
+                <Link className="btn" to="/agenda/novo" data-tour="page-primary-action">
                   Novo
                 </Link>
               </div>

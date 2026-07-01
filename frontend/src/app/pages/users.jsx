@@ -77,7 +77,7 @@ export function UsersListPage() {
             <PageSearch value={search} onChange={(event) => setSearch(event.target.value)} />
 
             <div className="list-intro-actions">
-              <Link className="btn list-intro-action" to="/usuarios/novo">Novo</Link>
+              <Link className="btn list-intro-action" to="/usuarios/novo" data-tour="page-primary-action">Novo</Link>
             </div>
           </div>
         </section>

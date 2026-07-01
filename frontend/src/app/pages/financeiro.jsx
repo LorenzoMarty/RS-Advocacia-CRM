@@ -354,7 +354,7 @@ export function FinanceiroPage() {
                 <h1 className="intro-title">Financeiro</h1>
                 <p className="section-note">Receitas, despesas e fluxo do escritório</p>
               </div>
-              <Link className="btn" to="/financeiro/novo">Novo lançamento</Link>
+              <Link className="btn" to="/financeiro/novo" data-tour="page-primary-action">Novo lançamento</Link>
             </div>
 
             <Motion.div

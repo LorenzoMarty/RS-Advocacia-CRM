@@ -151,7 +151,7 @@ export function ClientsListPage() {
               </div>
             </div>
 
-            <Link className="btn list-intro-action" to="/clientes/novo">Novo</Link>
+            <Link className="btn list-intro-action" to="/clientes/novo" data-tour="page-primary-action">Novo</Link>
           </div>
         </section>
 
