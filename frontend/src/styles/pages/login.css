@@ -97,6 +97,15 @@
     line-height:1.6;
 }
 
+.login-purpose{
+    position:relative;
+    z-index:1;
+    margin:0;
+    color:var(--soft);
+    font-size:.86rem;
+    line-height:1.6;
+}
+
 .login-alert{
     display:grid;
     gap:6px;
@@ -253,6 +262,28 @@
     color:var(--muted);
     font-size:.82rem;
     line-height:1.6;
+}
+
+.login-legal-links{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:8px;
+    font-size:.78rem;
+}
+
+.login-legal-links a{
+    color:var(--muted);
+    text-decoration:underline;
+    text-underline-offset:2px;
+}
+
+.login-legal-links a:hover{
+    color:var(--gold-soft);
+}
+
+.login-legal-links span{
+    color:var(--muted);
 }
 
 html[data-theme="light"] .login-card{
