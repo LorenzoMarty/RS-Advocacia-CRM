@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import { api, isApiEnabled } from '../api';
 
@@ -41,6 +41,11 @@ export function LoginPage() {
           <p className="login-subtitle">Continue pela página segura do Google.</p>
         </header>
 
+        <p className="login-purpose">
+          Plataforma de gestão jurídica interna do escritório RS Advocacia:
+          clientes, processos, agenda, prazos e petições em um só lugar.
+        </p>
+
         {visibleError ? (
           <div className="login-alert login-alert-error" role="alert">
             <span>{visibleError}</span>
@@ -64,6 +69,11 @@ export function LoginPage() {
 
         <footer className="login-footer" id="login-help">
           <p>Depois do login, você volta automaticamente para o painel.</p>
+          <nav className="login-legal-links" aria-label="Links legais">
+            <Link to="/politica-privacidade">Política de Privacidade</Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/termos-de-uso">Termos de Uso</Link>
+          </nav>
         </footer>
       </section>
     </main>

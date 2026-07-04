@@ -50,6 +50,7 @@ import { AuditPage } from "./app/pages/audit";
 import { useAppState } from "./app/store";
 import { MeetingsPage } from "./app/pages/meetings";
 import { PrivacyPolicyPage } from "./app/pages/privacy-policy";
+import { TermsOfServicePage } from "./app/pages/terms-of-service";
 
 function ClientFormRoute() {
   const { clientId } = useParams();
@@ -225,6 +226,7 @@ export default function App() {
           </Route>
 
           <Route path="/politica-privacidade" element={<PrivacyPolicyPage />} />
+          <Route path="/termos-de-uso" element={<TermsOfServicePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </HashRouter>
