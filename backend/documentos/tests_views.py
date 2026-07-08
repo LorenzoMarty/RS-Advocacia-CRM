@@ -155,6 +155,82 @@ class DocumentoViewsTests(TestCase):
 
 
 @override_settings(GOOGLE_DRIVE_ROOT_FOLDER_ID=ROOT)
+class ImportacaoDriveViewsTests(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Advogada", email="adv@example.com", cargo="Administrador"
+        )
+        auth_user = get_user_model().objects.create_superuser(
+            username=self.usuario.email, email=self.usuario.email
+        )
+        self.client.force_login(auth_user)
+        session = self.client.session
+        session["usuario_id"] = self.usuario.pk
+        session.save()
+
+        self.cliente = _cliente()
+        _clientedrive(self.cliente)
+
+    @patch("documentos.importacao.drive_service")
+    @patch("documentos.importacao.drive")
+    def test_escanear_retorna_sugestoes_sem_gravar_no_banco(
+        self, mock_drive, mock_service
+    ):
+        mock_drive.list_folders.return_value = []
+        mock_drive.list_files.return_value = [
+            {
+                "id": "f1",
+                "name": "RG comprovante residencia.pdf",
+                "mimeType": "application/pdf",
+            }
+        ]
+
+        response = self.client.post(
+            reverse("escanear_importacao", args=[self.cliente.pk]),
+            data={},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        dados = response.json()["dados"]
+        self.assertEqual(len(dados["documentos_sugeridos"]), 1)
+        self.assertEqual(DocumentoCliente.objects.count(), 0)
+
+    def test_confirmar_cria_processo_e_documento(self):
+        cnj = "1234567-79.2024.8.13.0001"
+        response = self.client.post(
+            reverse("confirmar_importacao", args=[self.cliente.pk]),
+            data={
+                "processos": [{"numero_processo": cnj, "origem_pasta_id": "pasta-1"}],
+                "documentos": [
+                    {
+                        "drive_file_id": "f1",
+                        "nome": "peticao.pdf",
+                        "categoria": DocumentoCliente.CATEGORIA_PETICAO,
+                        "processo_numero": cnj,
+                    }
+                ],
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        dados = response.json()["dados"]
+        self.assertEqual(dados["processos_criados"], 1)
+        self.assertEqual(dados["documentos_criados"], 1)
+        documento = DocumentoCliente.objects.get(drive_file_id="f1")
+        self.assertEqual(documento.processo.numero_processo, cnj)
+
+    def test_confirmar_rejeita_corpo_mal_formado(self):
+        response = self.client.post(
+            reverse("confirmar_importacao", args=[self.cliente.pk]),
+            data={"processos": "nao-e-lista", "documentos": []},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+
+@override_settings(GOOGLE_DRIVE_ROOT_FOLDER_ID=ROOT)
 class DocumentoPermissionTests(TestCase):
     def setUp(self):
         self.cliente = _cliente()

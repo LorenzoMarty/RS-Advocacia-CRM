@@ -38,6 +38,12 @@
     color:#ffd5d5;
 }
 
+.popup-panel-wide{
+    width:min(760px, 100%);
+    max-height:min(720px, 90vh);
+    overflow:auto;
+}
+
 .popup-copy{
     display:grid;
     gap:8px;

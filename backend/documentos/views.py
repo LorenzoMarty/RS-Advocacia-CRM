@@ -22,7 +22,7 @@ from integrations.google.exceptions import (
 from integrations.google.oauth import current_usuario
 from integrations.google.responses import mapear_erro_google as _mapear_erro_google
 
-from . import services
+from . import importacao, services
 from .forms import UploadDocumentoForm
 from .models import DocumentoCliente, serialize_documento
 
@@ -226,9 +226,7 @@ def criar_pasta_view(request, cliente_id):
 
     usuario = current_usuario(request)
     try:
-        pasta = services.criar_pasta(
-            usuario, cliente, nome=nome, parent_id=parent_id
-        )
+        pasta = services.criar_pasta(usuario, cliente, nome=nome, parent_id=parent_id)
     except (
         GoogleConfigurationError,
         GoogleAuthorizationRequired,
@@ -293,7 +291,9 @@ def excluir_pasta_view(request, cliente_id, folder_id):
     ) as exc:
         return _mapear_erro_google(exc)
 
-    return resposta_sucesso({"id": folder_id}, mensagem="Pasta excluída do Google Drive.")
+    return resposta_sucesso(
+        {"id": folder_id}, mensagem="Pasta excluída do Google Drive."
+    )
 
 
 @app_permissions_required("clientes.view_cliente")
@@ -315,9 +315,7 @@ def upload_drive_view(request, cliente_id):
 
     folder_id = (request.POST.get("folder_id") or "").strip()
     if not folder_id:
-        return resposta_erro(
-            {"folder_id": ["Pasta de destino inválida."]}, status=400
-        )
+        return resposta_erro({"folder_id": ["Pasta de destino inválida."]}, status=400)
 
     arquivo = request.FILES.get("arquivo") or next(iter(request.FILES.values()), None)
     if arquivo is None:
@@ -392,3 +390,70 @@ def download_documento_view(request, cliente_id, doc_id):
     )
     response["Content-Disposition"] = f'attachment; filename="{documento.nome}"'
     return response
+
+
+# --- Drive import wizard (scan existing folder -> suggest -> confirm) ------
+
+
+@app_permissions_required("documentos.view_documentocliente", "clientes.view_cliente")
+def escanear_importacao_view(request, cliente_id):
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    cliente = get_object_or_404(Cliente, pk=cliente_id)
+    try:
+        corpo = ler_corpo_json(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    folder_id = (corpo.get("folder_id") or "").strip() or services._client_root_id(
+        cliente
+    )
+    if not folder_id:
+        return resposta_erro(
+            {"folder_id": ["Informe a pasta do Google Drive a escanear."]},
+            status=400,
+        )
+
+    usuario = current_usuario(request)
+    try:
+        arvore = importacao.escanear_arvore(usuario, folder_id)
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+
+    plano = importacao.sugerir_plano(arvore, cliente)
+    return resposta_sucesso(plano)
+
+
+@app_permissions_required(
+    "documentos.add_documentocliente", "processos.add_processo", "clientes.view_cliente"
+)
+def confirmar_importacao_view(request, cliente_id):
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    cliente = get_object_or_404(Cliente, pk=cliente_id)
+    try:
+        corpo = ler_corpo_json(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    processos = corpo.get("processos") or []
+    documentos = corpo.get("documentos") or []
+    if not isinstance(processos, list) or not isinstance(documentos, list):
+        return resposta_erro(
+            {"corpo": ["'processos' e 'documentos' devem ser listas."]}, status=400
+        )
+
+    resultado = importacao.confirmar_importacao(cliente, processos, documentos)
+    return resposta_sucesso(
+        {
+            "processos_criados": len(resultado["processos"]),
+            "documentos_criados": len(resultado["documentos"]),
+        },
+        mensagem="Importação concluída.",
+    )

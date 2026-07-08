@@ -10,6 +10,7 @@ import {
   uploadToDriveFolder,
 } from '../services/documentos';
 import { EmptyState } from '../pages/common';
+import { ClientImportWizard } from './client-import-wizard';
 
 function formatSize(bytes) {
   if (!bytes) return '—';
@@ -41,6 +42,7 @@ export function ClientDocuments({ client }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [folderName, setFolderName] = useState('');
   const [dragOver, setDragOver] = useState(false);
 
@@ -199,6 +201,14 @@ export function ClientDocuments({ client }) {
           <p className="section-note">Pastas no Google Drive</p>
         </div>
         <div className="drive-actions">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setImporting(true)}
+            disabled={busy || loading}
+          >
+            Importar do Drive
+          </button>
           {!creating ? (
             <button
               type="button"
@@ -358,6 +368,14 @@ export function ClientDocuments({ client }) {
           )}
         </div>
       )}
+
+      {importing ? (
+        <ClientImportWizard
+          clientId={client.id}
+          onClose={() => setImporting(false)}
+          onImported={() => load(currentFolderId, path)}
+        />
+      ) : null}
     </section>
   );
 }

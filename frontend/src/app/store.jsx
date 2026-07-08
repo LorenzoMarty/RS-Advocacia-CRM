@@ -380,6 +380,11 @@ export function AppStateProvider({ children }) {
     });
   }
 
+  async function refreshProcesses() {
+    const payload = await api.listProcesses();
+    setProcesses(processesFromResponse(payload));
+  }
+
   async function saveEvent(payload) {
     return saveEntity({
       id: payload.id,
@@ -1082,6 +1087,7 @@ export function AppStateProvider({ children }) {
     sair,
     saveClient,
     saveProcess,
+    refreshProcesses,
     saveEvent,
     markEventAttendance,
     moveEvent,

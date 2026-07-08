@@ -113,3 +113,64 @@ export async function uploadToDriveFolder(clientId, { file, folderId }) {
   });
   return driveFileFromApi(payload.arquivo);
 }
+
+// --- Drive import wizard (scan existing folder -> suggest -> confirm) ------
+
+function processSuggestionFromApi(item) {
+  return {
+    numeroProcesso: item.numero_processo || '',
+    originFolderId: item.origem_pasta_id || '',
+    originFolderName: item.origem_pasta_nome || '',
+  };
+}
+
+function documentSuggestionFromApi(item) {
+  return {
+    driveFileId: item.drive_file_id || '',
+    name: item.nome || '',
+    mimeType: item.mime_type || '',
+    size: Number(item.tamanho_bytes || 0),
+    folderId: item.drive_folder_id || '',
+    link: item.link_visualizacao || '',
+    category: item.categoria_sugerida || 'other',
+    processNumber: item.numero_processo_sugerido || '',
+    cpfCnpjFound: item.cpf_cnpj_encontrado || '',
+  };
+}
+
+export async function scanClientDriveImport(clientId, folderId) {
+  const payload = await apiRequest(`/api/clientes/${clientId}/drive/importar/escanear/`, {
+    method: 'POST',
+    body: JSON.stringify({ folder_id: folderId || '' }),
+  });
+  return {
+    suggestedProcesses: (payload.processos_sugeridos || []).map(processSuggestionFromApi),
+    suggestedDocuments: (payload.documentos_sugeridos || []).map(documentSuggestionFromApi),
+  };
+}
+
+export async function confirmClientDriveImport(clientId, { processes, documents }) {
+  const payload = await apiRequest(`/api/clientes/${clientId}/drive/importar/confirmar/`, {
+    method: 'POST',
+    body: JSON.stringify({
+      processos: processes.map((item) => ({
+        numero_processo: item.numeroProcesso,
+        origem_pasta_id: item.originFolderId,
+      })),
+      documentos: documents.map((item) => ({
+        drive_file_id: item.driveFileId,
+        nome: item.name,
+        mime_type: item.mimeType,
+        tamanho_bytes: item.size,
+        drive_folder_id: item.folderId,
+        link_visualizacao: item.link,
+        categoria: item.category,
+        processo_numero: item.processNumber,
+      })),
+    }),
+  });
+  return {
+    processesCreated: Number(payload.processos_criados || 0),
+    documentsCreated: Number(payload.documentos_criados || 0),
+  };
+}

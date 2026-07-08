@@ -407,17 +407,30 @@ export function ClientFormPage() {
   );
 }
 
+const PAST_EVENTS_PAGE_SIZE = 5;
+
 export function ClientDetailPage() {
   const params = useParams();
   const { clients, events, processes } = useAppState();
   const client = clients.find((item) => item.id === params.clientId) || null;
+  const [showAllPastEvents, setShowAllPastEvents] = useState(false);
+  const [now] = useState(() => Date.now());
 
   if (!client) {
     return <NotFoundState title="Cliente não encontrado." />;
   }
 
   const relatedProcesses = processes.filter((process) => process.clientId === client.id);
-  const relatedEvents = events.filter((event) => event.clientId === client.id);
+  const clientEvents = events.filter((event) => event.clientId === client.id);
+  const upcomingEvents = clientEvents
+    .filter((event) => event.start && new Date(event.start).getTime() >= now)
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
+  const pastEvents = clientEvents
+    .filter((event) => !event.start || new Date(event.start).getTime() < now)
+    .sort((a, b) => new Date(b.start) - new Date(a.start));
+  const visiblePastEvents = showAllPastEvents ? pastEvents : pastEvents.slice(0, PAST_EVENTS_PAGE_SIZE);
+  const relatedEvents = [...upcomingEvents, ...visiblePastEvents];
+  const hiddenPastEventsCount = pastEvents.length - visiblePastEvents.length;
 
   return (
     <>
@@ -526,7 +539,10 @@ export function ClientDetailPage() {
               <div className="section-head">
                 <div>
                   <h2 className="section-title">Compromissos</h2>
-                  <p className="section-note">{formatCount(relatedEvents.length)}</p>
+                  <p className="section-note">
+                    {formatCount(upcomingEvents.length)} próximo{upcomingEvents.length === 1 ? '' : 's'}
+                    {pastEvents.length ? ` · ${formatCount(pastEvents.length)} anterior${pastEvents.length === 1 ? '' : 'es'}` : ''}
+                  </p>
                 </div>
               </div>
 
@@ -555,6 +571,11 @@ export function ClientDetailPage() {
                   />
                 )}
               </div>
+              {hiddenPastEventsCount > 0 && (
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAllPastEvents(true)}>
+                  Ver mais {formatCount(hiddenPastEventsCount)} anterior{hiddenPastEventsCount === 1 ? '' : 'es'}
+                </button>
+              )}
             </section>
 
             <section className="surface section-card">

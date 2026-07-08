@@ -10,6 +10,7 @@
 @import url("./components/appearance.css");
 @import url("./components/loading.css");
 @import url("./components/notifications.css");
+@import url("./components/import-wizard.css");
 @import url("./utilities/helpers.css");
 @import url("./utilities/responsive.css");
 @import url("./pages/meetings.css");

@@ -69,6 +69,93 @@ class AgendaIntegrationViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         sync_agenda.assert_not_called()
 
+    @patch("agenda.views.sync_agenda")
+    def test_listagem_filtra_por_cliente_id(self, sync_agenda):
+        outro_cliente = Cliente.objects.create(
+            nome="Outro Cliente",
+            email="outro@example.com",
+            telefone="11988888888",
+            cpf="987.654.321-00",
+            tipo_cliente="esporadico",
+        )
+        outro_processo = Processo.objects.create(
+            numero_processo="0007654-56.2026.8.26.0001",
+            cliente=outro_cliente,
+            descricao="Processo",
+            vara="1a Vara",
+            area_juridica="Civel",
+            status="Ativo",
+            advogado_responsavel=self.usuario.nome,
+        )
+        Evento.objects.create(
+            titulo="Audiencia cliente",
+            tipo_evento="Audiencia",
+            prioridade="Alta",
+            data_inicio="2026-06-23T09:00:00-03:00",
+            data_fim="2026-06-23T10:00:00-03:00",
+            cliente=self.cliente,
+            processo=self.processo,
+            status="Agendado",
+            criado_por=self.usuario.nome,
+            local="Forum",
+        )
+        Evento.objects.create(
+            titulo="Audiencia outro cliente",
+            tipo_evento="Audiencia",
+            prioridade="Alta",
+            data_inicio="2026-06-24T09:00:00-03:00",
+            data_fim="2026-06-24T10:00:00-03:00",
+            cliente=outro_cliente,
+            processo=outro_processo,
+            status="Agendado",
+            criado_por=self.usuario.nome,
+            local="Forum",
+        )
+
+        response = self.client.get(reverse("listar_eventos"), {"cliente_id": self.cliente.pk})
+
+        self.assertEqual(response.status_code, 200)
+        eventos = response.json()["dados"]["eventos"]
+        self.assertEqual(len(eventos), 1)
+        self.assertEqual(eventos[0]["cliente_id"], str(self.cliente.pk))
+
+    @patch("agenda.views.sync_agenda")
+    def test_listagem_filtra_por_janela_de_data(self, sync_agenda):
+        Evento.objects.create(
+            titulo="Fora da janela",
+            tipo_evento="Audiencia",
+            prioridade="Alta",
+            data_inicio="2026-01-01T09:00:00-03:00",
+            data_fim="2026-01-01T10:00:00-03:00",
+            cliente=self.cliente,
+            processo=self.processo,
+            status="Agendado",
+            criado_por=self.usuario.nome,
+            local="Forum",
+        )
+        Evento.objects.create(
+            titulo="Dentro da janela",
+            tipo_evento="Audiencia",
+            prioridade="Alta",
+            data_inicio="2026-06-23T09:00:00-03:00",
+            data_fim="2026-06-23T10:00:00-03:00",
+            cliente=self.cliente,
+            processo=self.processo,
+            status="Agendado",
+            criado_por=self.usuario.nome,
+            local="Forum",
+        )
+
+        response = self.client.get(
+            reverse("listar_eventos"),
+            {"data_inicio": "2026-06-01T00:00:00-03:00", "data_fim": "2026-06-30T23:59:59-03:00"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        eventos = response.json()["dados"]["eventos"]
+        self.assertEqual(len(eventos), 1)
+        self.assertEqual(eventos[0]["titulo"], "Dentro da janela")
+
     @patch("agenda.views.sync_local_event", return_value=1)
     def test_criar_evento_sincroniza_por_backend_e_expoe_status(self, sync_local_event):
         response = self.client.post(

@@ -1,6 +1,7 @@
 import logging
 
 from django.shortcuts import get_object_or_404
+from django.utils.dateparse import parse_datetime
 
 from agenda.forms import EventoForm
 from agenda.models import Evento
@@ -100,9 +101,9 @@ def serialize_evento(evento: Evento):
         "tipo_evento": evento.tipo_evento,
         "status": evento.status,
         "prioridade": evento.prioridade,
-        "cliente_id": str(evento.cliente_id),
+        "cliente_id": str(evento.cliente_id) if evento.cliente_id else "",
         "cliente_nome": cliente_nome,
-        "processo_id": str(evento.processo_id),
+        "processo_id": str(evento.processo_id) if evento.processo_id else "",
         "processo_numero": processo_numero,
         "responsavel": str(evento.responsavel_id) if evento.responsavel_id else "",
         "responsavel_nome": responsavel_nome,
@@ -149,9 +150,21 @@ def listar_eventos(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    eventos = (
-        _eventos_compromisso_queryset().select_related("cliente", "processo", "responsavel").all()
-    )
+    eventos = _eventos_compromisso_queryset().select_related("cliente", "processo", "responsavel")
+
+    cliente_id = request.GET.get("cliente_id")
+    if cliente_id:
+        eventos = eventos.filter(cliente_id=cliente_id)
+
+    data_inicio = parse_datetime(request.GET.get("data_inicio") or "")
+    if data_inicio:
+        eventos = eventos.filter(data_inicio__gte=data_inicio)
+
+    data_fim = parse_datetime(request.GET.get("data_fim") or "")
+    if data_fim:
+        eventos = eventos.filter(data_inicio__lte=data_fim)
+
+    eventos = eventos.order_by("data_inicio")
     serialized = [serialize_evento(evento) for evento in eventos]
     return resposta_sucesso({"eventos": serialized})
 
