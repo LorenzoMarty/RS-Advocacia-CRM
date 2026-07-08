@@ -283,6 +283,64 @@ class GoogleCalendarSyncTests(TestCase):
         service.events.return_value.insert.assert_not_called()
 
     @patch("integrations.google.calendar.calendar_service")
+    def test_evento_importado_sem_correspondencia_fica_sem_cliente_e_processo(
+        self, calendar_service
+    ):
+        """Compromisso pessoal do Google Calendar não vira um cliente/processo fake.
+
+        Antes de 2026-07, todo item importado sem par local era preso a um
+        cliente e processo técnicos sintéticos ("Google Agenda" /
+        "GOOGLE-CALENDAR"), o que fazia esse cliente acumular dezenas de
+        compromissos sem nenhuma relação real com ele.
+        """
+        # Remove o evento local do setUp: aqui o interesse é isolado no
+        # comportamento de importação, não na exportação de eventos locais
+        # (já coberta por outros testes desta classe).
+        self.evento.delete()
+
+        service = MagicMock()
+        calendar_service.return_value = service
+        clientes_antes = Cliente.objects.count()
+        service.events.return_value.list.return_value.execute.return_value = {
+            "items": [
+                {
+                    "id": "remote-personal",
+                    "status": "confirmed",
+                    "summary": "Dentista",
+                    "description": "",
+                    "location": "",
+                    "updated": "2026-06-24T12:00:00Z",
+                    "start": {"dateTime": "2026-06-24T14:00:00-03:00"},
+                    "end": {"dateTime": "2026-06-24T15:00:00-03:00"},
+                }
+            ],
+            "nextSyncToken": "token",
+        }
+        # O evento recém-importado pode não bater o hash local exatamente após
+        # o round-trip de timezone, então o sync tenta sincronizá-lo de volta
+        # ao Google na mesma rodada (comportamento pré-existente do export).
+        remote_response = {
+            "id": "remote-personal",
+            "etag": "etag-1",
+            "updated": "2026-06-24T12:00:00Z",
+        }
+        service.events.return_value.insert.return_value.execute.return_value = (
+            remote_response
+        )
+        service.events.return_value.update.return_value.execute.return_value = (
+            remote_response
+        )
+
+        result = sync_agenda(self.usuario)
+
+        self.assertEqual(result["importados"], 1)
+        importado = Evento.objects.get(titulo="Dentista")
+        self.assertIsNone(importado.cliente_id)
+        self.assertIsNone(importado.processo_id)
+        # Não deve mais criar um cliente/processo técnico para abrigar o evento.
+        self.assertEqual(Cliente.objects.count(), clientes_antes)
+
+    @patch("integrations.google.calendar.calendar_service")
     def test_delete_no_google_remove_evento_interno(self, calendar_service):
         GoogleEventLink.objects.create(
             calendar=self.calendar,
