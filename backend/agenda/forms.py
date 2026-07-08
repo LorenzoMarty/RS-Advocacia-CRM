@@ -120,11 +120,16 @@ class EventoForm(forms.ModelForm):
         if isinstance(cliente_field, forms.ModelChoiceField):
             cliente_field.empty_label = "Selecione o cliente"
             cliente_field.queryset = cliente_field.queryset.order_by("nome")
+            # O model permite null (evento importado do Google Calendar sem
+            # cliente/processo correspondente), mas a criação manual pela UI
+            # continua exigindo os dois.
+            cliente_field.required = True
 
         if isinstance(processo_field, forms.ModelChoiceField):
             processo_field.empty_label = "Selecione o processo"
             processo_field.queryset = processo_field.queryset.select_related(
                 "cliente"
             ).order_by("numero_processo")
+            processo_field.required = True
 
         self.fields["responsavel"].queryset = Usuario.objects.order_by("nome")

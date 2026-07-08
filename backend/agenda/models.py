@@ -12,8 +12,15 @@ class Evento(models.Model):
     tipo_evento = models.CharField(max_length=50)
     status = models.CharField(max_length=50)
     prioridade = models.CharField(max_length=50)
-    cliente = models.ForeignKey("clientes.Cliente", on_delete=models.CASCADE)
-    processo = models.ForeignKey("processos.Processo", on_delete=models.CASCADE)
+    # Nullable: eventos importados do Google Calendar que não correspondem a
+    # nenhum cliente/processo real ficam soltos (compromisso geral da agenda),
+    # em vez de presos a um cliente/processo técnico sintético.
+    cliente = models.ForeignKey(
+        "clientes.Cliente", on_delete=models.CASCADE, null=True, blank=True
+    )
+    processo = models.ForeignKey(
+        "processos.Processo", on_delete=models.CASCADE, null=True, blank=True
+    )
     responsavel = models.ForeignKey(
         "usuarios.Usuario",
         on_delete=models.SET_NULL,
@@ -40,4 +47,5 @@ class Evento(models.Model):
             )
 
     def __str__(self):
-        return f"{self.processo.numero_processo} - {self.data_inicio.strftime('%Y-%m-%d %H:%M')}"
+        numero = self.processo.numero_processo if self.processo_id else "sem processo"
+        return f"{numero} - {self.data_inicio.strftime('%Y-%m-%d %H:%M')}"

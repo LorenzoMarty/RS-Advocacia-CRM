@@ -12,14 +12,17 @@ from django.utils.dateparse import parse_date, parse_datetime
 from googleapiclient.errors import HttpError
 
 from agenda.models import Evento
-from clientes.models import Cliente
 from integrations.google.client import account_for_usuario, calendar_service
 from integrations.google.exceptions import GoogleApiError
 from integrations.models import GoogleCalendar, GoogleEventLink
-from processos.models import Processo
 
 logger = logging.getLogger(__name__)
 
+# Nome/numero do cliente e processo tecnicos sinteticos usados ate 2026-07 para
+# prender eventos importados sem correspondencia local. Mantidos aqui so como
+# referencia para a limpeza de dados legados (ver
+# agenda/management/commands/limpar_evento_sync_tecnico.py); eventos novos nao
+# usam mais esse padrao (ver _create_imported_event).
 SYNC_CLIENT_NAME = "Google Agenda"
 SYNC_PROCESS_NUMBER = "GOOGLE-CALENDAR"
 RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
@@ -235,41 +238,21 @@ def _remote_fields(item: dict) -> dict | None:
     }
 
 
-def _technical_process(usuario) -> Processo:
-    cliente = Cliente.objects.filter(nome=SYNC_CLIENT_NAME).first()
-    if cliente is None:
-        cliente = Cliente.objects.create(
-            nome=SYNC_CLIENT_NAME,
-            email="google-calendar@example.com",
-            telefone="00000000000",
-            cpf="000.000.000-00",
-            tipo_cliente="esporadico",
-            obs="Cliente tecnico para sincronizacao Google.",
-        )
-    processo = Processo.objects.filter(numero_processo=SYNC_PROCESS_NUMBER).first()
-    if processo is None:
-        processo = Processo.objects.create(
-            numero_processo=SYNC_PROCESS_NUMBER,
-            cliente=cliente,
-            descricao="Processo tecnico do Google Calendar.",
-            vara="Google Calendar",
-            area_juridica="Administrativo",
-            status="Ativo",
-            advogado_responsavel=(getattr(usuario, "nome", "") or "Google Calendar")[
-                :100
-            ],
-        )
-    return processo
-
-
 def _create_imported_event(usuario, item: dict) -> Evento | None:
+    """Create a local Evento mirroring a Google Calendar item with no local match.
+
+    Left without ``cliente``/``processo`` (both nullable) — it's a generic
+    calendar entry, not necessarily tied to any client's process. Prior to
+    2026-07, these were force-attached to a synthetic "Google Agenda"
+    cliente/processo pair, which made every unmatched calendar entry show up
+    as if it were a real client's compromisso.
+    """
     fields = _remote_fields(item)
     if fields is None:
         return None
-    processo = _technical_process(usuario)
     return Evento.objects.create(
-        cliente=processo.cliente,
-        processo=processo,
+        cliente=None,
+        processo=None,
         tipo_evento="Reuniao",
         status="Agendado",
         prioridade="Media",
