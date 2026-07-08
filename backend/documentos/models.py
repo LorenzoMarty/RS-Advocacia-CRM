@@ -64,6 +64,13 @@ class DocumentoCliente(models.Model):
         on_delete=models.CASCADE,
         related_name="documentos",
     )
+    processo = models.ForeignKey(
+        "processos.Processo",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documentos",
+    )
     categoria = models.CharField(
         max_length=20,
         choices=CATEGORIA_CHOICES,
@@ -123,11 +130,31 @@ class PastaGerenciada(models.Model):
         return f"{self.ordem}. {self.nome_base}"
 
 
+class ProcessoDrive(models.Model):
+    """Cache of the Drive folder id for a process, keyed by process pk.
+
+    Mirrors :class:`ClienteDrive`. Replaces the previous by-name lookup of the
+    process folder (fragile to renames) with a persisted id.
+    """
+
+    processo = models.OneToOneField(
+        "processos.Processo",
+        on_delete=models.CASCADE,
+        related_name="drive",
+    )
+    pasta_id = models.CharField(max_length=255)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Drive de {self.processo.numero_processo}"
+
+
 def serialize_documento(documento: DocumentoCliente):
     return {
         "id": str(documento.pk),
         "pk": documento.pk,
         "cliente": str(documento.cliente_id),
+        "processo_id": str(documento.processo_id) if documento.processo_id else "",
         "categoria": documento.categoria,
         "nome": documento.nome,
         "mime_type": documento.mime_type,

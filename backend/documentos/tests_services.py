@@ -4,7 +4,12 @@ from django.test import TestCase, override_settings
 
 from clientes.models import Cliente
 from documentos import services
-from documentos.models import ClienteDrive, DocumentoCliente, PastaGerenciada
+from documentos.models import (
+    ClienteDrive,
+    DocumentoCliente,
+    PastaGerenciada,
+    ProcessoDrive,
+)
 from integrations.google.exceptions import GoogleConfigurationError
 from processos.models import Processo
 
@@ -330,9 +335,7 @@ class PastaNumeradaTests(TestCase):
             {"id": "f3", "name": "3. C"},
         ]
         for nome in ("A", "B", "C"):
-            services.criar_pasta(
-                "user", self.cliente, nome=nome, parent_id="parent"
-            )
+            services.criar_pasta("user", self.cliente, nome=nome, parent_id="parent")
 
         nomes = [c.args[1] for c in mock_drive.create_folder.call_args_list]
         self.assertEqual(nomes, ["1. A", "2. B", "3. C"])
@@ -422,25 +425,13 @@ class RenameSyncTests(TestCase):
 
     @patch("documentos.services.drive_service")
     @patch("documentos.services.drive")
-    def test_renomear_pasta_processo_renames_by_old_name(
+    def test_renomear_pasta_processo_renames_via_processo_drive(
         self, mock_drive, mock_service
     ):
-        ClienteDrive.objects.create(
-            cliente=self.cliente,
-            pasta_cliente_id="cliente-folder",
-            pasta_peticoes_id="",
-            pasta_documentos_id="",
-            pasta_outros_id="",
-        )
         processo = _processo(self.cliente, area="Trabalhista", numero="0001234-56.2026")
-        mock_drive.list_folders.return_value = [
-            {"id": "p-old", "name": "Cível - 0001234-56.2026"},
-            {"id": "other", "name": "Outra"},
-        ]
+        ProcessoDrive.objects.create(processo=processo, pasta_id="p-old")
 
-        services.renomear_pasta_processo(
-            "user", processo, "Cível - 0001234-56.2026"
-        )
+        services.renomear_pasta_processo("user", processo, "Cível - 0001234-56.2026")
 
         mock_drive.rename_file.assert_called_once_with(
             mock_service.return_value, "p-old", "Trabalhista - 0001234-56.2026"
@@ -448,17 +439,22 @@ class RenameSyncTests(TestCase):
 
     @patch("documentos.services.drive_service")
     @patch("documentos.services.drive")
+    def test_renomear_pasta_processo_noop_without_processo_drive(
+        self, mock_drive, mock_service
+    ):
+        processo = _processo(self.cliente, area="Trabalhista", numero="0001234-56.2026")
+
+        services.renomear_pasta_processo("user", processo, "Cível - 0001234-56.2026")
+
+        mock_drive.rename_file.assert_not_called()
+
+    @patch("documentos.services.drive_service")
+    @patch("documentos.services.drive")
     def test_renomear_pasta_processo_noop_when_name_unchanged(
         self, mock_drive, mock_service
     ):
-        ClienteDrive.objects.create(
-            cliente=self.cliente,
-            pasta_cliente_id="cliente-folder",
-            pasta_peticoes_id="",
-            pasta_documentos_id="",
-            pasta_outros_id="",
-        )
         processo = _processo(self.cliente, area="Cível", numero="0001234-56.2026")
+        ProcessoDrive.objects.create(processo=processo, pasta_id="p-old")
 
         services.renomear_pasta_processo("user", processo, "Cível - 0001234-56.2026")
 

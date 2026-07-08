@@ -20,7 +20,7 @@ from integrations.google import drive
 from integrations.google.client import drive_service
 from integrations.google.exceptions import GoogleConfigurationError
 
-from .models import ClienteDrive, DocumentoCliente, PastaGerenciada
+from .models import ClienteDrive, DocumentoCliente, PastaGerenciada, ProcessoDrive
 
 # Subfolders created under every client folder, in display order.
 SUBPASTAS = ("Petições", "Documentos", "Outros")
@@ -235,11 +235,9 @@ def ensure_client_template(usuario, cliente) -> str:
         drive.ensure_folder(service, nome, pasta_cliente_id)
 
     for processo in Processo.objects.filter(cliente=cliente):
-        pasta_processo_id = drive.ensure_folder(
-            service, _nome_pasta_processo(processo), pasta_cliente_id
-        )
+        pasta_id = pasta_processo_id(usuario, processo)
         for subpasta in PROCESSO_SUBPASTAS:
-            drive.ensure_folder(service, subpasta, pasta_processo_id)
+            drive.ensure_folder(service, subpasta, pasta_id)
 
     return pasta_cliente_id
 
@@ -358,11 +356,25 @@ def pasta_peticoes_cliente(usuario, cliente) -> str:
 
 
 def pasta_processo_id(usuario, processo) -> str:
-    """Find-or-create the Drive folder of ``processo`` under its client; return id."""
+    """Find-or-create the Drive folder of ``processo`` under its client; return id.
+
+    Cached in :class:`ProcessoDrive` keyed by ``processo.pk`` so renaming the
+    process (and thus its display name) never orphans the folder reference.
+    """
+    registro = ProcessoDrive.objects.filter(processo=processo).first()
+    if registro and registro.pasta_id:
+        return registro.pasta_id
+
     service, pasta_cliente_id = _ensure_cliente_root(usuario, processo.cliente)
-    return drive.ensure_folder(
+    pasta_id = drive.ensure_folder(
         service, _nome_pasta_processo(processo), pasta_cliente_id
     )
+    if registro:
+        registro.pasta_id = pasta_id
+        registro.save(update_fields=["pasta_id"])
+    else:
+        ProcessoDrive.objects.create(processo=processo, pasta_id=pasta_id)
+    return pasta_id
 
 
 def pasta_peticoes_processo(usuario, processo) -> str:
@@ -424,22 +436,20 @@ def renomear_pasta_cliente(usuario, cliente, novo_nome: str) -> None:
 
 
 def renomear_pasta_processo(usuario, processo, nome_antigo: str) -> None:
-    """Rename the process Drive folder from ``nome_antigo`` to its current name.
+    """Rename the process Drive folder to match ``processo``'s current name.
 
-    Locates the folder by its previous display name under the client root; no-op
-    when the client has no Drive folder or the old folder is absent.
+    Locates the folder via the persisted :class:`ProcessoDrive` id (no longer a
+    by-name search); no-op when the process has no Drive folder yet or the
+    computed name already matches ``nome_antigo``.
     """
-    pasta_cliente_id = _client_root_id(processo.cliente)
-    if not pasta_cliente_id:
+    registro = ProcessoDrive.objects.filter(processo=processo).first()
+    if not registro or not registro.pasta_id:
         return
-    service = drive_service(usuario)
     novo_nome = _nome_pasta_processo(processo)
     if novo_nome == nome_antigo:
         return
-    for pasta in drive.list_folders(service, pasta_cliente_id):
-        if pasta.get("name") == nome_antigo:
-            drive.rename_file(service, pasta["id"], novo_nome)
-            return
+    service = drive_service(usuario)
+    drive.rename_file(service, registro.pasta_id, novo_nome)
 
 
 def upload_para_pasta(
