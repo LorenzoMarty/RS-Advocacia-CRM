@@ -1,27 +1,47 @@
-"""Drive import: scan an existing client folder and suggest processo/document links.
+"""Drive import: bulk-onboard clients, then scan a client folder for processos/docs.
 
-Addresses the onboarding gap where a client already has a Google Drive folder
-mixing personal documents and legal-process files, with nothing in the system
-tying them to a ``Processo`` or categorizing them. The flow is:
+Addresses the onboarding gap where the firm's Google Drive already has a
+"Clientes" tree (one top-level folder per client, processo subfolders inside)
+predating the CRM, with nothing in the system tying folders to clients,
+processos or documents. Two flows:
 
-1. :func:`escanear_arvore` walks the Drive tree read-only (bounded, no writes).
-2. :func:`sugerir_plano` runs the CNJ/CPF-CNPJ/keyword heuristics over the tree
-   and proposes processos and document categories — still read-only.
-3. A human reviews/edits the suggestions in the UI, then
-   :func:`confirmar_importacao` persists the reviewed plan (transactional,
-   idempotent on ``numero_processo`` and ``drive_file_id``).
+Bulk client discovery (root of the "Clientes" tree)
+    1. :func:`descobrir_clientes_novos` lists top-level Drive folders not yet
+       linked to a ``ClienteDrive`` — read-only.
+    2. A human reviews/approves the candidates, then
+       :func:`criar_clientes_a_partir_de_pastas` creates a ``Cliente`` per
+       approved folder, links the existing folder id immediately (so future
+       uploads land there instead of a new folder), and auto-detects that
+       client's processos via the per-client scan below.
+
+Per-client scan (existing client, folder may predate or postdate the CRM)
+    1. :func:`escanear_arvore` walks the Drive tree read-only (bounded, no writes).
+    2. :func:`sugerir_plano` runs the CNJ/CPF-CNPJ/keyword heuristics over the tree
+       and proposes processos and document categories — still read-only.
+    3. A human reviews/edits the suggestions in the UI, then
+       :func:`confirmar_importacao` persists the reviewed plan (transactional,
+       idempotent on ``numero_processo`` and ``drive_file_id``).
+
+Periodic sync (``documentos.tasks.sincronizar_drive``, no human in the loop)
+    :func:`sincronizar_pasta_conhecida` re-runs the per-client scan for a
+    folder the periodic Drive-changes task saw mutate, but only if that folder
+    is already part of a tree the CRM owns (a client's or a processo's linked
+    folder) — it never guesses at unrelated Drive content.
 """
 
 from __future__ import annotations
 
 from django.db import transaction
+from django.db.models import Q
 
+from clientes.models import Cliente
 from core.br_identifiers import classificar_por_palavras, extrair_cnj, extrair_cpf_cnpj
 from integrations.google import drive
 from integrations.google.client import drive_service
 from processos.models import Processo
 
-from .models import DocumentoCliente, ProcessoDrive
+from . import services
+from .models import ClienteDrive, DocumentoCliente, ProcessoDrive
 
 # Safety bounds: a personal Drive folder scan must not run away on a huge or
 # accidentally-shared tree.
@@ -209,3 +229,117 @@ def confirmar_importacao(
         "processos": list(numero_para_processo.values()),
         "documentos": documentos_criados,
     }
+
+
+def descobrir_clientes_novos(usuario) -> list[dict]:
+    """List top-level folders under the Drive "Clientes" root with no client yet.
+
+    Read-only. A folder already linked to a :class:`ClienteDrive` (matched by
+    id, so renames don't re-surface it) is excluded, whatever its current name.
+    """
+    service = drive_service(usuario)
+    root_id = services._root_folder_id()
+    vinculadas = set(ClienteDrive.objects.values_list("pasta_cliente_id", flat=True))
+
+    return [
+        {"pasta_id": pasta["id"], "nome": pasta.get("name", "")}
+        for pasta in drive.list_folders(service, root_id)
+        if pasta["id"] not in vinculadas
+    ]
+
+
+@transaction.atomic
+def criar_clientes_a_partir_de_pastas(usuario, pastas: list[dict]) -> list[Cliente]:
+    """Bulk-create clients from approved top-level Drive folder candidates.
+
+    Each ``Cliente`` is created with only ``nome`` filled in — CPF, phone and
+    email are completed later by the lawyer — but the Drive folder is linked
+    by id immediately (no new folder is created), so uploads and processo
+    detection use the client's existing tree from the start. For each new
+    client this also runs the per-client scan/suggest/confirm flow to
+    auto-create its processos (documents are left for the reviewed per-client
+    wizard, since categorization there benefits from a human pass).
+
+    Idempotent: a ``pasta_id`` already linked to a client (either from a
+    previous call or a race) is skipped rather than duplicated.
+    """
+    ja_vinculadas = set(ClienteDrive.objects.values_list("pasta_cliente_id", flat=True))
+    service = drive_service(usuario)
+    criados: list[Cliente] = []
+
+    for item in pastas:
+        pasta_id = (item.get("pasta_id") or "").strip()
+        nome = (item.get("nome") or "").strip()
+        if not pasta_id or not nome or pasta_id in ja_vinculadas:
+            continue
+
+        cliente = Cliente.objects.create(nome=nome)
+        ClienteDrive.objects.create(
+            cliente=cliente,
+            pasta_cliente_id=pasta_id,
+            pasta_peticoes_id=drive.ensure_folder(service, "Petições", pasta_id),
+            pasta_documentos_id=drive.ensure_folder(service, "Documentos", pasta_id),
+            pasta_outros_id=drive.ensure_folder(service, "Outros", pasta_id),
+        )
+        ja_vinculadas.add(pasta_id)
+        criados.append(cliente)
+
+        arvore = escanear_arvore(usuario, pasta_id)
+        plano = sugerir_plano(arvore, cliente)
+        confirmar_importacao(cliente, plano["processos_sugeridos"], [])
+
+    return criados
+
+
+def _cliente_para_pasta_conhecida(pasta_id: str) -> Cliente | None:
+    """Resolve a Drive folder id to the client that already owns it, if any.
+
+    Matches the client's own tracked folders (root or any subfolder in
+    :class:`ClienteDrive`) or a processo's linked folder
+    (:class:`ProcessoDrive`). Returns ``None`` for anything outside a tree the
+    CRM already knows about.
+    """
+    cliente_drive = (
+        ClienteDrive.objects.filter(
+            Q(pasta_cliente_id=pasta_id)
+            | Q(pasta_peticoes_id=pasta_id)
+            | Q(pasta_documentos_id=pasta_id)
+            | Q(pasta_outros_id=pasta_id)
+            | Q(pasta_reunioes_id=pasta_id)
+        )
+        .select_related("cliente")
+        .first()
+    )
+    if cliente_drive:
+        return cliente_drive.cliente
+
+    processo_drive = (
+        ProcessoDrive.objects.filter(pasta_id=pasta_id)
+        .select_related("processo__cliente")
+        .first()
+    )
+    if processo_drive:
+        return processo_drive.processo.cliente
+
+    return None
+
+
+def sincronizar_pasta_conhecida(usuario, pasta_id: str) -> dict | None:
+    """Re-scan ``pasta_id`` if it's already part of a client tree the CRM owns.
+
+    Used by the periodic Drive sync (no human review): unlike
+    :func:`confirmar_importacao`'s normal caller, this auto-confirms both
+    processos and documentos, since the client/processo ownership of
+    ``pasta_id`` is already established (not a fresh guess from a bare folder
+    name). Returns ``None`` — and does nothing — if ``pasta_id`` isn't linked
+    to any client or processo yet.
+    """
+    cliente = _cliente_para_pasta_conhecida(pasta_id)
+    if cliente is None:
+        return None
+
+    arvore = escanear_arvore(usuario, pasta_id)
+    plano = sugerir_plano(arvore, cliente)
+    return confirmar_importacao(
+        cliente, plano["processos_sugeridos"], plano["documentos_sugeridos"]
+    )

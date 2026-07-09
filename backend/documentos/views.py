@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
 from clientes.models import Cliente
+from clientes.views import serialize_cliente
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -456,4 +457,55 @@ def confirmar_importacao_view(request, cliente_id):
             "documentos_criados": len(resultado["documentos"]),
         },
         mensagem="Importação concluída.",
+    )
+
+
+# --- Bulk client discovery (scan "Clientes" root -> suggest -> confirm) ----
+
+
+@app_permissions_required("clientes.add_cliente")
+def descobrir_clientes_view(request):
+    if request.method != "GET":
+        return metodo_nao_permitido(["GET"])
+
+    usuario = current_usuario(request)
+    try:
+        candidatos = importacao.descobrir_clientes_novos(usuario)
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+
+    return resposta_sucesso({"candidatos": candidatos})
+
+
+@app_permissions_required("clientes.add_cliente", "processos.add_processo")
+def confirmar_clientes_novos_view(request):
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    try:
+        corpo = ler_corpo_json(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    pastas = corpo.get("pastas") or []
+    if not isinstance(pastas, list):
+        return resposta_erro({"pastas": ["'pastas' deve ser uma lista."]}, status=400)
+
+    usuario = current_usuario(request)
+    try:
+        clientes = importacao.criar_clientes_a_partir_de_pastas(usuario, pastas)
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+
+    return resposta_sucesso(
+        {"clientes_criados": [serialize_cliente(cliente) for cliente in clientes]},
+        mensagem=f"{len(clientes)} cliente(s) importado(s) do Drive.",
     )

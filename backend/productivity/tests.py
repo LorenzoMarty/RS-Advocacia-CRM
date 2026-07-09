@@ -57,14 +57,14 @@ class ResumoProdutividadeTests(TestCase):
             vara="1a Vara",
             area_juridica="Civel",
             status="Ativo",
-            advogado_responsavel=self.usuario.nome,
+            advogado_responsavel=self.usuario,
         )
         self.prazo = Prazo.objects.create(
             titulo="Contestacao",
             descricao="Protocolar",
             data_limite="2026-06-23",
             processo=self.processo,
-            responsavel=self.usuario.nome,
+            responsavel=self.usuario,
         )
 
     def _entry(
@@ -205,14 +205,14 @@ class ProductivityTimerTests(TestCase):
             vara="1a Vara",
             area_juridica="Civel",
             status="Ativo",
-            advogado_responsavel=self.usuario.nome,
+            advogado_responsavel=self.usuario,
         )
         self.prazo = Prazo.objects.create(
             titulo="Prazo",
             descricao="Descricao",
             data_limite="2026-06-23",
             processo=self.processo,
-            responsavel=self.usuario.nome,
+            responsavel=self.usuario,
             status="Pendente",
             prioridade="Alta",
             criado_por=self.usuario.nome,

@@ -130,7 +130,7 @@ Troubleshooting:
 
 ## OAuth Google
 
-- O login Google e a autorizacao Calendar/Drive usam um unico fluxo backend com `openid email profile`, `https://www.googleapis.com/auth/calendar.events` e `https://www.googleapis.com/auth/drive.file`.
+- O login Google e a autorizacao Calendar/Drive usam um unico fluxo backend com `openid email profile`, `https://www.googleapis.com/auth/calendar.events` e `https://www.googleapis.com/auth/drive` (escopo completo do Drive; ver secao "Google Drive" abaixo sobre por que `drive.file` nao e suficiente).
 - O backend armazena access/refresh tokens criptografados em `integrations.GoogleAccount`; o React nunca recebe tokens Google.
 - `access_type=offline` e `prompt=consent` sao enviados no fluxo backend para obter e manter refresh token de forma previsivel.
 - Os compromissos sao enviados para os calendarios habilitados na integracao, iniciando por `GOOGLE_CALENDAR_ID`.
@@ -148,12 +148,15 @@ Troubleshooting:
 
 ### Google Drive (documentos por cliente)
 
-- O scope `drive.file` foi adicionado ao fluxo OAuth. **Usuarios ja conectados antes dessa mudanca precisam reconectar a conta Google** (`/api/autenticacao/google?force_consent=1`); sem o re-consent as chamadas ao Drive retornam 401.
+- O scope `drive` (acesso completo, nao mais `drive.file`) foi adicionado ao fluxo OAuth para permitir ler/escrever a arvore `Clientes/...` que ja existia no Drive do escritorio antes da integracao — `drive.file` so enxerga arquivos criados pelo proprio app. **Usuarios ja conectados antes dessa mudanca precisam reconectar a conta Google** (`/api/autenticacao/google?force_consent=1`); sem o re-consent as chamadas ao Drive retornam 401.
 - Defina `GOOGLE_DRIVE_ROOT_FOLDER_ID` com o ID da pasta `Clientes` no Drive (Shared Drive do escritorio ou pasta compartilhada). A pasta precisa estar compartilhada com a conta Google que grava. Sem essa variavel, os endpoints de documentos retornam 503.
 - `DRIVE_MAX_FILE_SIZE_MB` (default 25) limita o tamanho de upload.
 - Estrutura criada sob demanda: `Clientes/<Nome do Cliente>/{Peticoes,Documentos,Outros}`. Os metadados ficam espelhados no banco (`documentos.DocumentoCliente`); o Drive guarda o binario.
 - Reenviar um arquivo com o mesmo nome/categoria do cliente substitui o conteudo via `files.update` (nova revisao, mesmo arquivo) em vez de duplicar.
 - Endpoints: `GET/POST /api/clientes/<id>/documentos/...`, `GET /api/clientes/<id>/drive/estrutura/`. Detalhes em `claude/docs/2026-06-09-integracao-google-drive.md`.
+- **Importacao em massa de clientes existentes no Drive** (`documentos/importacao.py`): `GET /api/drive/importar/clientes/descobrir/` lista pastas de 1o nivel sob `GOOGLE_DRIVE_ROOT_FOLDER_ID` que ainda nao tem `Cliente` vinculado; `POST /api/drive/importar/clientes/confirmar/` (body `{"pastas": [{"pasta_id", "nome"}, ...]}`) cria um `Cliente` por pasta aprovada (so `nome` preenchido — CPF/telefone/email ficam para completar depois), vincula a pasta *existente* (nao cria uma nova) e roda a deteccao de processos por CNJ (`escanear_arvore`/`sugerir_plano`/`confirmar_importacao`, mesmo fluxo do wizard por cliente) para cada cliente novo. Documentos ficam para revisao manual no wizard por cliente (`/api/clientes/<id>/drive/importar/...`).
+- **Sincronizacao continua** (`documentos/tasks.py`, task Celery `documentos.sincronizar_drive`, agendada a cada 10 min em `jurisagenda/celery.py`): consome a Drive Changes API (`GoogleDriveSync` guarda o `startPageToken` por conta em `integrations/models.py`) e reage automaticamente — sem revisao humana, ao contrario da importacao em massa — a: pasta nova de 1o nivel em `GOOGLE_DRIVE_ROOT_FOLDER_ID` vira `Cliente` novo; mudanca dentro de uma pasta que o CRM ja conhece (cliente ou processo) reescaneia so aquela pasta; pasta movida para lixeira marca `Cliente.ativo=False` ou `Processo.status="Inativo (pasta removida do Drive)"` (nunca deleta o registro nem o arquivo no Drive).
+- Enriquecimento por IA dos campos que o nome da pasta nao da (`vara`, `area_juridica`) foi descartado por decisao do usuario — esses campos devem virar opcionais em auditoria propria dos forms, nao preenchidos por IA.
 
 ### Deploy do OAuth
 

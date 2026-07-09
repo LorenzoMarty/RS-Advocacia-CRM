@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 
 from usuarios.models import Usuario
@@ -89,6 +91,16 @@ class ProspectForm(forms.ModelForm):
             [current_prioridade],
             PRIORIDADES,
         )
+
+    def clean_telefone(self):
+        telefone = re.sub(r"\D", "", self.cleaned_data.get("telefone", ""))
+
+        if telefone and len(telefone) not in {10, 11}:
+            raise forms.ValidationError(
+                "Informe um telefone com DDD (10 ou 11 dígitos)."
+            )
+
+        return telefone
 
 
 class InteracaoForm(forms.ModelForm):

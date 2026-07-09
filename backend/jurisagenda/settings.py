@@ -198,7 +198,7 @@ WSGI_APPLICATION = "jurisagenda.wsgi.application"
 DATABASES = {
     "default": dj_database_url.parse(
         _database_url_from_env(),
-        conn_max_age=int(os.getenv("DATABASE_CONN_MAX_AGE", "0")),
+        conn_max_age=int(os.getenv("DATABASE_CONN_MAX_AGE", "60")),
         conn_health_checks=True,
     )
 }

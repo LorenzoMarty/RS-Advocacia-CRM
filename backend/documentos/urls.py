@@ -53,4 +53,14 @@ urlpatterns = [
         views.confirmar_importacao_view,
         name="confirmar_importacao",
     ),
+    path(
+        "api/drive/importar/clientes/descobrir/",
+        views.descobrir_clientes_view,
+        name="descobrir_clientes_drive",
+    ),
+    path(
+        "api/drive/importar/clientes/confirmar/",
+        views.confirmar_clientes_novos_view,
+        name="confirmar_clientes_novos_drive",
+    ),
 ]

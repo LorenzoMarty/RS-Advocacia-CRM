@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from clientes.models import Cliente
 from documentos import importacao
-from documentos.models import DocumentoCliente, ProcessoDrive
+from documentos.models import ClienteDrive, DocumentoCliente, ProcessoDrive
 from processos.models import Processo
 
 CNJ_VALIDO = "1234567-79.2024.8.13.0001"
@@ -225,3 +225,147 @@ class ConfirmarImportacaoTests(TestCase):
 
         documento = DocumentoCliente.objects.get(drive_file_id="f1")
         self.assertIsNone(documento.processo)
+
+
+class DescobrirClientesNovosTests(TestCase):
+    @patch("documentos.importacao.services._root_folder_id", return_value="raiz-clientes")
+    @patch("documentos.importacao.drive_service")
+    @patch("documentos.importacao.drive")
+    def test_lista_pastas_ainda_nao_vinculadas(
+        self, mock_drive, mock_service, mock_root
+    ):
+        mock_drive.list_folders.return_value = [
+            {"id": "pasta-nova", "name": "Maria Souza"},
+            {"id": "pasta-existente", "name": "João Silva"},
+        ]
+        cliente = _cliente()
+        ClienteDrive.objects.create(
+            cliente=cliente,
+            pasta_cliente_id="pasta-existente",
+            pasta_peticoes_id="p",
+            pasta_documentos_id="d",
+            pasta_outros_id="o",
+        )
+
+        candidatos = importacao.descobrir_clientes_novos("usuario")
+
+        self.assertEqual(
+            candidatos, [{"pasta_id": "pasta-nova", "nome": "Maria Souza"}]
+        )
+
+
+class CriarClientesAPartirDePastasTests(TestCase):
+    @patch("documentos.importacao.drive_service")
+    @patch("documentos.importacao.drive")
+    def test_cria_cliente_vincula_pasta_existente_e_detecta_processo(
+        self, mock_drive, mock_service
+    ):
+        mock_drive.ensure_folder.side_effect = (
+            lambda service, nome, parent_id: f"{parent_id}/{nome}"
+        )
+
+        def list_folders(service, parent_id):
+            if parent_id == "pasta-nova":
+                return [{"id": "sub", "name": f"Processo {CNJ_VALIDO}"}]
+            return []
+
+        def list_files(service, parent_id):
+            return []
+
+        mock_drive.list_folders.side_effect = list_folders
+        mock_drive.list_files.side_effect = list_files
+
+        clientes = importacao.criar_clientes_a_partir_de_pastas(
+            "usuario", [{"pasta_id": "pasta-nova", "nome": "Maria Souza"}]
+        )
+
+        self.assertEqual(len(clientes), 1)
+        cliente = clientes[0]
+        self.assertEqual(cliente.nome, "Maria Souza")
+        self.assertEqual(cliente.email, "")
+        drive_cliente = ClienteDrive.objects.get(cliente=cliente)
+        self.assertEqual(drive_cliente.pasta_cliente_id, "pasta-nova")
+        processo = Processo.objects.get(cliente=cliente, numero_processo=CNJ_VALIDO)
+        self.assertEqual(ProcessoDrive.objects.get(processo=processo).pasta_id, "sub")
+
+    @patch("documentos.importacao.drive_service")
+    @patch("documentos.importacao.drive")
+    def test_ignora_pasta_ja_vinculada(self, mock_drive, mock_service):
+        cliente = _cliente()
+        ClienteDrive.objects.create(
+            cliente=cliente,
+            pasta_cliente_id="pasta-existente",
+            pasta_peticoes_id="p",
+            pasta_documentos_id="d",
+            pasta_outros_id="o",
+        )
+
+        clientes = importacao.criar_clientes_a_partir_de_pastas(
+            "usuario", [{"pasta_id": "pasta-existente", "nome": "João Silva"}]
+        )
+
+        self.assertEqual(clientes, [])
+        self.assertEqual(Cliente.objects.count(), 1)
+
+
+class SincronizarPastaConhecidaTests(TestCase):
+    def test_resolve_cliente_por_pasta_cliente(self):
+        cliente = _cliente()
+        ClienteDrive.objects.create(
+            cliente=cliente,
+            pasta_cliente_id="pasta-cliente",
+            pasta_peticoes_id="p",
+            pasta_documentos_id="d",
+            pasta_outros_id="o",
+        )
+
+        self.assertEqual(
+            importacao._cliente_para_pasta_conhecida("pasta-cliente"), cliente
+        )
+
+    def test_resolve_cliente_por_pasta_processo(self):
+        cliente = _cliente()
+        processo = Processo.objects.create(
+            cliente=cliente, numero_processo=CNJ_VALIDO
+        )
+        ProcessoDrive.objects.create(processo=processo, pasta_id="pasta-processo")
+
+        self.assertEqual(
+            importacao._cliente_para_pasta_conhecida("pasta-processo"), cliente
+        )
+
+    def test_pasta_desconhecida_retorna_none(self):
+        self.assertIsNone(importacao._cliente_para_pasta_conhecida("desconhecida"))
+
+    @patch("documentos.importacao.drive_service")
+    @patch("documentos.importacao.drive")
+    def test_reescaneia_pasta_conhecida_e_confirma_automaticamente(
+        self, mock_drive, mock_service
+    ):
+        cliente = _cliente()
+        ClienteDrive.objects.create(
+            cliente=cliente,
+            pasta_cliente_id="pasta-cliente",
+            pasta_peticoes_id="p",
+            pasta_documentos_id="d",
+            pasta_outros_id="o",
+        )
+
+        def list_folders(service, parent_id):
+            if parent_id == "pasta-cliente":
+                return [{"id": "sub", "name": f"Processo {CNJ_VALIDO}"}]
+            return []
+
+        mock_drive.list_folders.side_effect = list_folders
+        mock_drive.list_files.side_effect = lambda service, parent_id: []
+
+        resultado = importacao.sincronizar_pasta_conhecida("usuario", "pasta-cliente")
+
+        self.assertIsNotNone(resultado)
+        processo = Processo.objects.get(cliente=cliente, numero_processo=CNJ_VALIDO)
+        self.assertEqual(ProcessoDrive.objects.get(processo=processo).pasta_id, "sub")
+
+    def test_pasta_nao_conhecida_retorna_none_sem_chamar_drive(self):
+        self.assertIsNone(
+            importacao.sincronizar_pasta_conhecida("usuario", "pasta-qualquer")
+        )

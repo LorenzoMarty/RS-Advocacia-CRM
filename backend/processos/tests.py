@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -11,7 +12,7 @@ from processos.models import Processo
 from usuarios.models import Usuario
 
 
-def _payload_valido(cliente, responsavel="Dra. Ana"):
+def _payload_valido(cliente, responsavel):
     return {
         "numero_processo": "0001234-55.2024.8.26.0100",
         "cliente": cliente.pk,
@@ -19,7 +20,7 @@ def _payload_valido(cliente, responsavel="Dra. Ana"):
         "vara": "1ª Vara Cível",
         "area_juridica": "Cível",
         "status": "Ativo",
-        "advogado_responsavel": responsavel,
+        "advogado_responsavel": responsavel.pk,
     }
 
 
@@ -33,21 +34,23 @@ class ProcessoFormTests(TestCase):
             email="cliente@example.com",
             obs="",
         )
-        Usuario.objects.create(
+        self.usuario = Usuario.objects.create(
             nome="Dra. Ana", email="ana@example.com", cargo="Advogado"
         )
 
     def test_form_valido(self):
-        form = ProcessoForm(_payload_valido(self.cliente))
+        form = ProcessoForm(_payload_valido(self.cliente, self.usuario))
         self.assertTrue(form.is_valid(), form.errors)
 
-    def test_form_rejeita_responsavel_fora_das_opcoes(self):
-        form = ProcessoForm(_payload_valido(self.cliente, responsavel="Inexistente"))
+    def test_form_rejeita_responsavel_inexistente(self):
+        payload = _payload_valido(self.cliente, self.usuario)
+        payload["advogado_responsavel"] = self.usuario.pk + 1000
+        form = ProcessoForm(payload)
         self.assertFalse(form.is_valid())
         self.assertIn("advogado_responsavel", form.errors)
 
     def test_form_exige_numero_processo(self):
-        payload = _payload_valido(self.cliente)
+        payload = _payload_valido(self.cliente, self.usuario)
         payload["numero_processo"] = ""
         form = ProcessoForm(payload)
         self.assertFalse(form.is_valid())
@@ -64,7 +67,7 @@ class ProcessoApiTests(TestCase):
             email="api@example.com",
             obs="",
         )
-        Usuario.objects.create(
+        self.usuario = Usuario.objects.create(
             nome="Dra. Ana", email="ana@example.com", cargo="Advogado"
         )
         self.user = get_user_model().objects.create_user(
@@ -91,7 +94,7 @@ class ProcessoApiTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.post(
             reverse("criar_processo"),
-            data=json.dumps(_payload_valido(self.cliente)),
+            data=json.dumps(_payload_valido(self.cliente, self.usuario)),
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 201, response.content)
@@ -103,12 +106,16 @@ class ProcessoApiTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.post(
             reverse("criar_processo"),
-            data=json.dumps(_payload_valido(self.cliente)),
+            data=json.dumps(_payload_valido(self.cliente, self.usuario)),
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_editar_atualiza_campo(self):
+    @patch(
+        "processos.views.documentos_tasks.renomear_pasta_processo.delay",
+        return_value=None,
+    )
+    def test_editar_atualiza_campo(self, _mock_delay):
         self._grant("change_processo")
         processo = Processo.objects.create(
             numero_processo="0001",
@@ -117,10 +124,10 @@ class ProcessoApiTests(TestCase):
             vara="1ª Vara Cível",
             area_juridica="Cível",
             status="Ativo",
-            advogado_responsavel="Dra. Ana",
+            advogado_responsavel=self.usuario,
         )
         self.client.force_login(self.user)
-        payload = _payload_valido(self.cliente)
+        payload = _payload_valido(self.cliente, self.usuario)
         payload["status"] = "Concluído"
         response = self.client.put(
             reverse("editar_processo", args=[processo.pk]),
@@ -140,7 +147,7 @@ class ProcessoApiTests(TestCase):
             vara="1ª Vara Cível",
             area_juridica="Cível",
             status="Ativo",
-            advogado_responsavel="Dra. Ana",
+            advogado_responsavel=self.usuario,
         )
         self.client.force_login(self.user)
         response = self.client.delete(reverse("excluir_processo", args=[processo.pk]))

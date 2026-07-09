@@ -2,6 +2,8 @@ import re
 
 from django import forms
 
+from core.br_identifiers import validar_cpf_cnpj
+
 from .models import Cliente
 
 
@@ -33,4 +35,17 @@ class ClienteForm(forms.ModelForm):
                 "Informe um CPF com 11 dígitos ou um CNPJ com 14 dígitos."
             )
 
+        if not validar_cpf_cnpj(cpf):
+            raise forms.ValidationError("CPF ou CNPJ inválido.")
+
         return cpf
+
+    def clean_telefone(self):
+        telefone = re.sub(r"\D", "", self.cleaned_data.get("telefone", ""))
+
+        if len(telefone) not in {10, 11}:
+            raise forms.ValidationError(
+                "Informe um telefone com DDD (10 ou 11 dígitos)."
+            )
+
+        return telefone

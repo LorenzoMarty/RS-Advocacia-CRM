@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +23,8 @@ import {
   formatDate,
   formatTime,
   formatDocument,
+  formatPhone,
+  stripPhone,
   getClientTypeLabel,
   getStatusTone,
   normalizeText,
@@ -31,6 +33,7 @@ import {
 import { Select } from '../components/select';
 import { ComboField, EmptyState, Field, NotFoundState } from './common';
 import { ClientDocuments } from '../components/client-documents';
+import { ClientDriveDiscoveryWizard } from '../components/client-drive-discovery-wizard';
 
 const columnHelper = createColumnHelper();
 
@@ -42,7 +45,10 @@ const clientSchema = z.object({
   ),
   clientType: z.enum(['esporadico', 'mensalista']),
   partner: z.string().optional(),
-  phone: z.string().min(1, 'Informe o telefone.'),
+  phone: z.string().min(1, 'Informe o telefone.').refine(
+    (val) => stripPhone(val).length >= 10,
+    'Informe um telefone com DDD (10 ou 11 dígitos).',
+  ),
   email: z.string().min(1, 'Informe o e-mail.').email('E-mail inválido.'),
   notes: z.string(),
 });
@@ -60,12 +66,48 @@ const SORT_ICONS = {
   ),
 };
 
+const ClientRow = memo(function ClientRow({ client, processCount, onDelete }) {
+  return (
+    <Motion.article className="client-row" variants={staggerItem}>
+      <div className="client-avatar" aria-hidden="true">{client.name.slice(0, 1).toUpperCase()}</div>
+
+      <div className="client-main">
+        <h2 className="client-name">{client.name}</h2>
+        <span className={`client-tier client-tier-${client.clientType}`}>{getClientTypeLabel(client.clientType)}</span>
+        {client.ativo === false ? (
+          <span className="client-tier client-tier-inativo">Inativo (Drive)</span>
+        ) : null}
+        <span className="client-doc">{documentLabel(client.document)} {formatDocument(client.document)}</span>
+      </div>
+
+      <div className="client-contact">
+        <div className="contact-stack">
+          <a className="contact-link" href={`mailto:${client.email}`}>{client.email}</a>
+          <a className="contact-link" href={`tel:${client.phone}`}>{client.phone}</a>
+        </div>
+      </div>
+
+      <div className="client-volume">
+        <strong className="volume-number">{processCount}</strong>
+        <span className="volume-label">processo{processCount === 1 ? '' : 's'}</span>
+      </div>
+
+      <div className="client-actions">
+        <Link className="action-link" to={`/clientes/${client.id}`}>Ver</Link>
+        <Link className="action-link" to={`/clientes/${client.id}/editar`}>Editar</Link>
+        <button className="action-link action-link-danger" type="button" onClick={() => onDelete(client)}>Excluir</button>
+      </div>
+    </Motion.article>
+  );
+});
+
 export function ClientsListPage() {
   const { clients, deleteClient, processes } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
   const [clientType, setClientType] = useState('todos');
   const [sorting, setSorting] = useState([]);
+  const [discovering, setDiscovering] = useState(false);
 
   const typeFilteredClients = useMemo(
     () => (clientType === 'todos' ? clients : clients.filter((c) => c.clientType === clientType)),
@@ -151,9 +193,20 @@ export function ClientsListPage() {
               </div>
             </div>
 
+            <button
+              type="button"
+              className="btn btn-secondary list-intro-action"
+              onClick={() => setDiscovering(true)}
+            >
+              Importar do Drive
+            </button>
             <Link className="btn list-intro-action" to="/clientes/novo" data-tour="page-primary-action">Novo</Link>
           </div>
         </section>
+
+        {discovering ? (
+          <ClientDriveDiscoveryWizard onClose={() => setDiscovering(false)} />
+        ) : null}
 
         <section className="surface clients-panel">
           {rows.length ? (
@@ -200,33 +253,7 @@ export function ClientsListPage() {
                   const client = row.original;
                   const processCount = processes.filter((process) => process.clientId === client.id).length;
                   return (
-                    <Motion.article key={client.id} className="client-row" variants={staggerItem}>
-                      <div className="client-avatar" aria-hidden="true">{client.name.slice(0, 1).toUpperCase()}</div>
-
-                      <div className="client-main">
-                        <h2 className="client-name">{client.name}</h2>
-                        <span className={`client-tier client-tier-${client.clientType}`}>{getClientTypeLabel(client.clientType)}</span>
-                        <span className="client-doc">{documentLabel(client.document)} {formatDocument(client.document)}</span>
-                      </div>
-
-                      <div className="client-contact">
-                        <div className="contact-stack">
-                          <a className="contact-link" href={`mailto:${client.email}`}>{client.email}</a>
-                          <a className="contact-link" href={`tel:${client.phone}`}>{client.phone}</a>
-                        </div>
-                      </div>
-
-                      <div className="client-volume">
-                        <strong className="volume-number">{processCount}</strong>
-                        <span className="volume-label">processo{processCount === 1 ? '' : 's'}</span>
-                      </div>
-
-                      <div className="client-actions">
-                        <Link className="action-link" to={`/clientes/${client.id}`}>Ver</Link>
-                        <Link className="action-link" to={`/clientes/${client.id}/editar`}>Editar</Link>
-                        <button className="action-link action-link-danger" type="button" onClick={() => handleDeleteClient(client)}>Excluir</button>
-                      </div>
-                    </Motion.article>
+                    <ClientRow key={client.id} client={client} processCount={processCount} onDelete={handleDeleteClient} />
                   );
                 })}
               </Motion.div>
@@ -258,13 +285,16 @@ export function ClientFormPage() {
       document: client ? formatDocument(client.document) : '',
       clientType: client?.clientType ?? 'esporadico',
       partner: client?.partner ?? '',
-      phone: client?.phone ?? '',
+      phone: client ? formatPhone(client.phone) : '',
       email: client?.email ?? '',
       notes: client?.notes ?? '',
     },
   });
 
-  const partnerOptions = [...new Set(clients.map((item) => item.partner).filter(Boolean))];
+  const partnerOptions = useMemo(
+    () => [...new Set(clients.map((item) => item.partner).filter(Boolean))],
+    [clients],
+  );
 
   if (isEditing && !client) {
     return <NotFoundState title="Cliente não encontrado." />;
@@ -277,7 +307,7 @@ export function ClientFormPage() {
       document: stripDocument(data.document),
       clientType: data.clientType,
       partner: (data.partner || '').trim(),
-      phone: data.phone.trim(),
+      phone: stripPhone(data.phone),
       email: data.email.trim(),
       notes: data.notes.trim(),
     });
@@ -371,7 +401,17 @@ export function ClientFormPage() {
 
               <div className="form-grid">
                 <Field id="client-phone" label="Telefone" error={errors.phone?.message}>
-                  <input id="client-phone" {...register('phone')} />
+                  <Controller
+                    name="phone"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        id="client-phone"
+                        {...field}
+                        onChange={(e) => field.onChange(formatPhone(e.target.value))}
+                      />
+                    )}
+                  />
                 </Field>
 
                 <Field id="client-email" label="E-mail" error={errors.email?.message}>

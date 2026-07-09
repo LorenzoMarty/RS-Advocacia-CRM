@@ -11,7 +11,7 @@ import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { motion as Motion, pop, staggerContainer } from '../motion';
 import { useAppState } from '../store';
-import { buildSearchText, formatCount, formatDate, getStatusTone, normalizeText } from '../utils';
+import { buildSearchText, formatCount, formatDate, formatPhone, getStatusTone, normalizeText, stripPhone } from '../utils';
 import { Select } from '../components/select';
 import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
@@ -408,7 +408,7 @@ export function ProspectFormPage() {
 
   const [form, setForm] = useState(() => ({
     name: prospect?.name || '',
-    phone: prospect?.phone || '',
+    phone: prospect ? formatPhone(prospect.phone) : '',
     email: prospect?.email || '',
     origin: prospect?.origin || '',
     demandType: prospect?.demandType || '',
@@ -449,6 +449,7 @@ export function ProspectFormPage() {
       id: prospect?.id,
       ...form,
       name: form.name.trim(),
+      phone: stripPhone(form.phone),
       responsibleName: selectedUser?.name || prospect?.responsibleName || '',
     });
     if (!saved) return;
@@ -476,7 +477,7 @@ export function ProspectFormPage() {
                 <input id="prospect-name" value={form.name} onChange={(event) => update('name', event.target.value)} />
               </Field>
               <Field id="prospect-phone" label="Telefone">
-                <input id="prospect-phone" value={form.phone} onChange={(event) => update('phone', event.target.value)} />
+                <input id="prospect-phone" value={form.phone} onChange={(event) => update('phone', formatPhone(event.target.value))} />
               </Field>
               <Field id="prospect-email" label="E-mail">
                 <input id="prospect-email" type="email" value={form.email} onChange={(event) => update('email', event.target.value)} />

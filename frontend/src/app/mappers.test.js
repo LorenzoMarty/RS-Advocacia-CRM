@@ -204,7 +204,8 @@ describe('processFromApi / processToPayload', () => {
       vara: '2ª Vara Cível',
       area_juridica: 'Cível',
       status: 'Ativo',
-      advogado_responsavel: 'Dr. João',
+      advogado_responsavel: 5,
+      advogado_responsavel_nome: 'Dr. João',
       data_ultima_movimentacao: '2026-06-01',
     });
 
@@ -215,7 +216,8 @@ describe('processFromApi / processToPayload', () => {
       clientName: 'Maria',
       court: '2ª Vara Cível',
       area: 'Cível',
-      owner: 'Dr. João',
+      owner: '5',
+      ownerName: 'Dr. João',
       lastMovementAt: '2026-06-01',
     });
   });
@@ -234,7 +236,7 @@ describe('processFromApi / processToPayload', () => {
         court: 'v',
         area: 'a',
         status: 's',
-        owner: 'o',
+        owner: '5',
       }),
     ).toEqual({
       numero_processo: '123',
@@ -243,7 +245,7 @@ describe('processFromApi / processToPayload', () => {
       vara: 'v',
       area_juridica: 'a',
       status: 's',
-      advogado_responsavel: 'o',
+      advogado_responsavel: '5',
     });
   });
 });

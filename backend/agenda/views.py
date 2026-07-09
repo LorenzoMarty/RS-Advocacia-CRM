@@ -1,10 +1,12 @@
 import logging
 
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 
 from agenda.forms import EventoForm
 from agenda.models import Evento
+from agenda.tasks import sincronizar_evento_google_calendar
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
 from core.permissions import app_permissions_required
@@ -17,11 +19,7 @@ from core.utils import (
     resposta_erro,
     resposta_sucesso,
 )
-from integrations.google.calendar import (
-    delete_remote_event,
-    sync_agenda,
-    sync_local_event,
-)
+from integrations.google.calendar import delete_remote_event, sync_agenda
 from integrations.google.exceptions import GoogleAuthorizationRequired
 from integrations.google.oauth import current_usuario
 
@@ -76,15 +74,25 @@ def _usuario_google_atual(request):
 
 
 def _sincronizar_evento_se_conectado(request, evento):
+    """Agenda a sincronizacao do evento com o Google Calendar em background.
+
+    Chamadas ao Google Calendar sao rede real e nao devem bloquear a resposta
+    HTTP de criar/editar evento. O resultado (sincronizado/nao_conectado) nao
+    e mais retornado sincronamente porque nenhum consumidor do frontend usava
+    esse valor (ver client-side agenda.saveEvent / markEventAttendance).
+    """
     usuario = _usuario_google_atual(request)
-    try:
-        quantidade = sync_local_event(usuario, evento)
-        return {"status": "sincronizado", "calendarios": quantidade}
-    except GoogleAuthorizationRequired:
+    if usuario is None:
         return {"status": "nao_conectado"}
-    except Exception:
-        logger.exception("Erro ao sincronizar evento local com Google Calendar.")
-        return {"status": "pendente"}
+
+    if getattr(settings, "CELERY_BROKER_URL", None):
+        sincronizar_evento_google_calendar.delay(evento.pk, usuario.pk)
+    else:
+        # Dev sem Redis/Celery: roda inline, best-effort (mesmo padrao do
+        # MEETINGS_PROCESSING_MODE=inline).
+        sincronizar_evento_google_calendar(evento.pk, usuario.pk)
+
+    return {"status": "agendado"}
 
 
 def serialize_evento(evento: Evento):

@@ -42,7 +42,7 @@ class PeticoesViewsTests(TestCase):
             vara="1a Vara Civel",
             area_juridica="Civel",
             status="Ativo",
-            advogado_responsavel=self.usuario.nome,
+            advogado_responsavel=self.usuario,
         )
 
     def payload(self):
@@ -206,7 +206,7 @@ class PeticoesViewsTests(TestCase):
             vara="2a Vara Civel",
             area_juridica="Trabalhista",
             status="Ativo",
-            advogado_responsavel=self.usuario.nome,
+            advogado_responsavel=self.usuario,
         )
         payload = self.payload()
         payload["processo"] = outro_processo.pk

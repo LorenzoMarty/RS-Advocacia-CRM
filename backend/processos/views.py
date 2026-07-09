@@ -13,21 +13,10 @@ from core.utils import (
     resposta_sucesso,
 )
 from documentos import services as documentos_services
-from integrations.google.exceptions import (
-    GoogleApiError,
-    GoogleAuthorizationRequired,
-    GoogleConfigurationError,
-)
+from documentos import tasks as documentos_tasks
 from integrations.google.oauth import current_usuario
 from processos.forms import ProcessoForm
 from processos.models import Processo
-
-# Drive-folder sync is best-effort: a Drive failure never aborts the edit.
-_GOOGLE_ERRORS = (
-    GoogleConfigurationError,
-    GoogleAuthorizationRequired,
-    GoogleApiError,
-)
 
 
 def _filtrar_processos(request):
@@ -40,7 +29,7 @@ def _filtrar_processos(request):
             | Q(cliente__nome__icontains=busca)
             | Q(area_juridica__icontains=busca)
             | Q(vara__icontains=busca)
-            | Q(advogado_responsavel__icontains=busca)
+            | Q(advogado_responsavel__nome__icontains=busca)
             | Q(status__icontains=busca)
         )
 
@@ -59,7 +48,16 @@ def serialize_processo(processo: Processo):
         "vara": processo.vara,
         "area_juridica": processo.area_juridica,
         "status": processo.status,
-        "advogado_responsavel": processo.advogado_responsavel,
+        "advogado_responsavel": (
+            str(processo.advogado_responsavel_id)
+            if processo.advogado_responsavel_id
+            else ""
+        ),
+        "advogado_responsavel_nome": (
+            processo.advogado_responsavel.nome
+            if processo.advogado_responsavel_id
+            else ""
+        ),
         "data_ultima_movimentacao": isoformat_ou_nulo(
             processo.data_ultima_movimentacao
         ),
@@ -76,7 +74,7 @@ def listar_processos(request):
         return metodo_nao_permitido(["GET"])
 
     processos, busca = _filtrar_processos(request)
-    processos = processos.select_related("cliente")
+    processos = processos.select_related("cliente", "advogado_responsavel")
     serialized = [serialize_processo(processo) for processo in processos]
     return resposta_sucesso({"processos": serialized, "busca": busca})
 
@@ -94,7 +92,9 @@ def criar_processo(request):
     form = ProcessoForm(payload)
     if form.is_valid():
         processo = form.save()
-        processo = Processo.objects.select_related("cliente").get(pk=processo.pk)
+        processo = Processo.objects.select_related(
+            "cliente", "advogado_responsavel"
+        ).get(pk=processo.pk)
         serialized = serialize_processo(processo)
         auditoria_services.registrar(
             request,
@@ -120,7 +120,8 @@ def detalhes_processo(request, processo_id):
         return metodo_nao_permitido(["GET"])
 
     processo = get_object_or_404(
-        Processo.objects.select_related("cliente"), pk=processo_id
+        Processo.objects.select_related("cliente", "advogado_responsavel"),
+        pk=processo_id,
     )
     serialized = serialize_processo(processo)
     return resposta_sucesso({"processo": serialized})
@@ -144,13 +145,13 @@ def editar_processo(request, processo_id):
     form = ProcessoForm(payload, instance=processo)
     if form.is_valid():
         processo = form.save()
-        processo = Processo.objects.select_related("cliente").get(pk=processo.pk)
-        try:
-            documentos_services.renomear_pasta_processo(
-                current_usuario(request), processo, nome_pasta_antigo
-            )
-        except _GOOGLE_ERRORS:
-            pass
+        processo = Processo.objects.select_related(
+            "cliente", "advogado_responsavel"
+        ).get(pk=processo.pk)
+        usuario = current_usuario(request)
+        documentos_tasks.renomear_pasta_processo.delay(
+            processo.pk, usuario.pk if usuario else None, nome_pasta_antigo
+        )
         serialized = serialize_processo(processo)
         alteracoes = auditoria_services.calcular_diff(antes, serialized)
         if alteracoes:

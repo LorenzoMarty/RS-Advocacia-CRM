@@ -137,3 +137,25 @@ class GoogleEventLink(models.Model):
 
     def __str__(self) -> str:
         return f"{self.calendar.calendar_id}:{self.google_event_id}"
+
+
+class GoogleDriveSync(models.Model):
+    """Cursor into the Drive changes feed for one connected account.
+
+    Mirrors :class:`GoogleCalendar`'s ``sync_token`` pattern but scoped to the
+    whole Drive (there is one shared "Clientes" tree, not one folder per
+    account), so it's a single cursor per account rather than one per
+    calendar. Not encrypted: a Drive page token is an opaque pagination
+    cursor, not a credential.
+    """
+
+    account = models.OneToOneField(
+        GoogleAccount,
+        on_delete=models.CASCADE,
+        related_name="drive_sync",
+    )
+    start_page_token = models.CharField(max_length=255, blank=True, default="")
+    last_synced_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f"Drive sync de {self.account.email}"

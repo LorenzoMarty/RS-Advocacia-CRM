@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { motion as Motion, staggerContainer, staggerItem } from '../motion';
@@ -21,6 +21,40 @@ function validateProcessForm(form) {
   return nextErrors;
 }
 
+const ProcessRow = memo(function ProcessRow({ process, clientName, onDelete }) {
+  return (
+    <Motion.article className="process-row" variants={staggerItem}>
+      <div className="process-main">
+        <h2 className="process-number">{process.number}</h2>
+        <span className="process-client">{clientName}</span>
+      </div>
+
+      <div className="process-meta">
+        <div className="meta-stack">
+          {process.area ? <span className="meta-chip">{process.area}</span> : null}
+          {process.court ? <span className="meta-chip">{process.court}</span> : null}
+        </div>
+      </div>
+
+      <div className="process-owner">
+        <div className="owner-stack">
+          <span className="owner-chip">{process.ownerName}</span>
+        </div>
+      </div>
+
+      <div className="process-status">
+        <StatusBadge tone={getStatusTone(process.status)}>{process.status}</StatusBadge>
+      </div>
+
+      <div className="process-actions">
+        <Link className="action-link" to={`/processos/${process.id}`}>Ver</Link>
+        <Link className="action-link" to={`/processos/${process.id}/editar`}>Editar</Link>
+        <button className="action-link action-link-danger" type="button" onClick={() => onDelete(process)}>Excluir</button>
+      </div>
+    </Motion.article>
+  );
+});
+
 export function ProcessesListPage() {
   const { clients, deleteProcess, processes } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
@@ -34,7 +68,7 @@ export function ProcessesListPage() {
           clients.find((client) => client.id === process.clientId)?.name,
           process.area,
           process.court,
-          process.owner,
+          process.ownerName,
           process.status,
         ]).includes(normalizeText(search)),
       ),
@@ -99,35 +133,12 @@ export function ProcessesListPage() {
                 animate="visible"
               >
                 {filteredProcesses.map((process) => (
-                  <Motion.article key={process.id} className="process-row" variants={staggerItem}>
-                    <div className="process-main">
-                      <h2 className="process-number">{process.number}</h2>
-                      <span className="process-client">{clients.find((client) => client.id === process.clientId)?.name}</span>
-                    </div>
-
-                    <div className="process-meta">
-                      <div className="meta-stack">
-                        {process.area ? <span className="meta-chip">{process.area}</span> : null}
-                        {process.court ? <span className="meta-chip">{process.court}</span> : null}
-                      </div>
-                    </div>
-
-                    <div className="process-owner">
-                      <div className="owner-stack">
-                        <span className="owner-chip">{process.owner}</span>
-                      </div>
-                    </div>
-
-                    <div className="process-status">
-                      <StatusBadge tone={getStatusTone(process.status)}>{process.status}</StatusBadge>
-                    </div>
-
-                    <div className="process-actions">
-                      <Link className="action-link" to={`/processos/${process.id}`}>Ver</Link>
-                      <Link className="action-link" to={`/processos/${process.id}/editar`}>Editar</Link>
-                      <button className="action-link action-link-danger" type="button" onClick={() => handleDeleteProcess(process)}>Excluir</button>
-                    </div>
-                  </Motion.article>
+                  <ProcessRow
+                    key={process.id}
+                    process={process}
+                    clientName={clients.find((client) => client.id === process.clientId)?.name}
+                    onDelete={handleDeleteProcess}
+                  />
                 ))}
               </Motion.div>
             </>
@@ -149,7 +160,7 @@ export function ProcessFormPage() {
   const params = useParams();
   const [searchParams] = useSearchParams();
   const isEditing = Boolean(params.processId);
-  const { clients, processes, saveProcess } = useAppState();
+  const { clients, processes, saveProcess, users } = useAppState();
   const process = processes.find((item) => item.id === params.processId) || null;
   const initialClientId = searchParams.get('cliente') || '';
   const [form, setForm] = useState(() => ({
@@ -164,9 +175,18 @@ export function ProcessFormPage() {
   }));
   const [errors, setErrors] = useState({});
 
-  const statusOptions = [...new Set([...PROCESS_STATUS_OPTIONS, ...processes.map((item) => item.status).filter(Boolean)])];
-  const areaOptions = [...new Set([...PROCESS_AREA_OPTIONS, ...processes.map((item) => item.area).filter(Boolean)])];
-  const courtOptions = [...new Set(processes.map((item) => item.court).filter(Boolean))];
+  const statusOptions = useMemo(
+    () => [...new Set([...PROCESS_STATUS_OPTIONS, ...processes.map((item) => item.status).filter(Boolean)])],
+    [processes],
+  );
+  const areaOptions = useMemo(
+    () => [...new Set([...PROCESS_AREA_OPTIONS, ...processes.map((item) => item.area).filter(Boolean)])],
+    [processes],
+  );
+  const courtOptions = useMemo(
+    () => [...new Set(processes.map((item) => item.court).filter(Boolean))],
+    [processes],
+  );
 
   if (isEditing && !process) {
     return <NotFoundState title="Processo não encontrado." />;
@@ -254,11 +274,16 @@ export function ProcessFormPage() {
                 </Field>
 
                 <Field id="process-owner" label="Responsável" error={errors.owner}>
-                  <input
+                  <Select
                     id="process-owner"
                     value={form.owner}
                     onChange={(event) => setForm((currentForm) => ({ ...currentForm, owner: event.target.value }))}
-                  />
+                  >
+                    <option value="">Selecione o responsável</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>{user.name}</option>
+                    ))}
+                  </Select>
                 </Field>
 
                 <Field id="process-status" label="Status" error={errors.status}>
@@ -388,7 +413,7 @@ export function ProcessDetailPage() {
                 </article>
                 <article className="summary-card">
                   <span>Responsável</span>
-                  <strong>{process.owner || '-'}</strong>
+                  <strong>{process.ownerName || '-'}</strong>
                 </article>
               </aside>
             </div>
@@ -424,7 +449,7 @@ export function ProcessDetailPage() {
                 </article>
                 <article className="detail-item">
                   <span>Responsável</span>
-                  <strong>{process.owner || '-'}</strong>
+                  <strong>{process.ownerName || '-'}</strong>
                 </article>
                 <article className="detail-item">
                   <span>Status</span>

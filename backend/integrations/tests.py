@@ -198,7 +198,7 @@ class GoogleCalendarSyncTests(TestCase):
             vara="Vara",
             area_juridica="Civel",
             status="Ativo",
-            advogado_responsavel=self.usuario.nome,
+            advogado_responsavel=self.usuario,
         )
         self.evento = Evento.objects.create(
             titulo="Evento",

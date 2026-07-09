@@ -28,7 +28,11 @@ TOKEN_URL = (
 )
 STATE_SESSION_KEY = "google_oauth_state"
 CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events"
-DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file"
+# Full Drive scope (not drive.file): the client-discovery import needs to read
+# and write folders the app never created itself, since the firm's existing
+# "Clientes" tree predates the integration. Requires re-consent from anyone
+# already connected (prompt=consent is already forced below).
+DRIVE_SCOPE = "https://www.googleapis.com/auth/drive"
 SCOPES = ("openid", "email", "profile", CALENDAR_SCOPE, DRIVE_SCOPE)
 
 

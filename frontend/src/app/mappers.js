@@ -311,7 +311,8 @@ export function processFromApi(process) {
     court: process.vara || '',
     area: process.area_juridica || '',
     status: process.status || '',
-    owner: process.advogado_responsavel || '',
+    owner: process.advogado_responsavel ? String(process.advogado_responsavel) : '',
+    ownerName: process.advogado_responsavel_nome || '',
     lastMovementAt: process.data_ultima_movimentacao || null,
   };
 }
@@ -362,7 +363,8 @@ export function deadlineFromApi(deadline) {
     clientName: deadline.cliente_nome || '',
     processId: String(deadline.processo_id || ''),
     processNumber: deadline.processo_numero || '',
-    responsible: deadline.responsavel || '',
+    responsible: deadline.responsavel ? String(deadline.responsavel) : '',
+    responsibleName: deadline.responsavel_nome || '',
     createdBy: deadline.criado_por || '',
     notes: deadline.observacoes || '',
     completed: Boolean(deadline.concluido),
@@ -393,7 +395,7 @@ export function processToPayload(process) {
     vara: process.court,
     area_juridica: process.area,
     status: process.status,
-    advogado_responsavel: process.owner,
+    advogado_responsavel: process.owner || null,
   };
 }
 
@@ -563,7 +565,7 @@ export function deadlineToPayload(deadline) {
     descricao: deadline.description,
     data_limite: deadline.date,
     processo: deadline.processId,
-    responsavel: deadline.responsible,
+    responsavel: deadline.responsible || null,
     status: deadline.status,
     prioridade: deadline.priority,
     observacoes: deadline.notes,

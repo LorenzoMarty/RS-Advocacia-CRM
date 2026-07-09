@@ -13,12 +13,12 @@ from usuarios.models import Usuario
 ROOT = "root-folder-id"
 
 
-def _cliente(nome="João Silva"):
+def _cliente(nome="João Silva", cpf=""):
     return Cliente.objects.create(
         nome=nome,
         email="c@example.com",
         telefone="11999999999",
-        cpf="12345678901",
+        cpf=cpf,
         tipo_cliente="esporadico",
     )
 

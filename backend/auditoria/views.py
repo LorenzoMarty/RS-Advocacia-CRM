@@ -87,7 +87,7 @@ def serialize_registro(registro: RegistroAuditoria):
             processo_rotulo = registro.entidade_rotulo
         elif registro.entidade_tipo == RegistroAuditoria.ENTIDADE_PRAZO:
             prazo = (
-                Prazo.objects.select_related("processo")
+                Prazo.objects.select_related("processo", "responsavel")
                 .filter(pk=registro.entidade_id)
                 .first()
             )
@@ -231,8 +231,8 @@ def painel_auditoria(request: HttpRequest):
     if erro_admin is not None:
         return erro_admin
 
-    processos = list(Processo.objects.select_related("cliente"))
-    prazos = list(Prazo.objects.filter(concluido=False).select_related("processo"))
+    processos = list(Processo.objects.select_related("cliente", "advogado_responsavel"))
+    prazos = list(Prazo.objects.filter(concluido=False).select_related("processo", "responsavel"))
     clientes = list(Cliente.objects.all())
     running_timers = TimeEntry.objects.filter(status=TimeEntry.STATUS_RUNNING).count()
 
@@ -252,8 +252,8 @@ def visao_geral(request: HttpRequest):
     if erro_admin is not None:
         return erro_admin
 
-    processos = list(Processo.objects.select_related("cliente").all())
-    todos_prazos = list(Prazo.objects.select_related("processo").all())
+    processos = list(Processo.objects.select_related("cliente", "advogado_responsavel").all())
+    todos_prazos = list(Prazo.objects.select_related("processo", "responsavel").all())
     clientes = list(Cliente.objects.all())
     eventos = list(
         Evento.objects.exclude(tipo_evento__icontains="prazo")

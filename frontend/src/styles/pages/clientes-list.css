@@ -155,6 +155,13 @@
         border-color:rgba(212,175,55,.2);
     }
 
+    .client-tier-inativo{
+        color:#e08585;
+        background:rgba(224,90,90,.1);
+        border-color:rgba(224,90,90,.25);
+        margin-left:8px;
+    }
+
     .client-doc{
         display:block;
         margin-top:6px;

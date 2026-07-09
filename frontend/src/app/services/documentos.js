@@ -174,3 +174,29 @@ export async function confirmClientDriveImport(clientId, { processes, documents 
     documentsCreated: Number(payload.documentos_criados || 0),
   };
 }
+
+// --- Bulk client discovery (scan "Clientes" root -> suggest -> confirm) ----
+
+function newClientCandidateFromApi(item) {
+  return {
+    folderId: item.pasta_id || '',
+    name: item.nome || '',
+  };
+}
+
+export async function discoverNewClients() {
+  const payload = await apiRequest('/api/drive/importar/clientes/descobrir/');
+  return (payload.candidatos || []).map(newClientCandidateFromApi);
+}
+
+export async function confirmNewClients(candidates) {
+  const payload = await apiRequest('/api/drive/importar/clientes/confirmar/', {
+    method: 'POST',
+    body: JSON.stringify({
+      pastas: candidates.map((item) => ({ pasta_id: item.folderId, nome: item.name })),
+    }),
+  });
+  return {
+    clientsCreated: (payload.clientes_criados || []).length,
+  };
+}
