@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -383,6 +383,11 @@ export function AppStateProvider({ children }) {
   async function refreshProcesses() {
     const payload = await api.listProcesses();
     setProcesses(processesFromResponse(payload));
+  }
+
+  async function refreshClients() {
+    const payload = await api.listClients();
+    setClients(sortByName(clientsFromResponse(payload)));
   }
 
   async function saveEvent(payload) {
@@ -1057,73 +1062,106 @@ export function AppStateProvider({ children }) {
     }
   }
 
-  const value = {
-    users,
-    clients,
-    processes,
-    events,
-    deadlines,
-    petitions,
-    prospects,
-    lancamentos,
-    timeEntries,
-    productivityGoals,
-    auditEntries,
-    auditOverview,
-    auditPagination,
-    loadAudit,
-    loadMoreAudit,
-    loadAuditOverview,
-    currentUser,
-    currentRole,
-    hasPermission,
-    isApiEnabled,
-    isLoading,
-    isEventsLoading,
-    isDeadlinesLoading,
-    isPetitionsLoading,
-    apiStatus,
-    addFlash,
-    sair,
-    saveClient,
-    saveProcess,
-    refreshProcesses,
-    saveEvent,
-    markEventAttendance,
-    moveEvent,
-    saveDeadline,
-    createDeadlineDocument,
-    uploadDeadlineDocument,
-    removeDeadlineDocument,
-    savePetition,
-    createPetitionDocument,
-    removePetitionDocument,
-    saveDeadlineTimer,
-    syncGoogleCalendarEvents,
-    loadEvent,
-    loadDeadline,
-    loadPetition,
-    saveUser,
-    deleteClient,
-    deleteProcess,
-    deleteEvent,
-    deleteDeadline,
-    deletePetition,
-    deleteUser,
-    saveProspect,
-    deleteProspect,
-    addInteracao,
-    convertProspect,
-    saveLancamento,
-    deleteLancamento,
-    marcarLancamentoPago,
-    cancelarLancamento,
-    startTimeEntry,
-    pauseTimeEntry,
-    resumeTimeEntry,
-    stopTimeEntry,
-    saveProductivityGoals,
-  };
+  // Memoizado por dados, nao por funcoes: as funcoes abaixo sao redefinidas a
+  // cada render (fecham sobre o estado atual), mas o objeto so ganha nova
+  // identidade quando algum dado listado nas deps realmente muda. Isso evita
+  // que todo consumidor de useAppState() re-renderize a cada setState do
+  // provider (ex.: um toast via addFlash nao deve re-renderizar a lista de
+  // clientes).
+  const value = useMemo(
+    () => ({
+      users,
+      clients,
+      processes,
+      events,
+      deadlines,
+      petitions,
+      prospects,
+      lancamentos,
+      timeEntries,
+      productivityGoals,
+      auditEntries,
+      auditOverview,
+      auditPagination,
+      loadAudit,
+      loadMoreAudit,
+      loadAuditOverview,
+      currentUser,
+      currentRole,
+      hasPermission,
+      isApiEnabled,
+      isLoading,
+      isEventsLoading,
+      isDeadlinesLoading,
+      isPetitionsLoading,
+      apiStatus,
+      addFlash,
+      sair,
+      saveClient,
+      saveProcess,
+      refreshProcesses,
+      refreshClients,
+      saveEvent,
+      markEventAttendance,
+      moveEvent,
+      saveDeadline,
+      createDeadlineDocument,
+      uploadDeadlineDocument,
+      removeDeadlineDocument,
+      savePetition,
+      createPetitionDocument,
+      removePetitionDocument,
+      saveDeadlineTimer,
+      syncGoogleCalendarEvents,
+      loadEvent,
+      loadDeadline,
+      loadPetition,
+      saveUser,
+      deleteClient,
+      deleteProcess,
+      deleteEvent,
+      deleteDeadline,
+      deletePetition,
+      deleteUser,
+      saveProspect,
+      deleteProspect,
+      addInteracao,
+      convertProspect,
+      saveLancamento,
+      deleteLancamento,
+      marcarLancamentoPago,
+      cancelarLancamento,
+      startTimeEntry,
+      pauseTimeEntry,
+      resumeTimeEntry,
+      stopTimeEntry,
+      saveProductivityGoals,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- funções (saveX, deleteX, etc.) são recriadas a cada render e não precisam entrar aqui; o value memoiza pelos dados, não pelas referências de função.
+    [
+      users,
+      clients,
+      processes,
+      events,
+      deadlines,
+      petitions,
+      prospects,
+      lancamentos,
+      timeEntries,
+      productivityGoals,
+      auditEntries,
+      auditOverview,
+      auditPagination,
+      currentUser,
+      currentRole,
+      isApiEnabled,
+      isLoading,
+      isEventsLoading,
+      isDeadlinesLoading,
+      isPetitionsLoading,
+      apiStatus,
+    ],
+  );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }

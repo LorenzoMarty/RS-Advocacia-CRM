@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -56,13 +57,17 @@ class _AuditoriaBaseTestCase(TestCase):
             vara="1a Vara",
             area_juridica="Civel",
             status="Ativo",
-            advogado_responsavel=self.usuario.nome,
+            advogado_responsavel=self.usuario,
         )
 
 
 @override_settings(SECURE_SSL_REDIRECT=False)
 class AuditoriaRegistroTests(_AuditoriaBaseTestCase):
-    def test_editar_processo_registra_diff_e_autor(self):
+    @patch(
+        "processos.views.documentos_tasks.renomear_pasta_processo.delay",
+        return_value=None,
+    )
+    def test_editar_processo_registra_diff_e_autor(self, _mock_delay):
         response = self.client.patch(
             reverse("editar_processo", args=[self.processo.pk]),
             data=json.dumps(
@@ -73,7 +78,7 @@ class AuditoriaRegistroTests(_AuditoriaBaseTestCase):
                     "vara": "1a Vara",
                     "area_juridica": "Civel",
                     "status": "Encerrado",
-                    "advogado_responsavel": self.usuario.nome,
+                    "advogado_responsavel": self.usuario.pk,
                 }
             ),
             content_type="application/json",
@@ -95,7 +100,7 @@ class AuditoriaRegistroTests(_AuditoriaBaseTestCase):
             descricao="",
             data_limite="2026-06-23",
             processo=self.processo,
-            responsavel=self.usuario.nome,
+            responsavel=self.usuario,
             status="Pendente",
         )
 
@@ -204,12 +209,12 @@ class AuditoriaListagemTests(_AuditoriaBaseTestCase):
 
 @override_settings(SECURE_SSL_REDIRECT=False)
 class PainelAuditoriaTests(_AuditoriaBaseTestCase):
-    def _criar_prazo(self, dias, responsavel="Adv", concluido=False):
+    def _criar_prazo(self, dias, responsavel=None, concluido=False):
         return Prazo.objects.create(
             titulo=f"Prazo {dias}",
             data_limite=timezone.localdate() + timedelta(days=dias),
             processo=self.processo,
-            responsavel=responsavel,
+            responsavel=responsavel or self.usuario,
             status="Pendente",
             concluido=concluido,
         )
@@ -233,7 +238,7 @@ class PainelAuditoriaTests(_AuditoriaBaseTestCase):
             vara="2a Vara",
             area_juridica="Civel",
             status="Ativo",
-            advogado_responsavel="",  # sem dono → severidade 50
+            advogado_responsavel=None,  # sem dono → severidade 50
         )
         self._tornar_parado(parado)
 
@@ -320,6 +325,7 @@ class PainelAuditoriaTests(_AuditoriaBaseTestCase):
 # Agenda CRUD audit instrumentation
 # ---------------------------------------------------------------------------
 
+
 @override_settings(SECURE_SSL_REDIRECT=False)
 class AuditoriaEventoTests(_AuditoriaBaseTestCase):
     """Garante que criar/editar/excluir evento cria RegistroAuditoria."""
@@ -364,8 +370,9 @@ class AuditoriaEventoTests(_AuditoriaBaseTestCase):
         self.assertEqual(registro.processo_rotulo, self.processo.numero_processo)
 
     def test_editar_evento_registra_diff(self):
-        from agenda.models import Evento
         from django.utils import timezone
+
+        from agenda.models import Evento
 
         now = timezone.now()
         evento = Evento.objects.create(
@@ -402,11 +409,12 @@ class AuditoriaEventoTests(_AuditoriaBaseTestCase):
         self.assertEqual(registro.alteracoes["local"]["para"], "Tribunal")
 
     def test_excluir_evento_registra(self):
-        from agenda.models import Evento
-        from django.utils import timezone
-
         # Mocking Google Calendar delete — override with a no-op
         import unittest.mock as mock
+
+        from django.utils import timezone
+
+        from agenda.models import Evento
 
         now = timezone.now()
         evento = Evento.objects.create(
@@ -424,12 +432,8 @@ class AuditoriaEventoTests(_AuditoriaBaseTestCase):
             criado_por=self.usuario.nome,
         )
 
-        with mock.patch(
-            "agenda.views.delete_remote_event", return_value=None
-        ):
-            response = self.client.delete(
-                reverse("excluir_evento", args=[evento.pk])
-            )
+        with mock.patch("agenda.views.delete_remote_event", return_value=None):
+            response = self.client.delete(reverse("excluir_evento", args=[evento.pk]))
 
         self.assertEqual(response.status_code, 200, response.json())
         registro = RegistroAuditoria.objects.get(
@@ -443,6 +447,7 @@ class AuditoriaEventoTests(_AuditoriaBaseTestCase):
 # ---------------------------------------------------------------------------
 # listar_auditoria — novos filtros e paginação
 # ---------------------------------------------------------------------------
+
 
 @override_settings(SECURE_SSL_REDIRECT=False)
 class AuditoriaListagemFiltrosTests(_AuditoriaBaseTestCase):
@@ -488,9 +493,7 @@ class AuditoriaListagemFiltrosTests(_AuditoriaBaseTestCase):
         self._criar_registro(autor_nome="Maria")
         self._criar_registro(autor_nome="João", entidade_id="2")
 
-        response = self.client.get(
-            reverse("listar_auditoria"), {"autor_nome": "Maria"}
-        )
+        response = self.client.get(reverse("listar_auditoria"), {"autor_nome": "Maria"})
         registros = response.json()["dados"]["registros"]
         self.assertEqual(len(registros), 1)
         self.assertEqual(registros[0]["autor_nome"], "Maria")
@@ -501,9 +504,7 @@ class AuditoriaListagemFiltrosTests(_AuditoriaBaseTestCase):
             acao=RegistroAuditoria.ACAO_EXCLUIDO, entidade_id="2", resumo="excluido"
         )
 
-        response = self.client.get(
-            reverse("listar_auditoria"), {"acao": "excluido"}
-        )
+        response = self.client.get(reverse("listar_auditoria"), {"acao": "excluido"})
         registros = response.json()["dados"]["registros"]
         self.assertEqual(len(registros), 1)
         self.assertEqual(registros[0]["acao"], "excluido")
@@ -512,9 +513,7 @@ class AuditoriaListagemFiltrosTests(_AuditoriaBaseTestCase):
         self._criar_registro(resumo="Processo teste criado")
         self._criar_registro(resumo="Prazo vencido", entidade_id="2")
 
-        response = self.client.get(
-            reverse("listar_auditoria"), {"q": "teste"}
-        )
+        response = self.client.get(reverse("listar_auditoria"), {"q": "teste"})
         registros = response.json()["dados"]["registros"]
         self.assertEqual(len(registros), 1)
         self.assertIn("teste", registros[0]["resumo"])
@@ -546,6 +545,7 @@ class AuditoriaListagemFiltrosTests(_AuditoriaBaseTestCase):
 # visao_geral endpoint
 # ---------------------------------------------------------------------------
 
+
 @override_settings(SECURE_SSL_REDIRECT=False)
 class VisaoGeralTests(_AuditoriaBaseTestCase):
     def _criar_prazo(self, dias, concluido=False):
@@ -553,7 +553,7 @@ class VisaoGeralTests(_AuditoriaBaseTestCase):
             titulo=f"Prazo {dias}d",
             data_limite=timezone.localdate() + timedelta(days=dias),
             processo=self.processo,
-            responsavel=self.usuario.nome,
+            responsavel=self.usuario,
             status="Pendente",
             concluido=concluido,
         )
@@ -580,7 +580,7 @@ class VisaoGeralTests(_AuditoriaBaseTestCase):
 
     def test_visao_geral_retorna_todas_secoes(self):
         self._criar_prazo(-1)  # overdue
-        self._criar_prazo(3)   # due soon
+        self._criar_prazo(3)  # due soon
         self._criar_prazo(0, concluido=True)  # done
         Peticao.objects.create(
             cliente=self.cliente,
@@ -620,7 +620,7 @@ class VisaoGeralTests(_AuditoriaBaseTestCase):
 
     def test_prazos_buckets(self):
         self._criar_prazo(-2)  # overdue
-        self._criar_prazo(3)   # due soon
+        self._criar_prazo(3)  # due soon
         self._criar_prazo(0, concluido=True)  # done
         self._criar_prazo(90)  # later
 

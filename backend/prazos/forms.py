@@ -1,8 +1,5 @@
 from django import forms
 
-from processos.models import Processo
-from usuarios.models import Usuario
-
 from .models import Prazo
 
 STATUS_CHOICES = (
@@ -36,7 +33,6 @@ def _build_choices(placeholder, *groups):
 
 
 class PrazoForm(forms.ModelForm):
-    responsavel = forms.ChoiceField(choices=(), label="Responsavel")
     status = forms.ChoiceField(choices=(), label="Status")
 
     class Meta:
@@ -65,14 +61,7 @@ class PrazoForm(forms.ModelForm):
         if isinstance(field, forms.DateField):
             field.input_formats = ("%Y-%m-%d",)
 
-        instance = getattr(self, "instance", None)
-        current_responsavel = getattr(instance, "responsavel", "")
-        current_status = getattr(instance, "status", "")
-        usuarios = Usuario.objects.values_list("nome", flat=True)
-        responsaveis_processos = Processo.objects.values_list(
-            "advogado_responsavel", flat=True
-        )
-        existing_responsaveis = Prazo.objects.values_list("responsavel", flat=True)
+        current_status = getattr(self.instance, "status", "")
         existing_statuses = Prazo.objects.values_list("status", flat=True)
 
         processo_field = self.fields.get("processo")
@@ -82,13 +71,10 @@ class PrazoForm(forms.ModelForm):
                 "cliente"
             ).order_by("numero_processo")
 
-        self.fields["responsavel"].choices = _build_choices(
-            "Selecione o responsavel",
-            [current_responsavel],
-            usuarios,
-            responsaveis_processos,
-            existing_responsaveis,
-        )
+        responsavel_field = self.fields.get("responsavel")
+        if isinstance(responsavel_field, forms.ModelChoiceField):
+            responsavel_field.empty_label = "Selecione o responsável"
+
         self.fields["status"].choices = _build_choices(
             "Selecione o status",
             [current_status],

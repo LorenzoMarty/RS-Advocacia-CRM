@@ -105,7 +105,7 @@ class ProspeccaoViewsTests(TestCase):
 
         response = self.client.post(
             reverse("converter_prospect", args=[prospect.pk]),
-            data=json.dumps({"cpf": "12345678901", "tipo_cliente": "esporadico"}),
+            data=json.dumps({"cpf": "52998224725", "tipo_cliente": "esporadico"}),
             content_type="application/json",
         )
 

@@ -289,6 +289,49 @@ def list_folders(service, parent_id: str) -> list[dict[str, Any]]:
     return folders
 
 
+def get_start_page_token(service) -> str:
+    """Return a fresh cursor marking "now" in the Drive changes feed."""
+    response = _execute(
+        lambda: service.changes().getStartPageToken(supportsAllDrives=True),
+        "Não foi possível obter o cursor de mudanças do Google Drive.",
+    )
+    return response["startPageToken"]
+
+
+CHANGE_FIELDS = "fileId, removed, file(id, name, mimeType, parents, trashed)"
+
+
+def list_changes(service, page_token: str) -> dict[str, Any]:
+    """Return changes since ``page_token`` and the cursor to persist next.
+
+    Paginates internally via ``nextPageToken``; Drive only returns
+    ``newStartPageToken`` once the caller is caught up, so that value (kept
+    updated across pages) is what the caller should persist for its next call.
+    """
+    changes: list[dict[str, Any]] = []
+    token: str | None = page_token
+    new_start_page_token = page_token
+    while True:
+        response = _execute(
+            lambda t=token: service.changes().list(
+                pageToken=t,
+                spaces="drive",
+                fields=f"nextPageToken, newStartPageToken, changes({CHANGE_FIELDS})",
+                pageSize=100,
+                includeItemsFromAllDrives=True,
+                supportsAllDrives=True,
+            ),
+            "Não foi possível listar as mudanças do Google Drive.",
+        )
+        changes.extend(response.get("changes", []) if response else [])
+        token = response.get("nextPageToken") if response else None
+        if response and response.get("newStartPageToken"):
+            new_start_page_token = response["newStartPageToken"]
+        if not token:
+            break
+    return {"changes": changes, "new_start_page_token": new_start_page_token}
+
+
 def delete_folder(service, folder_id: str) -> None:
     """Permanently delete folder ``folder_id`` and its contents (404 = success)."""
     try:

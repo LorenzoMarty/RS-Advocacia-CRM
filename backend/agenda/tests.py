@@ -42,7 +42,7 @@ class AgendaIntegrationViewsTests(TestCase):
             vara="1a Vara",
             area_juridica="Civel",
             status="Ativo",
-            advogado_responsavel=self.usuario.nome,
+            advogado_responsavel=self.usuario,
         )
 
     def payload(self):
@@ -85,7 +85,7 @@ class AgendaIntegrationViewsTests(TestCase):
             vara="1a Vara",
             area_juridica="Civel",
             status="Ativo",
-            advogado_responsavel=self.usuario.nome,
+            advogado_responsavel=self.usuario,
         )
         Evento.objects.create(
             titulo="Audiencia cliente",
@@ -156,8 +156,8 @@ class AgendaIntegrationViewsTests(TestCase):
         self.assertEqual(len(eventos), 1)
         self.assertEqual(eventos[0]["titulo"], "Dentro da janela")
 
-    @patch("agenda.views.sync_local_event", return_value=1)
-    def test_criar_evento_sincroniza_por_backend_e_expoe_status(self, sync_local_event):
+    @patch("agenda.views.sincronizar_evento_google_calendar", return_value=None)
+    def test_criar_evento_sincroniza_por_backend_e_expoe_status(self, sincronizar_task):
         response = self.client.post(
             reverse("criar_evento"),
             data=json.dumps(self.payload()),
@@ -167,13 +167,13 @@ class AgendaIntegrationViewsTests(TestCase):
         self.assertEqual(response.status_code, 201, response.json())
         self.assertEqual(
             response.json()["dados"]["sincronizacao_google"]["status"],
-            "sincronizado",
+            "agendado",
         )
-        sync_local_event.assert_called_once()
+        sincronizar_task.delay.assert_called_once()
 
-    @patch("agenda.views.sync_local_event", return_value=1)
+    @patch("agenda.views.sincronizar_evento_google_calendar", return_value=None)
     def test_patch_evento_marca_comparecimento_com_payload_parcial(
-        self, sync_local_event
+        self, sincronizar_task
     ):
         evento = Evento.objects.create(
             titulo="Audiencia",
@@ -201,11 +201,11 @@ class AgendaIntegrationViewsTests(TestCase):
         evento.refresh_from_db()
         self.assertEqual(evento.status, "Compareceu")
         self.assertTrue(evento.concluido)
-        sync_local_event.assert_called_once()
+        sincronizar_task.delay.assert_called_once()
 
-    @patch("agenda.views.sync_local_event", return_value=1)
+    @patch("agenda.views.sincronizar_evento_google_calendar", return_value=None)
     def test_endpoint_comparecimento_nao_depende_do_formulario_de_edicao(
-        self, sync_local_event
+        self, sincronizar_task
     ):
         evento = Evento.objects.create(
             titulo="Audiencia",
@@ -234,10 +234,10 @@ class AgendaIntegrationViewsTests(TestCase):
         self.assertEqual(evento.status, "Compareceu")
         self.assertTrue(evento.concluido)
         self.assertEqual(response.json()["dados"]["evento"]["status"], "Compareceu")
-        sync_local_event.assert_called_once()
+        sincronizar_task.delay.assert_called_once()
 
-    @patch("agenda.views.sync_local_event", return_value=1)
-    def test_put_evento_parcial_aceita_alias_completed(self, sync_local_event):
+    @patch("agenda.views.sincronizar_evento_google_calendar", return_value=None)
+    def test_put_evento_parcial_aceita_alias_completed(self, sincronizar_task):
         evento = Evento.objects.create(
             titulo="Audiencia",
             descricao="Descricao",
@@ -264,10 +264,10 @@ class AgendaIntegrationViewsTests(TestCase):
         evento.refresh_from_db()
         self.assertEqual(evento.status, "Não compareceu")
         self.assertTrue(evento.concluido)
-        sync_local_event.assert_called_once()
+        sincronizar_task.delay.assert_called_once()
 
-    @patch("agenda.views.sync_local_event")
-    def test_criar_prazo_como_evento_e_bloqueado(self, sync_local_event):
+    @patch("agenda.views.sincronizar_evento_google_calendar")
+    def test_criar_prazo_como_evento_e_bloqueado(self, sincronizar_task):
         payload = self.payload()
         payload["titulo"] = "Prazo"
         payload["tipo_evento"] = "Prazo"
@@ -280,7 +280,7 @@ class AgendaIntegrationViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertFalse(Evento.objects.filter(tipo_evento__iexact="Prazo").exists())
-        sync_local_event.assert_not_called()
+        sincronizar_task.delay.assert_not_called()
 
     @patch("agenda.views.delete_remote_event", side_effect=RuntimeError("google down"))
     def test_exclusao_remota_falha_sem_apagar_evento_local(self, delete_remote_event):

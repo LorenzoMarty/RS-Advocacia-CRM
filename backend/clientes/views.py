@@ -13,20 +13,8 @@ from core.utils import (
     resposta_erro,
     resposta_sucesso,
 )
-from documentos import services as documentos_services
-from integrations.google.exceptions import (
-    GoogleApiError,
-    GoogleAuthorizationRequired,
-    GoogleConfigurationError,
-)
+from documentos import tasks as documentos_tasks
 from integrations.google.oauth import current_usuario
-
-# Drive-folder sync is best-effort: a Drive failure never aborts the edit.
-_GOOGLE_ERRORS = (
-    GoogleConfigurationError,
-    GoogleAuthorizationRequired,
-    GoogleApiError,
-)
 
 
 def _filtrar_clientes(request):
@@ -67,6 +55,7 @@ def serialize_cliente(cliente: Cliente):
         "tipo_cliente": cliente.tipo_cliente,
         "parceria": cliente.parceria,
         "obs": cliente.obs,
+        "ativo": cliente.ativo,
     }
 
 
@@ -142,12 +131,10 @@ def editar_cliente(request, cliente_id):
     if form.is_valid():
         cliente = form.save()
         if cliente.nome != nome_antigo:
-            try:
-                documentos_services.renomear_pasta_cliente(
-                    current_usuario(request), cliente, cliente.nome
-                )
-            except _GOOGLE_ERRORS:
-                pass
+            usuario = current_usuario(request)
+            documentos_tasks.renomear_pasta_cliente.delay(
+                cliente.pk, usuario.pk if usuario else None, cliente.nome
+            )
         serialized = serialize_cliente(cliente)
         return resposta_sucesso(
             {"cliente": serialized},

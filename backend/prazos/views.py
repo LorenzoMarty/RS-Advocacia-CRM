@@ -64,7 +64,8 @@ def serialize_prazo(prazo: Prazo):
         "cliente_nome": cliente.nome if cliente else "",
         "processo_id": str(prazo.processo_id),
         "processo_numero": prazo.processo.numero_processo if prazo.processo_id else "",
-        "responsavel": prazo.responsavel,
+        "responsavel": str(prazo.responsavel_id) if prazo.responsavel_id else "",
+        "responsavel_nome": prazo.responsavel.nome if prazo.responsavel_id else "",
         "criado_por": prazo.criado_por,
         "observacoes": prazo.observacoes,
         "link_drive": prazo.link_drive,
@@ -107,7 +108,7 @@ def listar_prazos(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    prazos = Prazo.objects.select_related("processo__cliente").all()
+    prazos = Prazo.objects.select_related("processo__cliente", "responsavel").all()
     return resposta_sucesso({"prazos": [serialize_prazo(prazo) for prazo in prazos]})
 
 
@@ -126,7 +127,7 @@ def criar_prazo(request):
         prazo = form.save(commit=False)
         prazo.criado_por = _resolver_criador_prazo(request)
         prazo.save()
-        prazo = Prazo.objects.select_related("processo__cliente").get(pk=prazo.pk)
+        prazo = Prazo.objects.select_related("processo__cliente", "responsavel").get(pk=prazo.pk)
         auditoria_services.registrar(
             request,
             acao=RegistroAuditoria.ACAO_CRIADO,
@@ -151,7 +152,7 @@ def detalhes_prazo(request, prazo_id):
         return metodo_nao_permitido(["GET"])
 
     prazo = get_object_or_404(
-        Prazo.objects.select_related("processo__cliente"), pk=prazo_id
+        Prazo.objects.select_related("processo__cliente", "responsavel"), pk=prazo_id
     )
     return resposta_sucesso({"prazo": serialize_prazo(prazo)})
 
@@ -173,7 +174,7 @@ def editar_prazo(request, prazo_id):
     form = PrazoForm(payload, instance=prazo)
     if form.is_valid():
         prazo = form.save()
-        prazo = Prazo.objects.select_related("processo__cliente").get(pk=prazo.pk)
+        prazo = Prazo.objects.select_related("processo__cliente", "responsavel").get(pk=prazo.pk)
         alteracoes = auditoria_services.calcular_diff(antes, serialize_prazo(prazo))
         if alteracoes:
             auditoria_services.registrar(
@@ -202,7 +203,7 @@ def atualizar_timer_prazo(request, prazo_id):
         return metodo_nao_permitido(["PUT", "PATCH"])
 
     prazo = get_object_or_404(
-        Prazo.objects.select_related("processo__cliente"), pk=prazo_id
+        Prazo.objects.select_related("processo__cliente", "responsavel"), pk=prazo_id
     )
 
     try:
@@ -280,7 +281,7 @@ def documento_prazo(request, prazo_id):
         return metodo_nao_permitido(["POST", "DELETE"])
 
     prazo = get_object_or_404(
-        Prazo.objects.select_related("processo", "processo__cliente"), pk=prazo_id
+        Prazo.objects.select_related("processo", "processo__cliente", "responsavel"), pk=prazo_id
     )
     usuario = current_usuario(request)
 
@@ -325,7 +326,7 @@ def upload_documento_prazo(request, prazo_id):
         return metodo_nao_permitido(["POST"])
 
     prazo = get_object_or_404(
-        Prazo.objects.select_related("processo", "processo__cliente"), pk=prazo_id
+        Prazo.objects.select_related("processo", "processo__cliente", "responsavel"), pk=prazo_id
     )
 
     arquivo = request.FILES.get("arquivo") or next(iter(request.FILES.values()), None)

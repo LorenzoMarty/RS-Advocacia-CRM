@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   HashRouter,
   Navigate,
@@ -10,47 +11,122 @@ import {
 import { GuestLayout, ProtectedLayout } from "./app/layout";
 import { AppStateProvider } from "./app/store";
 import { AppErrorBoundary } from "./app/components/ErrorBoundary";
-import { LoginPage } from "./app/pages/auth";
-import { DashboardPage } from "./app/pages/dashboard";
-import {
-  ClientsListPage,
-  ClientFormPage,
-  ClientDetailPage,
-} from "./app/pages/clients";
-import {
-  ProcessesListPage,
-  ProcessFormPage,
-  ProcessDetailPage,
-} from "./app/pages/processes";
-import {
-  AgendaListPage,
-  AgendaDayPage,
-  EventFormPage,
-  EventDetailPage,
-} from "./app/pages/agendas";
-import {
-  DeadlineDetailPage,
-  DeadlineFormPage,
-  DeadlinesPage,
-} from "./app/pages/deadlines";
-import { PetitionFormPage, PetitionsPage } from "./app/pages/petitions";
-import {
-  UsersListPage,
-  UserFormPage,
-  UserDetailPage,
-} from "./app/pages/users";
-import { ProductivityPage } from "./app/pages/productivity/ProductivityPage";
-import {
-  ProspectKanbanPage,
-  ProspectFormPage,
-  ProspectDetailPage,
-} from "./app/pages/prospeccao";
-import { FinanceiroPage, LancamentoFormPage } from "./app/pages/financeiro";
-import { AuditPage } from "./app/pages/audit";
 import { useAppState } from "./app/store";
-import { MeetingsPage } from "./app/pages/meetings";
-import { PrivacyPolicyPage } from "./app/pages/privacy-policy";
-import { TermsOfServicePage } from "./app/pages/terms-of-service";
+
+const LoginPage = lazy(() =>
+  import("./app/pages/auth").then((m) => ({ default: m.LoginPage })),
+);
+const DashboardPage = lazy(() =>
+  import("./app/pages/dashboard").then((m) => ({ default: m.DashboardPage })),
+);
+const ClientsListPage = lazy(() =>
+  import("./app/pages/clients").then((m) => ({ default: m.ClientsListPage })),
+);
+const ClientFormPage = lazy(() =>
+  import("./app/pages/clients").then((m) => ({ default: m.ClientFormPage })),
+);
+const ClientDetailPage = lazy(() =>
+  import("./app/pages/clients").then((m) => ({ default: m.ClientDetailPage })),
+);
+const ProcessesListPage = lazy(() =>
+  import("./app/pages/processes").then((m) => ({
+    default: m.ProcessesListPage,
+  })),
+);
+const ProcessFormPage = lazy(() =>
+  import("./app/pages/processes").then((m) => ({ default: m.ProcessFormPage })),
+);
+const ProcessDetailPage = lazy(() =>
+  import("./app/pages/processes").then((m) => ({
+    default: m.ProcessDetailPage,
+  })),
+);
+const AgendaListPage = lazy(() =>
+  import("./app/pages/agendas").then((m) => ({ default: m.AgendaListPage })),
+);
+const AgendaDayPage = lazy(() =>
+  import("./app/pages/agendas").then((m) => ({ default: m.AgendaDayPage })),
+);
+const EventFormPage = lazy(() =>
+  import("./app/pages/agendas").then((m) => ({ default: m.EventFormPage })),
+);
+const EventDetailPage = lazy(() =>
+  import("./app/pages/agendas").then((m) => ({ default: m.EventDetailPage })),
+);
+const DeadlineDetailPage = lazy(() =>
+  import("./app/pages/deadlines").then((m) => ({
+    default: m.DeadlineDetailPage,
+  })),
+);
+const DeadlineFormPage = lazy(() =>
+  import("./app/pages/deadlines").then((m) => ({
+    default: m.DeadlineFormPage,
+  })),
+);
+const DeadlinesPage = lazy(() =>
+  import("./app/pages/deadlines").then((m) => ({ default: m.DeadlinesPage })),
+);
+const PetitionFormPage = lazy(() =>
+  import("./app/pages/petitions").then((m) => ({
+    default: m.PetitionFormPage,
+  })),
+);
+const PetitionsPage = lazy(() =>
+  import("./app/pages/petitions").then((m) => ({ default: m.PetitionsPage })),
+);
+const UsersListPage = lazy(() =>
+  import("./app/pages/users").then((m) => ({ default: m.UsersListPage })),
+);
+const UserFormPage = lazy(() =>
+  import("./app/pages/users").then((m) => ({ default: m.UserFormPage })),
+);
+const UserDetailPage = lazy(() =>
+  import("./app/pages/users").then((m) => ({ default: m.UserDetailPage })),
+);
+const ProductivityPage = lazy(() =>
+  import("./app/pages/productivity/ProductivityPage").then((m) => ({
+    default: m.ProductivityPage,
+  })),
+);
+const ProspectKanbanPage = lazy(() =>
+  import("./app/pages/prospeccao").then((m) => ({
+    default: m.ProspectKanbanPage,
+  })),
+);
+const ProspectFormPage = lazy(() =>
+  import("./app/pages/prospeccao").then((m) => ({
+    default: m.ProspectFormPage,
+  })),
+);
+const ProspectDetailPage = lazy(() =>
+  import("./app/pages/prospeccao").then((m) => ({
+    default: m.ProspectDetailPage,
+  })),
+);
+const FinanceiroPage = lazy(() =>
+  import("./app/pages/financeiro").then((m) => ({ default: m.FinanceiroPage })),
+);
+const LancamentoFormPage = lazy(() =>
+  import("./app/pages/financeiro").then((m) => ({
+    default: m.LancamentoFormPage,
+  })),
+);
+const AuditPage = lazy(() =>
+  import("./app/pages/audit").then((m) => ({ default: m.AuditPage })),
+);
+const MeetingsPage = lazy(() =>
+  import("./app/pages/meetings").then((m) => ({ default: m.MeetingsPage })),
+);
+const PrivacyPolicyPage = lazy(() =>
+  import("./app/pages/privacy-policy").then((m) => ({
+    default: m.PrivacyPolicyPage,
+  })),
+);
+const TermsOfServicePage = lazy(() =>
+  import("./app/pages/terms-of-service").then((m) => ({
+    default: m.TermsOfServicePage,
+  })),
+);
 
 function ClientFormRoute() {
   const { clientId } = useParams();
@@ -110,6 +186,7 @@ export default function App() {
     <AppErrorBoundary>
       <AppStateProvider>
       <HashRouter>
+        <Suspense fallback={null}>
         <Routes>
           <Route element={<GuestLayout />}>
             <Route path="/login" element={<LoginPage />} />
@@ -229,6 +306,7 @@ export default function App() {
           <Route path="/termos-de-uso" element={<TermsOfServicePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </HashRouter>
       </AppStateProvider>
     </AppErrorBoundary>

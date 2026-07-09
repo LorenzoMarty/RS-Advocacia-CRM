@@ -145,7 +145,7 @@ def build_priority_actions(prazos, processos, today, now, periodo):
                 "id": f"deadline-{prazo.id}",
                 "kind": "deadline",
                 "title": prazo.titulo or "Prazo",
-                "responsible": prazo.responsavel or "Sem responsável",
+                "responsible": prazo.responsavel.nome if prazo.responsavel_id else "Sem responsável",
                 "date": prazo.data_limite.isoformat() if prazo.data_limite else None,
                 "severity": severity,
                 "tone": severity_tone(severity),
@@ -171,7 +171,11 @@ def build_priority_actions(prazos, processos, today, now, periodo):
                 "id": f"process-{processo.id}",
                 "kind": "process",
                 "title": title,
-                "responsible": processo.advogado_responsavel or "Sem responsável",
+                "responsible": (
+                    processo.advogado_responsavel.nome
+                    if processo.advogado_responsavel_id
+                    else "Sem responsável"
+                ),
                 "date": None,
                 "severity": severity,
                 "tone": severity_tone(severity),

@@ -11,7 +11,13 @@ class Prazo(models.Model):
         on_delete=models.CASCADE,
         related_name="prazos",
     )
-    responsavel = models.CharField(max_length=100)
+    responsavel = models.ForeignKey(
+        "usuarios.Usuario",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="prazos_responsavel",
+    )
     status = models.CharField(max_length=50)
     prioridade = models.CharField(max_length=50, default="Alta")
     observacoes = models.TextField(blank=True)

@@ -34,7 +34,11 @@ def processos_parados_resumo(processos, now):
             {
                 "id": str(processo.pk),
                 "numero": processo.numero_processo or "",
-                "responsavel": processo.advogado_responsavel or "",
+                "responsavel": (
+                    processo.advogado_responsavel.nome
+                    if processo.advogado_responsavel_id
+                    else ""
+                ),
                 "dias_parado": dias,
                 "cliente_nome": (
                     processo.cliente.nome if processo.cliente_id else ""

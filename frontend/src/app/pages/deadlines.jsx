@@ -45,11 +45,6 @@ const kanbanCardMotion = prefersReducedMotion()
       exit: { opacity: 0, scale: 0.96, transition: { duration: DURATION.fast, ease: EASE_OUT } },
     };
 
-function sortedUnique(values) {
-  return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))]
-    .sort((left, right) => left.localeCompare(right, 'pt-BR'));
-}
-
 function dateInputValue(value = new Date()) {
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return value;
@@ -160,7 +155,7 @@ function DeadlineCard({
   processes,
 }) {
   const process = processes.find((item) => item.id === deadline.processId) || null;
-  const cardTitle = buildDeadlineTitle(process, deadline.responsible) || deadline.title;
+  const cardTitle = buildDeadlineTitle(process, deadline.responsibleName) || deadline.title;
   const interactions = isDragging ? {} : cardHover;
 
   return (
@@ -217,7 +212,7 @@ export function DeadlinesPage() {
 
   const responsibleOptions = useMemo(
     () =>
-      [...new Set(allDeadlines.map((deadline) => deadline.responsible).filter(Boolean))].sort(
+      [...new Set(allDeadlines.map((deadline) => deadline.responsibleName).filter(Boolean))].sort(
         (left, right) => left.localeCompare(right, 'pt-BR'),
       ),
     [allDeadlines],
@@ -231,7 +226,7 @@ export function DeadlinesPage() {
         const haystack = buildSearchText([
           deadline.title,
           deadline.status,
-          deadline.responsible,
+          deadline.responsibleName,
           process?.number,
           process?.area,
           client?.name,
@@ -241,7 +236,7 @@ export function DeadlinesPage() {
           return false;
         }
 
-        if (responsible && normalizeText(deadline.responsible) !== normalizeText(responsible)) {
+        if (responsible && normalizeText(deadline.responsibleName) !== normalizeText(responsible)) {
           return false;
         }
 
@@ -272,7 +267,7 @@ export function DeadlinesPage() {
     const deadlineProcess = processes.find((process) => process.id === deadline.processId) || null;
     await saveDeadline({
       ...deadline,
-      title: buildDeadlineTitle(deadlineProcess, deadline.responsible) || deadline.title,
+      title: buildDeadlineTitle(deadlineProcess, deadline.responsibleName) || deadline.title,
       status: 'Em andamento',
     }, { silent: true });
   }
@@ -295,7 +290,7 @@ export function DeadlinesPage() {
       const deadlineProcess = processes.find((process) => process.id === deadline.processId) || null;
       const savedDeadline = await saveDeadline({
         ...deadline,
-        title: buildDeadlineTitle(deadlineProcess, deadline.responsible) || deadline.title,
+        title: buildDeadlineTitle(deadlineProcess, deadline.responsibleName) || deadline.title,
         status: nextColumn.label,
         completed: nextColumn.key === 'protocolado',
       }, { silent: true });
@@ -573,7 +568,7 @@ export function DeadlineDetailPage() {
 
   const process = processes.find((item) => item.id === deadline.processId) || null;
   const client = clients.find((item) => item.id === deadline.clientId) || null;
-  const deadlineTitle = buildDeadlineTitle(process, deadline.responsible) || deadline.title;
+  const deadlineTitle = buildDeadlineTitle(process, deadline.responsibleName) || deadline.title;
   const statusLabel = deadlineStatusLabel(deadline);
   const isTimerRunning = Boolean(deadline.timerStartedAt);
   const elapsedSeconds = elapsedSecondsForDeadline(deadline, currentTime);
@@ -831,7 +826,7 @@ export function DeadlineDetailPage() {
               </article>
               <article className="detail-item">
                 <span>Responsável</span>
-                <strong>{deadline.responsible || '-'}</strong>
+                <strong>{deadline.responsibleName || '-'}</strong>
               </article>
               <article className="detail-item">
                 <span>Cliente</span>
@@ -860,7 +855,6 @@ export function DeadlineFormPage() {
   const { confirm, confirmPopup } = useConfirmPopup();
   const isEditing = Boolean(params.deadlineId);
   const {
-    currentUser,
     deleteDeadline,
     deadlines,
     isDeadlinesLoading,
@@ -901,14 +895,8 @@ export function DeadlineFormPage() {
   }
 
   const selectedProcess = processes.find((process) => process.id === form.processId) || null;
-  const generatedTitle = buildDeadlineTitle(selectedProcess, form.responsible);
-  const responsibleOptions = sortedUnique([
-    currentUser?.name,
-    ...users.map((user) => user.name),
-    ...processes.map((process) => process.owner),
-    ...deadlines.map((item) => item.responsible),
-    deadline?.responsible,
-  ]);
+  const selectedResponsible = users.find((user) => user.id === form.responsible) || null;
+  const generatedTitle = buildDeadlineTitle(selectedProcess, selectedResponsible?.name || '');
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -920,21 +908,24 @@ export function DeadlineFormPage() {
     }
 
     const process = processes.find((item) => item.id === form.processId) || null;
+    const responsibleUser = users.find((user) => user.id === form.responsible) || null;
+    const responsibleName = responsibleUser?.name || '';
     const savedDeadline = await saveDeadline({
       id: deadline?.id,
-      title: buildDeadlineTitle(process, form.responsible),
+      title: buildDeadlineTitle(process, responsibleName),
       priority: deadline?.priority || 'Alta',
       date: form.date,
       clientId: process?.clientId || '',
       processId: form.processId,
-      responsible: form.responsible.trim(),
+      responsible: form.responsible,
+      responsibleName,
       status: deadline?.status || DEADLINE_DEFAULT_STATUS,
       description: form.description.trim(),
       notes: deadline?.notes || '',
       completed: deadline?.completed || false,
       elapsedSeconds: deadline?.elapsedSeconds || 0,
       timerStartedAt: deadline?.timerStartedAt || '',
-      createdBy: deadline?.createdBy || form.responsible.trim() || 'Interno',
+      createdBy: deadline?.createdBy || responsibleName || 'Interno',
     });
 
     if (!savedDeadline) {
@@ -1018,9 +1009,9 @@ export function DeadlineFormPage() {
                     value={form.responsible}
                     onChange={(event) => setForm((currentForm) => ({ ...currentForm, responsible: event.target.value }))}
                   >
-                    <option value="">Selecione o responsavel</option>
-                    {responsibleOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
+                    <option value="">Selecione o responsável</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>{user.name}</option>
                     ))}
                   </Select>
                 </Field>
