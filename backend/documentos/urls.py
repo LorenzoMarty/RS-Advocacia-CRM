@@ -54,6 +54,16 @@ urlpatterns = [
         name="confirmar_importacao",
     ),
     path(
+        "api/clientes/<int:cliente_id>/drive/organizar/sugerir/",
+        views.sugerir_organizacao_view,
+        name="sugerir_organizacao_drive",
+    ),
+    path(
+        "api/clientes/<int:cliente_id>/drive/organizar/aplicar/",
+        views.aplicar_organizacao_view,
+        name="aplicar_organizacao_drive",
+    ),
+    path(
         "api/drive/importar/clientes/descobrir/",
         views.descobrir_clientes_view,
         name="descobrir_clientes_drive",

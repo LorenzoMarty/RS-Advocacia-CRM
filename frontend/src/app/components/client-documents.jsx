@@ -11,6 +11,7 @@ import {
 } from '../services/documentos';
 import { EmptyState } from '../pages/common';
 import { ClientImportWizard } from './client-import-wizard';
+import { ClientDriveOrganize } from './client-drive-organize';
 
 function formatSize(bytes) {
   if (!bytes) return '—';
@@ -43,6 +44,7 @@ export function ClientDocuments({ client }) {
   const [busy, setBusy] = useState(false);
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [organizing, setOrganizing] = useState(false);
   const [folderName, setFolderName] = useState('');
   const [dragOver, setDragOver] = useState(false);
 
@@ -209,6 +211,14 @@ export function ClientDocuments({ client }) {
           >
             Importar do Drive
           </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setOrganizing(true)}
+            disabled={busy || loading}
+          >
+            Organizar com IA
+          </button>
           {!creating ? (
             <button
               type="button"
@@ -374,6 +384,14 @@ export function ClientDocuments({ client }) {
           clientId={client.id}
           onClose={() => setImporting(false)}
           onImported={() => load(currentFolderId, path)}
+        />
+      ) : null}
+
+      {organizing ? (
+        <ClientDriveOrganize
+          clientId={client.id}
+          onClose={() => setOrganizing(false)}
+          onApplied={() => load(currentFolderId, path)}
         />
       ) : null}
     </section>

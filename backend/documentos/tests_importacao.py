@@ -369,3 +369,182 @@ class SincronizarPastaConhecidaTests(TestCase):
         self.assertIsNone(
             importacao.sincronizar_pasta_conhecida("usuario", "pasta-qualquer")
         )
+
+
+class SugerirPlanoIATests(TestCase):
+    def setUp(self):
+        self.cliente = _cliente()
+
+    def _arvore_simples(self, nome_pasta="Pasta geral"):
+        return {
+            "id": "raiz",
+            "nome": "",
+            "arquivos": [],
+            "subpastas": [
+                {
+                    "id": "sub",
+                    "nome": nome_pasta,
+                    "arquivos": [
+                        {
+                            "id": "f1",
+                            "nome": "arquivo.pdf",
+                            "mime_type": "application/pdf",
+                            "tamanho_bytes": 10,
+                            "link_visualizacao": "http://x",
+                        }
+                    ],
+                    "subpastas": [],
+                }
+            ],
+        }
+
+    @patch("documentos.importacao.ai_drive.classificar_arvore")
+    def test_degrada_para_heuristicas_quando_ia_falha(self, mock_classificar):
+        mock_classificar.side_effect = RuntimeError("api fora")
+
+        plano = importacao.sugerir_plano_ia(self._arvore_simples(), self.cliente)
+
+        self.assertFalse(plano["ia"]["usada"])
+        self.assertIn("heurísticas", plano["ia"]["aviso"])
+        self.assertEqual(plano["avisos_processos_sem_numero"], [])
+        self.assertEqual(len(plano["documentos_sugeridos"]), 1)
+
+    @patch("documentos.importacao.ai_drive.classificar_arvore")
+    def test_descarta_cnj_invalido_da_ia(self, mock_classificar):
+        mock_classificar.return_value = {
+            "processos": [
+                {
+                    "numero_cnj": "1234567-00.2024.8.13.0001",  # dígito errado
+                    "titulo": "Ação X",
+                    "pasta_id": "sub",
+                }
+            ],
+            "documentos": [],
+        }
+
+        plano = importacao.sugerir_plano_ia(self._arvore_simples(), self.cliente)
+
+        self.assertTrue(plano["ia"]["usada"])
+        self.assertEqual(plano["processos_sugeridos"], [])
+        # CNJ inválido é tratado como "sem número": vira aviso, nunca processo.
+        self.assertEqual(len(plano["avisos_processos_sem_numero"]), 1)
+        self.assertEqual(plano["avisos_processos_sem_numero"][0]["titulo"], "Ação X")
+
+    @patch("documentos.importacao.ai_drive.classificar_arvore")
+    def test_processo_sem_numero_vira_aviso(self, mock_classificar):
+        mock_classificar.return_value = {
+            "processos": [
+                {
+                    "numero_cnj": None,
+                    "titulo": "Ação trabalhista contra Empresa Y",
+                    "area_juridica": "Trabalhista",
+                    "descricao": "Reclamatória",
+                    "pasta_id": "sub",
+                }
+            ],
+            "documentos": [],
+        }
+
+        plano = importacao.sugerir_plano_ia(self._arvore_simples(), self.cliente)
+
+        self.assertEqual(plano["processos_sugeridos"], [])
+        aviso = plano["avisos_processos_sem_numero"][0]
+        self.assertEqual(aviso["titulo"], "Ação trabalhista contra Empresa Y")
+        self.assertEqual(aviso["area_juridica"], "Trabalhista")
+        self.assertEqual(aviso["origem_pasta_id"], "sub")
+
+    @patch("documentos.importacao.ai_drive.classificar_arvore")
+    def test_adiciona_processo_novo_com_cnj_valido(self, mock_classificar):
+        mock_classificar.return_value = {
+            "processos": [
+                {
+                    "numero_cnj": CNJ_VALIDO,
+                    "titulo": "Ação",
+                    "area_juridica": "Cível",
+                    "descricao": "Cobrança",
+                    "pasta_id": "sub",
+                }
+            ],
+            "documentos": [],
+        }
+
+        plano = importacao.sugerir_plano_ia(self._arvore_simples(), self.cliente)
+
+        self.assertEqual(len(plano["processos_sugeridos"]), 1)
+        sugerido = plano["processos_sugeridos"][0]
+        self.assertEqual(sugerido["numero_processo"], CNJ_VALIDO)
+        self.assertEqual(sugerido["origem"], "ia")
+        self.assertEqual(sugerido["area_juridica"], "Cível")
+
+    @patch("documentos.importacao.ai_drive.classificar_arvore")
+    def test_nao_repete_processo_ja_cadastrado(self, mock_classificar):
+        Processo.objects.create(cliente=self.cliente, numero_processo=CNJ_VALIDO)
+        mock_classificar.return_value = {
+            "processos": [{"numero_cnj": CNJ_VALIDO, "titulo": "Ação"}],
+            "documentos": [],
+        }
+
+        plano = importacao.sugerir_plano_ia(self._arvore_simples(), self.cliente)
+
+        self.assertEqual(plano["processos_sugeridos"], [])
+
+    @patch("documentos.importacao.ai_drive.classificar_arvore")
+    def test_complementa_processo_heuristico_sem_sobrescrever(self, mock_classificar):
+        mock_classificar.return_value = {
+            "processos": [
+                {
+                    "numero_cnj": CNJ_VALIDO,
+                    "titulo": "Ação",
+                    "area_juridica": "Cível",
+                    "descricao": "Descrição IA",
+                }
+            ],
+            "documentos": [],
+        }
+        arvore = self._arvore_simples(nome_pasta=f"Processo {CNJ_VALIDO}")
+
+        plano = importacao.sugerir_plano_ia(arvore, self.cliente)
+
+        self.assertEqual(len(plano["processos_sugeridos"]), 1)
+        item = plano["processos_sugeridos"][0]
+        self.assertNotIn("origem", item)  # continua sendo o item heurístico
+        self.assertEqual(item["area_juridica"], "Cível")
+        self.assertEqual(item["descricao"], "Descrição IA")
+
+    @patch("documentos.importacao.ai_drive.classificar_arvore")
+    def test_ia_reclassifica_documento_outro_mas_nao_sobrescreve_heuristica(
+        self, mock_classificar
+    ):
+        mock_classificar.return_value = {
+            "processos": [],
+            "documentos": [
+                {"arquivo_id": "f1", "categoria": "document"},
+                {"arquivo_id": "alucinado", "categoria": "petition"},
+            ],
+        }
+
+        plano = importacao.sugerir_plano_ia(self._arvore_simples(), self.cliente)
+
+        docs = {item["drive_file_id"]: item for item in plano["documentos_sugeridos"]}
+        self.assertEqual(
+            docs["f1"]["categoria_sugerida"], DocumentoCliente.CATEGORIA_DOCUMENTO
+        )
+        self.assertEqual(docs["f1"]["origem_categoria"], "ia")
+        self.assertNotIn("alucinado", docs)
+
+    @patch("documentos.importacao.ai_drive.classificar_arvore")
+    def test_pasta_id_alucinado_e_descartado(self, mock_classificar):
+        mock_classificar.return_value = {
+            "processos": [
+                {
+                    "numero_cnj": CNJ_VALIDO,
+                    "titulo": "Ação",
+                    "pasta_id": "pasta-inexistente",
+                }
+            ],
+            "documentos": [],
+        }
+
+        plano = importacao.sugerir_plano_ia(self._arvore_simples(), self.cliente)
+
+        self.assertEqual(plano["processos_sugeridos"][0]["origem_pasta_id"], "")

@@ -5,7 +5,9 @@ from unittest.mock import MagicMock, patch
 from django.test import SimpleTestCase, override_settings
 
 from ai.providers.openai_provider import OpenAIProvider
+from ai.services import drive_import as ai_drive
 from ai.services import meetings as ai_meetings
+from ai.services.drive_import import RespostaIAInvalida
 
 
 @override_settings(
@@ -123,3 +125,97 @@ class AIServiceTests(SimpleTestCase):
             result = ai_meetings.refine_summary("relatório", "trecho")
 
         self.assertEqual(result, "atualizado")
+
+
+@override_settings(
+    OPENAI_API_KEY="test-key",
+    OPENAI_CLASSIFICATION_MODEL="gpt-4.1-mini",
+)
+class DriveImportProviderTests(SimpleTestCase):
+    def test_classify_drive_tree_uses_classification_model(self):
+        client = MagicMock()
+        client.responses.create.return_value = SimpleNamespace(
+            output_text='{"processos": []}'
+        )
+        provider = OpenAIProvider(client=client)
+
+        result = provider.classify_drive_tree(
+            arvore_texto="pasta [1]: Raiz", contexto="Cliente: X"
+        )
+
+        self.assertEqual(result, '{"processos": []}')
+        kwargs = client.responses.create.call_args.kwargs
+        self.assertEqual(kwargs["model"], "gpt-4.1-mini")
+        self.assertFalse(kwargs["store"])
+        self.assertEqual(kwargs["text"], {"format": {"type": "json_object"}})
+        self.assertIn("pasta [1]: Raiz", kwargs["input"])
+
+    def test_plan_drive_organization_uses_classification_model(self):
+        client = MagicMock()
+        client.responses.create.return_value = SimpleNamespace(
+            output_text='{"operacoes": []}'
+        )
+        provider = OpenAIProvider(client=client)
+
+        result = provider.plan_drive_organization(
+            arvore_texto="pasta [1]: Raiz", contexto="Cliente: X"
+        )
+
+        self.assertEqual(result, '{"operacoes": []}')
+        kwargs = client.responses.create.call_args.kwargs
+        self.assertEqual(kwargs["model"], "gpt-4.1-mini")
+        self.assertFalse(kwargs["store"])
+
+
+class DriveImportServiceTests(SimpleTestCase):
+    ARVORE = {
+        "id": "raiz",
+        "nome": "Cliente X",
+        "arquivos": [
+            {"id": "f1", "nome": "contrato.pdf", "mime_type": "application/pdf"}
+        ],
+        "subpastas": [
+            {"id": "p1", "nome": "Processo", "arquivos": [], "subpastas": []}
+        ],
+    }
+
+    def test_serializar_arvore_inclui_ids_e_indentacao(self):
+        texto = ai_drive.serializar_arvore_para_ia(self.ARVORE)
+
+        self.assertIn("pasta [raiz]: Cliente X", texto)
+        self.assertIn("  arquivo [f1]: contrato.pdf (pdf)", texto)
+        self.assertIn("  pasta [p1]: Processo", texto)
+
+    def test_classificar_arvore_parse_json(self):
+        provider = MagicMock()
+        provider.classify_drive_tree.return_value = '{"processos": [1]}'
+
+        with patch("ai.services.drive_import.get_provider", return_value=provider):
+            dados = ai_drive.classificar_arvore(self.ARVORE, "contexto")
+
+        self.assertEqual(dados, {"processos": [1]})
+
+    def test_classificar_arvore_aceita_cercas_de_codigo(self):
+        provider = MagicMock()
+        provider.classify_drive_tree.return_value = '```json\n{"processos": []}\n```'
+
+        with patch("ai.services.drive_import.get_provider", return_value=provider):
+            dados = ai_drive.classificar_arvore(self.ARVORE, "contexto")
+
+        self.assertEqual(dados, {"processos": []})
+
+    def test_classificar_arvore_rejeita_nao_json(self):
+        provider = MagicMock()
+        provider.classify_drive_tree.return_value = "desculpe, não consigo"
+
+        with patch("ai.services.drive_import.get_provider", return_value=provider):
+            with self.assertRaises(RespostaIAInvalida):
+                ai_drive.classificar_arvore(self.ARVORE, "contexto")
+
+    def test_sugerir_organizacao_rejeita_lista_json(self):
+        provider = MagicMock()
+        provider.plan_drive_organization.return_value = "[1, 2]"
+
+        with patch("ai.services.drive_import.get_provider", return_value=provider):
+            with self.assertRaises(RespostaIAInvalida):
+                ai_drive.sugerir_organizacao(self.ARVORE, "contexto")

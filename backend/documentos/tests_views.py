@@ -249,3 +249,113 @@ class DocumentoPermissionTests(TestCase):
     def test_requires_authentication(self):
         response = self.client.get(reverse("listar_documentos", args=[self.cliente.pk]))
         self.assertEqual(response.status_code, 401)
+
+
+@override_settings(GOOGLE_DRIVE_ROOT_FOLDER_ID=ROOT)
+class OrganizacaoViewsTests(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Advogada", email="adv@example.com", cargo="Administrador"
+        )
+        auth_user = get_user_model().objects.create_superuser(
+            username=self.usuario.email, email=self.usuario.email
+        )
+        self.client.force_login(auth_user)
+        session = self.client.session
+        session["usuario_id"] = self.usuario.pk
+        session.save()
+
+        self.cliente = _cliente()
+        _clientedrive(self.cliente)
+
+    def test_sugerir_rejeita_get(self):
+        response = self.client.get(
+            reverse("sugerir_organizacao_drive", args=[self.cliente.pk])
+        )
+        self.assertEqual(response.status_code, 405)
+
+    def test_aplicar_rejeita_get(self):
+        response = self.client.get(
+            reverse("aplicar_organizacao_drive", args=[self.cliente.pk])
+        )
+        self.assertEqual(response.status_code, 405)
+
+    @patch("documentos.views.organizacao.sugerir_organizacao")
+    def test_sugerir_retorna_plano(self, mock_sugerir):
+        mock_sugerir.return_value = {"operacoes": [], "descartadas": 0}
+
+        response = self.client.post(
+            reverse("sugerir_organizacao_drive", args=[self.cliente.pk]),
+            content_type="application/json",
+            data="{}",
+        )
+
+        self.assertEqual(response.status_code, 200, response.json())
+        self.assertEqual(response.json()["dados"]["operacoes"], [])
+
+    @patch("documentos.views.organizacao.sugerir_organizacao")
+    def test_sugerir_ia_indisponivel_retorna_502(self, mock_sugerir):
+        from documentos.organizacao import OrganizacaoIndisponivel
+
+        mock_sugerir.side_effect = OrganizacaoIndisponivel("IA fora do ar")
+
+        response = self.client.post(
+            reverse("sugerir_organizacao_drive", args=[self.cliente.pk]),
+            content_type="application/json",
+            data="{}",
+        )
+
+        self.assertEqual(response.status_code, 502)
+
+    @patch("documentos.views.organizacao.aplicar_organizacao")
+    def test_aplicar_retorna_resumo(self, mock_aplicar):
+        mock_aplicar.return_value = {
+            "aplicadas": 2,
+            "falhas": [],
+            "rejeitadas": [],
+            "pastas_criadas": {},
+        }
+
+        response = self.client.post(
+            reverse("aplicar_organizacao_drive", args=[self.cliente.pk]),
+            content_type="application/json",
+            data='{"operacoes": []}',
+        )
+
+        self.assertEqual(response.status_code, 200, response.json())
+        self.assertEqual(response.json()["dados"]["aplicadas"], 2)
+
+    @patch("documentos.views.organizacao.aplicar_organizacao")
+    def test_aplicar_corpo_invalido_retorna_400(self, mock_aplicar):
+        from documentos.organizacao import OrganizacaoInvalida
+
+        mock_aplicar.side_effect = OrganizacaoInvalida("'operacoes' deve ser uma lista.")
+
+        response = self.client.post(
+            reverse("aplicar_organizacao_drive", args=[self.cliente.pk]),
+            content_type="application/json",
+            data='{"operacoes": 1}',
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    @patch("documentos.views.importacao.sugerir_plano_ia")
+    @patch("documentos.views.importacao.escanear_arvore")
+    def test_escanear_com_usar_ia_chama_plano_ia(self, mock_scan, mock_plano_ia):
+        mock_scan.return_value = {"id": "c", "nome": "", "arquivos": [], "subpastas": []}
+        mock_plano_ia.return_value = {
+            "processos_sugeridos": [],
+            "documentos_sugeridos": [],
+            "avisos_processos_sem_numero": [],
+            "ia": {"usada": True, "aviso": None},
+        }
+
+        response = self.client.post(
+            reverse("escanear_importacao", args=[self.cliente.pk]),
+            content_type="application/json",
+            data='{"usar_ia": true}',
+        )
+
+        self.assertEqual(response.status_code, 200, response.json())
+        mock_plano_ia.assert_called_once()
+        self.assertTrue(response.json()["dados"]["ia"]["usada"])

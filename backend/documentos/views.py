@@ -23,7 +23,7 @@ from integrations.google.exceptions import (
 from integrations.google.oauth import current_usuario
 from integrations.google.responses import mapear_erro_google as _mapear_erro_google
 
-from . import importacao, services
+from . import importacao, organizacao, services
 from .forms import UploadDocumentoForm
 from .models import DocumentoCliente, serialize_documento
 
@@ -426,7 +426,10 @@ def escanear_importacao_view(request, cliente_id):
     ) as exc:
         return _mapear_erro_google(exc)
 
-    plano = importacao.sugerir_plano(arvore, cliente)
+    if corpo.get("usar_ia"):
+        plano = importacao.sugerir_plano_ia(arvore, cliente)
+    else:
+        plano = importacao.sugerir_plano(arvore, cliente)
     return resposta_sucesso(plano)
 
 
@@ -457,6 +460,62 @@ def confirmar_importacao_view(request, cliente_id):
             "documentos_criados": len(resultado["documentos"]),
         },
         mensagem="Importação concluída.",
+    )
+
+
+# --- AI folder organization (suggest plan -> human review -> apply) --------
+
+
+@app_permissions_required("documentos.view_documentocliente", "clientes.view_cliente")
+def sugerir_organizacao_view(request, cliente_id):
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    cliente = get_object_or_404(Cliente, pk=cliente_id)
+    usuario = current_usuario(request)
+    try:
+        plano = organizacao.sugerir_organizacao(usuario, cliente)
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+    except organizacao.OrganizacaoInvalida as exc:
+        return resposta_erro(str(exc), status=400)
+    except organizacao.OrganizacaoIndisponivel as exc:
+        return resposta_erro(str(exc), status=502)
+
+    return resposta_sucesso(plano)
+
+
+@app_permissions_required("documentos.change_documentocliente", "clientes.view_cliente")
+def aplicar_organizacao_view(request, cliente_id):
+    if request.method != "POST":
+        return metodo_nao_permitido(["POST"])
+
+    cliente = get_object_or_404(Cliente, pk=cliente_id)
+    try:
+        corpo = ler_corpo_json(request)
+    except ValueError as exc:
+        return resposta_erro(str(exc), status=400)
+
+    operacoes = corpo.get("operacoes")
+    usuario = current_usuario(request)
+    try:
+        resultado = organizacao.aplicar_organizacao(usuario, cliente, operacoes)
+    except organizacao.OrganizacaoInvalida as exc:
+        return resposta_erro(str(exc), status=400)
+    except (
+        GoogleConfigurationError,
+        GoogleAuthorizationRequired,
+        GoogleApiError,
+    ) as exc:
+        return _mapear_erro_google(exc)
+
+    return resposta_sucesso(
+        resultado,
+        mensagem=f"{resultado['aplicadas']} operação(ões) aplicada(s).",
     )
 
 

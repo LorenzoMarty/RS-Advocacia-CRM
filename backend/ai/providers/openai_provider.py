@@ -4,6 +4,10 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from openai import OpenAI
 
+from ai.prompts.drive_import import (
+    CLASSIFICACAO_ARVORE_INSTRUCTIONS,
+    ORGANIZACAO_ARVORE_INSTRUCTIONS,
+)
 from ai.prompts.meetings import (
     SUMMARY_INSTRUCTIONS,
     SUMMARY_REFINE_INSTRUCTIONS,
@@ -27,6 +31,7 @@ class OpenAIProvider:
         self.client = client or OpenAI(api_key=api_key)
         self.transcription_model = settings.OPENAI_TRANSCRIPTION_MODEL
         self.summary_model = settings.OPENAI_SUMMARY_MODEL
+        self.classification_model = settings.OPENAI_CLASSIFICATION_MODEL
 
     def transcribe(
         self,
@@ -67,6 +72,28 @@ class OpenAIProvider:
             instructions=SUMMARY_REFINE_INSTRUCTIONS,
             input=entrada,
             max_output_tokens=1600,
+            store=False,
+        )
+        return response.output_text.strip()
+
+    def classify_drive_tree(self, *, arvore_texto: str, contexto: str) -> str:
+        response = self.client.responses.create(
+            model=self.classification_model,
+            instructions=CLASSIFICACAO_ARVORE_INSTRUCTIONS,
+            input=f"{contexto}\n\nÁRVORE DA PASTA:\n{arvore_texto}",
+            text={"format": {"type": "json_object"}},
+            max_output_tokens=4000,
+            store=False,
+        )
+        return response.output_text.strip()
+
+    def plan_drive_organization(self, *, arvore_texto: str, contexto: str) -> str:
+        response = self.client.responses.create(
+            model=self.classification_model,
+            instructions=ORGANIZACAO_ARVORE_INSTRUCTIONS,
+            input=f"{contexto}\n\nÁRVORE DA PASTA:\n{arvore_texto}",
+            text={"format": {"type": "json_object"}},
+            max_output_tokens=4000,
             store=False,
         )
         return response.output_text.strip()

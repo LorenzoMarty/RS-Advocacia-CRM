@@ -121,6 +121,19 @@ function processSuggestionFromApi(item) {
     numeroProcesso: item.numero_processo || '',
     originFolderId: item.origem_pasta_id || '',
     originFolderName: item.origem_pasta_nome || '',
+    legalArea: item.area_juridica || '',
+    description: item.descricao || '',
+    origin: item.origem || 'heuristica',
+  };
+}
+
+function processWarningFromApi(item) {
+  return {
+    title: item.titulo || '',
+    legalArea: item.area_juridica || '',
+    description: item.descricao || '',
+    originFolderId: item.origem_pasta_id || '',
+    originFolderName: item.origem_pasta_nome || '',
   };
 }
 
@@ -138,14 +151,19 @@ function documentSuggestionFromApi(item) {
   };
 }
 
-export async function scanClientDriveImport(clientId, folderId) {
+export async function scanClientDriveImport(clientId, folderId, { useAi = false } = {}) {
   const payload = await apiRequest(`/api/clientes/${clientId}/drive/importar/escanear/`, {
     method: 'POST',
-    body: JSON.stringify({ folder_id: folderId || '' }),
+    body: JSON.stringify({ folder_id: folderId || '', usar_ia: useAi }),
   });
   return {
     suggestedProcesses: (payload.processos_sugeridos || []).map(processSuggestionFromApi),
     suggestedDocuments: (payload.documentos_sugeridos || []).map(documentSuggestionFromApi),
+    warningsWithoutNumber: (payload.avisos_processos_sem_numero || []).map(processWarningFromApi),
+    ai: {
+      used: Boolean(payload.ia?.usada),
+      notice: payload.ia?.aviso || '',
+    },
   };
 }
 
@@ -156,6 +174,8 @@ export async function confirmClientDriveImport(clientId, { processes, documents 
       processos: processes.map((item) => ({
         numero_processo: item.numeroProcesso,
         origem_pasta_id: item.originFolderId,
+        area_juridica: item.legalArea || '',
+        descricao: item.description || '',
       })),
       documentos: documents.map((item) => ({
         drive_file_id: item.driveFileId,
@@ -172,6 +192,59 @@ export async function confirmClientDriveImport(clientId, { processes, documents 
   return {
     processesCreated: Number(payload.processos_criados || 0),
     documentsCreated: Number(payload.documentos_criados || 0),
+  };
+}
+
+// --- AI folder organization (suggest plan -> human review -> apply) --------
+
+function organizeOperationFromApi(item) {
+  return {
+    type: item.tipo || '',
+    ref: item.ref || '',
+    name: item.nome || '',
+    parentId: item.pai_id || '',
+    fileId: item.arquivo_id || '',
+    targetId: item.destino_id || '',
+    targetRef: item.destino_ref || '',
+    newName: item.novo_nome || '',
+    reason: item.motivo || '',
+  };
+}
+
+function organizeOperationToApi(item) {
+  return {
+    tipo: item.type,
+    ref: item.ref || '',
+    nome: item.name || '',
+    pai_id: item.parentId || '',
+    arquivo_id: item.fileId || '',
+    destino_id: item.targetId || '',
+    destino_ref: item.targetRef || '',
+    novo_nome: item.newName || '',
+    motivo: item.reason || '',
+  };
+}
+
+export async function suggestDriveOrganization(clientId) {
+  const payload = await apiRequest(`/api/clientes/${clientId}/drive/organizar/sugerir/`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  return {
+    operations: (payload.operacoes || []).map(organizeOperationFromApi),
+    discarded: Number(payload.descartadas || 0),
+  };
+}
+
+export async function applyDriveOrganization(clientId, operations) {
+  const payload = await apiRequest(`/api/clientes/${clientId}/drive/organizar/aplicar/`, {
+    method: 'POST',
+    body: JSON.stringify({ operacoes: operations.map(organizeOperationToApi) }),
+  });
+  return {
+    applied: Number(payload.aplicadas || 0),
+    failures: payload.falhas || [],
+    rejected: payload.rejeitadas || [],
   };
 }
 
