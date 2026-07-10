@@ -15,30 +15,51 @@ function formatBytes(size) {
   return `${(kb / 1024).toFixed(1)} MB`;
 }
 
+function hasValidCnjShape(value) {
+  return value.replace(/\D/g, '').length === 20;
+}
+
 export function ClientImportWizard({ clientId, onClose, onImported }) {
   const { addFlash, refreshProcesses } = useAppState();
   const [step, setStep] = useState('scan');
   const [folderId, setFolderId] = useState('');
+  const [useAi, setUseAi] = useState(false);
+  const [aiNotice, setAiNotice] = useState('');
   const [loading, setLoading] = useState(false);
   const [processes, setProcesses] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [warnings, setWarnings] = useState([]);
 
   async function handleScan() {
     setLoading(true);
     try {
-      const resultado = await scanClientDriveImport(clientId, folderId.trim());
+      const resultado = await scanClientDriveImport(clientId, folderId.trim(), { useAi });
       setProcesses(
         resultado.suggestedProcesses.map((item) => ({ ...item, included: true }))
       );
       setDocuments(
         resultado.suggestedDocuments.map((item) => ({ ...item, included: true }))
       );
+      setWarnings(
+        (resultado.warningsWithoutNumber || []).map((item) => ({
+          ...item,
+          numeroProcesso: '',
+          included: false,
+        }))
+      );
+      setAiNotice(resultado.ai?.notice || '');
       setStep('review');
     } catch (error) {
       addFlash(error.message || 'Não foi possível escanear a pasta do Drive.', 'error');
     } finally {
       setLoading(false);
     }
+  }
+
+  function updateWarning(index, changes) {
+    setWarnings((current) =>
+      current.map((item, i) => (i === index ? { ...item, ...changes } : item))
+    );
   }
 
   function updateProcess(index, changes) {
@@ -60,8 +81,16 @@ export function ClientImportWizard({ clientId, onClose, onImported }) {
   async function handleConfirm() {
     setLoading(true);
     try {
+      const warningProcesses = warnings
+        .filter((item) => item.included && hasValidCnjShape(item.numeroProcesso))
+        .map((item) => ({
+          numeroProcesso: item.numeroProcesso.trim(),
+          originFolderId: item.originFolderId,
+          legalArea: item.legalArea,
+          description: item.description,
+        }));
       const resultado = await confirmClientDriveImport(clientId, {
-        processes: processes.filter((item) => item.included),
+        processes: [...processes.filter((item) => item.included), ...warningProcesses],
         documents: documents
           .filter((item) => item.included)
           .map((item) => ({
@@ -112,6 +141,17 @@ export function ClientImportWizard({ clientId, onClose, onImported }) {
                 placeholder="ID da pasta no Drive"
               />
             </label>
+            <label className="import-wizard-field import-wizard-checkbox">
+              <input
+                type="checkbox"
+                checked={useAi}
+                onChange={(event) => setUseAi(event.target.checked)}
+              />
+              <span>
+                Analisar com IA (usa apenas os nomes de pastas e arquivos; sugere área,
+                descrição e possíveis processos sem número)
+              </span>
+            </label>
             <button
               type="button"
               className="btn"
@@ -125,6 +165,7 @@ export function ClientImportWizard({ clientId, onClose, onImported }) {
 
         {step === 'review' && (
           <div className="import-wizard-body">
+            {aiNotice && <p className="import-wizard-hint">{aiNotice}</p>}
             <section className="import-wizard-section">
               <h4>Processos sugeridos ({processes.length})</h4>
               {processes.length === 0 && (
@@ -146,6 +187,48 @@ export function ClientImportWizard({ clientId, onClose, onImported }) {
                 </div>
               ))}
             </section>
+
+            {warnings.length > 0 && (
+              <section className="import-wizard-section">
+                <h4>Possíveis processos sem número (IA) ({warnings.length})</h4>
+                <p className="import-wizard-hint">
+                  A IA identificou pastas que parecem processos, mas sem número CNJ no
+                  nome. Digite o número para incluir na importação.
+                </p>
+                {warnings.map((item, index) => (
+                  <div className="import-wizard-row" key={`${item.title}-${index}`}>
+                    <input
+                      type="checkbox"
+                      checked={item.included}
+                      disabled={!hasValidCnjShape(item.numeroProcesso)}
+                      onChange={(event) =>
+                        updateWarning(index, { included: event.target.checked })
+                      }
+                    />
+                    <div className="import-wizard-row-copy">
+                      <strong>{item.title}</strong>
+                      <span>
+                        {[item.legalArea, item.originFolderName]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      className="import-wizard-input"
+                      value={item.numeroProcesso}
+                      placeholder="0000000-00.0000.0.00.0000"
+                      onChange={(event) =>
+                        updateWarning(index, {
+                          numeroProcesso: event.target.value,
+                          included: hasValidCnjShape(event.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+              </section>
+            )}
 
             <section className="import-wizard-section">
               <h4>Documentos sugeridos ({documents.length})</h4>

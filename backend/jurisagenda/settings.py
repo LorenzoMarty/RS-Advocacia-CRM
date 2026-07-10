@@ -335,6 +335,10 @@ OPENAI_TRANSCRIPTION_MODEL = (
 OPENAI_SUMMARY_MODEL = (
     os.getenv("OPENAI_SUMMARY_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
 )
+OPENAI_CLASSIFICATION_MODEL = (
+    os.getenv("OPENAI_CLASSIFICATION_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
+)
+DRIVE_AI_MAX_OPERACOES = int(os.getenv("DRIVE_AI_MAX_OPERACOES", "").strip() or "100")
 MEETINGS_MAX_AUDIO_SIZE_MB = int(
     os.getenv("MEETINGS_MAX_AUDIO_SIZE_MB", "").strip() or "25"
 )

@@ -34,11 +34,17 @@ from __future__ import annotations
 from django.db import transaction
 from django.db.models import Q
 
+import logging
+import re
+
+from ai.services import drive_import as ai_drive
 from clientes.models import Cliente
 from core.br_identifiers import classificar_por_palavras, extrair_cnj, extrair_cpf_cnpj
 from integrations.google import drive
 from integrations.google.client import drive_service
 from processos.models import Processo
+
+logger = logging.getLogger(__name__)
 
 from . import services
 from .models import ClienteDrive, DocumentoCliente, ProcessoDrive
@@ -171,6 +177,158 @@ def sugerir_plano(arvore: dict, cliente) -> dict:
         "processos_sugeridos": list(processos_sugeridos.values()),
         "documentos_sugeridos": documentos_sugeridos,
     }
+
+
+def _mapear_pastas_da_arvore(arvore: dict) -> dict[str, str]:
+    """Map every folder id in the scanned tree to its name."""
+    pastas: dict[str, str] = {}
+
+    def _walk(no: dict) -> None:
+        pastas[no["id"]] = no.get("nome", "")
+        for subpasta in no.get("subpastas", []):
+            _walk(subpasta)
+
+    _walk(arvore)
+    return pastas
+
+
+def _ids_de_arquivos_da_arvore(arvore: dict) -> set[str]:
+    ids: set[str] = set()
+
+    def _walk(no: dict) -> None:
+        for arquivo in no.get("arquivos", []):
+            ids.add(arquivo["id"])
+        for subpasta in no.get("subpastas", []):
+            _walk(subpasta)
+
+    _walk(arvore)
+    return ids
+
+
+def _digitos(texto: str) -> str:
+    return re.sub(r"\D", "", texto or "")
+
+
+def sugerir_plano_ia(arvore: dict, cliente) -> dict:
+    """Extend :func:`sugerir_plano` with an AI pass over the same scanned tree.
+
+    The AI only ever sees folder/file names (never file contents). Its output is
+    treated as untrusted: CNJ numbers must pass :func:`extrair_cnj`'s validator,
+    Drive ids must exist in the scanned tree, and heuristic findings always win
+    on conflict. Processos the AI spots without a visible CNJ number become
+    ``avisos_processos_sem_numero`` for the reviewer to complete manually —
+    they are never auto-created. If the AI call fails for any reason the plain
+    heuristic plan is returned with ``ia.usada == False``.
+    """
+    plano = sugerir_plano(arvore, cliente)
+    plano["avisos_processos_sem_numero"] = []
+    plano["ia"] = {"usada": False, "aviso": None}
+
+    numeros_existentes = set(
+        Processo.objects.filter(cliente=cliente).values_list(
+            "numero_processo", flat=True
+        )
+    )
+    contexto = (
+        f"Cliente: {cliente.nome}\n"
+        "Processos já cadastrados (não sugerir de novo): "
+        + (", ".join(sorted(numeros_existentes)) or "nenhum")
+    )
+
+    try:
+        dados = ai_drive.classificar_arvore(arvore, contexto)
+    except Exception:  # degrade to heuristics-only on any AI failure
+        logger.exception("Classificação IA da pasta do cliente %s falhou", cliente.pk)
+        plano["ia"]["aviso"] = "IA indisponível; usando apenas heurísticas."
+        return plano
+
+    plano["ia"]["usada"] = True
+
+    pastas = _mapear_pastas_da_arvore(arvore)
+    arquivos_validos = _ids_de_arquivos_da_arvore(arvore)
+    sugeridos_por_digitos = {
+        _digitos(item["numero_processo"]): item
+        for item in plano["processos_sugeridos"]
+    }
+    digitos_conhecidos = {_digitos(numero) for numero in numeros_existentes}
+
+    for proc in dados.get("processos") or []:
+        if not isinstance(proc, dict):
+            continue
+        numeros = extrair_cnj(str(proc.get("numero_cnj") or ""))
+        pasta_id = str(proc.get("pasta_id") or "")
+        if pasta_id not in pastas:
+            pasta_id = ""
+        area = str(proc.get("area_juridica") or "").strip()[:100]
+        descricao = str(proc.get("descricao") or "").strip()
+
+        if not numeros:
+            titulo = str(proc.get("titulo") or "").strip()
+            if not titulo:
+                continue
+            plano["avisos_processos_sem_numero"].append(
+                {
+                    "titulo": titulo[:200],
+                    "area_juridica": area,
+                    "descricao": descricao,
+                    "origem_pasta_id": pasta_id,
+                    "origem_pasta_nome": pastas.get(pasta_id, ""),
+                }
+            )
+            continue
+
+        numero = numeros[0]
+        chave = _digitos(numero)
+        if chave in digitos_conhecidos:
+            continue
+        existente = sugeridos_por_digitos.get(chave)
+        if existente is not None:
+            existente.setdefault("area_juridica", "")
+            existente.setdefault("descricao", "")
+            existente["area_juridica"] = existente["area_juridica"] or area
+            existente["descricao"] = existente["descricao"] or descricao
+            continue
+        novo = {
+            "numero_processo": numero,
+            "origem_pasta_id": pasta_id,
+            "origem_pasta_nome": pastas.get(pasta_id, ""),
+            "area_juridica": area,
+            "descricao": descricao,
+            "origem": "ia",
+        }
+        plano["processos_sugeridos"].append(novo)
+        sugeridos_por_digitos[chave] = novo
+
+    docs_por_id = {
+        item["drive_file_id"]: item for item in plano["documentos_sugeridos"]
+    }
+    categorias_validas = {
+        DocumentoCliente.CATEGORIA_PETICAO,
+        DocumentoCliente.CATEGORIA_DOCUMENTO,
+        DocumentoCliente.CATEGORIA_OUTRO,
+    }
+    for doc in dados.get("documentos") or []:
+        if not isinstance(doc, dict):
+            continue
+        arquivo_id = str(doc.get("arquivo_id") or "")
+        item = docs_por_id.get(arquivo_id)
+        if item is None or arquivo_id not in arquivos_validos:
+            continue
+        categoria = str(doc.get("categoria") or "")
+        if (
+            categoria in categorias_validas
+            and categoria != DocumentoCliente.CATEGORIA_OUTRO
+            and item["categoria_sugerida"] == DocumentoCliente.CATEGORIA_OUTRO
+        ):
+            item["categoria_sugerida"] = categoria
+            item["origem_categoria"] = "ia"
+        numeros = extrair_cnj(str(doc.get("numero_cnj") or ""))
+        if numeros and not item["numero_processo_sugerido"]:
+            chave = _digitos(numeros[0])
+            if chave in sugeridos_por_digitos or chave in digitos_conhecidos:
+                item["numero_processo_sugerido"] = numeros[0]
+
+    return plano
 
 
 @transaction.atomic
