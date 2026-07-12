@@ -137,7 +137,10 @@ export function auditFromListResponse(payload) {
   return collectionFromResponse(payload, 'registros').map(auditEntryFromApi).filter(Boolean);
 }
 
-export function auditPaginationFromResponse(payload) {
+// Formato comum de paginação offset/limit usado por auditoria, clientes,
+// processos e usuários — todos devolvem `dados.paginacao` no mesmo shape
+// ({offset, limit, total, tem_mais}).
+export function paginationFromResponse(payload) {
   const dados = payload?.dados || payload;
   const pag = dados?.paginacao;
   if (!pag) {
@@ -149,6 +152,10 @@ export function auditPaginationFromResponse(payload) {
     total: pag.total ?? 0,
     temMais: Boolean(pag.tem_mais),
   };
+}
+
+export function auditPaginationFromResponse(payload) {
+  return paginationFromResponse(payload);
 }
 
 // Painel de risco computado no backend (GET /api/auditoria/painel/). Apenas

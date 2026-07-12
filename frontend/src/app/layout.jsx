@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, Suspense, useContext, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
@@ -17,6 +17,20 @@ const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 function createNavClass(isActive, baseClass) {
   return `${baseClass}${isActive ? ' active' : ''}`;
+}
+
+// Fallback do Suspense ao trocar de rota (download do chunk lazy da página).
+// Fica só no conteúdo — a sidebar/shell do ProtectedLayout continua montada.
+function RouteFallback() {
+  return (
+    <div className="route-fallback" aria-busy="true" aria-label="Carregando página">
+      <div className="skeleton-stack">
+        <span className="skeleton" style={{ height: 32, width: '40%' }} />
+        <span className="skeleton" style={{ height: 140 }} />
+        <span className="skeleton" style={{ height: 140 }} />
+      </div>
+    </div>
+  );
 }
 
 function NavigationIcon({ icon }) {
@@ -647,11 +661,13 @@ export function ProtectedLayout() {
         <div className="page">
           <div className="page-wrap">
             <main className="main" id="main-content">
-              <AnimatePresence mode="wait" initial={false}>
-                <MotionPage key={location.pathname} className="page-motion">
-                  <Outlet />
-                </MotionPage>
-              </AnimatePresence>
+              <Suspense fallback={<RouteFallback />}>
+                <AnimatePresence mode="wait" initial={false}>
+                  <MotionPage key={location.pathname} className="page-motion">
+                    <Outlet />
+                  </MotionPage>
+                </AnimatePresence>
+              </Suspense>
             </main>
           </div>
         </div>

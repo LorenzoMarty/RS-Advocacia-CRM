@@ -17,6 +17,28 @@ from documentos import tasks as documentos_tasks
 from integrations.google.oauth import current_usuario
 
 
+LIMITE_PADRAO = 100
+LIMITE_MAXIMO = 300
+
+
+def _limite(request):
+    try:
+        limite = int(request.GET.get("limit") or LIMITE_PADRAO)
+    except (TypeError, ValueError):
+        return LIMITE_PADRAO
+    if limite <= 0:
+        return LIMITE_PADRAO
+    return min(limite, LIMITE_MAXIMO)
+
+
+def _offset(request):
+    try:
+        offset = int(request.GET.get("offset") or 0)
+    except (TypeError, ValueError):
+        return 0
+    return max(0, offset)
+
+
 def _filtrar_clientes(request):
     busca = request.GET.get("q", "").strip()
     tipo_cliente = request.GET.get("tipo", "todos").strip()
@@ -70,12 +92,22 @@ def listar_clientes(request):
         return metodo_nao_permitido(["GET"])
 
     clientes, busca, tipo_cliente = _filtrar_clientes(request)
-    serialized = [serialize_cliente(cliente) for cliente in clientes]
+    total = clientes.count()
+    limit = _limite(request)
+    offset = _offset(request)
+    pagina = clientes[offset : offset + limit]
+    serialized = [serialize_cliente(cliente) for cliente in pagina]
     return resposta_sucesso(
         {
             "clientes": serialized,
             "busca": busca,
             "tipo_cliente": tipo_cliente,
+            "paginacao": {
+                "offset": offset,
+                "limit": limit,
+                "total": total,
+                "tem_mais": offset + limit < total,
+            },
         }
     )
 

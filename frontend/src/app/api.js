@@ -20,6 +20,14 @@ export function apiUrl(path) {
   return buildUrl(path);
 }
 
+// Serializa params ignorando null/undefined/''; usado pelos endpoints
+// paginados (clientes, processos, usuarios, auditoria).
+function buildQuery(params = {}) {
+  return new URLSearchParams(
+    Object.entries(params).filter(([, value]) => value != null && value !== ''),
+  ).toString();
+}
+
 export function getCookie(name) {
   let cookieValue = '';
 
@@ -196,11 +204,19 @@ export const api = {
   urlLoginGoogle: () => apiUrl('/api/autenticacao/google'),
   urlReauthorizeGoogle: () => `${apiUrl('/api/autenticacao/google')}?force_consent=1&next=/agenda`,
   sair: () => apiRequest('/api/autenticacao/sair/', { method: 'POST' }),
-  listClients: () => apiRequest('/api/clientes/'),
+  listClients: (params = {}) => {
+    const query = buildQuery(params);
+    return apiRequest(`/api/clientes/${query ? `?${query}` : ''}`);
+  },
+  getClient: (id) => apiRequest(`/api/clientes/${id}/`),
   createClient: (payload) => apiRequest('/api/clientes/criar/', jsonOptions('POST', payload)),
   updateClient: (id, payload) => apiRequest(`/api/clientes/${id}/editar/`, jsonOptions('PUT', payload)),
   deleteClient: (id) => apiRequest(`/api/clientes/${id}/excluir/`, { method: 'DELETE' }),
-  listProcesses: () => apiRequest('/api/processos/'),
+  listProcesses: (params = {}) => {
+    const query = buildQuery(params);
+    return apiRequest(`/api/processos/${query ? `?${query}` : ''}`);
+  },
+  getProcess: (id) => apiRequest(`/api/processos/${id}/`),
   createProcess: (payload) => apiRequest('/api/processos/criar/', jsonOptions('POST', payload)),
   updateProcess: (id, payload) => apiRequest(`/api/processos/${id}/editar/`, jsonOptions('PUT', payload)),
   deleteProcess: (id) => apiRequest(`/api/processos/${id}/excluir/`, { method: 'DELETE' }),
@@ -249,7 +265,10 @@ export const api = {
   resumeTimeEntry: (id, payload = {}) => productivityRequest(`time-entries/${id}/retomar/`, jsonOptions('PATCH', payload)),
   stopTimeEntry: (id) => productivityRequest(`time-entries/${id}/encerrar/`, jsonOptions('PATCH', {})),
   saveProductivityGoals: (payload) => productivityRequest('metas/salvar/', jsonOptions('PUT', payload)),
-  listUsers: () => apiRequest('/api/usuarios/'),
+  listUsers: (params = {}) => {
+    const query = buildQuery(params);
+    return apiRequest(`/api/usuarios/${query ? `?${query}` : ''}`);
+  },
   createUser: (payload) => apiRequest('/api/usuarios/criar/', jsonOptions('POST', payload)),
   updateUser: (id, payload) => apiRequest(`/api/usuarios/${id}/editar/`, jsonOptions('PUT', payload)),
   deleteUser: (id) => apiRequest(`/api/usuarios/${id}/excluir/`, { method: 'DELETE' }),
@@ -269,9 +288,7 @@ export const api = {
   cancelarLancamento: (id) => financeiroRequest(`${id}/cancelar/`, jsonOptions('POST', {})),
   dashboardFinanceiro: () => financeiroRequest('dashboard/'),
   listAudit: (params = {}) => {
-    const query = new URLSearchParams(
-      Object.entries(params).filter(([, value]) => value != null && value !== ''),
-    ).toString();
+    const query = buildQuery(params);
     return apiRequest(`/api/auditoria/${query ? `?${query}` : ''}`);
   },
   getAuditPanel: (periodo = 7) => apiRequest(`/api/auditoria/painel/?periodo=${periodo}`),

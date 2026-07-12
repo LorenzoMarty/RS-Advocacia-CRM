@@ -32,6 +32,13 @@ from prospeccao.views import serialize_prospect
 from usuarios.models import Usuario
 from usuarios.views import serialize_usuarios
 
+# Teto de segurança nas coleções mais propensas a crescer sem limite
+# (clientes/processos/usuarios) devolvidas no boot da SPA — não é paginação
+# real (a tela de listagem de cada entidade tem seu próprio endpoint paginado
+# em .../views.py), só evita que o payload do boot cresça sem limite conforme
+# o histórico do escritório aumenta.
+LIMITE_BOOTSTRAP_COLECAO = 2000
+
 FRONTEND_ACCESS_PERMISSIONS = (
     "financeiro.view_lancamento",
     "financeiro.add_lancamento",
@@ -101,8 +108,10 @@ def inicializacao(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    clientes = Cliente.objects.all()
-    processos = Processo.objects.select_related("cliente").all()
+    clientes = Cliente.objects.all()[:LIMITE_BOOTSTRAP_COLECAO]
+    processos = Processo.objects.select_related("cliente").all()[
+        :LIMITE_BOOTSTRAP_COLECAO
+    ]
     eventos = (
         Evento.objects.exclude(tipo_evento__icontains="prazo")
         .select_related("cliente", "processo", "responsavel")
@@ -137,7 +146,9 @@ def inicializacao(request):
     ]
 
     if user_has_permission(request, "usuarios.view_usuario"):
-        serialized_usuarios = serialize_usuarios(Usuario.objects.all())
+        serialized_usuarios = serialize_usuarios(
+            Usuario.objects.order_by("nome")[:LIMITE_BOOTSTRAP_COLECAO]
+        )
         data["usuarios"] = serialized_usuarios
 
     if usuario_atual and user_has_permission(request, "productivity.view_timeentry"):

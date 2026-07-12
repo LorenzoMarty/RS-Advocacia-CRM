@@ -6,6 +6,8 @@ from django.db.models import Q
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
+from auditoria import services as auditoria_services
+from auditoria.models import RegistroAuditoria
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -343,13 +345,47 @@ def _usuario_api_payload(request):
     return data
 
 
+LIMITE_PADRAO = 100
+LIMITE_MAXIMO = 300
+
+
+def _limite(request):
+    try:
+        limite = int(request.GET.get("limit") or LIMITE_PADRAO)
+    except (TypeError, ValueError):
+        return LIMITE_PADRAO
+    if limite <= 0:
+        return LIMITE_PADRAO
+    return min(limite, LIMITE_MAXIMO)
+
+
+def _offset(request):
+    try:
+        offset = int(request.GET.get("offset") or 0)
+    except (TypeError, ValueError):
+        return 0
+    return max(0, offset)
+
+
 @app_permissions_required("usuarios.view_usuario")
 def listar_usuarios(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
     _ensure_default_cargos()
-    return resposta_sucesso(_usuarios_response(Usuario.objects.all()))
+    usuarios = Usuario.objects.order_by("nome")
+    total = usuarios.count()
+    limit = _limite(request)
+    offset = _offset(request)
+    pagina = usuarios[offset : offset + limit]
+    resposta = _usuarios_response(pagina)
+    resposta["paginacao"] = {
+        "offset": offset,
+        "limit": limit,
+        "total": total,
+        "tem_mais": offset + limit < total,
+    }
+    return resposta_sucesso(resposta)
 
 
 @app_permissions_required("usuarios.add_usuario")
@@ -424,11 +460,38 @@ def excluir_usuario(request, usuario_id):
         return metodo_nao_permitido(["DELETE"])
 
     usuario = get_object_or_404(Usuario, pk=usuario_id)
+
+    usuario_logado = get_usuario_atual(request)["usuario_logado"]
+    if usuario_logado and usuario_logado.pk == usuario.pk:
+        return resposta_erro(
+            {"usuario": ["Você não pode excluir o próprio usuário."]}, status=400
+        )
+
+    if normalize_cargo_name(usuario.cargo) == "Administrador":
+        existe_outro_admin = (
+            Usuario.objects.filter(cargo="Administrador").exclude(pk=usuario.pk).exists()
+        )
+        if not existe_outro_admin:
+            return resposta_erro(
+                {"usuario": ["Não é possível excluir o último Administrador."]},
+                status=400,
+            )
+
     deleted_id = str(usuario.pk)
+    deleted_nome = usuario.nome
     auth_user = _find_auth_user(usuario.email)
     if auth_user is not None:
         auth_user.delete()
     usuario.delete()
+
+    auditoria_services.registrar(
+        request,
+        acao=RegistroAuditoria.ACAO_EXCLUIDO,
+        entidade_tipo=RegistroAuditoria.ENTIDADE_USUARIO,
+        entidade_id=deleted_id,
+        rotulo=deleted_nome,
+    )
+
     return resposta_sucesso(
         {"id": deleted_id}, mensagem="Usuário excluído com sucesso."
     )

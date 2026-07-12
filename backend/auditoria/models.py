@@ -22,11 +22,13 @@ class RegistroAuditoria(models.Model):
     ENTIDADE_PRAZO = "prazo"
     ENTIDADE_PETICAO = "peticao"
     ENTIDADE_EVENTO = "evento"
+    ENTIDADE_USUARIO = "usuario"
     ENTIDADE_CHOICES = (
         (ENTIDADE_PROCESSO, "Processo"),
         (ENTIDADE_PRAZO, "Prazo"),
         (ENTIDADE_PETICAO, "Petição"),
         (ENTIDADE_EVENTO, "Evento"),
+        (ENTIDADE_USUARIO, "Usuário"),
     )
 
     acao = models.CharField(max_length=20, choices=ACAO_CHOICES)

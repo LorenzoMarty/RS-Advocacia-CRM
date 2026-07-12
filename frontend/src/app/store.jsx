@@ -35,6 +35,7 @@ import {
   auditFromListResponse,
   auditPaginationFromResponse,
   auditOverviewFromResponse,
+  paginationFromResponse,
   clientToPayload,
   processToPayload,
   eventToPayload,
@@ -144,6 +145,10 @@ export function AppStateProvider({ children }) {
   const [auditOverview, setAuditOverview] = useState(null);
   const [auditPagination, setAuditPagination] = useState({ offset: 0, limit: 100, total: 0, temMais: false });
   const [auditFilters, setAuditFilters] = useState({});
+  const DEFAULT_PAGINATION = { offset: 0, limit: 100, total: 0, temMais: false };
+  const [clientsPagination, setClientsPagination] = useState(DEFAULT_PAGINATION);
+  const [processesPagination, setProcessesPagination] = useState(DEFAULT_PAGINATION);
+  const [usersPagination, setUsersPagination] = useState(DEFAULT_PAGINATION);
   const [isLoading, setIsLoading] = useState(isApiEnabled);
   const [apiStatus, setApiStatus] = useState(isApiEnabled ? 'loading' : 'local');
   const [isEventsLoading, setIsEventsLoading] = useState(isApiEnabled);
@@ -206,15 +211,14 @@ export function AppStateProvider({ children }) {
   async function loadRemoteCollections() {
     let loadedRemoteData = false;
     let lastError = null;
+    // Clientes/processos/usuarios NÃO entram aqui: agora que
+    // listClients/listProcesses/listUsers são paginados (limit/offset),
+    // chamá-los sem params aqui pegaria só a primeira página (limit padrão
+    // 100) e sobrescreveria silenciosamente o array cheio que
+    // applyBootstrapPayload acabou de popular. O bootstrap já cobre essas 3
+    // coleções (com teto de segurança); a tela de listagem de cada uma busca
+    // sua própria página corretamente paginada quando é visitada.
     const loaders = [
-      {
-        load: api.listClients,
-        apply: (payload) => setClients(sortByName(clientsFromResponse(payload))),
-      },
-      {
-        load: api.listProcesses,
-        apply: (payload) => setProcesses(processesFromResponse(payload)),
-      },
       {
         load: api.listEvents,
         apply: (payload) => setEvents(eventsFromResponse(payload)),
@@ -239,13 +243,6 @@ export function AppStateProvider({ children }) {
     try {
       const payload = await api.carregarInicializacao();
       applyBootstrapPayload(payload);
-      const canLoadUsers = Object.prototype.hasOwnProperty.call(payload, 'usuarios');
-      if (canLoadUsers) {
-        loaders.push({
-          load: api.listUsers,
-          apply: (payload) => setUsers((currentUsers) => sortByName(mergeById(currentUsers, usersFromResponse(payload)))),
-        });
-      }
       loadedRemoteData = true;
     } catch (error) {
       lastError = error;
@@ -388,6 +385,111 @@ export function AppStateProvider({ children }) {
   async function refreshClients() {
     const payload = await api.listClients();
     setClients(sortByName(clientsFromResponse(payload)));
+  }
+
+  // Busca um único cliente/processo por id e mescla no array do store — usado
+  // pelas telas de detalhe/edição, já que agora `clients`/`processes` podem
+  // conter só a página carregada pela listagem (loadClients/loadProcesses),
+  // não a coleção inteira. Sem isso, abrir /clientes/:id direto (link externo,
+  // recarregar a página) falharia para um registro fora da página atual.
+  async function loadClient(clientId) {
+    try {
+      const response = await api.getClient(clientId);
+      const client = clientFromResponse(response);
+      if (client) {
+        setClients((current) => sortByName(replaceById(current, client)));
+      }
+      return client;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
+  }
+
+  async function loadProcess(processId) {
+    try {
+      const response = await api.getProcess(processId);
+      const process = processFromResponse(response);
+      if (process) {
+        setProcesses((current) => replaceById(current, process));
+      }
+      return process;
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+      return null;
+    }
+  }
+
+  // Busca/paginação server-side para as telas de listagem (Clientes, Processos,
+  // Usuários) — mesmo padrão de loadAudit/loadMoreAudit. Substitui a página
+  // inteira ao trocar filtro; loadMore* concatena a próxima fatia.
+  async function loadClients(params = {}) {
+    try {
+      const query = { limit: 100, offset: 0, ...params };
+      const payload = await api.listClients(query);
+      setClients(sortByName(clientsFromResponse(payload)));
+      setClientsPagination(paginationFromResponse(payload));
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+    }
+  }
+
+  async function loadMoreClients(params = {}) {
+    try {
+      const nextOffset = clientsPagination.offset + clientsPagination.limit;
+      const query = { limit: clientsPagination.limit, offset: nextOffset, ...params };
+      const payload = await api.listClients(query);
+      setClients((current) => sortByName([...current, ...clientsFromResponse(payload)]));
+      setClientsPagination(paginationFromResponse(payload));
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+    }
+  }
+
+  async function loadProcesses(params = {}) {
+    try {
+      const query = { limit: 100, offset: 0, ...params };
+      const payload = await api.listProcesses(query);
+      setProcesses(processesFromResponse(payload));
+      setProcessesPagination(paginationFromResponse(payload));
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+    }
+  }
+
+  async function loadMoreProcesses(params = {}) {
+    try {
+      const nextOffset = processesPagination.offset + processesPagination.limit;
+      const query = { limit: processesPagination.limit, offset: nextOffset, ...params };
+      const payload = await api.listProcesses(query);
+      setProcesses((current) => [...current, ...processesFromResponse(payload)]);
+      setProcessesPagination(paginationFromResponse(payload));
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+    }
+  }
+
+  async function loadUsers(params = {}) {
+    try {
+      const query = { limit: 100, offset: 0, ...params };
+      const payload = await api.listUsers(query);
+      setUsers(usersFromResponse(payload));
+      setUsersPagination(paginationFromResponse(payload));
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+    }
+  }
+
+  async function loadMoreUsers(params = {}) {
+    try {
+      const nextOffset = usersPagination.offset + usersPagination.limit;
+      const query = { limit: usersPagination.limit, offset: nextOffset, ...params };
+      const payload = await api.listUsers(query);
+      setUsers((current) => [...current, ...usersFromResponse(payload)]);
+      setUsersPagination(paginationFromResponse(payload));
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+    }
   }
 
   async function saveEvent(payload) {
@@ -1086,6 +1188,15 @@ export function AppStateProvider({ children }) {
       loadAudit,
       loadMoreAudit,
       loadAuditOverview,
+      clientsPagination,
+      loadClients,
+      loadMoreClients,
+      processesPagination,
+      loadProcesses,
+      loadMoreProcesses,
+      usersPagination,
+      loadUsers,
+      loadMoreUsers,
       currentUser,
       currentRole,
       hasPermission,
@@ -1101,6 +1212,8 @@ export function AppStateProvider({ children }) {
       saveProcess,
       refreshProcesses,
       refreshClients,
+      loadClient,
+      loadProcess,
       saveEvent,
       markEventAttendance,
       moveEvent,
@@ -1152,6 +1265,9 @@ export function AppStateProvider({ children }) {
       auditEntries,
       auditOverview,
       auditPagination,
+      clientsPagination,
+      processesPagination,
+      usersPagination,
       currentUser,
       currentRole,
       isApiEnabled,

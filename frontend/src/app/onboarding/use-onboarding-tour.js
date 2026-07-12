@@ -54,17 +54,21 @@ export function useOnboardingTour() {
   const navigate = useNavigate();
 
   const start = useCallback(
-    (steps, onComplete) => {
+    (steps, onProgress, startIndex = 0) => {
       if (!steps?.length) return null;
 
       let driverObj;
+      let lastActiveIndex = Math.min(Math.max(startIndex, 0), steps.length - 1);
+      let completedNaturally = false;
 
       async function goToStep(index) {
         if (index < 0) return;
         if (index >= steps.length) {
+          completedNaturally = true;
           driverObj.destroy();
           return;
         }
+        lastActiveIndex = index;
         const step = steps[index];
         if (step.route && step.route !== currentPath()) {
           navigate(step.route);
@@ -86,12 +90,12 @@ export function useOnboardingTour() {
         doneBtnText: 'Concluir',
         progressText: '{{current}} de {{total}}',
         steps: steps.map((step) => ({ element: step.element, popover: step.popover })),
-        onDestroyed: () => onComplete?.(),
+        onDestroyed: () => onProgress?.(lastActiveIndex, completedNaturally),
         onNextClick: (_element, _step, opts) => goToStep(opts.state.activeIndex + 1),
         onPrevClick: (_element, _step, opts) => goToStep(opts.state.activeIndex - 1),
       });
 
-      goToStep(0);
+      goToStep(lastActiveIndex);
       return driverObj;
     },
     [navigate],

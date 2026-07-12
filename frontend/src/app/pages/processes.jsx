@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { motion as Motion, staggerContainer, staggerItem } from '../motion';
@@ -6,7 +6,7 @@ import { PROCESS_AREA_OPTIONS, PROCESS_STATUS_OPTIONS } from '../data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
-import { buildSearchText, formatCount, getStatusTone, normalizeText } from '../utils';
+import { formatCount, getStatusTone } from '../utils';
 import { Select } from '../components/select';
 import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
@@ -56,24 +56,30 @@ const ProcessRow = memo(function ProcessRow({ process, clientName, onDelete }) {
 });
 
 export function ProcessesListPage() {
-  const { clients, deleteProcess, processes } = useAppState();
+  const { clients, deleteProcess, loadMoreProcesses, loadProcesses, processes, processesPagination } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const filteredProcesses = useMemo(
-    () =>
-      processes.filter((process) =>
-        buildSearchText([
-          process.number,
-          clients.find((client) => client.id === process.clientId)?.name,
-          process.area,
-          process.court,
-          process.ownerName,
-          process.status,
-        ]).includes(normalizeText(search)),
-      ),
-    [clients, processes, search],
-  );
+  // Busca server-side (processos/views.py já suporta ?q=); debounce evita
+  // uma request por tecla. Filtra os mesmos campos que o backend cobre
+  // (número, cliente, área, vara, responsável, status).
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadProcesses({ q: search });
+    }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  async function handleLoadMore() {
+    setLoadingMore(true);
+    try {
+      await loadMoreProcesses({ q: search });
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function handleDeleteProcess(process) {
     const canDelete = await confirm({
@@ -102,7 +108,7 @@ export function ProcessesListPage() {
               <h1 className="intro-title">Processos</h1>
               <p className="section-note">Gerencie seus processos jurídicos</p>
             </div>
-            <span className="badge gold" data-list-count>{formatCount(filteredProcesses.length)}</span>
+            <span className="badge gold" data-list-count>{formatCount(processesPagination.total)}</span>
           </div>
 
           <div className="list-intro-toolbar">
@@ -116,7 +122,7 @@ export function ProcessesListPage() {
         </section>
 
         <section className="surface process-panel">
-          {filteredProcesses.length ? (
+          {processes.length ? (
             <>
               <div className="process-head" aria-hidden="true">
                 <span>Processo</span>
@@ -132,7 +138,7 @@ export function ProcessesListPage() {
                 initial="hidden"
                 animate="visible"
               >
-                {filteredProcesses.map((process) => (
+                {processes.map((process) => (
                   <ProcessRow
                     key={process.id}
                     process={process}
@@ -141,6 +147,14 @@ export function ProcessesListPage() {
                   />
                 ))}
               </Motion.div>
+
+              {processesPagination.temMais ? (
+                <div className="list-load-more">
+                  <button className="btn btn-secondary" type="button" onClick={handleLoadMore} disabled={loadingMore}>
+                    {loadingMore ? 'Carregando...' : 'Carregar mais'}
+                  </button>
+                </div>
+              ) : null}
             </>
           ) : (
             <EmptyState
@@ -160,7 +174,7 @@ export function ProcessFormPage() {
   const params = useParams();
   const [searchParams] = useSearchParams();
   const isEditing = Boolean(params.processId);
-  const { clients, processes, saveProcess, users } = useAppState();
+  const { clients, loadProcess, processes, saveProcess, users } = useAppState();
   const process = processes.find((item) => item.id === params.processId) || null;
   const initialClientId = searchParams.get('cliente') || '';
   const [form, setForm] = useState(() => ({
@@ -175,6 +189,41 @@ export function ProcessFormPage() {
   }));
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingProcess, setIsLoadingProcess] = useState(isEditing);
+
+  // `processes` no store pode conter só a página carregada pela listagem —
+  // busca o registro direto por id caso a edição seja aberta fora dessa
+  // página (link externo, busca ativa que excluiu o processo, etc).
+  useEffect(() => {
+    if (!isEditing) {
+      setIsLoadingProcess(false);
+      return undefined;
+    }
+    let isMounted = true;
+    setIsLoadingProcess(true);
+    loadProcess(params.processId).finally(() => {
+      if (isMounted) setIsLoadingProcess(false);
+    });
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.processId, isEditing]);
+
+  useEffect(() => {
+    if (!process) return;
+    setForm({
+      id: process.id || '',
+      number: process.number || '',
+      clientId: process.clientId || initialClientId,
+      owner: process.owner || '',
+      status: process.status || 'Ativo',
+      area: process.area || '',
+      court: process.court || '',
+      description: process.description || '',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [process]);
 
   const statusOptions = useMemo(
     () => [...new Set([...PROCESS_STATUS_OPTIONS, ...processes.map((item) => item.status).filter(Boolean)])],
@@ -190,6 +239,9 @@ export function ProcessFormPage() {
   );
 
   if (isEditing && !process) {
+    if (isLoadingProcess) {
+      return null;
+    }
     return <NotFoundState title="Processo não encontrado." />;
   }
 
@@ -367,10 +419,26 @@ export function ProcessFormPage() {
 
 export function ProcessDetailPage() {
   const params = useParams();
-  const { clients, deadlines, events, petitions, processes } = useAppState();
+  const { clients, deadlines, events, loadProcess, petitions, processes } = useAppState();
   const process = processes.find((item) => item.id === params.processId) || null;
+  const [isLoadingProcess, setIsLoadingProcess] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoadingProcess(true);
+    loadProcess(params.processId).finally(() => {
+      if (isMounted) setIsLoadingProcess(false);
+    });
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.processId]);
 
   if (!process) {
+    if (isLoadingProcess) {
+      return null;
+    }
     return <NotFoundState title="Processo não encontrado." />;
   }
 
