@@ -174,6 +174,7 @@ export function ProcessFormPage() {
     description: process?.description || '',
   }));
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const statusOptions = useMemo(
     () => [...new Set([...PROCESS_STATUS_OPTIONS, ...processes.map((item) => item.status).filter(Boolean)])],
@@ -201,6 +202,7 @@ export function ProcessFormPage() {
       return;
     }
 
+    setIsSubmitting(true);
     const savedProcess = await saveProcess({
       id: form.id || undefined,
       number: form.number.trim(),
@@ -211,6 +213,7 @@ export function ProcessFormPage() {
       court: form.court.trim(),
       description: form.description.trim(),
     });
+    setIsSubmitting(false);
 
     if (!savedProcess) {
       return;
@@ -350,7 +353,9 @@ export function ProcessFormPage() {
             </section>
 
             <div className="form-actions">
-              <button className="btn" type="submit">{isEditing ? 'Atualizar' : 'Salvar'}</button>
+              <button className="btn" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
+              </button>
               <Link className="btn btn-secondary" to={isEditing ? `/processos/${process.id}` : '/processos'}>Cancelar</Link>
             </div>
           </form>

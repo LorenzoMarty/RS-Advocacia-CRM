@@ -201,18 +201,6 @@
 .timeline-day-empty p{color:var(--soft);font-size:.88rem;margin:0}
 .timeline-day-empty a{color:var(--gold-soft)}
 
-/* Light theme */
-html[data-theme="light"] .timeline-event{
-    background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,243,236,.98));
-    border-color:rgba(30,34,45,.1);
-    box-shadow:0 6px 16px rgba(58,44,20,.07);
-}
-html[data-theme="light"] .timeline-event-time{
-    background:rgba(24,30,42,.06);
-    color:#16181f;
-}
-html[data-theme="light"] .timeline-row.is-now{background:rgba(212,175,55,.04)}
-
 @media(max-width:640px){
     .agenda-day-intro{padding:16px}
     .day-nav-controls{gap:8px}

@@ -273,35 +273,6 @@
         justify-content:center;
     }
 
-    html[data-theme="light"] .client-row,
-    html[data-theme="light"] .contact-link,
-    html[data-theme="light"] .action-link{
-        background:rgba(24,30,42,.04);
-        border-color:rgba(30,34,45,.1);
-    }
-
-    html[data-theme="light"] .action-link-danger{
-        background:rgba(229,111,111,.08);
-        border-color:rgba(229,111,111,.18);
-    }
-
-    html[data-theme="light"] .client-avatar{
-        background:rgba(181,138,79,.1);
-        border-color:rgba(181,138,79,.2);
-    }
-
-    html[data-theme="light"] .client-tier-esporadico{
-        background:rgba(24,30,42,.04);
-        border-color:rgba(30,34,45,.1);
-        color:rgba(22,24,31,.72);
-    }
-
-    html[data-theme="light"] .client-tier-mensalista{
-        background:rgba(181,138,79,.12);
-        border-color:rgba(181,138,79,.22);
-        color:#8b6836;
-    }
-
     @media (max-width:1160px){
         .list-head{
             display:none;

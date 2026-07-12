@@ -125,9 +125,6 @@
 .transcript-editor textarea:focus{border-color:rgba(212,175,55,.28);box-shadow:0 0 0 4px rgba(212,175,55,.08)}
 .transcript-actions{display:flex;gap:10px;flex-wrap:wrap}
 
-/* ---- Light theme ---- */
-html[data-theme="light"] .meeting-doc-sheet{background:#ffffff}
-
 @media (max-width:980px){
   .meetings-layout{grid-template-columns:1fr}
   .meetings-sidebar{position:static}

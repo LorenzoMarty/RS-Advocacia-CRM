@@ -178,24 +178,6 @@
         justify-content:center;
     }
 
-    html[data-theme="light"] .user-row,
-    html[data-theme="light"] .contact-chip,
-    html[data-theme="light"] .action-link{
-        background:rgba(24,30,42,.04);
-        border-color:rgba(30,34,45,.1);
-    }
-
-    html[data-theme="light"] .action-link-danger{
-        background:rgba(229,111,111,.08);
-        border-color:rgba(229,111,111,.18);
-    }
-
-    html[data-theme="light"] .role-badge,
-    html[data-theme="light"] .user-avatar{
-        background:rgba(181,138,79,.1);
-        border-color:rgba(181,138,79,.2);
-    }
-
     @media (max-width:1160px){
         .users-head{
             display:none;

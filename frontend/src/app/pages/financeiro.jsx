@@ -236,7 +236,7 @@ function dashboardFromApi(data) {
 }
 
 export function FinanceiroPage() {
-  const { lancamentos, marcarLancamentoPago, cancelarLancamento, deleteLancamento } = useAppState();
+  const { lancamentos, marcarLancamentoPago, cancelarLancamento, deleteLancamento, addFlash } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [tab, setTab] = useState('receber');
   const [search, setSearch] = useState('');
@@ -244,6 +244,9 @@ export function FinanceiroPage() {
   const [sort, setSort] = useState({ field: 'dueDate', dir: 'desc' });
   const [page, setPage] = useState(1);
   const [dashboard, setDashboard] = useState(DASHBOARD_EMPTY);
+  const [dashboardError, setDashboardError] = useState(false);
+  const [dashboardReloadKey, setDashboardReloadKey] = useState(0);
+  const tabRefs = useRef({});
 
   // Recarrega o dashboard do servidor após qualquer mutação (store atualiza lancamentos).
   useEffect(() => {
@@ -251,15 +254,22 @@ export function FinanceiroPage() {
     api
       .dashboardFinanceiro()
       .then((data) => {
-        if (active) setDashboard(dashboardFromApi(data.dados ?? data));
+        if (!active) return;
+        setDashboard(dashboardFromApi(data.dados ?? data));
+        setDashboardError(false);
       })
-      .catch(() => {
-        // Non-fatal: table still works without dashboard metrics.
+      .catch((error) => {
+        if (!active) return;
+        setDashboardError(true);
+        addFlash(
+          error instanceof Error ? error.message : 'Não foi possível carregar as métricas financeiras.',
+          'error',
+        );
       });
     return () => {
       active = false;
     };
-  }, [lancamentos]);
+  }, [lancamentos, dashboardReloadKey, addFlash]);
 
   const categoryOptions = useMemo(() => {
     const type = tab === 'despesas' ? 'despesa' : 'receita';
@@ -294,6 +304,22 @@ export function FinanceiroPage() {
     setTab(nextTab);
     setCategoryFilter('');
     setPage(1);
+  }
+
+  function handleTabKeyDown(event) {
+    const currentIndex = FINANCE_TABS.findIndex((item) => item.key === tab);
+    let nextIndex = null;
+
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % FINANCE_TABS.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + FINANCE_TABS.length) % FINANCE_TABS.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = FINANCE_TABS.length - 1;
+    else return;
+
+    event.preventDefault();
+    const nextTab = FINANCE_TABS[nextIndex];
+    changeTab(nextTab.key);
+    tabRefs.current[nextTab.key]?.focus();
   }
 
   // Clique numa fatia/legenda do donut foca a tabela na categoria.
@@ -357,6 +383,18 @@ export function FinanceiroPage() {
               <Link className="btn" to="/financeiro/novo" data-tour="page-primary-action">Novo lançamento</Link>
             </div>
 
+            {dashboardError ? (
+              <div className="empty" role="alert">
+                <strong>Não foi possível carregar as métricas.</strong>
+                <p>
+                  Os valores abaixo podem estar desatualizados.{' '}
+                  <button type="button" className="action-link" onClick={() => setDashboardReloadKey((key) => key + 1)}>
+                    Tentar novamente
+                  </button>
+                </p>
+              </div>
+            ) : null}
+
             <Motion.div
               className="financeiro-metrics"
               variants={staggerContainer}
@@ -377,15 +415,18 @@ export function FinanceiroPage() {
           </div>
 
           <div className="financeiro-panel">
-            <div className="financeiro-tabs" role="tablist">
+            <div className="financeiro-tabs" role="tablist" aria-label="Filtrar lançamentos por status">
               {FINANCE_TABS.map((item) => (
                 <button
                   key={item.key}
+                  ref={(node) => { tabRefs.current[item.key] = node; }}
                   type="button"
                   role="tab"
                   aria-selected={tab === item.key}
+                  tabIndex={tab === item.key ? 0 : -1}
                   className={`financeiro-tab${tab === item.key ? ' is-active' : ''}`}
                   onClick={() => changeTab(item.key)}
+                  onKeyDown={handleTabKeyDown}
                 >
                   {item.label}
                 </button>
@@ -500,6 +541,7 @@ export function LancamentoFormPage() {
     notes: lancamento?.notes || '',
   }));
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (isEditing && !lancamento) {
     return <NotFoundState title="Lançamento não encontrado." />;
@@ -550,6 +592,7 @@ export function LancamentoFormPage() {
       return;
     }
 
+    setIsSubmitting(true);
     const saved = await saveLancamento({
       id: lancamento?.id,
       ...form,
@@ -557,6 +600,7 @@ export function LancamentoFormPage() {
       value: Number(form.value),
       paymentDate: form.status === 'Pago' ? form.paymentDate : '',
     });
+    setIsSubmitting(false);
     if (!saved) return;
     navigate('/financeiro', { replace: true });
   }
@@ -634,7 +678,9 @@ export function LancamentoFormPage() {
             </div>
 
             <div className="form-actions">
-              <button className="btn" type="submit">{isEditing ? 'Atualizar' : 'Salvar'}</button>
+              <button className="btn" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
+              </button>
               <Link className="btn btn-secondary" to="/financeiro">Cancelar</Link>
             </div>
           </form>

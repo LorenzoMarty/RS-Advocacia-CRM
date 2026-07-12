@@ -286,31 +286,6 @@
     color:var(--muted);
 }
 
-html[data-theme="light"] .login-card{
-    background:
-        linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.78)),
-        var(--panel);
-    box-shadow:0 28px 64px rgba(58,44,20,.12);
-}
-
-html[data-theme="light"] .login-brand-mark{
-    background:linear-gradient(145deg, rgba(181,138,79,.16), rgba(181,138,79,.05));
-    border-color:rgba(181,138,79,.2);
-}
-
-html[data-theme="light"] .login-alert{
-    color:#8f2929;
-    background:rgba(239,122,122,.1);
-    border-color:rgba(143,41,41,.18);
-}
-
-html[data-theme="light"] .login-input-wrap input:-webkit-autofill,
-html[data-theme="light"] .login-input-wrap input:-webkit-autofill:hover,
-html[data-theme="light"] .login-input-wrap input:-webkit-autofill:focus{
-    -webkit-text-fill-color:var(--text);
-    box-shadow:0 0 0 1000px rgba(255,249,242,.98) inset;
-}
-
 @media (max-width:640px){
     .login-shell{
         padding:18px 12px;

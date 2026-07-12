@@ -155,9 +155,7 @@
     font-size:.7rem;
 }
 
-html[data-theme="light"] .sidebar-profile{
-    background:rgba(24,30,42,.04);
-}
+
 
 .profile{display:flex;align-items:center;gap:10px;min-width:0}
 .avatar{
@@ -245,11 +243,7 @@ html[data-theme="light"] .sidebar-profile{
     background:rgba(239,122,122,.12);
 }
 
-html[data-theme="light"] .logout-link:hover{
-    color:#8f2929;
-    border-color:rgba(143,41,41,.2);
-    background:rgba(239,122,122,.1);
-}
+
 
 .sidebar-toggle-clean:hover{
     background:var(--sidebar-toggle-bg-hover);

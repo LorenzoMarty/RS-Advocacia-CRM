@@ -60,31 +60,14 @@
     background:rgba(126,165,239,.1);
 }
 
-html[data-theme="light"] .flash{
-    background:rgba(255,251,245,.96);
-    border-color:rgba(30,34,45,.1);
-    box-shadow:0 16px 32px rgba(58,44,20,.14);
-}
 
-html[data-theme="light"] .flash-success{
-    background:rgba(112,205,155,.12);
-    border-color:rgba(112,205,155,.22);
-}
 
-html[data-theme="light"] .flash-error{
-    background:rgba(239,122,122,.12);
-    border-color:rgba(239,122,122,.22);
-}
 
-html[data-theme="light"] .flash-warning{
-    background:rgba(228,183,105,.12);
-    border-color:rgba(228,183,105,.22);
-}
 
-html[data-theme="light"] .flash-info{
-    background:rgba(126,165,239,.12);
-    border-color:rgba(126,165,239,.22);
-}
+
+
+
+
 
 @keyframes toast-in{
     from{

@@ -30,7 +30,7 @@ function validateUserForm(form, users, currentId) {
 }
 
 export function UsersListPage() {
-  const { addFlash, currentUser, deleteUser, users } = useAppState();
+  const { addFlash, currentUser, deleteUser, isLoading, users } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
 
@@ -83,7 +83,13 @@ export function UsersListPage() {
         </section>
 
         <section className="surface users-panel">
-          {filteredUsers.length ? (
+          {isLoading ? (
+            <div className="skeleton-stack">
+              <span className="skeleton" style={{ height: 56 }} />
+              <span className="skeleton" style={{ height: 56 }} />
+              <span className="skeleton" style={{ height: 56 }} />
+            </div>
+          ) : filteredUsers.length ? (
             <>
               <div className="users-head" aria-hidden="true">
                 <span>Usuário</span>

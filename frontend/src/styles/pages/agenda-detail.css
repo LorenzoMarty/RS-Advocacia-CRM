@@ -377,24 +377,6 @@
         text-transform:uppercase;
     }
 
-    html[data-theme="light"] .event-mark,
-    html[data-theme="light"] .summary-card,
-    html[data-theme="light"] .detail-item,
-    html[data-theme="light"] .link-card,
-    html[data-theme="light"] .note-box,
-    html[data-theme="light"] .meta-pill,
-    html[data-theme="light"] .meta-chip,
-    html[data-theme="light"] .status-badge,
-    html[data-theme="light"] .link-mark{
-        background:rgba(24,30,42,.04);
-        border-color:rgba(30,34,45,.1);
-    }
-
-    html[data-theme="light"] .status-badge.gold{
-        background:rgba(181,138,79,.1);
-        border-color:rgba(181,138,79,.2);
-    }
-
     @media (max-width:1180px){
         .event-hero-grid,
         .event-layout{

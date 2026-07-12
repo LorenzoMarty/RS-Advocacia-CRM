@@ -146,5 +146,4 @@
 .theme-icon svg{position:absolute;inset:0;transition:opacity .18s ease,transform .18s ease}
 .theme-icon .sun{opacity:0;transform:scale(.8) rotate(-8deg)}
 .theme-icon .moon{opacity:1;transform:scale(1)}
-html[data-theme="light"] .theme-icon .sun{opacity:1;transform:scale(1) rotate(0)}
-html[data-theme="light"] .theme-icon .moon{opacity:0;transform:scale(.8) rotate(8deg)}
+

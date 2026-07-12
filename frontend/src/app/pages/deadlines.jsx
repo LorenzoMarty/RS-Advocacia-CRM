@@ -19,6 +19,7 @@ import { useAppState } from '../store';
 import {
   buildSearchText,
   formatCount,
+  formatDate,
   getStatusTone,
   normalizeText,
 } from '../utils';
@@ -151,12 +152,15 @@ function DeadlineCard({
   isMoving,
   onDragStart,
   onDragEnd,
+  onMove,
   onTimerStart,
   processes,
 }) {
   const process = processes.find((item) => item.id === deadline.processId) || null;
   const cardTitle = buildDeadlineTitle(process, deadline.responsibleName) || deadline.title;
   const interactions = isDragging ? {} : cardHover;
+  const statusLabel = deadlineStatusLabel(deadline);
+  const currentColumnKey = deadlineColumnKey(deadline);
 
   return (
     <MotionArticle
@@ -172,6 +176,22 @@ function DeadlineCard({
           {cardTitle}
         </Link>
       </h3>
+      <div className="deadline-card-meta">
+        <span>{formatDate(deadlineMoment(deadline))}</span>
+        <StatusBadge tone={getStatusTone(statusLabel, deadline.completed)}>
+          {statusLabel}
+        </StatusBadge>
+      </div>
+      <Select
+        className="deadline-card-status-select"
+        aria-label={`Mover "${cardTitle}" para outra coluna`}
+        value={currentColumnKey}
+        onChange={(event) => onMove(deadline, event.target.value)}
+      >
+        {DEADLINE_STATUS_COLUMNS.map((column) => (
+          <option key={column.key} value={column.key}>{column.label}</option>
+        ))}
+      </Select>
       <TaskTimer
         taskId={deadline.id}
         taskType="prazo"
@@ -186,7 +206,7 @@ function DeadlineCard({
 }
 
 export function DeadlinesPage() {
-  const { addFlash, clients, deadlines, processes, saveDeadline, timeEntries } = useAppState();
+  const { addFlash, clients, deadlines, isDeadlinesLoading, processes, saveDeadline, timeEntries } = useAppState();
   const [search, setSearch] = useState('');
   const [responsible, setResponsible] = useState('');
   const [processId, setProcessId] = useState('');
@@ -424,7 +444,15 @@ export function DeadlinesPage() {
           </div>
         </section>
 
-        {allDeadlines.length ? (
+        {isDeadlinesLoading ? (
+          <section className="surface section-card">
+            <div className="skeleton-stack">
+              <span className="skeleton" style={{ height: 22, width: '40%' }} />
+              <span className="skeleton" style={{ height: 120 }} />
+              <span className="skeleton" style={{ height: 120 }} />
+            </div>
+          </section>
+        ) : allDeadlines.length ? (
           <section className={`deadlines-board${draggingDeadlineId ? ' is-dragging' : ''}`} aria-label="Kanban de prazos fatais">
             {DEADLINE_STATUS_COLUMNS.map((column) => (
               <section
@@ -476,6 +504,7 @@ export function DeadlinesPage() {
                           isMoving={movingDeadlineId === deadline.id}
                           onDragEnd={handleDragEnd}
                           onDragStart={handleDragStart}
+                          onMove={moveDeadline}
                           onTimerStart={promoteDeadlineToActive}
                           processes={processes}
                         />
@@ -646,9 +675,13 @@ export function DeadlineDetailPage() {
 
   async function handleRemoveDoc() {
     if (isDocBusy) return;
-    const apagar = window.confirm(
-      'Remover o documento deste prazo?\n\nOK = apagar o arquivo no Drive também (era temporário).\nCancelar = manter o arquivo, só desvincular.',
-    );
+    const apagar = await confirm({
+      title: 'Remover o documento deste prazo?',
+      message: 'Apagar o arquivo também remove o arquivo do Drive (era temporário). Manter só desvincula o documento do prazo, sem apagá-lo.',
+      confirmLabel: 'Apagar arquivo',
+      cancelLabel: 'Manter arquivo',
+      tone: 'danger',
+    });
     setIsDocBusy(true);
     try {
       const saved = await removeDeadlineDocument(deadline.id, { deleteFile: apagar });
@@ -871,6 +904,7 @@ export function DeadlineFormPage() {
     date: deadline ? dateInputValue(deadlineMoment(deadline)) : initialDate,
   }));
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!deadline) {
@@ -910,6 +944,7 @@ export function DeadlineFormPage() {
     const process = processes.find((item) => item.id === form.processId) || null;
     const responsibleUser = users.find((user) => user.id === form.responsible) || null;
     const responsibleName = responsibleUser?.name || '';
+    setIsSubmitting(true);
     const savedDeadline = await saveDeadline({
       id: deadline?.id,
       title: buildDeadlineTitle(process, responsibleName),
@@ -927,6 +962,7 @@ export function DeadlineFormPage() {
       timerStartedAt: deadline?.timerStartedAt || '',
       createdBy: deadline?.createdBy || responsibleName || 'Interno',
     });
+    setIsSubmitting(false);
 
     if (!savedDeadline) {
       return;
@@ -1027,8 +1063,8 @@ export function DeadlineFormPage() {
               </div>
 
               <div className="form-actions">
-                <button className="btn" type="submit">
-                  {isEditing ? 'Atualizar prazo' : 'Salvar prazo'}
+                <button className="btn" type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar prazo' : 'Salvar prazo'}
                 </button>
                 {isEditing ? (
                   <button className="btn btn-danger" type="button" onClick={handleDelete}>

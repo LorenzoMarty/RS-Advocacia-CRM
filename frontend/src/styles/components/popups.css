@@ -80,18 +80,11 @@
     padding-top:2px;
 }
 
-html[data-theme="light"] .popup-layer{
-    background:rgba(32,36,45,.28);
-}
 
-html[data-theme="light"] .popup-panel{
-    background:linear-gradient(180deg, rgba(255,251,245,.98), rgba(246,241,232,.98));
-    box-shadow:0 24px 54px rgba(58,44,20,.18);
-}
 
-html[data-theme="light"] .popup-panel-danger .popup-mark{
-    color:#8f2929;
-}
+
+
+
 
 @media (max-width:640px){
     .popup-layer{

@@ -16,7 +16,7 @@
     --line-strong:rgba(148,163,184,.22);
     --text:#e5e7eb;
     --soft:rgba(203,213,225,.82);
-    --muted:rgba(148,163,184,.68);
+    --muted:rgba(148,163,184,.78);
     --gold:#D4AF37;
     --gold-soft:#D4AF37;
     --success:#73d3b1;
@@ -105,10 +105,7 @@
     --chart-track:rgba(148,163,184,.12);
 }
 
-html[data-theme="light"]{
-    --chart-grid:rgba(30,34,45,.1);
-    --chart-track:rgba(30,34,45,.08);
-}
+
 
 /* Estratégia global de movimento reduzido.
    Colapsa durações de transições/animações CSS a ~zero para quem pede
