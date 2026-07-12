@@ -2,6 +2,16 @@ import { useState } from 'react';
 import { useAppState } from '../store';
 import { discoverNewClients, confirmNewClients } from '../services/documentos.js';
 
+// Pastas do Drive às vezes carregam sufixos técnicos de ferramentas de
+// sync/backup (ex.: carimbo ISO8601 "20260709T012217Z") no próprio nome —
+// isso nunca é gerado pelo nosso código, vem literal do Google Drive, mas
+// vale avisar antes de virar o nome oficial do cliente.
+const SUSPICIOUS_NAME_PATTERN = /\d{8}T\d{6}Z|-\d{3,}-\d{3,}$/;
+
+function looksSuspicious(name) {
+  return SUSPICIOUS_NAME_PATTERN.test(name || '');
+}
+
 export function ClientDriveDiscoveryWizard({ onClose }) {
   const { addFlash, refreshClients } = useAppState();
   const [step, setStep] = useState('scan');
@@ -89,7 +99,18 @@ export function ClientDriveDiscoveryWizard({ onClose }) {
                     }
                   />
                   <div className="import-wizard-row-copy">
-                    <strong>{item.name}</strong>
+                    <input
+                      className="import-wizard-name-input"
+                      type="text"
+                      value={item.name}
+                      aria-label={`Nome do cliente para a pasta "${item.name}"`}
+                      onChange={(event) => updateCandidate(index, { name: event.target.value })}
+                    />
+                    {looksSuspicious(item.name) ? (
+                      <span className="import-wizard-warning">
+                        Nome da pasta parece técnico (ex.: carimbo de data/hora) — confira antes de importar.
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               ))}

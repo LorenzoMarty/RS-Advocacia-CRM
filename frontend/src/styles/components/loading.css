@@ -88,6 +88,11 @@
     50%{transform:translateY(-3px);box-shadow:0 22px 38px rgba(212,175,55,.13)}
 }
 
+/* Fallback do Suspense ao trocar de rota — só a área de conteúdo, sidebar continua montada. */
+.route-fallback{
+    padding:var(--pad-card, 22px);
+}
+
 /* Skeletons — placeholders de carregamento (componente Skeleton.jsx). */
 .skeleton-stack{
     display:grid;

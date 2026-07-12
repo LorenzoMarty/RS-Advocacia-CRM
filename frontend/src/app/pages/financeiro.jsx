@@ -11,9 +11,10 @@ import {
 import { api } from '../api';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
+import { lancamentosFromResponse } from '../mappers';
 import { AnimatePresence, motion as Motion, pop, prefersReducedMotion, staggerContainer, staggerItem } from '../motion';
 import { useAppState } from '../store';
-import { buildSearchText, formatDate, getStatusTone, normalizeText } from '../utils';
+import { formatDate, getStatusTone } from '../utils';
 import { Select } from '../components/select';
 import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
@@ -91,17 +92,6 @@ function todayIso() {
   const date = new Date();
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 10);
-}
-
-function tabFilter(lancamento, tab) {
-  if (tab === 'despesas') {
-    return lancamento.type === 'despesa';
-  }
-  if (tab === 'pagas') {
-    return lancamento.type === 'receita' && lancamento.status === 'Pago';
-  }
-  // receber: receitas não pagas (pendente/atrasado), exclui canceladas
-  return lancamento.type === 'receita' && lancamento.status === 'Pendente';
 }
 
 // Setor destacado (cresce + halo) renderizado para a fatia em hover/foco.
@@ -235,8 +225,23 @@ function dashboardFromApi(data) {
   };
 }
 
+// tab (UI) -> {tipo, status} aceitos por GET /api/financeiro/ (financeiro/views.py:91-121).
+const TAB_TO_PARAMS = {
+  despesas: { tipo: 'despesa' },
+  pagas: { tipo: 'receita', status: 'Pago' },
+  receber: { tipo: 'receita', status: 'Pendente' },
+};
+
+// sort local (field/dir) -> `ordenar` aceito pelo backend (financeiro/views.py:31-38).
+const SORT_FIELD_TO_ORDENAR = { value: 'valor', description: 'descricao', dueDate: 'data_vencimento' };
+
+function sortToOrdenar(sort) {
+  const campo = SORT_FIELD_TO_ORDENAR[sort.field] || 'data_vencimento';
+  return sort.dir === 'desc' ? `-${campo}` : campo;
+}
+
 export function FinanceiroPage() {
-  const { lancamentos, marcarLancamentoPago, cancelarLancamento, deleteLancamento, addFlash } = useAppState();
+  const { marcarLancamentoPago, cancelarLancamento, deleteLancamento, addFlash } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [tab, setTab] = useState('receber');
   const [search, setSearch] = useState('');
@@ -246,9 +251,49 @@ export function FinanceiroPage() {
   const [dashboard, setDashboard] = useState(DASHBOARD_EMPTY);
   const [dashboardError, setDashboardError] = useState(false);
   const [dashboardReloadKey, setDashboardReloadKey] = useState(0);
+  const [rows, setRows] = useState([]);
+  const [rowsMeta, setRowsMeta] = useState({ total: 0, numPages: 1 });
+  const [rowsReloadKey, setRowsReloadKey] = useState(0);
   const tabRefs = useRef({});
 
-  // Recarrega o dashboard do servidor após qualquer mutação (store atualiza lancamentos).
+  // Tabela agora busca do endpoint já paginado do backend (financeiro/views.py
+  // listar_lancamentos, Django Paginator) em vez de filtrar/paginar client-side
+  // sobre o array inteiro do store. Debounce só na busca por texto.
+  useEffect(() => {
+    let active = true;
+    const timer = setTimeout(() => {
+      const params = {
+        ...TAB_TO_PARAMS[tab],
+        categoria: categoryFilter,
+        q: search,
+        ordenar: sortToOrdenar(sort),
+        page,
+        page_size: PAGE_SIZE,
+      };
+      api.listLancamentos(new URLSearchParams(
+        Object.entries(params).filter(([, value]) => value != null && value !== ''),
+      ).toString())
+        .then((response) => {
+          if (!active) return;
+          const dados = response?.dados || response;
+          setRows(lancamentosFromResponse(response));
+          setRowsMeta({ total: dados.total ?? 0, numPages: dados.num_pages ?? 1 });
+        })
+        .catch((error) => {
+          if (!active) return;
+          addFlash(
+            error instanceof Error ? error.message : 'Não foi possível carregar os lançamentos.',
+            'error',
+          );
+        });
+    }, search ? 300 : 0);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [tab, categoryFilter, search, sort, page, rowsReloadKey, addFlash]);
+
+  // Recarrega o dashboard e a tabela após qualquer mutação (pagar/cancelar/excluir/salvar).
   useEffect(() => {
     let active = true;
     api
@@ -269,36 +314,21 @@ export function FinanceiroPage() {
     return () => {
       active = false;
     };
-  }, [lancamentos, dashboardReloadKey, addFlash]);
+  }, [dashboardReloadKey, addFlash]);
 
   const categoryOptions = useMemo(() => {
     const type = tab === 'despesas' ? 'despesa' : 'receita';
-    const existing = lancamentos.filter((item) => item.type === type).map((item) => item.category);
-    return [...new Set([...FINANCE_CATEGORIES[type], ...existing].filter(Boolean))];
-  }, [tab, lancamentos]);
+    return FINANCE_CATEGORIES[type];
+  }, [tab]);
 
-  const rows = useMemo(() => {
-    let list = lancamentos.filter((item) => tabFilter(item, tab));
-    if (categoryFilter) {
-      list = list.filter((item) => item.category === categoryFilter);
-    }
-    if (search) {
-      list = list.filter((item) =>
-        buildSearchText([item.description, item.category, item.clientName, item.caseNumber]).includes(normalizeText(search)),
-      );
-    }
-    list = [...list].sort((a, b) => {
-      const dir = sort.dir === 'asc' ? 1 : -1;
-      if (sort.field === 'value') return (a.value - b.value) * dir;
-      if (sort.field === 'description') return a.description.localeCompare(b.description, 'pt-BR') * dir;
-      return String(a.dueDate).localeCompare(String(b.dueDate)) * dir;
-    });
-    return list;
-  }, [lancamentos, tab, categoryFilter, search, sort]);
-
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const totalPages = Math.max(1, rowsMeta.numPages);
   const safePage = Math.min(page, totalPages);
-  const pageRows = rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pageRows = rows;
+
+  function reloadRows() {
+    setRowsReloadKey((key) => key + 1);
+    setDashboardReloadKey((key) => key + 1);
+  }
 
   function changeTab(nextTab) {
     setTab(nextTab);
@@ -343,7 +373,8 @@ export function FinanceiroPage() {
       confirmLabel: 'Marcar pago',
     });
     if (!ok) return;
-    await marcarLancamentoPago(lancamento.id, todayIso());
+    const saved = await marcarLancamentoPago(lancamento.id, todayIso());
+    if (saved) reloadRows();
   }
 
   async function handleCancel(lancamento) {
@@ -354,7 +385,8 @@ export function FinanceiroPage() {
       tone: 'danger',
     });
     if (!ok) return;
-    await cancelarLancamento(lancamento.id);
+    const saved = await cancelarLancamento(lancamento.id);
+    if (saved) reloadRows();
   }
 
   async function handleDelete(lancamento) {
@@ -365,7 +397,8 @@ export function FinanceiroPage() {
       tone: 'danger',
     });
     if (!ok) return;
-    await deleteLancamento(lancamento.id);
+    const wasDeleted = await deleteLancamento(lancamento.id);
+    if (wasDeleted) reloadRows();
   }
 
   return (

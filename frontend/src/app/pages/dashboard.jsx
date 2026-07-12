@@ -77,7 +77,7 @@ export function DashboardPage() {
 
             <div className="hero-actions">
               <Link className="btn" to="/agenda/novo">
-                Novo
+                Novo compromisso
               </Link>
               <Link className="btn btn-secondary" to="/agenda">
                 Agenda

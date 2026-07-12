@@ -20,6 +20,7 @@ _ROTULOS_ENTIDADE = {
     RegistroAuditoria.ENTIDADE_PRAZO: "Prazo",
     RegistroAuditoria.ENTIDADE_PETICAO: "Petição",
     RegistroAuditoria.ENTIDADE_EVENTO: "Evento",
+    RegistroAuditoria.ENTIDADE_USUARIO: "Usuário",
 }
 _ROTULOS_ACAO = {
     RegistroAuditoria.ACAO_CRIADO: "criado",

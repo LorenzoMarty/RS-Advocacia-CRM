@@ -1,3 +1,10 @@
+/* Botão "Carregar mais" ao fim de listas paginadas (clientes, processos, usuários). */
+.list-load-more{
+    display:flex;
+    justify-content:center;
+    padding:16px 0 4px;
+}
+
 .profile{
     padding:5px;
     padding-right:9px;

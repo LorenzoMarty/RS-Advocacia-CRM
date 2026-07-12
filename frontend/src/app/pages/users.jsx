@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
@@ -30,13 +30,40 @@ function validateUserForm(form, users, currentId) {
 }
 
 export function UsersListPage() {
-  const { addFlash, currentUser, deleteUser, isLoading, users } = useAppState();
+  const {
+    addFlash,
+    currentUser,
+    deleteUser,
+    isLoading,
+    loadMoreUsers,
+    loadUsers,
+    users,
+    usersPagination,
+  } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Busca própria e paginada, independente do teto de segurança do bootstrap
+  // (core/views.py inicializacao) — busca por nome/email ainda é client-side
+  // sobre as páginas já carregadas, o backend de usuários não filtra por texto.
+  useEffect(() => {
+    loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredUsers = users.filter((user) =>
     buildSearchText([user.name, user.email, profileLabel(user)]).includes(normalizeText(search)),
   );
+
+  async function handleLoadMore() {
+    setLoadingMore(true);
+    try {
+      await loadMoreUsers();
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function handleDeleteUser(user) {
     if (currentUser?.id === user.id) {
@@ -131,6 +158,14 @@ export function UsersListPage() {
                   </Motion.article>
                 ))}
               </Motion.div>
+
+              {usersPagination.temMais && !search ? (
+                <div className="list-load-more">
+                  <button className="btn btn-secondary" type="button" onClick={handleLoadMore} disabled={loadingMore}>
+                    {loadingMore ? 'Carregando...' : 'Carregar mais'}
+                  </button>
+                </div>
+              ) : null}
             </>
           ) : (
             <EmptyState

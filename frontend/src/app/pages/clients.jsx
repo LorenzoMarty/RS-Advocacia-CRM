@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,7 +6,6 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
@@ -17,7 +16,6 @@ import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { AnimatePresence, motion as Motion, staggerContainer, staggerItem } from '../motion';
 import { useAppState } from '../store';
 import {
-  buildSearchText,
   documentLabel,
   formatCount,
   formatDate,
@@ -27,7 +25,6 @@ import {
   stripPhone,
   getClientTypeLabel,
   getStatusTone,
-  normalizeText,
   stripDocument,
 } from '../utils';
 import { Select } from '../components/select';
@@ -82,8 +79,16 @@ const ClientRow = memo(function ClientRow({ client, processCount, onDelete }) {
 
       <div className="client-contact">
         <div className="contact-stack">
-          <a className="contact-link" href={`mailto:${client.email}`}>{client.email}</a>
-          <a className="contact-link" href={`tel:${client.phone}`}>{client.phone}</a>
+          {client.email ? (
+            <a className="contact-link" href={`mailto:${client.email}`}>{client.email}</a>
+          ) : (
+            <span className="contact-link contact-link-empty">-</span>
+          )}
+          {client.phone ? (
+            <a className="contact-link" href={`tel:${client.phone}`}>{client.phone}</a>
+          ) : (
+            <span className="contact-link contact-link-empty">-</span>
+          )}
         </div>
       </div>
 
@@ -102,17 +107,24 @@ const ClientRow = memo(function ClientRow({ client, processCount, onDelete }) {
 });
 
 export function ClientsListPage() {
-  const { clients, deleteClient, processes } = useAppState();
+  const { clients, clientsPagination, deleteClient, loadClients, loadMoreClients, processes } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
   const [clientType, setClientType] = useState('todos');
   const [sorting, setSorting] = useState([]);
   const [discovering, setDiscovering] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const typeFilteredClients = useMemo(
-    () => (clientType === 'todos' ? clients : clients.filter((c) => c.clientType === clientType)),
-    [clients, clientType],
-  );
+  // Busca/filtro por tipo agora são server-side (clientes/views.py já suporta
+  // ?q=&tipo=); debounce evita uma request por tecla. Sort continua client-side
+  // — atua só sobre a página já carregada, não sobre a coleção inteira.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadClients({ q: search, tipo: clientType });
+    }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, clientType]);
 
   const columns = useMemo(() => [
     columnHelper.accessor('name', { header: 'Cliente' }),
@@ -123,25 +135,25 @@ export function ClientsListPage() {
     ),
   ], [processes]);
 
-  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table exposes non-memoizable APIs by design.
   const table = useReactTable({
-    data: typeFilteredClients,
+    data: clients,
     columns,
-    state: { globalFilter: search, sorting },
+    state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    globalFilterFn: (row, _, value) => {
-      const client = row.original;
-      return buildSearchText([
-        client.name, client.email, client.phone, client.document,
-        getClientTypeLabel(client.clientType),
-      ]).includes(normalizeText(value));
-    },
   });
 
   const rows = table.getRowModel().rows;
+
+  async function handleLoadMore() {
+    setLoadingMore(true);
+    try {
+      await loadMoreClients({ q: search, tipo: clientType });
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function handleDeleteClient(client) {
     const canDelete = await confirm({
@@ -167,7 +179,7 @@ export function ClientsListPage() {
               <h1 className="intro-title">Clientes</h1>
               <p className="section-note">Gerencie seus clientes</p>
             </div>
-            <span className="badge gold" data-list-count>{formatCount(rows.length)}</span>
+            <span className="badge gold" data-list-count>{formatCount(clientsPagination.total)}</span>
           </div>
 
           <div className="list-intro-toolbar clients-intro-toolbar">
@@ -257,6 +269,14 @@ export function ClientsListPage() {
                   );
                 })}
               </Motion.div>
+
+              {clientsPagination.temMais ? (
+                <div className="list-load-more">
+                  <button className="btn btn-secondary" type="button" onClick={handleLoadMore} disabled={loadingMore}>
+                    {loadingMore ? 'Carregando...' : 'Carregar mais'}
+                  </button>
+                </div>
+              ) : null}
             </>
           ) : (
             <EmptyState
@@ -275,10 +295,30 @@ export function ClientFormPage() {
   const navigate = useNavigate();
   const params = useParams();
   const isEditing = Boolean(params.clientId);
-  const { clients, saveClient } = useAppState();
+  const { clients, loadClient, saveClient } = useAppState();
   const client = clients.find((item) => item.id === params.clientId) || null;
+  const [isLoadingClient, setIsLoadingClient] = useState(isEditing);
 
-  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm({
+  // `clients` no store pode conter só a página carregada pela listagem — busca
+  // o registro direto por id caso a edição seja aberta fora dessa página
+  // (link externo, busca ativa que excluiu o cliente, etc).
+  useEffect(() => {
+    if (!isEditing) {
+      setIsLoadingClient(false);
+      return undefined;
+    }
+    let isMounted = true;
+    setIsLoadingClient(true);
+    loadClient(params.clientId).finally(() => {
+      if (isMounted) setIsLoadingClient(false);
+    });
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.clientId, isEditing]);
+
+  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       name: client?.name ?? '',
@@ -291,12 +331,30 @@ export function ClientFormPage() {
     },
   });
 
+  // defaultValues só é lido no primeiro render do useForm — quando o cliente
+  // chega depois (fetch assíncrono), precisa de reset() explícito.
+  useEffect(() => {
+    if (!client) return;
+    reset({
+      name: client.name ?? '',
+      document: formatDocument(client.document),
+      clientType: client.clientType ?? 'esporadico',
+      partner: client.partner ?? '',
+      phone: formatPhone(client.phone),
+      email: client.email ?? '',
+      notes: client.notes ?? '',
+    });
+  }, [client, reset]);
+
   const partnerOptions = useMemo(
     () => [...new Set(clients.map((item) => item.partner).filter(Boolean))],
     [clients],
   );
 
   if (isEditing && !client) {
+    if (isLoadingClient) {
+      return null;
+    }
     return <NotFoundState title="Cliente não encontrado." />;
   }
 
@@ -451,12 +509,28 @@ const PAST_EVENTS_PAGE_SIZE = 5;
 
 export function ClientDetailPage() {
   const params = useParams();
-  const { clients, events, processes } = useAppState();
+  const { clients, events, loadClient, processes } = useAppState();
   const client = clients.find((item) => item.id === params.clientId) || null;
   const [showAllPastEvents, setShowAllPastEvents] = useState(false);
   const [now] = useState(() => Date.now());
+  const [isLoadingClient, setIsLoadingClient] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoadingClient(true);
+    loadClient(params.clientId).finally(() => {
+      if (isMounted) setIsLoadingClient(false);
+    });
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.clientId]);
 
   if (!client) {
+    if (isLoadingClient) {
+      return null;
+    }
     return <NotFoundState title="Cliente não encontrado." />;
   }
 

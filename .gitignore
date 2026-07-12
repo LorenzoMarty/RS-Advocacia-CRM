@@ -32,3 +32,4 @@ coverage/
 .ruff_cache/
 .mypy_cache/
 .cache/
+.claude/knowledge/

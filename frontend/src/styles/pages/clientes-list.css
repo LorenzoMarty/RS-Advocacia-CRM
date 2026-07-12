@@ -175,6 +175,11 @@
         gap:8px;
     }
 
+    .contact-link-empty{
+        color:var(--muted);
+        cursor:default;
+    }
+
     .contact-link{
         display:inline-flex;
         align-items:center;
