@@ -206,25 +206,6 @@
         margin-top:16px;
     }
 
-    html[data-theme="light"] .process-row,
-    html[data-theme="light"] .meta-chip,
-    html[data-theme="light"] .owner-chip,
-    html[data-theme="light"] .status-badge,
-    html[data-theme="light"] .action-link{
-        background:rgba(24,30,42,.04);
-        border-color:rgba(30,34,45,.1);
-    }
-
-    html[data-theme="light"] .action-link-danger{
-        background:rgba(229,111,111,.08);
-        border-color:rgba(229,111,111,.18);
-    }
-
-    html[data-theme="light"] .status-badge.gold{
-        background:rgba(181,138,79,.1);
-        border-color:rgba(181,138,79,.2);
-    }
-
     @media (max-width:1180px){
         .process-head{
             display:none;

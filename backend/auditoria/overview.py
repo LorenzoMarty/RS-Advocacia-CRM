@@ -6,7 +6,6 @@ beside ``painel.py`` — both are called from ``visao_geral`` and their results
 are merged into one response.
 """
 
-from datetime import timedelta
 
 from django.utils import timezone
 

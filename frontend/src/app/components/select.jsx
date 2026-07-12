@@ -410,5 +410,3 @@ function Option({ shellId, option, selected, highlighted, onPick, onHover }) {
     </button>
   );
 }
-
-export default Select;

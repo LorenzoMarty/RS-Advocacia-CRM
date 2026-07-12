@@ -217,6 +217,19 @@ function ProspectCard({ prospect, deadlines, onDragStart, onDragEnd, isDragging,
           </div>
         )}
       </div>
+
+      {!isTerminal && !showInteraction ? (
+        <Select
+          className="prospect-card-status-select"
+          aria-label={`Mover "${prospect.name}" para outra etapa`}
+          value={prospect.status}
+          onChange={(event) => onAdvance(prospect, event.target.value)}
+        >
+          {STATUS_LABELS.map((label) => (
+            <option key={label} value={label}>{label}</option>
+          ))}
+        </Select>
+      ) : null}
     </article>
   );
 }

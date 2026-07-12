@@ -519,7 +519,6 @@ class AuditoriaListagemFiltrosTests(_AuditoriaBaseTestCase):
         self.assertIn("teste", registros[0]["resumo"])
 
     def test_filtro_desde_ate(self):
-        import datetime
 
         hoje = timezone.localdate()
         # Cria um registro antigo via update direto

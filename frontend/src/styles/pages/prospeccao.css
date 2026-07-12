@@ -194,6 +194,28 @@
   white-space: nowrap;
 }
 
+.prospect-card-status-select {
+  margin-top: 8px;
+}
+
+.prospect-card-status-select .rs-select-trigger {
+  min-height: 34px;
+  padding: 0 34px 0 11px;
+  border-radius: 10px;
+  font-size: .78rem;
+}
+
+.prospect-card-status-select .rs-select-value {
+  font-size: .78rem;
+  font-weight: 600;
+}
+
+.prospect-card-status-select .rs-select-icon {
+  width: 15px;
+  height: 15px;
+  right: 10px;
+}
+
 .prospect-quick-form {
   display: grid;
   gap: 6px;

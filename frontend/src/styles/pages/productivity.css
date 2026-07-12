@@ -305,26 +305,6 @@
     letter-spacing:.02em;
 }
 
-html[data-theme="light"] .task-timer,
-html[data-theme="light"] .productivity-kpi,
-html[data-theme="light"] .productivity-segmented,
-html[data-theme="light"] .productivity-active-item,
-html[data-theme="light"] .productivity-history-row,
-html[data-theme="light"] .productivity-bar-row,
-html[data-theme="light"] .productivity-task-item{
-    background:rgba(24,30,42,.04);
-    border-color:rgba(30,34,45,.1);
-}
-
-html[data-theme="light"] .productivity-kpis{
-    background:rgba(30,34,45,.1);
-    border-color:rgba(30,34,45,.1);
-}
-
-html[data-theme="light"] .timer-btn-stop{
-    color:#8f2929;
-}
-
 @media (max-width:980px){
     .productivity-kpis{
         grid-template-columns:repeat(3,minmax(0,1fr));

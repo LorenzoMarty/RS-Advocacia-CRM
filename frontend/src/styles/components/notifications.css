@@ -214,17 +214,6 @@
 .profile-dropdown-action--danger:hover{background:rgba(239,122,122,.08);color:#fff1f1}
 .profile-dropdown-action--danger svg{color:#ef7a7a}
 
-/* Light theme overrides */
-html[data-theme="light"] .profile-dropdown{
-    background:#ffffff;
-    border-color:rgba(0,0,0,.1);
-    box-shadow:0 -4px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.08);
-}
-html[data-theme="light"] .sidebar-profile-btn:hover{background:rgba(24,30,42,.06)}
-html[data-theme="light"] .sidebar-profile-btn[aria-expanded="true"]{background:rgba(212,175,55,.08)}
-html[data-theme="light"] .profile-dropdown-action:hover{background:rgba(0,0,0,.04);color:var(--text)}
-html[data-theme="light"] .notification-item:hover{background:rgba(0,0,0,.03)}
-
 /* Mobile: fixed sheet above bottom nav */
 @media (max-width:640px){
     .profile-dropdown{

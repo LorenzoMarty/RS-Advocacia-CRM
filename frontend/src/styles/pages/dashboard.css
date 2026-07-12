@@ -300,33 +300,6 @@
         letter-spacing:-.04em;
     }
 
-    html[data-theme="light"] .dashboard-page{
-        background:#ffffff;
-    }
-
-    html[data-theme="light"] .dashboard-page .hero{
-        background:#ffffff;
-    }
-
-    html[data-theme="light"] .metric,
-    html[data-theme="light"] .focus-card,
-    html[data-theme="light"] .item,
-    html[data-theme="light"] .shortcut,
-    html[data-theme="light"] .rail-stat,
-    html[data-theme="light"] .focus-meta span,
-    html[data-theme="light"] .item-meta span{
-        background:rgba(24,30,42,.04);
-        border-color:rgba(30,34,45,.1);
-        box-shadow:none;
-    }
-
-    html[data-theme="light"] .item-time,
-    html[data-theme="light"] .shortcut-icon,
-    html[data-theme="light"] .focus-label{
-        background:rgba(181,138,79,.1);
-        border-color:rgba(181,138,79,.2);
-    }
-
     @media (max-width:1180px){
         .hero-grid,
         .dashboard-grid{

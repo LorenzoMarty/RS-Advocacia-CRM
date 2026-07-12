@@ -312,36 +312,6 @@
         flex-wrap:wrap;
     }
 
-    html[data-theme="light"] .client-mark,
-    html[data-theme="light"] .summary-card,
-    html[data-theme="light"] .detail-item,
-    html[data-theme="light"] .process-item,
-    html[data-theme="light"] .event-item,
-    html[data-theme="light"] .meta-pill,
-    html[data-theme="light"] .meta-chip,
-    html[data-theme="light"] .note-box,
-    html[data-theme="light"] .status-badge{
-        background:rgba(24,30,42,.04);
-        border-color:rgba(30,34,45,.1);
-    }
-
-    html[data-theme="light"] .status-badge.gold{
-        background:rgba(181,138,79,.1);
-        border-color:rgba(181,138,79,.2);
-    }
-
-    html[data-theme="light"] .client-tier-esporadico{
-        background:rgba(24,30,42,.04);
-        border-color:rgba(30,34,45,.1);
-        color:rgba(22,24,31,.72);
-    }
-
-    html[data-theme="light"] .client-tier-mensalista{
-        background:rgba(181,138,79,.12);
-        border-color:rgba(181,138,79,.22);
-        color:#8b6836;
-    }
-
     @media (max-width:1180px){
         .client-hero-grid,
         .client-layout{
@@ -496,12 +466,6 @@
 
 .client-documents .document-meta .list-title{
     word-break:break-word;
-}
-
-html[data-theme="light"] .client-documents .document-category,
-html[data-theme="light"] .client-documents .document-item{
-    background:rgba(24,30,42,.04);
-    border-color:rgba(30,34,45,.1);
 }
 
 @media (max-width:700px){

@@ -84,8 +84,4 @@
     outline:none;
     box-shadow:0 0 0 3px rgba(239,122,122,.3);
 }
-html[data-theme="light"] .btn-danger{
-    color:#8f2929;
-    background:rgba(239,122,122,.1);
-    border-color:rgba(143,41,41,.18);
-}
+

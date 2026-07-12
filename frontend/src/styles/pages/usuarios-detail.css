@@ -254,22 +254,6 @@
         margin-top:12px;
     }
 
-    html[data-theme="light"] .user-mark,
-    html[data-theme="light"] .summary-card,
-    html[data-theme="light"] .detail-item,
-    html[data-theme="light"] .note-box,
-    html[data-theme="light"] .related-item,
-    html[data-theme="light"] .meta-pill,
-    html[data-theme="light"] .meta-chip{
-        background:rgba(24,30,42,.04);
-        border-color:rgba(30,34,45,.1);
-    }
-
-    html[data-theme="light"] .role-pill{
-        background:rgba(181,138,79,.1);
-        border-color:rgba(181,138,79,.2);
-    }
-
     @media (max-width:1180px){
         .user-layout{
             grid-template-columns:1fr;

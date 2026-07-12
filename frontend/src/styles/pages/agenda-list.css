@@ -39,15 +39,7 @@
         background:#161a22;
         color:#f6f1e8;
     }
-    html[data-theme="light"] .filter-select{
-        border-color:rgba(30,34,45,.12);
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.72);
-    }
-    html[data-theme="light"] .filter-select option,
-    html[data-theme="light"] .filter-select optgroup{
-        background:#fbf6ef;
-        color:#16181f;
-    }
+
     .agenda-layout{display:grid;grid-template-columns:minmax(0,1.38fr) minmax(320px,.82fr);gap:var(--gap-page)}
     .calendar-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}
     .calendar-controls{display:flex;align-items:center;gap:10px}
@@ -250,32 +242,7 @@
     .status-badge.warn{color:var(--warn)}
     .status-badge.danger{color:var(--danger)}
     .status-badge.gold{color:var(--gold-soft);background:rgba(212,175,55,.08);border-color:rgba(212,175,55,.2)}
-    html[data-theme="light"] .toolbar-search input,html[data-theme="light"] .filter-select,html[data-theme="light"] .side-item,html[data-theme="light"] .meta-chip,html[data-theme="light"] .status-badge,html[data-theme="light"] .legend-chip{background:rgba(24,30,42,.04);border-color:rgba(30,34,45,.1)}
-    html[data-theme="light"] .day-card{
-        background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(244,238,230,.94));
-        border-color:rgba(30,34,45,.1);
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 12px 24px rgba(58,44,20,.06);
-    }
-    html[data-theme="light"] .day-card.is-today{
-        background:linear-gradient(180deg, rgba(255,249,238,.98), rgba(247,239,225,.96));
-        border-color:rgba(181,138,79,.22);
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.92), 0 14px 28px rgba(181,138,79,.08);
-    }
-    html[data-theme="light"] .calendar-event{
-        background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,243,236,.98));
-        border-color:rgba(30,34,45,.1);
-        box-shadow:0 8px 18px rgba(58,44,20,.08);
-    }
-    html[data-theme="light"] .calendar-event-time{
-        background:rgba(24,30,42,.06);
-        color:#16181f;
-    }
-    html[data-theme="light"] .calendar-event-context{color:rgba(22,24,31,.6)}
-    html[data-theme="light"] .calendar-more{
-        background:rgba(24,30,42,.04);
-        border-color:rgba(30,34,45,.12);
-        color:rgba(22,24,31,.72);
-    }
+
     @media (max-width:1180px){.agenda-layout{grid-template-columns:1fr}}
     @media (max-width:900px){.agenda-toolbar{grid-template-columns:1fr}.toolbar-side{justify-items:start}.toolbar-actions{justify-content:flex-start}.toolbar-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.agenda-intro,.calendar-panel,.rail-panel{padding:16px}.agenda-toolbar,.toolbar-main,.toolbar-side,.agenda-rail,.rail-sections{gap:14px}.toolbar-search input,.filter-select{min-height:42px}.toolbar-actions{width:100%;justify-content:stretch}.toolbar-actions .btn{flex:1}.toolbar-filters{grid-template-columns:1fr}.calendar-top{flex-direction:column;align-items:flex-start;margin-bottom:14px}.calendar-controls{width:100%;justify-content:space-between}.calendar-month{min-width:0;flex:1;font-size:.8rem}.calendar-legend{gap:6px;margin-bottom:14px}.legend-chip{min-height:28px;padding:0 9px;font-size:.68rem}.calendar-weekdays,.calendar-days{gap:8px}.day-card{min-height:136px;padding:10px;border-radius:18px}.day-events{gap:7px}.calendar-event{padding:8px 8px 8px 12px;border-radius:12px}.calendar-event-time{min-height:20px;padding:0 7px;font-size:.62rem}.calendar-event-title{font-size:.74rem}.calendar-event-context{font-size:.66rem}.calendar-more{min-height:28px;font-size:.64rem}.rail-block + .rail-block{padding-top:14px}.side-list{gap:8px}.side-item{gap:8px;padding:12px;border-radius:16px}.side-title{font-size:.9rem}.side-time{margin-top:4px;font-size:.76rem}.side-meta{gap:6px}.meta-chip,.status-badge{min-height:28px;padding:0 9px;font-size:.68rem}.status-badge{font-size:.62rem}}

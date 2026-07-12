@@ -29,23 +29,18 @@ export class AppErrorBoundary extends Component {
             gap: '1rem',
             padding: '2rem',
             textAlign: 'center',
+            background: 'var(--body-bg)',
+            color: 'var(--text)',
           }}
         >
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Algo deu errado</h1>
-          <p style={{ color: 'var(--text-secondary, #666)' }}>
+          <h1 style={{ fontFamily: 'var(--serif)', fontSize: '1.75rem', fontWeight: 400 }}>Algo deu errado</h1>
+          <p style={{ color: 'var(--soft)' }}>
             Ocorreu um erro inesperado. Por favor, recarregue a página.
           </p>
           <button
+            type="button"
+            className="btn"
             onClick={() => window.location.reload()}
-            style={{
-              padding: '0.5rem 1.25rem',
-              borderRadius: '0.375rem',
-              background: 'var(--primary, #2563eb)',
-              color: '#fff',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-            }}
           >
             Recarregar página
           </button>

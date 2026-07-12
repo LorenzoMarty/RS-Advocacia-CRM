@@ -361,17 +361,6 @@
 .section-action{font-size:.76rem;color:var(--gold-soft,var(--gold));text-decoration:none;white-space:nowrap}
 .section-action:hover{text-decoration:underline}
 
-/* ---------- Light theme ---------- */
-html[data-theme="light"] .risk-score-inner{background:#fff}
-html[data-theme="light"] .audit-card.section-card{
-    background:#ffffff;
-}
-html[data-theme="light"] .risk-score-card,
-html[data-theme="light"] .audit-priority-item,
-html[data-theme="light"] .audit-type-card{
-    background:transparent;border-color:transparent;
-}
-
 /* ---------- Responsivo ---------- */
 @media(max-width:1080px){
     .audit-risk-hero{grid-template-columns:1fr}

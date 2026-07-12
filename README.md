@@ -30,7 +30,8 @@ Fluxo principal:
 4. Um evento do processo e salvo na agenda.
 5. As informacoes ficam centralizadas no dashboard e nas paginas por categoria.
 
-Para a arquitetura de reunioes e IA, consulte [`docs/architecture-ai-meetings.md`](docs/architecture-ai-meetings.md).
+Para a arquitetura de reunioes e IA, consulte a nota `Arquitetura` no vault do projeto (ver `CLAUDE.md`
+> `## Contexto no Obsidian`).
 
 ## Instalacao
 
@@ -90,27 +91,24 @@ para dev local/inline e blobs pequenos.
 
 ## Worker de gravacoes (GCP)
 
-O worker Celery + Redis rodam na VM GCP via Docker Compose (`deploy/gcp-free/`).
-O backend enfileira no Redis pela porta TLS 6380; o worker consome pela rede
-interna do compose.
+Web (Gunicorn), worker Celery, beat e Redis rodam juntos na VM GCP via Docker
+Compose (`deploy/gcp-free/`), com Caddy na frente fazendo TLS. O broker Redis
+fica só na rede interna do compose (sem TLS/porta exposta).
 
 Primeira instalacao (na VM GCP, com Docker instalado):
 
 ```bash
 git clone <repo> && cd Agenda-Juri/deploy/gcp-free
 cp .env.example .env       # preencher DATABASE_URL, OPENAI_API_KEY, GOOGLE_*, SECRET_KEY, REDIS_PASSWORD
-./redis/gen-certs.sh       # certificados TLS self-signed do Redis
 docker compose up -d
 ```
 
-No backend (GCP), configure as variaveis de ambiente:
+Isso sobe `web`, `worker`, `beat`, `redis` e `caddy` no mesmo compose;
+`CELERY_BROKER_URL`/`REDIS_URL` já são fixados internamente pelo próprio
+`docker-compose.yml` (`redis://:${REDIS_PASSWORD}@redis:6379/0`), não precisa
+configurar na mão. Detalhes completos em `deploy/gcp-free/README.md`.
 
-- `CELERY_BROKER_URL=rediss://:<REDIS_PASSWORD>@localhost:6380/0?ssl_cert_reqs=CERT_NONE`
-- `MEETINGS_PROCESSING_MODE=celery`
-- **Nao** defina `REDIS_URL` se nao quiser que o cache Django use Redis em todo request.
-
-Atualizacao apos `git pull`: `docker compose up -d --build worker`. Alternativa sem Docker:
-`deploy/worker/systemd/agenda-juri-worker.service`.
+Atualizacao apos `git pull`: `docker compose up -d --build`.
 
 Troubleshooting:
 
@@ -118,7 +116,6 @@ Troubleshooting:
   (`docker compose ps`, `docker compose logs worker`).
 - Gravacao "falhou" pedindo reconexao do Google: quem enviou desconectou a conta;
   reconectar em Integracoes e reenviar.
-- Teste do broker de fora: `redis-cli --tls --insecure -h <host> -p 6380 -a <senha> ping`.
 - Teste do worker: `docker compose exec worker celery -A jurisagenda inspect ping`.
 
 ## Tecnologias
@@ -153,7 +150,7 @@ Troubleshooting:
 - `DRIVE_MAX_FILE_SIZE_MB` (default 25) limita o tamanho de upload.
 - Estrutura criada sob demanda: `Clientes/<Nome do Cliente>/{Peticoes,Documentos,Outros}`. Os metadados ficam espelhados no banco (`documentos.DocumentoCliente`); o Drive guarda o binario.
 - Reenviar um arquivo com o mesmo nome/categoria do cliente substitui o conteudo via `files.update` (nova revisao, mesmo arquivo) em vez de duplicar.
-- Endpoints: `GET/POST /api/clientes/<id>/documentos/...`, `GET /api/clientes/<id>/drive/estrutura/`. Detalhes em `claude/docs/2026-06-09-integracao-google-drive.md`.
+- Endpoints: `GET/POST /api/clientes/<id>/documentos/...`, `GET /api/clientes/<id>/drive/estrutura/`. Detalhes no registro `2026-06-09-integracao-google-drive` do vault do projeto.
 - **Importacao em massa de clientes existentes no Drive** (`documentos/importacao.py`): `GET /api/drive/importar/clientes/descobrir/` lista pastas de 1o nivel sob `GOOGLE_DRIVE_ROOT_FOLDER_ID` que ainda nao tem `Cliente` vinculado; `POST /api/drive/importar/clientes/confirmar/` (body `{"pastas": [{"pasta_id", "nome"}, ...]}`) cria um `Cliente` por pasta aprovada (so `nome` preenchido — CPF/telefone/email ficam para completar depois), vincula a pasta *existente* (nao cria uma nova) e roda a deteccao de processos por CNJ (`escanear_arvore`/`sugerir_plano`/`confirmar_importacao`, mesmo fluxo do wizard por cliente) para cada cliente novo. Documentos ficam para revisao manual no wizard por cliente (`/api/clientes/<id>/drive/importar/...`).
 - **Sincronizacao continua** (`documentos/tasks.py`, task Celery `documentos.sincronizar_drive`, agendada a cada 10 min em `jurisagenda/celery.py`): consome a Drive Changes API (`GoogleDriveSync` guarda o `startPageToken` por conta em `integrations/models.py`) e reage automaticamente — sem revisao humana, ao contrario da importacao em massa — a: pasta nova de 1o nivel em `GOOGLE_DRIVE_ROOT_FOLDER_ID` vira `Cliente` novo; mudanca dentro de uma pasta que o CRM ja conhece (cliente ou processo) reescaneia so aquela pasta; pasta movida para lixeira marca `Cliente.ativo=False` ou `Processo.status="Inativo (pasta removida do Drive)"` (nunca deleta o registro nem o arquivo no Drive).
 - Enriquecimento por IA dos campos que o nome da pasta nao da (`vara`, `area_juridica`) foi descartado por decisao do usuario — esses campos devem virar opcionais em auditoria propria dos forms, nao preenchidos por IA.

@@ -109,6 +109,7 @@ function PetitionCard({
   onCreateDocument,
   onDragEnd,
   onDragStart,
+  onMove,
   onRemoveDocument,
   onTimerStart,
   petition,
@@ -119,6 +120,7 @@ function PetitionCard({
   const clientName = client?.name || petition.clientName || 'Cliente';
   const processNumber = process?.number || petition.processNumber || '';
   const statusLabel = petitionStatusLabel(petition);
+  const currentColumnKey = petitionColumnKey(petition);
 
   return (
     <MotionArticle
@@ -156,6 +158,17 @@ function PetitionCard({
       {petition.driveFileId ? (
         <p className="petition-card-docbadge">📄 Documento criado no Drive</p>
       ) : null}
+
+      <Select
+        className="petition-card-status-select"
+        aria-label={`Mover peça de "${clientName}" para outra coluna`}
+        value={currentColumnKey}
+        onChange={(event) => onMove(petition, event.target.value)}
+      >
+        {PETITION_STATUS_COLUMNS.map((column) => (
+          <option key={column.key} value={column.key}>{column.label}</option>
+        ))}
+      </Select>
 
       <div className="petition-card-footer">
         <StatusBadge tone={getStatusTone(statusLabel)}>{statusLabel}</StatusBadge>
@@ -212,6 +225,7 @@ export function PetitionsPage() {
     savePetition,
     timeEntries,
   } = useAppState();
+  const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
   const [docBusyId, setDocBusyId] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -269,7 +283,13 @@ export function PetitionsPage() {
     await savePetition({ ...petition, status: 'Em andamento' }, { silent: true });
     // Ao iniciar, oferecer criar o documento no Drive e abri-lo automaticamente.
     if (!petition.driveFileId && !petition.driveLink) {
-      const criar = window.confirm('Criar um documento no Google Drive para esta peça e abri-lo agora?');
+      const criar = await confirm({
+        title: 'Criar documento no Drive?',
+        message: 'Cria um documento no Google Drive para esta peça e abre em uma nova aba.',
+        confirmLabel: 'Criar e abrir',
+        cancelLabel: 'Agora não',
+        tone: 'default',
+      });
       if (criar) {
         await handleCreateDocument(petition, { open: true });
       }
@@ -291,9 +311,13 @@ export function PetitionsPage() {
 
   async function handleRemoveDocument(petition) {
     if (docBusyId) return;
-    const apagar = window.confirm(
-      'Remover o documento desta peça?\n\nOK = apagar o arquivo no Drive também (era temporário).\nCancelar = manter o arquivo, só desvincular.',
-    );
+    const apagar = await confirm({
+      title: 'Remover o documento desta peça?',
+      message: 'Apagar o arquivo também remove o arquivo do Drive (era temporário). Manter só desvincula o documento da peça, sem apagá-lo.',
+      confirmLabel: 'Apagar arquivo',
+      cancelLabel: 'Manter arquivo',
+      tone: 'danger',
+    });
     setDocBusyId(petition.id);
     try {
       await removePetitionDocument(petition.id, { deleteFile: apagar });
@@ -386,6 +410,7 @@ export function PetitionsPage() {
 
   return (
     <>
+      {confirmPopup}
       <PageChrome label="Petições ou contestações" />
       <div className="petitions-page">
         <section className="surface petitions-intro">
@@ -468,6 +493,7 @@ export function PetitionsPage() {
                           onCreateDocument={handleCreateDocument}
                           onDragEnd={handleDragEnd}
                           onDragStart={handleDragStart}
+                          onMove={movePetition}
                           onRemoveDocument={handleRemoveDocument}
                           onTimerStart={promotePetitionToActive}
                           petition={petition}
@@ -605,6 +631,7 @@ export function PetitionFormPage() {
     isEditing ? {} : { clientId: initialClientId, processId: initialProcessId },
   ));
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const clientOptions = [...clients].sort((left, right) => left.name.localeCompare(right.name, 'pt-BR'));
   const processOptions = [...processes]
@@ -673,6 +700,7 @@ export function PetitionFormPage() {
       return;
     }
 
+    setIsSubmitting(true);
     const savedPetition = await savePetition({
       id: petition?.id,
       clientId,
@@ -686,6 +714,7 @@ export function PetitionFormPage() {
       area: derivedArea,
       status: form.status || PETITION_DEFAULT_STATUS,
     });
+    setIsSubmitting(false);
 
     if (savedPetition) {
       navigate('/peticoes-contestacoes', { replace: true });
@@ -849,8 +878,8 @@ export function PetitionFormPage() {
               </div>
 
               <div className="form-actions">
-                <button className="btn" type="submit">
-                  {isEditing ? 'Atualizar peça' : 'Salvar peça'}
+                <button className="btn" type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar peça' : 'Salvar peça'}
                 </button>
                 {isEditing ? (
                   <button className="btn btn-danger" type="button" onClick={handleDelete}>

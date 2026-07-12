@@ -13,5 +13,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# The worker only consumes tasks; migrations stay in the Vercel build step.
+# The worker only consumes tasks; migrations run in the web service (RUN_MIGRATIONS=1).
 CMD ["celery", "-A", "jurisagenda", "worker", "--loglevel=info", "--concurrency=2"]
