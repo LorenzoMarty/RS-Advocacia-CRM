@@ -98,6 +98,7 @@ export function Field({
   children,
   headLink = null,
   note = null,
+  required = false,
 }) {
   const errorId = error && id ? `${id}-error` : undefined;
   let content = children;
@@ -111,15 +112,21 @@ export function Field({
       content = children;
     }
   }
+  const labelNode = (
+    <label htmlFor={id}>
+      {label}
+      {required ? <span className="field-required" aria-hidden="true"> *</span> : null}
+    </label>
+  );
   return (
     <div className={`field${error ? ' has-error' : ''}${className ? ` ${className}` : ''}`}>
       {headLink ? (
         <div className="field-head">
-          <label htmlFor={id}>{label}</label>
+          {labelNode}
           {headLink}
         </div>
       ) : (
-        <label htmlFor={id}>{label}</label>
+        labelNode
       )}
       {content}
       {note ? <p className="field-help">{note}</p> : null}

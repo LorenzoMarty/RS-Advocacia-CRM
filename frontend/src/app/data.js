@@ -45,6 +45,7 @@ export const FINANCE_TABS = [
   { key: 'receber', label: 'A Receber' },
   { key: 'pagas', label: 'Pagas' },
   { key: 'despesas', label: 'Despesas' },
+  { key: 'cancelados', label: 'Cancelados' },
 ];
 
 export const EVENT_TYPE_OPTIONS = ['Audiência', 'Reunião'];

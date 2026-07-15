@@ -230,6 +230,7 @@ const TAB_TO_PARAMS = {
   despesas: { tipo: 'despesa' },
   pagas: { tipo: 'receita', status: 'Pago' },
   receber: { tipo: 'receita', status: 'Pendente' },
+  cancelados: { status: 'Cancelado' },
 };
 
 // sort local (field/dir) -> `ordenar` aceito pelo backend (financeiro/views.py:31-38).
@@ -317,8 +318,9 @@ export function FinanceiroPage() {
   }, [dashboardReloadKey, addFlash]);
 
   const categoryOptions = useMemo(() => {
-    const type = tab === 'despesas' ? 'despesa' : 'receita';
-    return FINANCE_CATEGORIES[type];
+    if (tab === 'despesas') return FINANCE_CATEGORIES.despesa;
+    if (tab === 'cancelados') return [...FINANCE_CATEGORIES.receita, ...FINANCE_CATEGORIES.despesa];
+    return FINANCE_CATEGORIES.receita;
   }, [tab]);
 
   const totalPages = Math.max(1, rowsMeta.numPages);

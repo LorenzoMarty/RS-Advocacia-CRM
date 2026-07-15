@@ -407,11 +407,11 @@ export function ClientFormPage() {
               </div>
 
               <div className="form-grid">
-                <Field id="client-name" label="Nome" error={errors.name?.message}>
+                <Field id="client-name" label="Nome" error={errors.name?.message} required>
                   <input id="client-name" {...register('name')} />
                 </Field>
 
-                <Field id="client-document" label="CPF / CNPJ" error={errors.document?.message}>
+                <Field id="client-document" label="CPF / CNPJ" error={errors.document?.message} required>
                   <Controller
                     name="document"
                     control={control}
@@ -458,7 +458,7 @@ export function ClientFormPage() {
               </div>
 
               <div className="form-grid">
-                <Field id="client-phone" label="Telefone" error={errors.phone?.message}>
+                <Field id="client-phone" label="Telefone" error={errors.phone?.message} required>
                   <Controller
                     name="phone"
                     control={control}
@@ -472,7 +472,7 @@ export function ClientFormPage() {
                   />
                 </Field>
 
-                <Field id="client-email" label="E-mail" error={errors.email?.message}>
+                <Field id="client-email" label="E-mail" error={errors.email?.message} required>
                   <input id="client-email" type="email" {...register('email')} />
                 </Field>
               </div>
