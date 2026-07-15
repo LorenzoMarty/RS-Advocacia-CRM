@@ -17,6 +17,15 @@ import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
 const STATUS_LABELS = PROSPECT_STATUS_COLUMNS.map((column) => column.label);
 
+// O valor persistido ("Media", sem acento) é o enum aceito pelo backend
+// (prospeccao/models.py PRIORIDADES) — mudar o valor exigiria migração de
+// dados; aqui só corrigimos a exibição.
+const PRIORITY_LABELS = { Media: 'Média' };
+
+function priorityLabel(priority) {
+  return PRIORITY_LABELS[priority] || priority;
+}
+
 function priorityTone(priority) {
   const normalized = normalizeText(priority);
   if (normalized.includes('alta')) return 'danger';
@@ -138,7 +147,7 @@ function ProspectCard({ prospect, deadlines, onDragStart, onDragEnd, isDragging,
         <Link to={`/prospeccao/${prospect.id}`} className="prospect-card-name">
           {prospect.name}
         </Link>
-        <StatusBadge tone={priorityTone(prospect.priority)}>{prospect.priority}</StatusBadge>
+        <StatusBadge tone={priorityTone(prospect.priority)}>{priorityLabel(prospect.priority)}</StatusBadge>
       </div>
       <p className="prospect-card-demand">{prospect.demandType || 'Demanda não informada'}</p>
       <dl className="prospect-card-meta">
@@ -538,7 +547,7 @@ export function ProspectFormPage() {
               <Field id="prospect-priority" label="Prioridade">
                 <Select id="prospect-priority" value={form.priority} onChange={(event) => update('priority', event.target.value)}>
                   {PROSPECT_PRIORITY_OPTIONS.map((option) => (
-                    <option key={option} value={option}>{option}</option>
+                    <option key={option} value={option}>{priorityLabel(option)}</option>
                   ))}
                 </Select>
               </Field>
@@ -596,6 +605,7 @@ export function ProspectDetailPage() {
       title: 'Converter em cliente?',
       message: `${prospect.name} será cadastrado como cliente real.`,
       confirmLabel: 'Converter',
+      tone: 'default',
     });
     if (!ok) return;
     const result = await convertProspect(prospect.id, {
@@ -650,7 +660,7 @@ export function ProspectDetailPage() {
             <article className="detail-item"><span>E-mail</span><strong>{prospect.email || '-'}</strong></article>
             <article className="detail-item"><span>Origem</span><strong>{prospect.origin || '-'}</strong></article>
             <article className="detail-item"><span>Responsável</span><strong>{prospect.responsibleName || '-'}</strong></article>
-            <article className="detail-item"><span>Prioridade</span><strong>{prospect.priority}</strong></article>
+            <article className="detail-item"><span>Prioridade</span><strong>{priorityLabel(prospect.priority)}</strong></article>
             <article className="detail-item"><span>Próxima ação</span><strong>{prospect.nextAction || '-'}</strong></article>
           </div>
 

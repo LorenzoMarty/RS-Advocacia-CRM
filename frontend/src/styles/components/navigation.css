@@ -105,7 +105,7 @@
 
 .nav-link span:last-child{
     min-width:0;
-    max-width:140px;
+    max-width:190px;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;

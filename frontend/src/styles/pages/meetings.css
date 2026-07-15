@@ -20,6 +20,8 @@
 .meeting-form input,.meeting-form select{min-height:46px}
 .meeting-form textarea{resize:vertical;line-height:1.55}
 .meeting-form input:focus,.meeting-form select:focus,.meeting-form textarea:focus{border-color:rgba(212,175,55,.28);box-shadow:0 0 0 4px rgba(212,175,55,.08)}
+.meeting-form input[type="datetime-local"]::-webkit-calendar-picker-indicator{margin-left:8px;padding:4px;border-radius:8px;filter:invert(72%) sepia(37%) saturate(526%) hue-rotate(357deg) brightness(96%) contrast(92%);cursor:pointer}
+.meeting-form input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover{background:rgba(212,175,55,.12)}
 .meeting-form-actions{display:flex;gap:10px;flex-wrap:wrap}
 .btn-compact{min-height:32px;padding:0 12px;border-radius:11px;font-size:.78rem}
 
