@@ -61,14 +61,14 @@
         border:1px solid rgba(212,175,55,.18);
     }
 
-    .process-number{
+    .process-hero .process-number{
         margin:0;
         font-family:var(--serif);
         font-size:clamp(2.3rem, 4vw, 3.4rem);
         line-height:.95;
         font-weight:400;
         letter-spacing:-.06em;
-        word-break:break-word;
+        overflow-wrap:break-word;
     }
 
     .process-subtitle{
@@ -414,7 +414,7 @@
         font-size:.92rem;
     }
 
-    .process-number{
+    .process-hero .process-number{
         font-size:clamp(1.85rem, 9vw, 2.35rem);
     }
 

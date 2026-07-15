@@ -124,7 +124,11 @@
         line-height:.95;
         font-weight:400;
         letter-spacing:-.06em;
-        word-break:break-word;
+        overflow-wrap:break-word;
+        display:-webkit-box;
+        -webkit-box-orient:vertical;
+        -webkit-line-clamp:2;
+        overflow:hidden;
     }
 
     .client-tier{

@@ -17,6 +17,8 @@ function validateProcessForm(form) {
   if (!form.clientId) nextErrors.clientId = 'Selecione um cliente.';
   if (!form.owner.trim()) nextErrors.owner = 'Informe o responsável.';
   if (!form.status.trim()) nextErrors.status = 'Informe o status.';
+  if (!form.area.trim()) nextErrors.area = 'Informe a área jurídica.';
+  if (!form.court.trim()) nextErrors.court = 'Informe a vara.';
 
   return nextErrors;
 }
@@ -225,6 +227,16 @@ export function ProcessFormPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [process]);
 
+  function updateField(field, value) {
+    setForm((currentForm) => ({ ...currentForm, [field]: value }));
+    setErrors((currentErrors) => {
+      if (!currentErrors[field]) return currentErrors;
+      const next = { ...currentErrors };
+      delete next[field];
+      return next;
+    });
+  }
+
   const statusOptions = useMemo(
     () => [...new Set([...PROCESS_STATUS_OPTIONS, ...processes.map((item) => item.status).filter(Boolean)])],
     [processes],
@@ -307,19 +319,19 @@ export function ProcessFormPage() {
               </div>
 
               <div className="form-grid">
-                <Field id="process-number" label="Número" error={errors.number}>
+                <Field id="process-number" label="Número" error={errors.number} required>
                   <input
                     id="process-number"
                     value={form.number}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, number: event.target.value }))}
+                    onChange={(event) => updateField('number', event.target.value)}
                   />
                 </Field>
 
-                <Field id="process-client" label="Cliente" error={errors.clientId}>
+                <Field id="process-client" label="Cliente" error={errors.clientId} required>
                   <Select
                     id="process-client"
                     value={form.clientId}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, clientId: event.target.value }))}
+                    onChange={(event) => updateField('clientId', event.target.value)}
                   >
                     <option value="">Selecione o cliente</option>
                     {clients.map((client) => (
@@ -328,11 +340,11 @@ export function ProcessFormPage() {
                   </Select>
                 </Field>
 
-                <Field id="process-owner" label="Responsável" error={errors.owner}>
+                <Field id="process-owner" label="Responsável" error={errors.owner} required>
                   <Select
                     id="process-owner"
                     value={form.owner}
-                    onChange={(event) => setForm((currentForm) => ({ ...currentForm, owner: event.target.value }))}
+                    onChange={(event) => updateField('owner', event.target.value)}
                   >
                     <option value="">Selecione o responsável</option>
                     {users.map((user) => (
@@ -341,7 +353,7 @@ export function ProcessFormPage() {
                   </Select>
                 </Field>
 
-                <Field id="process-status" label="Status" error={errors.status}>
+                <Field id="process-status" label="Status" error={errors.status} required>
                   <ComboField
                     id="process-status"
                     value={form.status}
@@ -349,7 +361,7 @@ export function ProcessFormPage() {
                     selectPlaceholder="Selecione o status"
                     customLabel="+ Digitar novo status..."
                     customPlaceholder="Ex: Suspenso..."
-                    onChange={(value) => setForm((currentForm) => ({ ...currentForm, status: value }))}
+                    onChange={(value) => updateField('status', value)}
                   />
                 </Field>
               </div>
@@ -361,7 +373,7 @@ export function ProcessFormPage() {
               </div>
 
               <div className="form-grid">
-                <Field id="process-area" label="Área jurídica" error={errors.area}>
+                <Field id="process-area" label="Área jurídica" error={errors.area} required>
                   <ComboField
                     id="process-area"
                     value={form.area}
@@ -369,11 +381,11 @@ export function ProcessFormPage() {
                     selectPlaceholder="Selecione a área jurídica"
                     customLabel="+ Digitar nova área..."
                     customPlaceholder="Ex: Penal, Previdenciário..."
-                    onChange={(value) => setForm((currentForm) => ({ ...currentForm, area: value }))}
+                    onChange={(value) => updateField('area', value)}
                   />
                 </Field>
 
-                <Field id="process-court" label="Vara" error={errors.court}>
+                <Field id="process-court" label="Vara" error={errors.court} required>
                   <ComboField
                     id="process-court"
                     value={form.court}
@@ -381,7 +393,7 @@ export function ProcessFormPage() {
                     selectPlaceholder="Selecione a vara"
                     customLabel="+ Digitar nova vara..."
                     customPlaceholder="Ex: 2ª Vara Criminal..."
-                    onChange={(value) => setForm((currentForm) => ({ ...currentForm, court: value }))}
+                    onChange={(value) => updateField('court', value)}
                   />
                 </Field>
               </div>

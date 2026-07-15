@@ -692,6 +692,7 @@ export function ProtectedLayout() {
         theme="dark"
         position="bottom-right"
         richColors
+        closeButton
         toastOptions={{
           style: {
             background: 'rgba(15,23,42,.98)',
