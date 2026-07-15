@@ -373,6 +373,7 @@ export function FinanceiroPage() {
       title: 'Marcar como pago?',
       message: `"${lancamento.description}" será marcado como pago hoje.`,
       confirmLabel: 'Marcar pago',
+      tone: 'default',
     });
     if (!ok) return;
     const saved = await marcarLancamentoPago(lancamento.id, todayIso());
@@ -383,7 +384,8 @@ export function FinanceiroPage() {
     const ok = await confirm({
       title: 'Cancelar lançamento?',
       message: `"${lancamento.description}" será cancelado.`,
-      confirmLabel: 'Cancelar lançamento',
+      confirmLabel: 'Sim, cancelar',
+      cancelLabel: 'Voltar',
       tone: 'danger',
     });
     if (!ok) return;

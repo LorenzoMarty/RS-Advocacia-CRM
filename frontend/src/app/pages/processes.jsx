@@ -6,7 +6,7 @@ import { PROCESS_AREA_OPTIONS, PROCESS_STATUS_OPTIONS } from '../data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
-import { formatCount, getStatusTone } from '../utils';
+import { formatCount, formatPhone, getStatusTone } from '../utils';
 import { Select } from '../components/select';
 import { ComboField, EmptyState, Field, NotFoundState } from './common';
 
@@ -674,7 +674,7 @@ export function ProcessDetailPage() {
 
                   <div className="client-meta">
                     <a className="meta-chip" href={`mailto:${client.email}`}>{client.email}</a>
-                    <a className="meta-chip" href={`tel:${client.phone}`}>{client.phone}</a>
+                    <a className="meta-chip" href={`tel:${client.phone}`}>{formatPhone(client.phone)}</a>
                   </div>
 
                   <div className="empty-actions">

@@ -590,7 +590,7 @@ export function ClientDetailPage() {
                 </article>
                 <article className="detail-item">
                   <span>Telefone</span>
-                  <a href={`tel:${client.phone}`}>{client.phone}</a>
+                  <a href={`tel:${client.phone}`}>{formatPhone(client.phone)}</a>
                 </article>
                 <article className="detail-item">
                   <span>E-mail</span>
