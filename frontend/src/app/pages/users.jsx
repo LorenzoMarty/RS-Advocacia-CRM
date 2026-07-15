@@ -34,7 +34,6 @@ export function UsersListPage() {
     addFlash,
     currentUser,
     deleteUser,
-    isLoading,
     loadMoreUsers,
     loadUsers,
     users,
@@ -43,12 +42,23 @@ export function UsersListPage() {
   const { confirm, confirmPopup } = useConfirmPopup();
   const [search, setSearch] = useState('');
   const [loadingMore, setLoadingMore] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
 
   // Busca própria e paginada, independente do teto de segurança do bootstrap
   // (core/views.py inicializacao) — busca por nome/email ainda é client-side
   // sobre as páginas já carregadas, o backend de usuários não filtra por texto.
+  // Loading local (não o isLoading global do bootstrap): sem isso, a tela
+  // mostra "Nenhum usuário encontrado" por um instante antes deste fetch
+  // próprio terminar — exatamente o flash que essa tela corrigiu antes.
   useEffect(() => {
-    loadUsers();
+    let isMounted = true;
+    setIsLoadingUsers(true);
+    loadUsers().finally(() => {
+      if (isMounted) setIsLoadingUsers(false);
+    });
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -110,7 +120,7 @@ export function UsersListPage() {
         </section>
 
         <section className="surface users-panel">
-          {isLoading ? (
+          {isLoadingUsers ? (
             <div className="skeleton-stack">
               <span className="skeleton" style={{ height: 56 }} />
               <span className="skeleton" style={{ height: 56 }} />
