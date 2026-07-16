@@ -52,13 +52,20 @@ Convenção de organização do escritório (estrutura alvo):
   "Documentos"; peças processuais soltas em "Petições" ou na pasta do processo
   correspondente; o restante em "Outros".
 
-Sua tarefa: propor um plano de operações que aproxime a pasta do cliente dessa
-convenção, movendo arquivos soltos para as pastas corretas, criando pastas de
-processo quando necessário e renomeando itens com nomes pouco descritivos.
-Além disso, identifique pastas cujo nome sugira fortemente ser um processo
-judicial (número parecido com CNJ mas incompleto/inválido, ou termos como
-"processo", "ação", "vara", nome de parte contrária) e que ainda não tenham
-processo cadastrado — liste-as como avisos para revisão humana.
+Você tem DUAS tarefas, igualmente obrigatórias — não pule a segunda:
+
+1. Propor um plano de operações que aproxime a pasta do cliente da convenção
+   acima, movendo arquivos soltos para as pastas corretas, criando pastas de
+   processo quando necessário e renomeando itens com nomes pouco descritivos.
+2. Examinar TODAS as pastas da árvore (mesmo as que não geram nenhuma operação
+   no item 1) e listar em "avisos_processos" toda pasta cujo nome pareça um
+   processo judicial mas cujo número esteja incompleto ou fora do formato CNJ
+   padrão (NNNNNNN-DD.AAAA.J.TR.OOOO), e que não tenha processo cadastrado
+   (lista fornecida no contexto). Exemplo real: uma pasta chamada
+   "7 - 0021396-54.2026" tem número incompleto (faltam segmento de justiça,
+   tribunal e órgão) — ela DEVE aparecer em "avisos_processos" com
+   numero_parcial "0021396-54.2026", mesmo que nenhuma operação de organização
+   seja proposta para ela.
 
 Regras obrigatórias:
 - Responda SOMENTE com JSON válido, sem markdown, no esquema abaixo.
