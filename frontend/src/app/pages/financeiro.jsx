@@ -659,7 +659,7 @@ export function LancamentoFormPage() {
 
           <form className="lancamento-form" onSubmit={handleSubmit}>
             <div className="form-grid">
-              <Field id="lanc-description" label="Descrição" className="span-2" error={errors.description}>
+              <Field id="lanc-description" label="Descrição" className="span-2" error={errors.description} required>
                 <input id="lanc-description" value={form.description} onChange={(event) => update('description', event.target.value)} />
               </Field>
               <Field id="lanc-type" label="Tipo">
@@ -669,7 +669,7 @@ export function LancamentoFormPage() {
                   ))}
                 </Select>
               </Field>
-              <Field id="lanc-category" label="Categoria" error={errors.category}>
+              <Field id="lanc-category" label="Categoria" error={errors.category} required>
                 <ComboField
                   id="lanc-category"
                   value={form.category}
@@ -680,14 +680,14 @@ export function LancamentoFormPage() {
                   onChange={(value) => update('category', value)}
                 />
               </Field>
-              <Field id="lanc-value" label="Valor (R$)" error={errors.value}>
+              <Field id="lanc-value" label="Valor (R$)" error={errors.value} required>
                 <input id="lanc-value" type="number" min="0" step="0.01" value={form.value} onChange={(event) => update('value', event.target.value)} />
               </Field>
               <Field id="lanc-due" label="Vencimento">
                 <input id="lanc-due" type="date" value={form.dueDate} onChange={(event) => update('dueDate', event.target.value)} />
               </Field>
               {form.status === 'Pago' ? (
-                <Field id="lanc-payment" label="Data de pagamento" error={errors.paymentDate}>
+                <Field id="lanc-payment" label="Data de pagamento" error={errors.paymentDate} required>
                   <input id="lanc-payment" type="date" value={form.paymentDate} onChange={(event) => update('paymentDate', event.target.value)} />
                 </Field>
               ) : null}

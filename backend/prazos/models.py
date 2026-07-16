@@ -33,6 +33,10 @@ class Prazo(models.Model):
 
     class Meta:
         ordering = ("data_limite", "id")
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["data_limite"]),
+        ]
 
     def clean(self):
         if self.processo_id and self.processo.cliente_id is None:

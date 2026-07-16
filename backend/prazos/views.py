@@ -13,41 +13,17 @@ from core.utils import (
     isoformat_ou_nulo,
     ler_corpo_json,
     metodo_nao_permitido,
+    resolver_criador,
     resposta_erro,
     resposta_sucesso,
 )
 from documentos import services as documentos_services
 from documentos.views import SUPPORTED_DOCUMENT_EXTENSIONS
-from integrations.google.exceptions import (
-    GoogleApiError,
-    GoogleAuthorizationRequired,
-    GoogleConfigurationError,
-)
+from integrations.google.exceptions import GOOGLE_ERRORS
 from integrations.google.oauth import current_usuario
 from integrations.google.responses import mapear_erro_google
 from prazos.forms import PrazoForm
 from prazos.models import Prazo
-
-
-def _resolver_criador_prazo(request):
-    nome_sessao = (request.session.get("usuario_nome") or "").strip()
-    if nome_sessao:
-        return nome_sessao
-
-    usuario_requisicao = getattr(request, "user", None)
-    if usuario_requisicao and getattr(usuario_requisicao, "is_authenticated", False):
-        obter_nome_completo = getattr(usuario_requisicao, "get_full_name", None)
-        if callable(obter_nome_completo):
-            nome_completo = obter_nome_completo().strip()
-            if nome_completo:
-                return nome_completo
-
-        for atributo in ("first_name", "username", "email"):
-            valor = (getattr(usuario_requisicao, atributo, "") or "").strip()
-            if valor:
-                return valor
-
-    return "Interno"
 
 
 def serialize_prazo(prazo: Prazo):
@@ -125,7 +101,7 @@ def criar_prazo(request):
     form = PrazoForm(payload)
     if form.is_valid():
         prazo = form.save(commit=False)
-        prazo.criado_por = _resolver_criador_prazo(request)
+        prazo.criado_por = resolver_criador(request)
         prazo.save()
         prazo = Prazo.objects.select_related("processo__cliente", "responsavel").get(pk=prazo.pk)
         auditoria_services.registrar(
@@ -264,13 +240,6 @@ def atualizar_timer_prazo(request, prazo_id):
     )
 
 
-_GOOGLE_ERRORS = (
-    GoogleConfigurationError,
-    GoogleAuthorizationRequired,
-    GoogleApiError,
-)
-
-
 @app_permissions_required("prazos.change_prazo")
 def documento_prazo(request, prazo_id):
     """Create (POST) a blank Doc in the process folder, or remove (DELETE) the ref.
@@ -292,7 +261,7 @@ def documento_prazo(request, prazo_id):
             meta = documentos_services.criar_documento_branco(
                 usuario, parent_id=parent_id, nome=nome
             )
-        except _GOOGLE_ERRORS as exc:
+        except GOOGLE_ERRORS as exc:
             return mapear_erro_google(exc)
 
         prazo.drive_file_id = meta["id"]
@@ -308,7 +277,7 @@ def documento_prazo(request, prazo_id):
     if apagar and prazo.drive_file_id:
         try:
             documentos_services.excluir_arquivo(usuario, prazo.drive_file_id)
-        except _GOOGLE_ERRORS as exc:
+        except GOOGLE_ERRORS as exc:
             return mapear_erro_google(exc)
 
     prazo.drive_file_id = ""
@@ -364,7 +333,7 @@ def upload_documento_prazo(request, prazo_id):
             content=arquivo.read(),
             mime_type=arquivo.content_type or "",
         )
-    except _GOOGLE_ERRORS as exc:
+    except GOOGLE_ERRORS as exc:
         return mapear_erro_google(exc)
 
     prazo.drive_file_id = meta["id"]

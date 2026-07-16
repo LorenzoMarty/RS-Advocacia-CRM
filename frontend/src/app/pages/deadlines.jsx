@@ -1024,7 +1024,7 @@ export function DeadlineFormPage() {
               </div>
 
               <div className="form-grid">
-                <Field id="deadline-process" label="Processo" className="span-2" error={errors.processId}>
+                <Field id="deadline-process" label="Processo" className="span-2" error={errors.processId} required>
                   <Select
                     id="deadline-process"
                     value={form.processId}
@@ -1039,7 +1039,7 @@ export function DeadlineFormPage() {
                   </Select>
                 </Field>
 
-                <Field id="deadline-responsible" label="Responsável" className="span-2" error={errors.responsible}>
+                <Field id="deadline-responsible" label="Responsável" className="span-2" error={errors.responsible} required>
                   <Select
                     id="deadline-responsible"
                     value={form.responsible}

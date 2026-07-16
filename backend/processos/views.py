@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
 from core.permissions import app_permissions_required
+from core.pagination import paginar
 from core.utils import (
     erros_formulario,
     isoformat_ou_nulo,
@@ -17,28 +18,6 @@ from documentos import tasks as documentos_tasks
 from integrations.google.oauth import current_usuario
 from processos.forms import ProcessoForm
 from processos.models import Processo
-
-
-LIMITE_PADRAO = 100
-LIMITE_MAXIMO = 300
-
-
-def _limite(request):
-    try:
-        limite = int(request.GET.get("limit") or LIMITE_PADRAO)
-    except (TypeError, ValueError):
-        return LIMITE_PADRAO
-    if limite <= 0:
-        return LIMITE_PADRAO
-    return min(limite, LIMITE_MAXIMO)
-
-
-def _offset(request):
-    try:
-        offset = int(request.GET.get("offset") or 0)
-    except (TypeError, ValueError):
-        return 0
-    return max(0, offset)
 
 
 def _filtrar_processos(request):
@@ -98,21 +77,13 @@ def listar_processos(request):
 
     processos, busca = _filtrar_processos(request)
     processos = processos.select_related("cliente", "advogado_responsavel")
-    total = processos.count()
-    limit = _limite(request)
-    offset = _offset(request)
-    pagina = processos[offset : offset + limit]
+    pagina, paginacao = paginar(processos, request)
     serialized = [serialize_processo(processo) for processo in pagina]
     return resposta_sucesso(
         {
             "processos": serialized,
             "busca": busca,
-            "paginacao": {
-                "offset": offset,
-                "limit": limit,
-                "total": total,
-                "tem_mais": offset + limit < total,
-            },
+            "paginacao": paginacao,
         }
     )
 

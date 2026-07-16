@@ -154,6 +154,13 @@ export function AppStateProvider({ children }) {
   const [isEventsLoading, setIsEventsLoading] = useState(isApiEnabled);
   const [isDeadlinesLoading, setIsDeadlinesLoading] = useState(isApiEnabled);
   const [isPetitionsLoading, setIsPetitionsLoading] = useState(isApiEnabled);
+  // Per-domain loading flags for lists that don't have a dedicated useState
+  // slice above (clients/processes/users/audit) — a map instead of one flag
+  // per domain so new lists can opt in without growing this block further.
+  const [loadingByKey, setLoadingByKey] = useState({});
+  function setKeyLoading(key, value) {
+    setLoadingByKey((current) => ({ ...current, [key]: value }));
+  }
   const [currentSessionUser, setCurrentSessionUser] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem('rs-advocacia-user') || null);
 
@@ -424,6 +431,7 @@ export function AppStateProvider({ children }) {
   // Usuários) — mesmo padrão de loadAudit/loadMoreAudit. Substitui a página
   // inteira ao trocar filtro; loadMore* concatena a próxima fatia.
   async function loadClients(params = {}) {
+    setKeyLoading('clients', true);
     try {
       const query = { limit: 100, offset: 0, ...params };
       const payload = await api.listClients(query);
@@ -431,6 +439,8 @@ export function AppStateProvider({ children }) {
       setClientsPagination(paginationFromResponse(payload));
     } catch (error) {
       addFlash(errorMessage(error), 'error');
+    } finally {
+      setKeyLoading('clients', false);
     }
   }
 
@@ -447,6 +457,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadProcesses(params = {}) {
+    setKeyLoading('processes', true);
     try {
       const query = { limit: 100, offset: 0, ...params };
       const payload = await api.listProcesses(query);
@@ -454,6 +465,8 @@ export function AppStateProvider({ children }) {
       setProcessesPagination(paginationFromResponse(payload));
     } catch (error) {
       addFlash(errorMessage(error), 'error');
+    } finally {
+      setKeyLoading('processes', false);
     }
   }
 
@@ -470,6 +483,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadUsers(params = {}) {
+    setKeyLoading('users', true);
     try {
       const query = { limit: 100, offset: 0, ...params };
       const payload = await api.listUsers(query);
@@ -477,6 +491,8 @@ export function AppStateProvider({ children }) {
       setUsersPagination(paginationFromResponse(payload));
     } catch (error) {
       addFlash(errorMessage(error), 'error');
+    } finally {
+      setKeyLoading('users', false);
     }
   }
 
@@ -1131,6 +1147,7 @@ export function AppStateProvider({ children }) {
   }
 
   async function loadAudit(filters = {}) {
+    setKeyLoading('audit', true);
     try {
       const params = { limit: 50, offset: 0, ...filters };
       const payload = await api.listAudit(params);
@@ -1139,6 +1156,8 @@ export function AppStateProvider({ children }) {
       setAuditFilters(filters);
     } catch (error) {
       addFlash(errorMessage(error), 'error');
+    } finally {
+      setKeyLoading('audit', false);
     }
   }
 
@@ -1205,6 +1224,7 @@ export function AppStateProvider({ children }) {
       isEventsLoading,
       isDeadlinesLoading,
       isPetitionsLoading,
+      loadingByKey,
       apiStatus,
       addFlash,
       sair,
@@ -1275,6 +1295,7 @@ export function AppStateProvider({ children }) {
       isEventsLoading,
       isDeadlinesLoading,
       isPetitionsLoading,
+      loadingByKey,
       apiStatus,
     ],
   );

@@ -214,6 +214,7 @@ export function EventFormPage() {
                   label="Título"
                   className="span-2"
                   error={errors.title}
+                  required
                 >
                   <input
                     id="event-title"
@@ -231,6 +232,7 @@ export function EventFormPage() {
                   id="event-type"
                   label="Tipo de compromisso"
                   error={errors.type}
+                  required
                 >
                   {typeMode === 'custom' ? (
                     <div className="type-combo">
@@ -280,6 +282,7 @@ export function EventFormPage() {
                   id="event-priority"
                   label="Prioridade"
                   error={errors.priority}
+                  required
                 >
                   <Select
                     id="event-priority"
@@ -310,7 +313,7 @@ export function EventFormPage() {
               </div>
 
               <div className="form-grid">
-                <Field id="event-start" label="Início" error={errors.start}>
+                <Field id="event-start" label="Início" error={errors.start} required>
                   <input
                     id="event-start"
                     type="datetime-local"
@@ -324,7 +327,7 @@ export function EventFormPage() {
                   />
                 </Field>
 
-                <Field id="event-end" label="Fim" error={errors.end}>
+                <Field id="event-end" label="Fim" error={errors.end} required>
                   <input
                     id="event-end"
                     type="datetime-local"
@@ -371,6 +374,7 @@ export function EventFormPage() {
                   id="event-client"
                   label="Cliente"
                   error={errors.clientId}
+                  required
                 >
                   <Select
                     id="event-client"
@@ -405,6 +409,7 @@ export function EventFormPage() {
                   id="event-process"
                   label="Processo"
                   error={errors.processId}
+                  required
                 >
                   <Select
                     id="event-process"
@@ -433,6 +438,7 @@ export function EventFormPage() {
                   id="event-responsible"
                   label="Responsável"
                   error={errors.responsible}
+                  required
                 >
                   <Select
                     id="event-responsible"

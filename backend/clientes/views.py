@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from clientes.forms import ClienteForm
 from clientes.models import Cliente
 from core.permissions import app_permissions_required
+from core.pagination import paginar
 from core.utils import (
     erros_formulario,
     ler_corpo_json,
@@ -15,28 +16,6 @@ from core.utils import (
 )
 from documentos import tasks as documentos_tasks
 from integrations.google.oauth import current_usuario
-
-
-LIMITE_PADRAO = 100
-LIMITE_MAXIMO = 300
-
-
-def _limite(request):
-    try:
-        limite = int(request.GET.get("limit") or LIMITE_PADRAO)
-    except (TypeError, ValueError):
-        return LIMITE_PADRAO
-    if limite <= 0:
-        return LIMITE_PADRAO
-    return min(limite, LIMITE_MAXIMO)
-
-
-def _offset(request):
-    try:
-        offset = int(request.GET.get("offset") or 0)
-    except (TypeError, ValueError):
-        return 0
-    return max(0, offset)
 
 
 def _filtrar_clientes(request):
@@ -92,22 +71,14 @@ def listar_clientes(request):
         return metodo_nao_permitido(["GET"])
 
     clientes, busca, tipo_cliente = _filtrar_clientes(request)
-    total = clientes.count()
-    limit = _limite(request)
-    offset = _offset(request)
-    pagina = clientes[offset : offset + limit]
+    pagina, paginacao = paginar(clientes, request)
     serialized = [serialize_cliente(cliente) for cliente in pagina]
     return resposta_sucesso(
         {
             "clientes": serialized,
             "busca": busca,
             "tipo_cliente": tipo_cliente,
-            "paginacao": {
-                "offset": offset,
-                "limit": limit,
-                "total": total,
-                "tem_mais": offset + limit < total,
-            },
+            "paginacao": paginacao,
         }
     )
 

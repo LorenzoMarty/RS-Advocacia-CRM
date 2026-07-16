@@ -258,11 +258,11 @@ export function UserFormPage() {
         <section className="surface form-panel">
           <form className="user-form" onSubmit={handleSubmit}>
             <div className="form-grid">
-              <Field id="user-name" label="Nome" error={errors.name}>
+              <Field id="user-name" label="Nome" error={errors.name} required>
                 <input id="user-name" value={form.name} onChange={(event) => setForm((currentForm) => ({ ...currentForm, name: event.target.value }))} />
               </Field>
 
-              <Field id="user-email" label="E-mail" error={errors.email}>
+              <Field id="user-email" label="E-mail" error={errors.email} required>
                 <input id="user-email" type="email" value={form.email} onChange={(event) => setForm((currentForm) => ({ ...currentForm, email: event.target.value }))} />
               </Field>
 
@@ -270,6 +270,7 @@ export function UserFormPage() {
                 id="user-role"
                 label="Perfil"
                 error={errors.roleId}
+                required
               >
                 <Select id="user-role" value={form.roleId} onChange={(event) => setForm((currentForm) => ({ ...currentForm, roleId: event.target.value }))}>
                   <option value="">Selecione o perfil</option>

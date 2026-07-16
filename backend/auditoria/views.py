@@ -9,6 +9,7 @@ from auditoria import overview as overview_mod
 from auditoria import painel
 from auditoria.models import RegistroAuditoria
 from clientes.models import Cliente
+from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     isoformat_ou_nulo,
@@ -21,9 +22,6 @@ from prazos.models import Prazo
 from processos.models import Processo
 from productivity.models import ProductivityGoal, TimeEntry
 from usuarios.models import Usuario
-
-LIMITE_PADRAO = 100
-LIMITE_MAXIMO = 300
 
 
 def _authenticated_user(request: HttpRequest) -> User | None:
@@ -120,24 +118,6 @@ def serialize_registro(registro: RegistroAuditoria):
     }
 
 
-def _limite(request: HttpRequest) -> int:
-    try:
-        limite = int(request.GET.get("limit") or LIMITE_PADRAO)
-    except (TypeError, ValueError):
-        return LIMITE_PADRAO
-    if limite <= 0:
-        return LIMITE_PADRAO
-    return min(limite, LIMITE_MAXIMO)
-
-
-def _offset(request: HttpRequest) -> int:
-    try:
-        offset = int(request.GET.get("offset") or 0)
-    except (TypeError, ValueError):
-        return 0
-    return max(0, offset)
-
-
 def _parse_date(value):
     """'YYYY-MM-DD' -> date, ou None se inválido."""
     if not value:
@@ -192,20 +172,12 @@ def listar_auditoria(request: HttpRequest):
             | Q(processo_rotulo__icontains=q)
         )
 
-    total = registros.count()
-    limit = _limite(request)
-    offset = _offset(request)
-    pagina = registros[offset : offset + limit]
+    pagina, paginacao = paginar(registros, request)
 
     return resposta_sucesso(
         {
             "registros": [serialize_registro(registro) for registro in pagina],
-            "paginacao": {
-                "offset": offset,
-                "limit": limit,
-                "total": total,
-                "tem_mais": offset + limit < total,
-            },
+            "paginacao": paginacao,
         }
     )
 

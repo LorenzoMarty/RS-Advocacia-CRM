@@ -495,7 +495,7 @@ export function ProspectFormPage() {
 
           <form className="prospect-form" onSubmit={handleSubmit}>
             <div className="form-grid">
-              <Field id="prospect-name" label="Nome" className="span-2" error={errors.name}>
+              <Field id="prospect-name" label="Nome" className="span-2" error={errors.name} required>
                 <input id="prospect-name" value={form.name} onChange={(event) => update('name', event.target.value)} />
               </Field>
               <Field id="prospect-phone" label="Telefone">

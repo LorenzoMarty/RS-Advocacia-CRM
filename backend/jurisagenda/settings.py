@@ -268,7 +268,10 @@ DEFAULT_REACT_ORIGINS = [
 ]
 FRONTEND_URL = os.getenv("FRONTEND_URL", DEFAULT_REACT_ORIGINS[0]).strip().rstrip("/")
 
-CORS_ALLOW_ALL_ORIGINS = _env_flag("CORS_ALLOW_ALL_ORIGINS", default=DEBUG)
+# Sempre False por padrao, mesmo em DEBUG=True: ligar debug local nao deve
+# implicar CORS irrestrito em nenhum ambiente (staging incluido). Precisa de
+# opt-in explicito via env var.
+CORS_ALLOW_ALL_ORIGINS = _env_flag("CORS_ALLOW_ALL_ORIGINS", default=False)
 CORS_ALLOWED_ORIGINS = sorted(
     {
         *DEFAULT_REACT_ORIGINS,
@@ -316,6 +319,11 @@ GOOGLE_CALENDAR_TIMEZONE = (
     os.getenv("GOOGLE_CALENDAR_TIMEZONE", TIME_ZONE).strip() or TIME_ZONE
 )
 GOOGLE_TOKEN_ENCRYPTION_KEY = os.getenv("GOOGLE_TOKEN_ENCRYPTION_KEY", "").strip()
+if not GOOGLE_TOKEN_ENCRYPTION_KEY and not DEBUG:
+    raise ImproperlyConfigured(
+        "Defina GOOGLE_TOKEN_ENCRYPTION_KEY nas variaveis de ambiente de producao "
+        "(sem ela, tokens OAuth do Google seriam cifrados com uma chave derivada de SECRET_KEY)."
+    )
 GOOGLE_SYNC_PAST_DAYS = int(os.getenv("GOOGLE_SYNC_PAST_DAYS", "").strip() or "180")
 GOOGLE_CALENDAR_WEBHOOK_URL = os.getenv("GOOGLE_CALENDAR_WEBHOOK_URL", "").strip()
 GOOGLE_WATCH_RENEWAL_HOURS = int(

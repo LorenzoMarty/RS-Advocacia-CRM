@@ -12,118 +12,119 @@ import { GuestLayout, ProtectedLayout } from "./app/layout";
 import { AppStateProvider } from "./app/store";
 import { AppErrorBoundary } from "./app/components/ErrorBoundary";
 import { useAppState } from "./app/store";
+import { retryImport } from "./app/lazy-retry";
 
 const LoginPage = lazy(() =>
-  import("./app/pages/auth").then((m) => ({ default: m.LoginPage })),
+  retryImport(() => import("./app/pages/auth")).then((m) => ({ default: m.LoginPage })),
 );
 const DashboardPage = lazy(() =>
-  import("./app/pages/dashboard").then((m) => ({ default: m.DashboardPage })),
+  retryImport(() => import("./app/pages/dashboard")).then((m) => ({ default: m.DashboardPage })),
 );
 const ClientsListPage = lazy(() =>
-  import("./app/pages/clients").then((m) => ({ default: m.ClientsListPage })),
+  retryImport(() => import("./app/pages/clients")).then((m) => ({ default: m.ClientsListPage })),
 );
 const ClientFormPage = lazy(() =>
-  import("./app/pages/clients").then((m) => ({ default: m.ClientFormPage })),
+  retryImport(() => import("./app/pages/clients")).then((m) => ({ default: m.ClientFormPage })),
 );
 const ClientDetailPage = lazy(() =>
-  import("./app/pages/clients").then((m) => ({ default: m.ClientDetailPage })),
+  retryImport(() => import("./app/pages/clients")).then((m) => ({ default: m.ClientDetailPage })),
 );
 const ProcessesListPage = lazy(() =>
-  import("./app/pages/processes").then((m) => ({
+  retryImport(() => import("./app/pages/processes")).then((m) => ({
     default: m.ProcessesListPage,
   })),
 );
 const ProcessFormPage = lazy(() =>
-  import("./app/pages/processes").then((m) => ({ default: m.ProcessFormPage })),
+  retryImport(() => import("./app/pages/processes")).then((m) => ({ default: m.ProcessFormPage })),
 );
 const ProcessDetailPage = lazy(() =>
-  import("./app/pages/processes").then((m) => ({
+  retryImport(() => import("./app/pages/processes")).then((m) => ({
     default: m.ProcessDetailPage,
   })),
 );
 const AgendaListPage = lazy(() =>
-  import("./app/pages/agendas").then((m) => ({ default: m.AgendaListPage })),
+  retryImport(() => import("./app/pages/agendas")).then((m) => ({ default: m.AgendaListPage })),
 );
 const AgendaDayPage = lazy(() =>
-  import("./app/pages/agendas").then((m) => ({ default: m.AgendaDayPage })),
+  retryImport(() => import("./app/pages/agendas")).then((m) => ({ default: m.AgendaDayPage })),
 );
 const EventFormPage = lazy(() =>
-  import("./app/pages/agendas").then((m) => ({ default: m.EventFormPage })),
+  retryImport(() => import("./app/pages/agendas")).then((m) => ({ default: m.EventFormPage })),
 );
 const EventDetailPage = lazy(() =>
-  import("./app/pages/agendas").then((m) => ({ default: m.EventDetailPage })),
+  retryImport(() => import("./app/pages/agendas")).then((m) => ({ default: m.EventDetailPage })),
 );
 const DeadlineDetailPage = lazy(() =>
-  import("./app/pages/deadlines").then((m) => ({
+  retryImport(() => import("./app/pages/deadlines")).then((m) => ({
     default: m.DeadlineDetailPage,
   })),
 );
 const DeadlineFormPage = lazy(() =>
-  import("./app/pages/deadlines").then((m) => ({
+  retryImport(() => import("./app/pages/deadlines")).then((m) => ({
     default: m.DeadlineFormPage,
   })),
 );
 const DeadlinesPage = lazy(() =>
-  import("./app/pages/deadlines").then((m) => ({ default: m.DeadlinesPage })),
+  retryImport(() => import("./app/pages/deadlines")).then((m) => ({ default: m.DeadlinesPage })),
 );
 const PetitionFormPage = lazy(() =>
-  import("./app/pages/petitions").then((m) => ({
+  retryImport(() => import("./app/pages/petitions")).then((m) => ({
     default: m.PetitionFormPage,
   })),
 );
 const PetitionsPage = lazy(() =>
-  import("./app/pages/petitions").then((m) => ({ default: m.PetitionsPage })),
+  retryImport(() => import("./app/pages/petitions")).then((m) => ({ default: m.PetitionsPage })),
 );
 const UsersListPage = lazy(() =>
-  import("./app/pages/users").then((m) => ({ default: m.UsersListPage })),
+  retryImport(() => import("./app/pages/users")).then((m) => ({ default: m.UsersListPage })),
 );
 const UserFormPage = lazy(() =>
-  import("./app/pages/users").then((m) => ({ default: m.UserFormPage })),
+  retryImport(() => import("./app/pages/users")).then((m) => ({ default: m.UserFormPage })),
 );
 const UserDetailPage = lazy(() =>
-  import("./app/pages/users").then((m) => ({ default: m.UserDetailPage })),
+  retryImport(() => import("./app/pages/users")).then((m) => ({ default: m.UserDetailPage })),
 );
 const ProductivityPage = lazy(() =>
-  import("./app/pages/productivity/ProductivityPage").then((m) => ({
+  retryImport(() => import("./app/pages/productivity/ProductivityPage")).then((m) => ({
     default: m.ProductivityPage,
   })),
 );
 const ProspectKanbanPage = lazy(() =>
-  import("./app/pages/prospeccao").then((m) => ({
+  retryImport(() => import("./app/pages/prospeccao")).then((m) => ({
     default: m.ProspectKanbanPage,
   })),
 );
 const ProspectFormPage = lazy(() =>
-  import("./app/pages/prospeccao").then((m) => ({
+  retryImport(() => import("./app/pages/prospeccao")).then((m) => ({
     default: m.ProspectFormPage,
   })),
 );
 const ProspectDetailPage = lazy(() =>
-  import("./app/pages/prospeccao").then((m) => ({
+  retryImport(() => import("./app/pages/prospeccao")).then((m) => ({
     default: m.ProspectDetailPage,
   })),
 );
 const FinanceiroPage = lazy(() =>
-  import("./app/pages/financeiro").then((m) => ({ default: m.FinanceiroPage })),
+  retryImport(() => import("./app/pages/financeiro")).then((m) => ({ default: m.FinanceiroPage })),
 );
 const LancamentoFormPage = lazy(() =>
-  import("./app/pages/financeiro").then((m) => ({
+  retryImport(() => import("./app/pages/financeiro")).then((m) => ({
     default: m.LancamentoFormPage,
   })),
 );
 const AuditPage = lazy(() =>
-  import("./app/pages/audit").then((m) => ({ default: m.AuditPage })),
+  retryImport(() => import("./app/pages/audit")).then((m) => ({ default: m.AuditPage })),
 );
 const MeetingsPage = lazy(() =>
-  import("./app/pages/meetings").then((m) => ({ default: m.MeetingsPage })),
+  retryImport(() => import("./app/pages/meetings")).then((m) => ({ default: m.MeetingsPage })),
 );
 const PrivacyPolicyPage = lazy(() =>
-  import("./app/pages/privacy-policy").then((m) => ({
+  retryImport(() => import("./app/pages/privacy-policy")).then((m) => ({
     default: m.PrivacyPolicyPage,
   })),
 );
 const TermsOfServicePage = lazy(() =>
-  import("./app/pages/terms-of-service").then((m) => ({
+  retryImport(() => import("./app/pages/terms-of-service")).then((m) => ({
     default: m.TermsOfServicePage,
   })),
 );

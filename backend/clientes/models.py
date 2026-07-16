@@ -31,6 +31,11 @@ class Cliente(models.Model):
                 name="cliente_cpf_unico_quando_preenchido",
             ),
         ]
+        indexes = [
+            models.Index(fields=["nome"]),
+            models.Index(fields=["email"]),
+            models.Index(fields=["tipo_cliente"]),
+        ]
 
     def __str__(self):
         return self.nome
