@@ -31,7 +31,7 @@ from integrations.google.exceptions import GoogleApiError
 from processos.models import Processo
 
 from . import services
-from .importacao import escanear_arvore
+from .importacao import confirmar_importacao, escanear_arvore, sugerir_plano
 from .models import ClienteDrive, DocumentoCliente
 
 logger = logging.getLogger(__name__)
@@ -231,16 +231,32 @@ def sugerir_organizacao(usuario, cliente) -> dict:
 
     pastas, arquivos, pai_de = _indexar_arvore(arvore)
     validas, rejeitadas = _validar_operacoes(brutas, pastas, arquivos, pai_de, raiz_id)
-    return {"operacoes": validas, "descartadas": len(rejeitadas)}
+
+    # Heurística (mesmo regex de CNJ do wizard de importação): identifica pastas
+    # de processo ainda não cadastradas para propor a criação junto do plano.
+    processos_sugeridos = sugerir_plano(arvore, cliente)["processos_sugeridos"]
+
+    return {
+        "operacoes": validas,
+        "descartadas": len(rejeitadas),
+        "processos_sugeridos": processos_sugeridos,
+    }
 
 
-def aplicar_organizacao(usuario, cliente, operacoes: list[dict]) -> dict:
+def aplicar_organizacao(
+    usuario, cliente, operacoes: list[dict], processos: list[dict] | None = None
+) -> dict:
     """Execute a human-approved batch of organization operations.
 
     Re-validates every operation against a fresh scan of the client's tree
     before any write, then executes ``create_folder`` first (resolving refs),
     then ``move``, then ``rename``. Individual Drive failures don't abort the
     batch; they are reported per item.
+
+    ``processos`` are approved rows from :func:`sugerir_organizacao`'s
+    ``processos_sugeridos`` (same heuristic as the import wizard); they are
+    persisted via :func:`confirmar_importacao`, which is idempotent on
+    ``(cliente, numero_processo)``.
     """
     if not isinstance(operacoes, list):
         raise OrganizacaoInvalida("'operacoes' deve ser uma lista.")
@@ -248,6 +264,8 @@ def aplicar_organizacao(usuario, cliente, operacoes: list[dict]) -> dict:
         raise OrganizacaoInvalida(
             f"Máximo de {settings.DRIVE_AI_MAX_OPERACOES} operações por vez."
         )
+    if processos is not None and not isinstance(processos, list):
+        raise OrganizacaoInvalida("'processos' deve ser uma lista.")
 
     raiz_id, arvore = _arvore_do_cliente(usuario, cliente)
     pastas, arquivos, pai_de = _indexar_arvore(arvore)
@@ -293,9 +311,15 @@ def aplicar_organizacao(usuario, cliente, operacoes: list[dict]) -> dict:
             )
             falhas.append({"operacao": op, "erro": str(exc)})
 
+    processos_criados = 0
+    if processos:
+        resultado_processos = confirmar_importacao(cliente, processos, [])
+        processos_criados = len(resultado_processos["processos"])
+
     return {
         "aplicadas": aplicadas,
         "falhas": falhas,
         "rejeitadas": rejeitadas,
         "pastas_criadas": pastas_criadas,
+        "processos_criados": processos_criados,
     }

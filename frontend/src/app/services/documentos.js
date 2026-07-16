@@ -241,18 +241,28 @@ export async function suggestDriveOrganization(clientId) {
   return {
     operations: (payload.operacoes || []).map(organizeOperationFromApi),
     discarded: Number(payload.descartadas || 0),
+    processesSuggested: (payload.processos_sugeridos || []).map(processSuggestionFromApi),
   };
 }
 
-export async function applyDriveOrganization(clientId, operations) {
+export async function applyDriveOrganization(clientId, operations, processes = []) {
   const payload = await apiRequest(`/api/clientes/${clientId}/drive/organizar/aplicar/`, {
     method: 'POST',
-    body: JSON.stringify({ operacoes: operations.map(organizeOperationToApi) }),
+    body: JSON.stringify({
+      operacoes: operations.map(organizeOperationToApi),
+      processos: processes.map((item) => ({
+        numero_processo: item.numeroProcesso,
+        origem_pasta_id: item.originFolderId,
+        area_juridica: item.legalArea || '',
+        descricao: item.description || '',
+      })),
+    }),
   });
   return {
     applied: Number(payload.aplicadas || 0),
     failures: payload.falhas || [],
     rejected: payload.rejeitadas || [],
+    processesCreated: Number(payload.processos_criados || 0),
   };
 }
 
