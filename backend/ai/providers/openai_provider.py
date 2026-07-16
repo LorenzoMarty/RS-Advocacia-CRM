@@ -80,7 +80,10 @@ class OpenAIProvider:
         response = self.client.responses.create(
             model=self.classification_model,
             instructions=CLASSIFICACAO_ARVORE_INSTRUCTIONS,
-            input=f"{contexto}\n\nÁRVORE DA PASTA:\n{arvore_texto}",
+            input=(
+                f"{contexto}\n\nÁRVORE DA PASTA:\n{arvore_texto}\n\n"
+                "Responda apenas com o JSON no esquema definido."
+            ),
             text={"format": {"type": "json_object"}},
             max_output_tokens=4000,
             store=False,
@@ -91,7 +94,10 @@ class OpenAIProvider:
         response = self.client.responses.create(
             model=self.classification_model,
             instructions=ORGANIZACAO_ARVORE_INSTRUCTIONS,
-            input=f"{contexto}\n\nÁRVORE DA PASTA:\n{arvore_texto}",
+            input=(
+                f"{contexto}\n\nÁRVORE DA PASTA:\n{arvore_texto}\n\n"
+                "Responda apenas com o JSON no esquema definido."
+            ),
             text={"format": {"type": "json_object"}},
             max_output_tokens=4000,
             store=False,
