@@ -5,6 +5,9 @@ from django.test import TestCase
 from clientes.models import Cliente
 from documentos import organizacao
 from documentos.models import ClienteDrive, DocumentoCliente
+from processos.models import Processo
+
+CNJ_VALIDO = "1234567-79.2024.8.13.0001"
 
 
 def _cliente(nome="João Silva"):
@@ -105,6 +108,53 @@ class SugerirOrganizacaoTests(TestCase):
         self.assertEqual(plano["operacoes"], [])
         self.assertEqual(plano["descartadas"], 1)
 
+    @patch(
+        "documentos.organizacao.escanear_arvore",
+        return_value={
+            "id": "raiz",
+            "nome": "Cliente",
+            "arquivos": [],
+            "subpastas": [
+                {
+                    "id": f"pasta-{CNJ_VALIDO}",
+                    "nome": CNJ_VALIDO,
+                    "arquivos": [],
+                    "subpastas": [],
+                }
+            ],
+        },
+    )
+    @patch("documentos.organizacao.ai_drive.sugerir_organizacao", return_value={"operacoes": []})
+    def test_identifica_processo_por_nome_de_pasta(self, mock_ia, mock_scan):
+        plano = organizacao.sugerir_organizacao("usuario", self.cliente)
+
+        self.assertEqual(len(plano["processos_sugeridos"]), 1)
+        self.assertEqual(plano["processos_sugeridos"][0]["numero_processo"], CNJ_VALIDO)
+
+    @patch(
+        "documentos.organizacao.escanear_arvore",
+        return_value={
+            "id": "raiz",
+            "nome": "Cliente",
+            "arquivos": [],
+            "subpastas": [
+                {
+                    "id": f"pasta-{CNJ_VALIDO}",
+                    "nome": CNJ_VALIDO,
+                    "arquivos": [],
+                    "subpastas": [],
+                }
+            ],
+        },
+    )
+    @patch("documentos.organizacao.ai_drive.sugerir_organizacao", return_value={"operacoes": []})
+    def test_nao_sugere_processo_ja_cadastrado(self, mock_ia, mock_scan):
+        Processo.objects.create(cliente=self.cliente, numero_processo=CNJ_VALIDO)
+
+        plano = organizacao.sugerir_organizacao("usuario", self.cliente)
+
+        self.assertEqual(plano["processos_sugeridos"], [])
+
 
 class AplicarOrganizacaoTests(TestCase):
     def setUp(self):
@@ -185,3 +235,21 @@ class AplicarOrganizacaoTests(TestCase):
         self.assertEqual(resultado["aplicadas"], 0)
         self.assertEqual(len(resultado["rejeitadas"]), 1)
         mock_drive.move_file.assert_not_called()
+
+    @patch("documentos.organizacao.drive_service", return_value=MagicMock())
+    @patch("documentos.organizacao.escanear_arvore", return_value=dict(ARVORE))
+    @patch("documentos.organizacao.drive")
+    def test_aplica_cria_processos_aprovados(self, mock_drive, mock_scan, mock_service):
+        resultado = organizacao.aplicar_organizacao(
+            "usuario",
+            self.cliente,
+            [],
+            [{"numero_processo": CNJ_VALIDO, "origem_pasta_id": "raiz"}],
+        )
+
+        self.assertEqual(resultado["processos_criados"], 1)
+        self.assertTrue(
+            Processo.objects.filter(
+                cliente=self.cliente, numero_processo=CNJ_VALIDO
+            ).exists()
+        )

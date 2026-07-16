@@ -489,7 +489,9 @@ def sugerir_organizacao_view(request, cliente_id):
     return resposta_sucesso(plano)
 
 
-@app_permissions_required("documentos.change_documentocliente", "clientes.view_cliente")
+@app_permissions_required(
+    "documentos.change_documentocliente", "processos.add_processo", "clientes.view_cliente"
+)
 def aplicar_organizacao_view(request, cliente_id):
     if request.method != "POST":
         return metodo_nao_permitido(["POST"])
@@ -501,9 +503,12 @@ def aplicar_organizacao_view(request, cliente_id):
         return resposta_erro(str(exc), status=400)
 
     operacoes = corpo.get("operacoes")
+    processos = corpo.get("processos") or []
     usuario = current_usuario(request)
     try:
-        resultado = organizacao.aplicar_organizacao(usuario, cliente, operacoes)
+        resultado = organizacao.aplicar_organizacao(
+            usuario, cliente, operacoes, processos
+        )
     except organizacao.OrganizacaoInvalida as exc:
         return resposta_erro(str(exc), status=400)
     except (
@@ -515,7 +520,10 @@ def aplicar_organizacao_view(request, cliente_id):
 
     return resposta_sucesso(
         resultado,
-        mensagem=f"{resultado['aplicadas']} operação(ões) aplicada(s).",
+        mensagem=(
+            f"{resultado['aplicadas']} operação(ões) aplicada(s), "
+            f"{resultado['processos_criados']} processo(s) criado(s)."
+        ),
     )
 
 

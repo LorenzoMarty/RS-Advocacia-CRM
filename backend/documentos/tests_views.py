@@ -314,6 +314,7 @@ class OrganizacaoViewsTests(TestCase):
             "falhas": [],
             "rejeitadas": [],
             "pastas_criadas": {},
+            "processos_criados": 0,
         }
 
         response = self.client.post(
