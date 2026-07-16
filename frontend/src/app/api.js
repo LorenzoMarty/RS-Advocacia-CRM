@@ -86,7 +86,11 @@ export function errorMessageFromPayload(payload, status) {
   return String(error);
 }
 
-export async function apiRequest(path, options = {}, { baseUrl = apiBaseUrl, requireConfiguredApi = true } = {}) {
+export async function apiRequest(
+  path,
+  options = {},
+  { baseUrl = apiBaseUrl, requireConfiguredApi = true, timeoutMs = 30_000 } = {},
+) {
   if (requireConfiguredApi && !baseUrl) {
     throw new Error('API não configurada. Defina VITE_API_URL.');
   }
@@ -102,7 +106,7 @@ export async function apiRequest(path, options = {}, { baseUrl = apiBaseUrl, req
   };
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30_000);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   let response;
   try {

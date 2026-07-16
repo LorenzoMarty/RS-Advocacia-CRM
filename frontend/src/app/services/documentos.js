@@ -152,10 +152,14 @@ function documentSuggestionFromApi(item) {
 }
 
 export async function scanClientDriveImport(clientId, folderId, { useAi = false } = {}) {
-  const payload = await apiRequest(`/api/clientes/${clientId}/drive/importar/escanear/`, {
-    method: 'POST',
-    body: JSON.stringify({ folder_id: folderId || '', usar_ia: useAi }),
-  });
+  const payload = await apiRequest(
+    `/api/clientes/${clientId}/drive/importar/escanear/`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ folder_id: folderId || '', usar_ia: useAi }),
+    },
+    useAi ? { timeoutMs: 90_000 } : {},
+  );
   return {
     suggestedProcesses: (payload.processos_sugeridos || []).map(processSuggestionFromApi),
     suggestedDocuments: (payload.documentos_sugeridos || []).map(documentSuggestionFromApi),
@@ -226,10 +230,14 @@ function organizeOperationToApi(item) {
 }
 
 export async function suggestDriveOrganization(clientId) {
-  const payload = await apiRequest(`/api/clientes/${clientId}/drive/organizar/sugerir/`, {
-    method: 'POST',
-    body: JSON.stringify({}),
-  });
+  const payload = await apiRequest(
+    `/api/clientes/${clientId}/drive/organizar/sugerir/`,
+    {
+      method: 'POST',
+      body: JSON.stringify({}),
+    },
+    { timeoutMs: 90_000 },
+  );
   return {
     operations: (payload.operacoes || []).map(organizeOperationFromApi),
     discarded: Number(payload.descartadas || 0),
