@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { useAppState } from '../store';
 import { applyDriveOrganization, suggestDriveOrganization } from '../services/documentos';
 
+function hasValidCnjShape(value) {
+  return value.replace(/\D/g, '').length === 20;
+}
+
 function operationLabel(item) {
   if (item.type === 'create_folder') {
     return `Criar pasta "${item.name}"`;
@@ -19,6 +23,7 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
   const [operations, setOperations] = useState([]);
   const [discarded, setDiscarded] = useState(0);
   const [processes, setProcesses] = useState([]);
+  const [warnings, setWarnings] = useState([]);
 
   async function handleSuggest() {
     setLoading(true);
@@ -27,6 +32,13 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
       setOperations(resultado.operations.map((item) => ({ ...item, included: true })));
       setDiscarded(resultado.discarded);
       setProcesses(resultado.processesSuggested.map((item) => ({ ...item, included: true })));
+      setWarnings(
+        resultado.processWarnings.map((item) => ({
+          ...item,
+          numeroProcesso: hasValidCnjShape(item.partialNumber) ? item.partialNumber : '',
+          included: hasValidCnjShape(item.partialNumber),
+        }))
+      );
       setStep('review');
     } catch (error) {
       addFlash(
@@ -50,9 +62,26 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
     );
   }
 
+  function updateWarning(index, changes) {
+    setWarnings((current) =>
+      current.map((item, i) => (i === index ? { ...item, ...changes } : item))
+    );
+  }
+
   async function handleApply() {
     const selectedOperations = operations.filter((item) => item.included);
-    const selectedProcesses = processes.filter((item) => item.included);
+    const confirmedWarnings = warnings
+      .filter((item) => item.included && hasValidCnjShape(item.numeroProcesso))
+      .map((item) => ({
+        numeroProcesso: item.numeroProcesso.trim(),
+        originFolderId: item.originFolderId,
+        legalArea: '',
+        description: item.title,
+      }));
+    const selectedProcesses = [
+      ...processes.filter((item) => item.included),
+      ...confirmedWarnings,
+    ];
     if (!selectedOperations.length && !selectedProcesses.length) {
       addFlash('Selecione ao menos um item para aplicar.', 'warning');
       return;
@@ -135,6 +164,48 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
               ))}
             </section>
 
+            {warnings.length > 0 && (
+              <section className="import-wizard-section">
+                <h4>Possíveis processos com número incompleto ({warnings.length})</h4>
+                <p className="import-wizard-hint">
+                  A IA encontrou pastas que parecem processo, mas o número não está
+                  completo/válido no nome. Digite o número correto para incluir.
+                </p>
+                {warnings.map((item, index) => (
+                  <div className="import-wizard-row" key={`aviso-${item.originFolderId}`}>
+                    <input
+                      type="checkbox"
+                      checked={item.included}
+                      disabled={!hasValidCnjShape(item.numeroProcesso)}
+                      onChange={(event) =>
+                        updateWarning(index, { included: event.target.checked })
+                      }
+                    />
+                    <div className="import-wizard-row-copy">
+                      <strong>{item.title}</strong>
+                      <span>
+                        {[item.reason, `pasta "${item.originFolderName}"`]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      className="import-wizard-input"
+                      value={item.numeroProcesso}
+                      placeholder="0000000-00.0000.0.00.0000"
+                      onChange={(event) =>
+                        updateWarning(index, {
+                          numeroProcesso: event.target.value,
+                          included: hasValidCnjShape(event.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+              </section>
+            )}
+
             <section className="import-wizard-section">
               <h4>Operações sugeridas ({operations.length})</h4>
               {discarded > 0 && (
@@ -181,7 +252,8 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
                 disabled={
                   loading ||
                   (operations.every((item) => !item.included) &&
-                    processes.every((item) => !item.included))
+                    processes.every((item) => !item.included) &&
+                    warnings.every((item) => !item.included))
                 }
               >
                 {loading ? 'Aplicando...' : 'Aplicar selecionadas'}

@@ -229,6 +229,16 @@ function organizeOperationToApi(item) {
   };
 }
 
+function processWarningFromOrganizeApi(item) {
+  return {
+    title: item.titulo || '',
+    reason: item.motivo || '',
+    partialNumber: item.numero_parcial || '',
+    originFolderId: item.origem_pasta_id || '',
+    originFolderName: item.origem_pasta_nome || '',
+  };
+}
+
 export async function suggestDriveOrganization(clientId) {
   const payload = await apiRequest(
     `/api/clientes/${clientId}/drive/organizar/sugerir/`,
@@ -242,6 +252,7 @@ export async function suggestDriveOrganization(clientId) {
     operations: (payload.operacoes || []).map(organizeOperationFromApi),
     discarded: Number(payload.descartadas || 0),
     processesSuggested: (payload.processos_sugeridos || []).map(processSuggestionFromApi),
+    processWarnings: (payload.avisos_processos || []).map(processWarningFromOrganizeApi),
   };
 }
 

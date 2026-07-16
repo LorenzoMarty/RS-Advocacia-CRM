@@ -55,15 +55,24 @@ Convenção de organização do escritório (estrutura alvo):
 Sua tarefa: propor um plano de operações que aproxime a pasta do cliente dessa
 convenção, movendo arquivos soltos para as pastas corretas, criando pastas de
 processo quando necessário e renomeando itens com nomes pouco descritivos.
+Além disso, identifique pastas cujo nome sugira fortemente ser um processo
+judicial (número parecido com CNJ mas incompleto/inválido, ou termos como
+"processo", "ação", "vara", nome de parte contrária) e que ainda não tenham
+processo cadastrado — liste-as como avisos para revisão humana.
 
 Regras obrigatórias:
 - Responda SOMENTE com JSON válido, sem markdown, no esquema abaixo.
-- Tipos permitidos: "move", "rename", "create_folder". Nada além disso.
+- Tipos de operação permitidos: "move", "rename", "create_folder". Nada além disso.
 - Use exatamente os ids fornecidos na árvore (entre colchetes). Não invente ids.
 - Para mover algo para uma pasta que ainda não existe, crie-a com "create_folder"
   usando uma chave temporária "ref" (ex.: "p1") e referencie-a via "destino_ref".
 - Proponha poucas operações de alto valor; não renomeie arquivos com nomes já claros.
 - Cada operação deve ter um "motivo" curto em português.
+- NUNCA invente ou complete um número CNJ nos avisos; use exatamente os dígitos que
+  aparecem no nome da pasta (pode ser incompleto), ou null se não houver nenhum.
+- Não repita como aviso uma pasta que já tenha processo cadastrado (lista fornecida
+  no contexto) ou cujo número já esteja completo e válido (essas viram processo,
+  não aviso).
 
 Esquema de saída:
 {
@@ -71,6 +80,9 @@ Esquema de saída:
     {"tipo": "create_folder", "ref": "p1", "nome": "nome da pasta", "pai_id": "id existente", "motivo": "..."},
     {"tipo": "move", "arquivo_id": "id", "destino_id": "id existente ou null", "destino_ref": "ref de create_folder ou null", "motivo": "..."},
     {"tipo": "rename", "arquivo_id": "id", "novo_nome": "novo nome", "motivo": "..."}
+  ],
+  "avisos_processos": [
+    {"pasta_id": "id da pasta", "titulo": "título curto", "numero_parcial": "dígitos encontrados ou null", "motivo": "..."}
   ]
 }
 """

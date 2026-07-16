@@ -155,6 +155,42 @@ class SugerirOrganizacaoTests(TestCase):
 
         self.assertEqual(plano["processos_sugeridos"], [])
 
+    @patch("documentos.organizacao.escanear_arvore", return_value=dict(ARVORE))
+    @patch("documentos.organizacao.ai_drive.sugerir_organizacao")
+    def test_aviso_de_processo_com_numero_incompleto(self, mock_ia, mock_scan):
+        mock_ia.return_value = {
+            "operacoes": [],
+            "avisos_processos": [
+                {
+                    "pasta_id": "peticoes",
+                    "titulo": "Ação trabalhista - fulano",
+                    "numero_parcial": "0021396-54.2026",
+                    "motivo": "número incompleto no nome da pasta",
+                }
+            ],
+        }
+
+        plano = organizacao.sugerir_organizacao("usuario", self.cliente)
+
+        self.assertEqual(len(plano["avisos_processos"]), 1)
+        self.assertEqual(plano["avisos_processos"][0]["titulo"], "Ação trabalhista - fulano")
+        self.assertEqual(plano["avisos_processos"][0]["origem_pasta_nome"], "Petições")
+
+    @patch("documentos.organizacao.escanear_arvore", return_value=dict(ARVORE))
+    @patch("documentos.organizacao.ai_drive.sugerir_organizacao")
+    def test_aviso_com_pasta_alucinada_e_descartado(self, mock_ia, mock_scan):
+        mock_ia.return_value = {
+            "operacoes": [],
+            "avisos_processos": [
+                {"pasta_id": "nao-existe", "titulo": "Processo fantasma"},
+                {"pasta_id": "peticoes", "titulo": ""},
+            ],
+        }
+
+        plano = organizacao.sugerir_organizacao("usuario", self.cliente)
+
+        self.assertEqual(plano["avisos_processos"], [])
+
 
 class AplicarOrganizacaoTests(TestCase):
     def setUp(self):
