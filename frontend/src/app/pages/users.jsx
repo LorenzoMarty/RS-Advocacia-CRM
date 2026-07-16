@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
@@ -16,17 +19,19 @@ function profileLabel(userOrValue) {
   return userOrValue?.roleName || userOrValue?.roleId || 'Sem perfil';
 }
 
-function validateUserForm(form, users, currentId) {
-  const nextErrors = {};
-
-  if (!form.name.trim()) nextErrors.name = 'Informe o nome.';
-  if (!form.email.trim()) nextErrors.email = 'Informe o e-mail.';
-  if (!form.roleId) nextErrors.roleId = 'Selecione um cargo.';
-  if (users.some((user) => user.email.toLowerCase() === form.email.toLowerCase() && user.id !== currentId)) {
-    nextErrors.email = 'Já existe um usuário com este e-mail.';
-  }
-
-  return nextErrors;
+function buildUserSchema(users, currentId) {
+  return z.object({
+    name: z.string().min(1, 'Informe o nome.'),
+    email: z.string().min(1, 'Informe o e-mail.'),
+    roleId: z.string().min(1, 'Selecione um cargo.'),
+  }).superRefine((data, ctx) => {
+    const emailTaken = users.some(
+      (user) => user.email.toLowerCase() === data.email.toLowerCase() && user.id !== currentId,
+    );
+    if (emailTaken) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['email'], message: 'Já existe um usuário com este e-mail.' });
+    }
+  });
 }
 
 export function UsersListPage() {
@@ -196,39 +201,44 @@ export function UserFormPage() {
   const isEditing = Boolean(params.userId);
   const { saveUser, users } = useAppState();
   const user = users.find((item) => item.id === params.userId) || null;
-  const [form, setForm] = useState(() => ({
-    id: user?.id || '',
-    name: user?.name || '',
-    email: user?.email || '',
-    roleId: user?.roleId || '',
-  }));
-  const [errors, setErrors] = useState({});
+
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(buildUserSchema(users, user?.id)),
+    defaultValues: {
+      name: user?.name ?? '',
+      email: user?.email ?? '',
+      roleId: user?.roleId ?? '',
+    },
+  });
+
+  // defaultValues só é lido no primeiro render do useForm — quando o usuário
+  // chega depois (fetch assíncrono), precisa de reset() explícito.
+  useEffect(() => {
+    if (!user) return;
+    reset({
+      name: user.name ?? '',
+      email: user.email ?? '',
+      roleId: user.roleId ?? '',
+    });
+  }, [user, reset]);
 
   if (isEditing && !user) {
     return <NotFoundState title="Usuário não encontrado." />;
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-    const nextErrors = validateUserForm(form, users, form.id);
-
-    if (Object.keys(nextErrors).length) {
-      setErrors(nextErrors);
-      return;
-    }
-
+  async function onSubmit(data) {
     const savedUser = await saveUser({
-      id: isEditing ? form.id : undefined,
-      name: form.name.trim(),
-      email: form.email.trim(),
-      roleId: form.roleId,
+      id: isEditing ? user.id : undefined,
+      name: data.name.trim(),
+      email: data.email.trim(),
+      roleId: data.roleId,
     });
 
     if (!savedUser) {
       return;
     }
 
-    navigate(`/usuarios/${savedUser.id || form.id}`, { replace: true });
+    navigate(`/usuarios/${savedUser.id || user?.id}`, { replace: true });
   }
 
   return (
@@ -256,23 +266,23 @@ export function UserFormPage() {
         </section>
 
         <section className="surface form-panel">
-          <form className="user-form" onSubmit={handleSubmit}>
+          <form className="user-form" onSubmit={handleSubmit(onSubmit)}>
             <div className="form-grid">
-              <Field id="user-name" label="Nome" error={errors.name} required>
-                <input id="user-name" value={form.name} onChange={(event) => setForm((currentForm) => ({ ...currentForm, name: event.target.value }))} />
+              <Field id="user-name" label="Nome" error={errors.name?.message} required>
+                <input id="user-name" {...register('name')} />
               </Field>
 
-              <Field id="user-email" label="E-mail" error={errors.email} required>
-                <input id="user-email" type="email" value={form.email} onChange={(event) => setForm((currentForm) => ({ ...currentForm, email: event.target.value }))} />
+              <Field id="user-email" label="E-mail" error={errors.email?.message} required>
+                <input id="user-email" type="email" {...register('email')} />
               </Field>
 
               <Field
                 id="user-role"
                 label="Perfil"
-                error={errors.roleId}
+                error={errors.roleId?.message}
                 required
               >
-                <Select id="user-role" value={form.roleId} onChange={(event) => setForm((currentForm) => ({ ...currentForm, roleId: event.target.value }))}>
+                <Select id="user-role" {...register('roleId')}>
                   <option value="">Selecione o perfil</option>
                   {USER_PROFILE_OPTIONS.map((profile) => <option key={profile} value={profile}>{profile}</option>)}
                 </Select>
@@ -281,7 +291,7 @@ export function UserFormPage() {
             </div>
 
             <div className="form-actions">
-              <button className="btn" type="submit">{isEditing ? 'Atualizar' : 'Salvar'}</button>
+              <button className="btn" type="submit" disabled={isSubmitting}>{isEditing ? 'Atualizar' : 'Salvar'}</button>
               <Link className="btn btn-secondary" to={isEditing ? `/usuarios/${user.id}` : '/usuarios'}>Cancelar</Link>
             </div>
           </form>
