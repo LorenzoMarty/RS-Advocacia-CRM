@@ -4,51 +4,6 @@
     min-height:100vh;
 }
 
-.sidebar{
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    bottom:0;
-    width:var(--sidebar);
-    padding:0;
-    border-radius:0;
-    background:var(--sidebar-bg);
-    border:0;
-    outline:1px solid var(--line);
-    outline-offset:-1px;
-    box-shadow:none;
-    backdrop-filter:none;
-    overflow:visible;
-    z-index:40;
-    transition:transform .35s cubic-bezier(.22,1,.36,1),width .35s cubic-bezier(.22,1,.36,1),padding .35s cubic-bezier(.22,1,.36,1),background .22s ease,border-color .22s ease;
-}
-
-.sidebar::before{
-    display:none;
-}
-
-.sidebar > *{position:relative;z-index:1}
-.sidebar-scroll{
-    display:flex;
-    flex-direction:column;
-    gap:24px;
-    flex:1;
-    min-height:0;
-    width:100%;
-    overflow-y:auto;
-    overflow-x:hidden;
-    padding:18px 18px 0;
-    scrollbar-gutter:stable;
-    scrollbar-width:thin;
-    scrollbar-color:var(--scroll-thumb) transparent;
-}
-
-.sidebar-scroll::-webkit-scrollbar{width:6px}
-.sidebar-scroll::-webkit-scrollbar-track{background:transparent}
-.sidebar-scroll::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:999px}
-
-
 .page{
     margin-left:0;
     padding:0 0 var(--bottom-nav-offset);

@@ -1,14 +1,4 @@
-.event-create-page{
-        display:grid;
-        gap:var(--gap-page);
-    }
-
-    .event-intro,
-    .event-form-panel{
-        padding:var(--pad-card);
-    }
-
-    .intro-grid{
+.intro-grid{
         display:grid;
         gap:14px;
     }
@@ -77,37 +67,6 @@
         margin:8px 0 0;
         padding-left:18px;
         color:var(--soft);
-    }
-
-    .event-form{
-        display:grid;
-        gap:24px;
-    }
-
-    .form-section{
-        display:grid;
-        gap:14px;
-    }
-
-    .section-headline{
-        display:grid;
-        gap:4px;
-    }
-
-    .section-kicker{
-        margin:0;
-        color:var(--muted);
-        font-size:.76rem;
-        font-weight:700;
-        letter-spacing:.16em;
-        text-transform:uppercase;
-    }
-
-    .section-copy{
-        margin:0;
-        color:var(--muted);
-        font-size:.86rem;
-        line-height:1.5;
     }
 
     .form-grid{
@@ -234,11 +193,6 @@
     }
 
 @media (max-width:720px){
-    .event-intro,
-    .event-form-panel{
-        padding:16px;
-    }
-
     .intro-link{
         gap:6px;
         font-size:.68rem;
@@ -264,17 +218,8 @@
         grid-column:auto;
     }
 
-    .event-form,
-    .form-section{
-        gap:var(--gap-page);
-    }
-
     .field{
         gap:7px;
-    }
-
-    .section-copy{
-        font-size:.8rem;
     }
 
     .field label{

@@ -21,6 +21,7 @@
 @import "./styles/pages/usuarios-detail.css";
 @import "./styles/pages/api-test.css";
 @import "./styles/utilities/tablet.css";
+@import "./styles/tailwind.css";
 
 #root {
   width: 100%;

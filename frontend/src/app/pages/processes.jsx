@@ -8,7 +8,18 @@ import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import { formatCount, formatPhone, getStatusTone } from '../utils';
 import { Select } from '../components/select';
-import { ComboField, EmptyState, Field, NotFoundState } from './common';
+import {
+  ComboField,
+  DetailGrid,
+  DetailHero,
+  DetailItem,
+  DetailLayout,
+  DetailSection,
+  DetailStack,
+  EmptyState,
+  Field,
+  NotFoundState,
+} from './common';
 
 function validateProcessForm(form) {
   const nextErrors = {};
@@ -480,102 +491,43 @@ export function ProcessDetailPage() {
     <>
       <PageChrome label="Processo" />
 
-      <div className="process-page">
-        <section className="surface process-hero">
-          <div className="crumbs">
-            <Link to="/processos">Processos</Link>
-          </div>
+      <div className="grid gap-4">
+        <DetailHero
+          breadcrumbLabel="Processos"
+          breadcrumbTo="/processos"
+          mark="PJ"
+          title={process.number}
+          subtitle={client?.name}
+          summary={[
+            { label: 'Status', value: <StatusBadge tone={getStatusTone(process.status)}>{process.status}</StatusBadge> },
+            ...(!process.lawyerEnabled
+              ? [{ label: 'Advogado', value: <StatusBadge tone="warn">Não habilitado</StatusBadge> }]
+              : []),
+            { label: 'Compromissos', value: relatedEvents.length },
+            { label: 'Prazos', value: relatedDeadlines.length },
+            { label: 'Peças', value: relatedPetitions.length },
+            { label: 'Responsável', value: process.ownerName || '-' },
+          ]}
+        />
 
-          <div className="process-hero-grid">
-            <div className="process-identity">
-              <div className="identity-row">
-                <div className="process-mark" aria-hidden="true">PJ</div>
-                <div>
-                  <h1 className="process-number">{process.number}</h1>
-                  <p className="process-subtitle">{client?.name}</p>
-                </div>
-              </div>
-
-              <aside className="hero-summary">
-                <article className="summary-card">
-                  <span>Status</span>
+        <DetailLayout>
+          <DetailStack>
+            <DetailSection title="Dados" note="Essenciais">
+              <DetailGrid>
+                <DetailItem label="Número">{process.number}</DetailItem>
+                <DetailItem label="Cliente">
+                  {client ? <Link className="hover:text-primary" to={`/clientes/${client.id}`}>{client.name}</Link> : '-'}
+                </DetailItem>
+                <DetailItem label="Área">{process.area || '-'}</DetailItem>
+                <DetailItem label="Vara">{process.court || '-'}</DetailItem>
+                <DetailItem label="Responsável">{process.ownerName || '-'}</DetailItem>
+                <DetailItem label="Status">
                   <StatusBadge tone={getStatusTone(process.status)}>{process.status}</StatusBadge>
-                </article>
-                {!process.lawyerEnabled && (
-                  <article className="summary-card">
-                    <span>Advogado</span>
-                    <StatusBadge tone="warn">Não habilitado</StatusBadge>
-                  </article>
-                )}
-                <article className="summary-card">
-                  <span>Compromissos</span>
-                  <strong>{relatedEvents.length}</strong>
-                </article>
-                <article className="summary-card">
-                  <span>Prazos</span>
-                  <strong>{relatedDeadlines.length}</strong>
-                </article>
-                <article className="summary-card">
-                  <span>Peças</span>
-                  <strong>{relatedPetitions.length}</strong>
-                </article>
-                <article className="summary-card">
-                  <span>Responsável</span>
-                  <strong>{process.ownerName || '-'}</strong>
-                </article>
-              </aside>
-            </div>
-          </div>
-        </section>
+                </DetailItem>
+              </DetailGrid>
+            </DetailSection>
 
-        <div className="process-layout">
-          <div className="stack">
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Dados</h2>
-                  <p className="section-note">Essenciais</p>
-                </div>
-              </div>
-
-              <div className="detail-grid">
-                <article className="detail-item">
-                  <span>Número</span>
-                  <strong>{process.number}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Cliente</span>
-                  {client ? <Link to={`/clientes/${client.id}`}>{client.name}</Link> : <strong>-</strong>}
-                </article>
-                <article className="detail-item">
-                  <span>Área</span>
-                  <strong>{process.area || '-'}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Vara</span>
-                  <strong>{process.court || '-'}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Responsável</span>
-                  <strong>{process.ownerName || '-'}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Status</span>
-                  <div className="detail-badge-wrap">
-                    <StatusBadge tone={getStatusTone(process.status)}>{process.status}</StatusBadge>
-                  </div>
-                </article>
-              </div>
-            </section>
-
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Compromissos</h2>
-                  <p className="section-note">{formatCount(relatedEvents.length)}</p>
-                </div>
-              </div>
-
+            <DetailSection title="Compromissos" note={formatCount(relatedEvents.length)}>
               <div className="list">
                 {relatedEvents.length ? relatedEvents.map((event) => (
                   <article key={event.id} className="event-item">
@@ -601,17 +553,9 @@ export function ProcessDetailPage() {
                   />
                 )}
               </div>
-            </section>
+            </DetailSection>
 
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Prazos</h2>
-                  <p className="section-note">{formatCount(relatedDeadlines.length, 'prazo', 'prazos')}</p>
-                </div>
-              </div>
-
-              <div className="list">
+            <DetailSection title="Prazos" note={formatCount(relatedDeadlines.length, 'prazo', 'prazos')}><div className="list">
                 {relatedDeadlines.length ? relatedDeadlines.map((deadline) => (
                   <article key={deadline.id} className="event-item">
                     <div className="list-top">
@@ -634,17 +578,9 @@ export function ProcessDetailPage() {
                   />
                 )}
               </div>
-            </section>
+            </DetailSection>
 
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Petições ou contestações</h2>
-                  <p className="section-note">{formatCount(relatedPetitions.length, 'peça', 'peças')}</p>
-                </div>
-              </div>
-
-              <div className="list">
+            <DetailSection title="Petições ou contestações" note={formatCount(relatedPetitions.length, 'peça', 'peças')}><div className="list">
                 {relatedPetitions.length ? relatedPetitions.map((petition) => (
                   <article key={petition.id} className="event-item">
                     <div className="list-top">
@@ -673,19 +609,11 @@ export function ProcessDetailPage() {
                   />
                 )}
               </div>
-            </section>
-          </div>
+            </DetailSection>
+          </DetailStack>
 
-          <div className="stack">
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Cliente</h2>
-                  <p className="section-note">Vinculado</p>
-                </div>
-              </div>
-
-              {client ? (
+          <DetailStack>
+            <DetailSection title="Cliente" note="Vinculado">{client ? (
                 <article className="client-card">
                   <div className="client-card-head">
                     <div className="client-mark" aria-hidden="true">{client.name.slice(0, 1).toUpperCase()}</div>
@@ -707,17 +635,9 @@ export function ProcessDetailPage() {
               ) : (
                 <div className="note-box">Nenhum cliente vinculado.</div>
               )}
-            </section>
+            </DetailSection>
 
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Observações</h2>
-                  <p className="section-note">Internas</p>
-                </div>
-              </div>
-
-              {process.description ? (
+            <DetailSection title="Observações" note="Internas">{process.description ? (
                 <div className="note-box">{process.description}</div>
               ) : (
                 <div className="empty">
@@ -725,9 +645,9 @@ export function ProcessDetailPage() {
                   <p>Nenhuma nota registrada.</p>
                 </div>
               )}
-            </section>
-          </div>
-        </div>
+            </DetailSection>
+          </DetailStack>
+        </DetailLayout>
       </div>
     </>
   );

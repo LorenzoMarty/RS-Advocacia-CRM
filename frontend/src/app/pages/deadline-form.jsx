@@ -4,6 +4,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { ArrowLeft } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome } from '../layout';
 import { useAppState } from '../store';
@@ -130,25 +135,25 @@ export function DeadlineFormPage() {
       <PageChrome label={isEditing ? 'Editar prazo' : 'Novo prazo'} />
       {confirmPopup}
 
-      <div className="deadline-form-page">
-        <section className="surface deadline-form-intro">
-          <div className="intro-grid">
-            <Link className="intro-link" to={`/prazos?data=${encodeURIComponent(date)}`}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-              Voltar para prazos
-            </Link>
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <Link
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to={`/prazos?data=${encodeURIComponent(date)}`}
+          >
+            <ArrowLeft className="size-3.5" />
+            Voltar para prazos
+          </Link>
 
-            <div>
-              <h1 className="intro-title">{isEditing ? 'Editar prazo' : 'Novo prazo'}</h1>
-              <p className="intro-note">Preencha os campos do prazo.</p>
-            </div>
-          </div>
+          <p className="mt-3 font-serif text-3xl text-foreground">
+            {isEditing ? 'Editar prazo' : 'Novo prazo'}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Preencha os campos do prazo.</p>
         </section>
 
         {processes.length ? (
-          <section className="surface deadline-form-panel">
+          <Card>
+            <CardContent className="py-5">
             <form className="deadline-task-form" onSubmit={handleSubmit(onSubmit)}>
               <div className="deadline-generated-name">
                 <span>Nome do prazo</span>
@@ -182,20 +187,26 @@ export function DeadlineFormPage() {
               </div>
 
               <div className="form-actions">
-                <button className="btn" type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar prazo' : 'Salvar prazo'}
-                </button>
+                </Button>
                 {isEditing ? (
-                  <button className="btn btn-danger" type="button" onClick={handleDelete}>
+                  <Button
+                    variant="outline"
+                    className="text-destructive hover:bg-destructive/10"
+                    type="button"
+                    onClick={handleDelete}
+                  >
                     Excluir
-                  </button>
+                  </Button>
                 ) : null}
-                <Link className="btn btn-secondary" to={`/prazos?data=${encodeURIComponent(date)}`}>
-                  Cancelar
-                </Link>
+                <Button asChild variant="outline">
+                  <Link to={`/prazos?data=${encodeURIComponent(date)}`}>Cancelar</Link>
+                </Button>
               </div>
             </form>
-          </section>
+            </CardContent>
+          </Card>
         ) : (
           <section className="surface section-card">
             <EmptyState

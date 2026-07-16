@@ -3,23 +3,8 @@
         gap:var(--gap-page);
     }
 
-    .event-hero,
     .section-card{
         padding:var(--pad-card);
-    }
-
-    .event-hero-actions{
-        display:flex;
-        flex-wrap:wrap;
-        gap:10px;
-        margin-bottom:20px;
-    }
-
-    .event-hero-grid{
-        display:grid;
-        grid-template-columns:minmax(0, 1fr);
-        gap:var(--gap-page);
-        align-items:stretch;
     }
 
     .crumbs{
@@ -39,13 +24,6 @@
         opacity:.5;
     }
 
-    .event-identity{
-        display:flex;
-        flex-direction:column;
-        justify-content:space-between;
-        gap:14px;
-    }
-
     .identity-row{
         display:flex;
         align-items:flex-start;
@@ -53,52 +31,6 @@
         min-width:0;
     }
 
-    .event-mark{
-        width:58px;
-        height:58px;
-        flex:0 0 auto;
-        display:grid;
-        place-items:center;
-        border-radius:20px;
-        color:var(--gold-soft);
-        font-size:1.02rem;
-        font-weight:700;
-        letter-spacing:.02em;
-        background:rgba(212,175,55,.08);
-        border:1px solid rgba(212,175,55,.18);
-    }
-
-    .event-title{
-        margin:0;
-        font-family:var(--serif);
-        font-size:clamp(2.25rem, 4vw, 3.25rem);
-        line-height:.96;
-        font-weight:400;
-        letter-spacing:-.06em;
-        word-break:break-word;
-    }
-
-    .event-subtitle{
-        margin:10px 0 0;
-        color:var(--soft);
-        font-size:.96rem;
-        line-height:1.6;
-    }
-
-    .hero-meta{
-        display:flex;
-        flex-wrap:wrap;
-        gap:10px;
-        align-items:flex-start;
-    }
-
-    .hero-meta .meta-pill,
-    .hero-meta .status-badge{
-        min-height:32px;
-        border-radius:10px;
-    }
-
-    .meta-pill,
     .meta-chip{
         display:inline-flex;
         align-items:center;
@@ -113,79 +45,6 @@
         white-space:nowrap;
         overflow:hidden;
         text-overflow:ellipsis;
-    }
-
-    .hero-summary{
-        display:flex;
-        flex-wrap:wrap;
-        gap:8px;
-        align-items:stretch;
-        width:fit-content;
-        max-width:100%;
-    }
-
-    .summary-card{
-        min-width:132px;
-        max-width:280px;
-        padding:12px 14px;
-        border-radius:16px;
-        border:1px solid var(--line);
-        background:var(--ghost);
-        display:grid;
-        align-content:center;
-        gap:6px;
-    }
-
-    .summary-card-status{
-        display:flex;
-        flex-direction:column;
-        justify-content:center;
-        align-items:flex-start;
-        text-align:left;
-        min-width:168px;
-    }
-
-    .summary-card span{
-        display:block;
-        color:var(--muted);
-        font-size:.66rem;
-        font-weight:700;
-        letter-spacing:.12em;
-        text-transform:uppercase;
-    }
-
-    .summary-card strong{
-        display:block;
-        margin-top:0;
-        font-size:1.28rem;
-        line-height:1.15;
-        letter-spacing:-.05em;
-        word-break:break-word;
-        display:-webkit-box;
-        -webkit-line-clamp:2;
-        -webkit-box-orient:vertical;
-        overflow:hidden;
-    }
-
-    .summary-card .status-badge{
-        margin-top:0;
-    }
-
-    .summary-card-status .status-badge{
-        display:inline-flex;
-        justify-content:flex-start;
-        width:auto;
-        max-width:100%;
-        margin-inline:0;
-        min-height:34px;
-        padding-inline:14px;
-        text-align:left;
-    }
-
-    .event-layout{
-        display:grid;
-        grid-template-columns:minmax(0, 1.04fr) minmax(320px, .96fr);
-        gap:var(--gap-page);
     }
 
     .stack{
@@ -377,19 +236,7 @@
         text-transform:uppercase;
     }
 
-    @media (max-width:1180px){
-        .event-hero-grid,
-        .event-layout{
-            grid-template-columns:1fr;
-        }
-
-        .hero-summary{
-            width:100%;
-        }
-    }
-
 @media (max-width:720px){
-    .event-hero,
     .section-card{
         padding:16px;
     }
@@ -414,51 +261,12 @@
         grid-column:auto;
     }
 
-    .event-mark{
-        width:48px;
-        height:48px;
-        border-radius:16px;
-        font-size:.92rem;
-    }
-
-    .event-title{
-        font-size:clamp(1.85rem, 10vw, 2.35rem);
-    }
-
-    .event-subtitle{
-        margin-top:8px;
-        font-size:.86rem;
-        line-height:1.5;
-    }
-
-    .hero-meta{
-        gap:8px;
-    }
-
-    .meta-pill,
     .meta-chip,
     .status-badge{
         min-height:30px;
         padding:0 10px;
         font-size:.64rem;
         border-radius:12px;
-    }
-
-    .hero-summary{
-        display:grid;
-        grid-template-columns:1fr;
-        width:100%;
-    }
-
-    .summary-card{
-        min-width:0;
-        max-width:none;
-        padding:12px 14px;
-        border-radius:16px;
-    }
-
-    .summary-card strong{
-        font-size:1.16rem;
     }
 
     .link-card,

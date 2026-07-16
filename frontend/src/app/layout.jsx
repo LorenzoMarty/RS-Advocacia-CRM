@@ -1,6 +1,35 @@
 import { createContext, Suspense, useContext, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import {
+  Bell,
+  Briefcase,
+  Calendar,
+  CalendarCheck,
+  ChevronUp,
+  CircleHelp,
+  Clock,
+  DollarSign,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ShieldCheck,
+  Sparkles,
+  Timer,
+  TrendingUp,
+  UserCog,
+  Users,
+  Video,
+  X,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 import { AppearancePanel, AppearanceTrigger } from './components/appearance-panel';
 import { useOnboardingLauncher } from './components/onboarding-launcher';
@@ -11,13 +40,24 @@ import { useAppearanceState } from './use-appearance';
 import { formatTime, normalizeText } from './utils';
 import { useNotifications } from './hooks/use-notifications';
 
+const NAV_ICONS = {
+  painel: LayoutDashboard,
+  clientes: Users,
+  processos: Briefcase,
+  agenda: Calendar,
+  prazos: CalendarCheck,
+  peticoes: FileText,
+  reunioes: Video,
+  produtividade: Timer,
+  prospeccao: TrendingUp,
+  financeiro: DollarSign,
+  auditoria: ShieldCheck,
+  usuarios: UserCog,
+};
+
 const PageChromeContext = createContext(() => {});
 const PAGE_CHROME_DEFAULT = { label: 'Painel', actions: null };
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
-function createNavClass(isActive, baseClass) {
-  return `${baseClass}${isActive ? ' active' : ''}`;
-}
 
 // Fallback do Suspense ao trocar de rota (download do chunk lazy da página).
 // Fica só no conteúdo — a sidebar/shell do ProtectedLayout continua montada.
@@ -33,122 +73,9 @@ function RouteFallback() {
   );
 }
 
-function NavigationIcon({ icon }) {
-  switch (icon) {
-    case 'painel':
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="8" rx="1.5" />
-          <rect x="14" y="3" width="7" height="5" rx="1.5" />
-          <rect x="14" y="12" width="7" height="9" rx="1.5" />
-          <rect x="3" y="15" width="7" height="6" rx="1.5" />
-        </svg>
-      );
-    case 'clientes':
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      );
-    case 'processos':
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <path d="M14 2v6h6" />
-          <path d="M8 13h8" />
-          <path d="M8 17h6" />
-        </svg>
-      );
-    case 'agenda':
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4" />
-          <path d="M8 2v4" />
-          <path d="M3 10h18" />
-          <path d="M8 14h.01" />
-          <path d="M12 14h.01" />
-          <path d="M16 14h.01" />
-          <path d="M8 18h.01" />
-          <path d="M12 18h.01" />
-        </svg>
-      );
-    case 'prazos':
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M8 2v4" />
-          <path d="M16 2v4" />
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M3 10h18" />
-          <path d="M8 15h5" />
-          <path d="m15 15 2 2 4-4" />
-        </svg>
-      );
-    case 'peticoes':
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <path d="M14 2v6h6" />
-          <path d="M8 13h5" />
-          <path d="M8 17h3" />
-          <path d="m14 18 4-4 2 2-4 4h-2z" />
-        </svg>
-      );
-    case 'reunioes':
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z" />
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-          <path d="M12 19v4" />
-          <path d="M8 23h8" />
-        </svg>
-      );
-    case 'produtividade':
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
-      );
-    case 'prospeccao':
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 3v18h18" />
-          <path d="m7 14 4-4 3 3 5-6" />
-          <path d="M19 7h-3" />
-          <path d="M19 7v3" />
-        </svg>
-      );
-    case 'financeiro':
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="5" width="20" height="14" rx="2" />
-          <path d="M2 10h20" />
-          <circle cx="12" cy="14" r="2" />
-        </svg>
-      );
-    case 'auditoria':
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.35-4.35" />
-          <path d="M11 8v6" />
-          <path d="M8 11h6" />
-        </svg>
-      );
-    default:
-      return (
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="10" cy="7" r="4" />
-          <path d="M20 8v6" />
-          <path d="M17 11h6" />
-        </svg>
-      );
-  }
+function NavigationIcon({ icon, className }) {
+  const Icon = NAV_ICONS[icon] || UserCog;
+  return <Icon className={className} strokeWidth={1.7} />;
 }
 
 export function PageChrome({ label, actions = null }) {
@@ -225,25 +152,68 @@ function useVisibleNavItems() {
   return NAV_ITEMS.filter((item) => !item.permission || hasPermission(item.permission));
 }
 
-function SidebarNavigation() {
+function SidebarNavLink({ item, collapsed }) {
+  const link = (
+    <NavLink
+      to={item.to}
+      end={item.to === '/'}
+      aria-label={item.label}
+      data-tour={`nav-${item.key}`}
+      className={({ isActive }) =>
+        cn(
+          'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground',
+          collapsed && 'justify-center px-0',
+          isActive && 'bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary',
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <span
+            className={cn(
+              'absolute left-1 top-1/2 h-0 w-[3px] -translate-y-1/2 rounded-full bg-primary opacity-0 transition-all duration-200',
+              isActive && 'h-[56%] opacity-100',
+            )}
+            aria-hidden="true"
+          />
+          <NavigationIcon
+            icon={item.key}
+            className={cn(
+              'size-5 shrink-0 transition-colors',
+              isActive ? 'text-primary drop-shadow-[0_0_10px_rgba(212,175,55,.18)]' : 'text-muted-foreground group-hover:text-foreground',
+            )}
+          />
+          <span
+            className={cn(
+              'truncate transition-all duration-200',
+              collapsed && 'pointer-events-none max-w-0 opacity-0',
+            )}
+          >
+            {item.label}
+          </span>
+        </>
+      )}
+    </NavLink>
+  );
+
+  if (!collapsed) {
+    return link;
+  }
+
+  return (
+    <Tooltip delayDuration={200}>
+      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipContent side="right">{item.label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function SidebarNavigation({ collapsed }) {
   const navItems = useVisibleNavItems();
   return (
-    <nav className="nav" aria-label="Áreas do sistema">
+    <nav className="grid gap-1.5" aria-label="Áreas do sistema">
       {navItems.map((item) => (
-        <NavLink
-          key={item.key}
-          to={item.to}
-          end={item.to === '/'}
-          className={({ isActive }) => createNavClass(isActive, 'nav-link')}
-          aria-label={item.label}
-          title={item.label}
-          data-tour={`nav-${item.key}`}
-        >
-          <span className="nav-icon" aria-hidden="true">
-            <NavigationIcon icon={item.key} />
-          </span>
-          <span>{item.label}</span>
-        </NavLink>
+        <SidebarNavLink key={item.key} item={item} collapsed={collapsed} />
       ))}
     </nav>
   );
@@ -252,23 +222,31 @@ function SidebarNavigation() {
 function BottomNavigation() {
   const navItems = useVisibleNavItems();
   return (
-    <div className="bottom-nav-shell" aria-hidden="false">
-      <nav className="bottom-nav" aria-label="Navegação principal">
-        <div className="bottom-nav-track">
+    <div
+      className="fixed inset-x-0 bottom-0 z-50 px-[max(14px,env(safe-area-inset-left))] pb-[calc(12px+env(safe-area-inset-bottom))] min-[1201px]:hidden"
+      aria-hidden="false"
+    >
+      <nav
+        className="mx-auto w-full max-w-[840px] rounded-[28px] border border-border bg-card/95 p-2.5 shadow-lg backdrop-blur-xl"
+        aria-label="Navegação principal"
+      >
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(58px,1fr))] gap-2">
           {navItems.map((item) => (
             <NavLink
               key={item.key}
               to={item.to}
               end={item.to === '/'}
-              className={({ isActive }) => createNavClass(isActive, 'bottom-nav-link')}
               aria-label={item.label}
-              title={item.label}
+              className={({ isActive }) =>
+                cn(
+                  'grid min-h-16 place-items-center gap-1.5 rounded-2xl border border-transparent px-2 py-2.5 text-muted-foreground transition-all',
+                  isActive && 'border-primary/30 bg-gradient-to-b from-primary to-primary/80 text-primary-foreground shadow-md',
+                )
+              }
             >
-              <span className="bottom-nav-pill">
-                <span className="bottom-nav-icon" aria-hidden="true">
-                  <NavigationIcon icon={item.key} />
-                </span>
-                <span className="bottom-nav-label">{item.mobileLabel}</span>
+              <NavigationIcon icon={item.key} className="size-[22px]" />
+              <span className="max-w-full truncate text-[.68rem] font-bold tracking-wide">
+                {item.mobileLabel}
               </span>
             </NavLink>
           ))}
@@ -371,7 +349,6 @@ function useShellPreferences() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', 'dark');
-    document.documentElement.setAttribute('data-sidebar-collapsed', sidebarCollapsed ? 'true' : 'false');
     localStorage.setItem('rs-advocacia-sidebar-collapsed', sidebarCollapsed ? 'true' : 'false');
   }, [sidebarCollapsed]);
 
@@ -393,7 +370,6 @@ export function GuestLayout() {
   useEffect(() => {
     document.body.classList.add('login-body');
     document.documentElement.setAttribute('data-theme', 'dark');
-    document.documentElement.removeAttribute('data-sidebar-collapsed');
 
     const themeMeta = document.querySelector('meta[name="theme-color"]');
     if (themeMeta) {
@@ -428,30 +404,14 @@ function formatRelTime(iso) {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(iso));
 }
 
+const NOTIF_TYPE_ICONS = { prazo: Clock, evento: Calendar, reuniao: Video };
+
 function NotifTypeIcon({ tipo }) {
-  if (tipo === 'prazo') return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
-    </svg>
-  );
-  if (tipo === 'evento') return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
-    </svg>
-  );
-  if (tipo === 'reuniao') return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8" />
-    </svg>
-  );
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" /><path d="M12 8h.01M12 12v4" />
-    </svg>
-  );
+  const Icon = NOTIF_TYPE_ICONS[tipo] || Bell;
+  return <Icon className="size-3.5" strokeWidth={1.8} aria-hidden="true" />;
 }
 
-function ProfileMenu({ onOpenAppearance, onStartTour }) {
+function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
   const { currentUser, currentRole, sair } = useAppState();
   const { notificacoes, totalNaoLidas, marcarLida, marcarTodasLidas } = useNotifications();
   const [open, setOpen] = useState(false);
@@ -472,115 +432,137 @@ function ProfileMenu({ onOpenAppearance, onStartTour }) {
   }
 
   return (
-    <div className="profile-menu" ref={menuRef}>
+    <div className="relative" ref={menuRef}>
       <button
         type="button"
-        className="profile sidebar-profile sidebar-profile-btn"
+        className={cn(
+          'relative flex w-full min-w-0 items-center gap-2.5 rounded-2xl border border-border bg-card/60 px-2.5 py-2 text-left transition-colors hover:bg-accent/10',
+          collapsed && 'justify-center px-0',
+        )}
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label={`Menu do usuário${totalNaoLidas ? ` — ${totalNaoLidas} notificações` : ''}`}
         onClick={() => setOpen((p) => !p)}
       >
-        <div className="avatar" aria-hidden="true">
-          {currentUser.name.slice(0, 1).toUpperCase()}
-        </div>
-        <div className="profile-copy">
-          <strong>{currentUser.name}</strong>
-          <span>{currentRole?.name || 'Usuário'}</span>
-        </div>
-        {totalNaoLidas > 0 && (
-          <span className="profile-notif-badge" aria-hidden="true">
-            {totalNaoLidas > 9 ? '9+' : totalNaoLidas}
-          </span>
-        )}
-        <svg
-          className={`profile-chevron${open ? ' is-open' : ''}`}
-          width="13" height="13" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+        <div
+          className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary/80 font-bold text-primary-foreground"
           aria-hidden="true"
         >
-          <path d="m18 15-6-6-6 6" />
-        </svg>
+          {currentUser.name.slice(0, 1).toUpperCase()}
+        </div>
+        {totalNaoLidas > 0 && (
+          <Badge
+            variant="destructive"
+            className={cn('shrink-0', collapsed && 'absolute -right-1 -top-1 px-1.5')}
+            aria-hidden="true"
+          >
+            {totalNaoLidas > 9 ? '9+' : totalNaoLidas}
+          </Badge>
+        )}
+        <div
+          className={cn(
+            'min-w-0 flex-1 overflow-hidden transition-all duration-200',
+            collapsed && 'max-w-0 flex-none opacity-0',
+          )}
+        >
+          <strong className="block truncate text-sm font-semibold text-foreground">{currentUser.name}</strong>
+          <span className="block truncate text-xs text-muted-foreground">{currentRole?.name || 'Usuário'}</span>
+        </div>
+        <ChevronUp
+          className={cn(
+            'size-3.5 shrink-0 text-muted-foreground transition-transform',
+            !open && 'rotate-180',
+            collapsed && 'hidden',
+          )}
+          aria-hidden="true"
+        />
       </button>
 
       {open && (
-        <div className="profile-dropdown" role="dialog" aria-label="Menu do usuário">
-          {/* Notifications */}
-          <div className="notification-header">
-            <strong>Notificações</strong>
+        <div
+          className="absolute bottom-full left-0 z-50 mb-2 w-[300px] rounded-2xl border border-border bg-card shadow-xl"
+          role="dialog"
+          aria-label="Menu do usuário"
+        >
+          <div className="flex items-center justify-between border-b border-border px-3.5 py-3 text-sm">
+            <strong className="text-foreground">Notificações</strong>
             {totalNaoLidas > 0 && (
-              <button type="button" className="notification-mark-all" onClick={marcarTodasLidas}>
+              <button
+                type="button"
+                className="text-xs text-primary hover:underline"
+                onClick={marcarTodasLidas}
+              >
                 Marcar todas lidas
               </button>
             )}
           </div>
 
           {notificacoes.length === 0 ? (
-            <div className="notification-empty">Sem notificações pendentes.</div>
+            <div className="px-3.5 py-5 text-center text-sm text-muted-foreground">
+              Sem notificações pendentes.
+            </div>
           ) : (
-            <ul className="notification-list" role="list">
+            <ul className="max-h-[280px] overflow-y-auto py-1" role="list">
               {notificacoes.map((n) => (
-                <li key={n.id} className={`notification-item notif-tipo-${n.tipo || 'sistema'}`}>
-                  <span className="notification-type-icon">
+                <li
+                  key={n.id}
+                  className="flex items-start gap-2.5 border-b border-border/60 px-3.5 py-2.5 last:border-0 hover:bg-accent/5"
+                >
+                  <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-muted/40 text-muted-foreground">
                     <NotifTypeIcon tipo={n.tipo} />
                   </span>
-                  <div className="notification-content">
-                    <strong className="notification-title">{n.titulo}</strong>
-                    {n.mensagem && <p className="notification-msg">{n.mensagem}</p>}
+                  <div className="min-w-0 flex-1">
+                    <strong className="block text-sm font-semibold text-foreground">{n.titulo}</strong>
+                    {n.mensagem && <p className="mt-0.5 text-xs text-muted-foreground">{n.mensagem}</p>}
                     {n.criada_em && (
-                      <time className="notification-time" dateTime={n.criada_em}>
+                      <time className="mt-1 block text-[.7rem] text-muted-foreground" dateTime={n.criada_em}>
                         {formatRelTime(n.criada_em)}
                       </time>
                     )}
                   </div>
                   <button
                     type="button"
-                    className="notification-dismiss"
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
                     aria-label="Marcar como lida"
                     onClick={() => marcarLida(n.id)}
                   >
-                    ×
+                    <X className="size-3.5" />
                   </button>
                 </li>
               ))}
             </ul>
           )}
 
-          <div className="profile-dropdown-sep" />
+          <Separator />
 
-          <nav className="profile-dropdown-actions" aria-label="Ações do usuário">
+          <nav className="flex flex-col gap-0.5 p-1.5" aria-label="Ações do usuário">
             {onOpenAppearance && (
-              <button type="button" className="profile-dropdown-action" onClick={() => handleAction(onOpenAppearance)}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="4" />
-                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-                </svg>
+              <button
+                type="button"
+                className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground"
+                onClick={() => handleAction(onOpenAppearance)}
+              >
+                <Sparkles className="size-4" strokeWidth={1.8} />
                 Aparência
               </button>
             )}
             {onStartTour && (
               <button
                 type="button"
-                className="profile-dropdown-action"
+                className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground"
                 data-tour="rever-tour"
                 onClick={() => handleAction(onStartTour)}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M9.5 9a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 2-2.4 3.6" />
-                  <path d="M12 17h.01" />
-                </svg>
+                <CircleHelp className="size-4" strokeWidth={1.8} />
                 Rever tour
               </button>
             )}
             <button
               type="button"
-              className="profile-dropdown-action profile-dropdown-action--danger"
+              className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
               onClick={() => handleAction(sair)}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="m16 17 5-5-5-5M21 12H9M13 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" />
-              </svg>
+              <LogOut className="size-4" strokeWidth={1.8} />
               Sair
             </button>
           </nav>
@@ -614,26 +596,44 @@ export function ProtectedLayout() {
 
   return (
     <PageChromeContext.Provider value={setChrome}>
+      <TooltipProvider delayDuration={200}>
       <a href="#main-content" className="skip-link">Ir para o conteúdo</a>
       <div className="shell">
-        <aside className="sidebar" id="app-sidebar" aria-label="Navegação principal">
-          <button
-            className="sidebar-toggle-clean"
-            type="button"
+        <aside
+          id="app-sidebar"
+          aria-label="Navegação principal"
+          className={cn(
+            'group fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-border bg-transparent transition-[width] duration-300 ease-out min-[1201px]:flex',
+          )}
+          style={{ width: sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar)' }}
+        >
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute right-[-21px] top-1/2 z-10 size-10 -translate-y-1/2 rounded-full opacity-0 shadow-lg backdrop-blur transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
             aria-controls="app-sidebar"
             aria-expanded={sidebarCollapsed ? 'false' : 'true'}
             aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
             title={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
             onClick={toggleSidebar}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="m15 6-6 6 6 6" />
-            </svg>
-          </button>
+            {sidebarCollapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+          </Button>
 
-          <div className="sidebar-scroll">
-            <Link className="brand" to="/" aria-label="Ir para a área inicial" title="Início">
-              <div className="brand-mark" aria-hidden="true">
+          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden px-4.5 pt-4.5">
+            <Link
+              className={cn(
+                'flex items-center gap-3 rounded-[20px] p-2',
+                sidebarCollapsed && 'justify-center',
+              )}
+              to="/"
+              aria-label="Ir para a área inicial"
+              title="Início"
+            >
+              <div
+                className="grid size-11 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/20 to-primary/5 text-primary"
+                aria-hidden="true"
+              >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 3v18" />
                   <path d="m19 8 3 8a5 5 0 0 1-6 0z" />
@@ -642,23 +642,36 @@ export function ProtectedLayout() {
                   <path d="M7 21h10" />
                 </svg>
               </div>
-              <div className="brand-copy">
-                <strong>RS Advocacia</strong>
+              <div
+                className={cn(
+                  'min-w-0 max-w-[180px] overflow-hidden transition-all duration-200',
+                  sidebarCollapsed && 'pointer-events-none max-w-0 opacity-0',
+                )}
+              >
+                <strong className="block truncate font-serif text-2xl font-normal text-foreground">
+                  RS Advocacia
+                </strong>
               </div>
             </Link>
 
-            <SidebarNavigation />
+            <SidebarNavigation collapsed={sidebarCollapsed} />
           </div>
 
-          <div className="sidebar-footer">
+          <div className="shrink-0 border-t border-border p-3">
             <ProfileMenu
               onOpenAppearance={() => appearance.setOpen(true)}
               onStartTour={hasTour ? startTour : undefined}
+              collapsed={sidebarCollapsed}
             />
           </div>
         </aside>
 
-        <div className="page">
+        <div
+          className={cn(
+            'page transition-[margin-left] duration-300 ease-out',
+            sidebarCollapsed ? 'min-[1201px]:ml-[var(--sidebar-collapsed)]' : 'min-[1201px]:ml-[var(--sidebar)]',
+          )}
+        >
           <div className="page-wrap">
             <main className="main" id="main-content">
               <Suspense fallback={<RouteFallback />}>
@@ -702,6 +715,7 @@ export function ProtectedLayout() {
           },
         }}
       />
+      </TooltipProvider>
     </PageChromeContext.Provider>
   );
 }

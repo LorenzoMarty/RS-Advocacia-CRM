@@ -1,7 +1,6 @@
 @import url("./base/variables.css");
 @import url("./base/reset.css");
 @import url("./base/layout.css");
-@import url("./components/navigation.css");
 @import url("./components/forms.css");
 @import url("./components/buttons.css");
 @import url("./components/cards.css");
@@ -9,7 +8,6 @@
 @import url("./components/popups.css");
 @import url("./components/appearance.css");
 @import url("./components/loading.css");
-@import url("./components/notifications.css");
 @import url("./components/import-wizard.css");
 @import url("./utilities/helpers.css");
 @import url("./utilities/responsive.css");

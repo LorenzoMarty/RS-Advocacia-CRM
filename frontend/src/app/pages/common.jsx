@@ -1,7 +1,94 @@
 import { Children, cloneElement, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 import { AnimatePresence, motion as Motion } from '../motion';
 import { Select } from '../components/select';
+
+// Padrão compartilhado de tela de detalhe (Cliente/Processo/Usuário/Compromisso):
+// breadcrumb + hero com marca/título/subtítulo + resumo opcional, layout 2 colunas
+// de section cards. Substitui o CSS legado duplicado por página (client-hero,
+// process-hero, user-hero...) por um único conjunto de componentes Tailwind/shadcn.
+export function DetailHero({ breadcrumbLabel, breadcrumbTo, mark, title, subtitle, meta, summary, actions }) {
+  return (
+    <section className="mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          to={breadcrumbTo}
+        >
+          <ArrowLeft className="size-3.5" />
+          {breadcrumbLabel}
+        </Link>
+        {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+      </div>
+
+      <div className="mt-4 flex items-center gap-4">
+        <div
+          className="grid size-14 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 font-serif text-xl text-primary"
+          aria-hidden="true"
+        >
+          {mark}
+        </div>
+        <div className="min-w-0">
+          <h1 className="truncate font-serif text-3xl leading-none text-foreground">{title}</h1>
+          {subtitle ? <p className="mt-1.5 truncate text-sm text-muted-foreground">{subtitle}</p> : null}
+          {meta ? <div className="mt-2 flex flex-wrap gap-1.5">{meta}</div> : null}
+        </div>
+      </div>
+
+      {summary?.length ? (
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {summary.map((item) => (
+            <div key={item.label} className="rounded-xl border border-border bg-accent/5 px-3 py-2.5">
+              <span className="block text-xs uppercase tracking-wide text-muted-foreground">{item.label}</span>
+              <div className="mt-1 text-sm font-semibold text-foreground">{item.value}</div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+export function DetailLayout({ children }) {
+  return <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{children}</div>;
+}
+
+export function DetailStack({ children }) {
+  return <div className="flex flex-col gap-4">{children}</div>;
+}
+
+export function DetailSection({ title, note, badge, children }) {
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <div>
+          <h2 className="font-serif text-lg text-foreground">{title}</h2>
+          {note ? <p className="text-xs text-muted-foreground">{note}</p> : null}
+        </div>
+        {badge}
+      </CardHeader>
+      <CardContent className="flex flex-col gap-1">{children}</CardContent>
+    </Card>
+  );
+}
+
+export function DetailGrid({ children }) {
+  return <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{children}</div>;
+}
+
+export function DetailItem({ label, children, span }) {
+  return (
+    <div className={cn('min-w-0', span && 'sm:col-span-2')}>
+      <span className="block text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
+      <div className="mt-1 truncate text-sm font-medium text-foreground">{children}</div>
+    </div>
+  );
+}
 
 const CUSTOM_OPTION = '__custom__';
 

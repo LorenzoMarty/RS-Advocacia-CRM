@@ -21,7 +21,17 @@ import {
   formatDateTime,
   normalizeText,
 } from "../utils";
-import { NotFoundState } from "./common";
+import { Button } from "@/components/ui/button";
+
+import {
+  DetailGrid,
+  DetailHero,
+  DetailItem,
+  DetailLayout,
+  DetailSection,
+  DetailStack,
+  NotFoundState,
+} from "./common";
 
 export function EventDetailPage() {
   const navigate = useNavigate();
@@ -98,142 +108,73 @@ export function EventDetailPage() {
       {confirmPopup}
       <PageChrome label="Compromisso" />
 
-      <div className="event-page">
-        <section className="surface event-hero">
-          <div className="crumbs">
-            <Link to="/agenda">Agenda</Link>
-          </div>
+      <div className="grid gap-4">
+        <DetailHero
+          breadcrumbLabel="Agenda"
+          breadcrumbTo="/agenda"
+          mark="EV"
+          title={eventItem.title}
+          subtitle={`${formatDate(eventItem.start)} • ${formatTime(eventItem.start)} até ${formatTime(eventItem.end)}`}
+          actions={
+            <>
+              {!eventItem.completed && !normalizeText(eventItem.status || '').includes('compareceu') && (
+                <>
+                  <Button onClick={() => handleMarkAttendance(true)}>Compareceu</Button>
+                  <Button variant="outline" onClick={() => handleMarkAttendance(false)}>Não compareceu</Button>
+                </>
+              )}
+              <Button asChild variant="outline">
+                <Link to={`/agenda/${eventItem.id}/editar`}>Editar</Link>
+              </Button>
+              <Button variant="outline" className="text-destructive hover:bg-destructive/10" onClick={handleDeleteEvent}>
+                Excluir
+              </Button>
+            </>
+          }
+          summary={[
+            {
+              label: 'Status',
+              value: (
+                <StatusBadge tone={getStatusTone(isOverdueEvent(eventItem) ? 'Atrasado' : eventItem.status, eventItem.completed)}>
+                  {eventItem.completed ? "Concluído" : isOverdueEvent(eventItem) ? "Atrasado" : eventItem.status}
+                </StatusBadge>
+              ),
+            },
+            { label: 'Cliente', value: client?.name || "Não vinculado" },
+            { label: 'Processo', value: process?.number || "Não vinculado" },
+          ]}
+        />
 
-          <div className="event-hero-actions">
-            {!eventItem.completed && !normalizeText(eventItem.status || '').includes('compareceu') && (
-              <>
-                <button className="btn" type="button" onClick={() => handleMarkAttendance(true)}>
-                  Compareceu
-                </button>
-                <button className="btn btn-secondary" type="button" onClick={() => handleMarkAttendance(false)}>
-                  Não compareceu
-                </button>
-              </>
-            )}
-            <Link className="btn btn-secondary" to={`/agenda/${eventItem.id}/editar`}>
-              Editar
-            </Link>
-            <button className="btn btn-danger" type="button" onClick={handleDeleteEvent}>
-              Excluir
-            </button>
-          </div>
-
-          <div className="event-hero-grid">
-            <div className="event-identity">
-              <div className="identity-row">
-                <div className="event-mark" aria-hidden="true">
-                  EV
-                </div>
-                <div>
-                  <h1 className="event-title">{eventItem.title}</h1>
-                  <p className="event-subtitle">
-                    {formatDate(eventItem.start)} •{" "}
-                    {formatTime(eventItem.start)} até{" "}
-                    {formatTime(eventItem.end)}
-                  </p>
-                </div>
-              </div>
-
-              <aside className="hero-summary">
-                <article className="summary-card summary-card-status">
-                  <span>Status</span>
+        <DetailLayout>
+          <DetailStack>
+            <DetailSection title="Informações" note="Essenciais">
+              <DetailGrid>
+                <DetailItem label="Título" span>{eventItem.title}</DetailItem>
+                <DetailItem label="Tipo">{eventItem.type || "-"}</DetailItem>
+                <DetailItem label="Responsável">{eventItem.responsibleName || "-"}</DetailItem>
+                <DetailItem label="Início">{formatDateTime(eventItem.start)}</DetailItem>
+                <DetailItem label="Fim">{formatDateTime(eventItem.end)}</DetailItem>
+                <DetailItem label="Status">
                   <StatusBadge
-                    tone={getStatusTone(isOverdueEvent(eventItem) ? 'Atrasado' : eventItem.status, eventItem.completed)}
+                    tone={getStatusTone(
+                      isOverdueEvent(eventItem) ? 'Atrasado' : eventItem.status,
+                      eventItem.completed,
+                    )}
                   >
-                    {eventItem.completed ? "Concluído" : isOverdueEvent(eventItem) ? "Atrasado" : eventItem.status}
+                    {isOverdueEvent(eventItem) ? "Atrasado" : eventItem.status}
                   </StatusBadge>
-                </article>
-
-                <article className="summary-card">
-                  <span>Cliente</span>
-                  <strong>{client?.name || "Não vinculado"}</strong>
-                </article>
-
-                <article className="summary-card">
-                  <span>Processo</span>
-                  <strong>{process?.number || "Não vinculado"}</strong>
-                </article>
-              </aside>
-            </div>
-          </div>
-        </section>
-
-        <div className="event-layout">
-          <div className="stack">
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Informações</h2>
-                  <p className="section-note">Essenciais</p>
-                </div>
-              </div>
-
-              <div className="detail-grid">
-                <article className="detail-item span-2">
-                  <span>Título</span>
-                  <strong>{eventItem.title}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Tipo</span>
-                  <strong>{eventItem.type || "-"}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Responsável</span>
-                  <strong>{eventItem.responsibleName || "-"}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Início</span>
-                  <strong>{formatDateTime(eventItem.start)}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Fim</span>
-                  <strong>{formatDateTime(eventItem.end)}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Status</span>
-                  <div className="detail-badge-wrap">
-                    <StatusBadge
-                      tone={getStatusTone(
-                        isOverdueEvent(eventItem) ? 'Atrasado' : eventItem.status,
-                        eventItem.completed,
-                      )}
-                    >
-                      {isOverdueEvent(eventItem) ? "Atrasado" : eventItem.status}
-                    </StatusBadge>
-                  </div>
-                </article>
-                <article className="detail-item">
-                  <span>Prioridade</span>
-                  <div className="detail-badge-wrap">
-                    <StatusBadge
-                      tone={getStatusTone(eventItem.priority)}
-                      className="priority-badge"
-                    >
-                      {eventItem.priority || "-"}
-                    </StatusBadge>
-                  </div>
-                </article>
-                <article className="detail-item span-2">
-                  <span>Local</span>
-                  <strong>{eventItem.location || "Não informado"}</strong>
-                </article>
-              </div>
-            </section>
+                </DetailItem>
+                <DetailItem label="Prioridade">
+                  <StatusBadge tone={getStatusTone(eventItem.priority)}>
+                    {eventItem.priority || "-"}
+                  </StatusBadge>
+                </DetailItem>
+                <DetailItem label="Local" span>{eventItem.location || "Não informado"}</DetailItem>
+              </DetailGrid>
+            </DetailSection>
 
             {eventItem.description || eventItem.notes ? (
-              <section className="surface section-card">
-                <div className="section-head">
-                  <div>
-                    <h2 className="section-title">Observações</h2>
-                    <p className="section-note">Contexto</p>
-                  </div>
-                </div>
-
+              <DetailSection title="Observações" note="Contexto">
                 <div className="note-box">
                   <div className="note-stack">
                     {eventItem.description ? (
@@ -250,20 +191,13 @@ export function EventDetailPage() {
                     ) : null}
                   </div>
                 </div>
-              </section>
+              </DetailSection>
             ) : null}
-          </div>
+          </DetailStack>
 
-          <div className="stack">
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Vínculos</h2>
-                  <p className="section-note">Relacionados</p>
-                </div>
-              </div>
-
-              <div className="stack">
+          <DetailStack>
+            <DetailSection title="Vínculos" note="Relacionados">
+              <div className="flex flex-col gap-3">
                 {client ? (
                   <Link className="link-card" to={`/clientes/${client.id}`}>
                     <div className="link-head">
@@ -312,41 +246,22 @@ export function EventDetailPage() {
                   </Link>
                 ) : null}
               </div>
-            </section>
+            </DetailSection>
 
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Resumo rápido</h2>
-                  <p className="section-note">Leitura imediata</p>
-                </div>
-              </div>
-
-              <div className="detail-grid">
-                <article className="detail-item">
-                  <span>Data</span>
-                  <strong>{formatDate(eventItem.start)}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Horário</span>
-                  <strong>
-                    {formatTime(eventItem.start)} - {formatTime(eventItem.end)}
-                  </strong>
-                </article>
-                <article className="detail-item">
-                  <span>Situação</span>
-                  <strong>
-                    {eventItem.completed ? "Encerrado" : "Em andamento"}
-                  </strong>
-                </article>
-                <article className="detail-item">
-                  <span>Origem</span>
-                  <strong>{eventItem.createdBy || "Interno"}</strong>
-                </article>
-              </div>
-            </section>
-          </div>
-        </div>
+            <DetailSection title="Resumo rápido" note="Leitura imediata">
+              <DetailGrid>
+                <DetailItem label="Data">{formatDate(eventItem.start)}</DetailItem>
+                <DetailItem label="Horário">
+                  {formatTime(eventItem.start)} - {formatTime(eventItem.end)}
+                </DetailItem>
+                <DetailItem label="Situação">
+                  {eventItem.completed ? "Encerrado" : "Em andamento"}
+                </DetailItem>
+                <DetailItem label="Origem">{eventItem.createdBy || "Interno"}</DetailItem>
+              </DetailGrid>
+            </DetailSection>
+          </DetailStack>
+        </DetailLayout>
       </div>
     </>
   );

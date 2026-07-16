@@ -10,6 +10,12 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, ChevronDown, ChevronUp, FolderInput, Plus } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
@@ -28,7 +34,18 @@ import {
   stripDocument,
 } from '../utils';
 import { Select } from '../components/select';
-import { ComboField, EmptyState, Field, NotFoundState } from './common';
+import {
+  ComboField,
+  DetailGrid,
+  DetailHero,
+  DetailItem,
+  DetailLayout,
+  DetailSection,
+  DetailStack,
+  EmptyState,
+  Field,
+  NotFoundState,
+} from './common';
 import { ClientDocuments } from '../components/client-documents';
 import { ClientDriveDiscoveryWizard } from '../components/client-drive-discovery-wizard';
 
@@ -51,56 +68,87 @@ const clientSchema = z.object({
 });
 
 const SORT_ICONS = {
-  asc: (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m18 15-6-6-6 6" />
-    </svg>
-  ),
-  desc: (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  ),
+  asc: <ChevronUp className="size-3" strokeWidth={2.2} aria-hidden="true" />,
+  desc: <ChevronDown className="size-3" strokeWidth={2.2} aria-hidden="true" />,
+};
+
+const CLIENT_TIER_CLASSES = {
+  esporadico: 'border-border bg-white/[.03] text-soft',
+  mensalista: 'border-primary/20 bg-primary/10 text-primary',
 };
 
 const ClientRow = memo(function ClientRow({ client, processCount, onDelete }) {
   return (
-    <Motion.article className="client-row" variants={staggerItem}>
-      <div className="client-avatar" aria-hidden="true">{client.name.slice(0, 1).toUpperCase()}</div>
-
-      <div className="client-main">
-        <h2 className="client-name">{client.name}</h2>
-        <span className={`client-tier client-tier-${client.clientType}`}>{getClientTypeLabel(client.clientType)}</span>
-        {client.ativo === false ? (
-          <span className="client-tier client-tier-inativo">Inativo (Drive)</span>
-        ) : null}
-        <span className="client-doc">{documentLabel(client.document)} {formatDocument(client.document)}</span>
+    <Motion.article
+      className="grid grid-cols-1 items-start gap-3 rounded-2xl border border-border bg-accent/5 p-4 transition-colors hover:border-primary/20 hover:bg-primary/5 sm:grid-cols-[auto_1fr_auto] sm:items-center lg:grid-cols-[auto_minmax(0,1.3fr)_minmax(260px,.95fr)_120px_272px]"
+      variants={staggerItem}
+    >
+      <div
+        className="hidden size-11 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-sm font-bold text-primary sm:grid"
+        aria-hidden="true"
+      >
+        {client.name.slice(0, 1).toUpperCase()}
       </div>
 
-      <div className="client-contact">
-        <div className="contact-stack">
+      <div className="min-w-0">
+        <h2 className="line-clamp-2 break-words font-serif text-2xl leading-[.95] text-foreground sm:text-3xl">
+          {client.name}
+        </h2>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <Badge variant="outline" className={cn('uppercase tracking-wide', CLIENT_TIER_CLASSES[client.clientType])}>
+            {getClientTypeLabel(client.clientType)}
+          </Badge>
+          {client.ativo === false ? (
+            <Badge variant="destructive" className="uppercase tracking-wide">Inativo (Drive)</Badge>
+          ) : null}
+        </div>
+        <span className="mt-1.5 block text-sm text-muted-foreground">
+          {documentLabel(client.document)} {formatDocument(client.document)}
+        </span>
+      </div>
+
+      <div className="min-w-0">
+        <div className="flex flex-wrap gap-2 sm:grid">
           {client.email ? (
-            <a className="contact-link" href={`mailto:${client.email}`}>{client.email}</a>
+            <a
+              className="inline-flex h-8 max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft"
+              href={`mailto:${client.email}`}
+            >
+              {client.email}
+            </a>
           ) : (
-            <span className="contact-link contact-link-empty">-</span>
+            <span className="inline-flex h-8 items-center px-2.5 text-sm text-muted-foreground">-</span>
           )}
           {client.phone ? (
-            <a className="contact-link" href={`tel:${client.phone}`}>{client.phone}</a>
+            <a
+              className="inline-flex h-8 max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft"
+              href={`tel:${client.phone}`}
+            >
+              {client.phone}
+            </a>
           ) : (
-            <span className="contact-link contact-link-empty">-</span>
+            <span className="inline-flex h-8 items-center px-2.5 text-sm text-muted-foreground">-</span>
           )}
         </div>
       </div>
 
-      <div className="client-volume">
-        <strong className="volume-number">{processCount}</strong>
-        <span className="volume-label">processo{processCount === 1 ? '' : 's'}</span>
+      <div className="min-w-0">
+        <strong className="block text-xl font-bold leading-none text-foreground">{processCount}</strong>
+        <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          processo{processCount === 1 ? '' : 's'}
+        </span>
       </div>
 
-      <div className="client-actions">
-        <Link className="action-link" to={`/clientes/${client.id}`}>Ver</Link>
-        <Link className="action-link" to={`/clientes/${client.id}/editar`}>Editar</Link>
-        <button className="action-link action-link-danger" type="button" onClick={() => onDelete(client)}>Excluir</button>
+      <div className="flex min-w-0 flex-wrap items-start justify-end gap-2 lg:justify-center">
+        <Button asChild variant="outline" size="sm">
+          <Link to={`/clientes/${client.id}`}>Ver</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link to={`/clientes/${client.id}/editar`}>Editar</Link>
+        </Button>
+        <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => onDelete(client)}>
+          Excluir
+        </Button>
       </div>
     </Motion.article>
   );
@@ -172,74 +220,84 @@ export function ClientsListPage() {
       {confirmPopup}
       <PageChrome label="Clientes" />
 
-      <div className="clients-page">
-        <section className="surface clients-intro">
-          <div className="section-head">
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 className="intro-title">Clientes</h1>
-              <p className="section-note">Gerencie seus clientes</p>
+              <p className="font-serif text-3xl text-foreground">Clientes</p>
+              <p className="mt-1 text-sm text-muted-foreground">{formatCount(clientsPagination.total)}</p>
             </div>
-            <span className="badge gold" data-list-count>{formatCount(clientsPagination.total)}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" onClick={() => setDiscovering(true)}>
+                <FolderInput className="size-4" />
+                Importar do Drive
+              </Button>
+              <Button asChild>
+                <Link to="/clientes/novo" data-tour="page-primary-action">
+                  <Plus className="size-4" />
+                  Novo
+                </Link>
+              </Button>
+            </div>
           </div>
+        </section>
 
-          <div className="list-intro-toolbar clients-intro-toolbar">
-            <div className="clients-filters">
+        <Card>
+          <CardContent className="flex flex-wrap items-center gap-3 py-4">
+            <div className="min-w-[180px] flex-1">
               <PageSearch
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 label="Buscar clientes"
               />
-
-              <div className="clients-type-filter">
-                <label className="sr-only" htmlFor="clients-type-filter">Tipo do cliente</label>
-                <Select
-                  id="clients-type-filter"
-                  value={clientType}
-                  onChange={(event) => setClientType(event.target.value)}
-                  aria-label="Filtrar por tipo do cliente"
-                >
-                  <option value="todos">Todos os tipos</option>
-                  <option value="esporadico">Esporádicos</option>
-                  <option value="mensalista">Mensalistas</option>
-                </Select>
-              </div>
             </div>
 
-            <button
-              type="button"
-              className="btn btn-secondary list-intro-action"
-              onClick={() => setDiscovering(true)}
-            >
-              Importar do Drive
-            </button>
-            <Link className="btn list-intro-action" to="/clientes/novo" data-tour="page-primary-action">Novo</Link>
-          </div>
-        </section>
+            <div className="w-full sm:w-[220px]">
+              <label className="sr-only" htmlFor="clients-type-filter">Tipo do cliente</label>
+              <Select
+                id="clients-type-filter"
+                value={clientType}
+                onChange={(event) => setClientType(event.target.value)}
+                aria-label="Filtrar por tipo do cliente"
+              >
+                <option value="todos">Todos os tipos</option>
+                <option value="esporadico">Esporádicos</option>
+                <option value="mensalista">Mensalistas</option>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
         {discovering ? (
           <ClientDriveDiscoveryWizard onClose={() => setDiscovering(false)} />
         ) : null}
 
-        <section className="surface clients-panel">
+        <Card>
+          <CardContent className="py-5">
           {rows.length ? (
             <>
-              <div className="list-head" aria-hidden="true">
+              <div
+                className="mb-3 hidden grid-cols-[minmax(0,1.3fr)_minmax(260px,.95fr)_120px_272px] gap-3.5 px-3.5 pl-[86px] text-xs font-bold uppercase tracking-wide text-muted-foreground lg:grid"
+                aria-hidden="true"
+              >
                 {table.getHeaderGroups()[0].headers.map((header) => {
                   const sortState = header.column.getIsSorted();
                   return (
                     <span
                       key={header.id}
-                      className={`list-head-cell${header.column.getCanSort() ? ' is-sortable' : ''}${sortState ? ' is-sorted' : ''}`}
-                      style={header.column.getCanSort() ? { cursor: 'pointer', userSelect: 'none' } : {}}
+                      className={cn(
+                        'inline-flex items-center gap-1.5',
+                        header.column.getCanSort() && 'cursor-pointer select-none hover:text-primary',
+                        sortState && 'text-primary',
+                      )}
                       onClick={header.column.getToggleSortingHandler()}
                     >
                       {flexRender(header.column.columnDef.header, header.getContext())}
-                      {' '}
                       <AnimatePresence mode="wait" initial={false}>
                         {sortState ? (
                           <Motion.span
                             key={sortState}
-                            className="sort-indicator"
+                            className="inline-flex items-center"
                             initial={{ opacity: 0, y: sortState === 'asc' ? 3 : -3 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: sortState === 'asc' ? -3 : 3 }}
@@ -252,11 +310,11 @@ export function ClientsListPage() {
                     </span>
                   );
                 })}
-                <span>Ações</span>
+                <span className="text-center">Ações</span>
               </div>
 
               <Motion.div
-                className="clients-list"
+                className="grid gap-2.5"
                 variants={staggerContainer}
                 initial="hidden"
                 animate="visible"
@@ -271,10 +329,10 @@ export function ClientsListPage() {
               </Motion.div>
 
               {clientsPagination.temMais ? (
-                <div className="list-load-more">
-                  <button className="btn btn-secondary" type="button" onClick={handleLoadMore} disabled={loadingMore}>
+                <div className="mt-4 flex justify-center">
+                  <Button variant="outline" onClick={handleLoadMore} disabled={loadingMore}>
                     {loadingMore ? 'Carregando...' : 'Carregar mais'}
-                  </button>
+                  </Button>
                 </div>
               ) : null}
             </>
@@ -282,10 +340,11 @@ export function ClientsListPage() {
             <EmptyState
               title="Nenhum cliente encontrado."
               copy="Ajuste a busca ou troque o tipo selecionado."
-              actions={<Link className="btn" to="/clientes/novo">Novo</Link>}
+              actions={<Button asChild><Link to="/clientes/novo">Novo</Link></Button>}
             />
           )}
-        </section>
+          </CardContent>
+        </Card>
       </div>
     </>
   );
@@ -378,28 +437,26 @@ export function ClientFormPage() {
     <>
       <PageChrome label={isEditing ? 'Editar cliente' : 'Novo cliente'} />
 
-      <div className="create-page">
-        <section className="surface create-intro">
-          <div className="intro-grid">
-            <Link className="intro-link" to={isEditing ? `/clientes/${client.id}` : '/clientes'}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-              {isEditing ? 'Voltar para o cliente' : 'Voltar para clientes'}
-            </Link>
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <Link
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to={isEditing ? `/clientes/${client.id}` : '/clientes'}
+          >
+            <ArrowLeft className="size-3.5" />
+            {isEditing ? 'Voltar para o cliente' : 'Voltar para clientes'}
+          </Link>
 
-            <div className="section-head">
-              <div>
-                <h1 className="intro-title">{isEditing ? 'Editar cliente' : 'Novo cliente'}</h1>
-                <p className="intro-note">
-                  {isEditing ? 'Atualize os dados do cadastro com o mesmo fluxo da criação.' : 'Cadastro direto e objetivo.'}
-                </p>
-              </div>
-            </div>
-          </div>
+          <p className="mt-3 font-serif text-3xl text-foreground">
+            {isEditing ? 'Editar cliente' : 'Novo cliente'}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isEditing ? 'Atualize os dados do cadastro com o mesmo fluxo da criação.' : 'Cadastro direto e objetivo.'}
+          </p>
         </section>
 
-        <section className="surface form-panel">
+        <Card>
+          <CardContent className="py-5">
           <form className="client-form" onSubmit={handleSubmit(onSubmit)}>
             <section className="form-group">
               <div className="group-head">
@@ -491,15 +548,16 @@ export function ClientFormPage() {
             </section>
 
             <div className="form-actions">
-              <button className="btn" type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting}>
                 {isEditing ? 'Atualizar' : 'Salvar'}
-              </button>
-              <Link className="btn btn-secondary" to={isEditing ? `/clientes/${client.id}` : '/clientes'}>
-                Cancelar
-              </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to={isEditing ? `/clientes/${client.id}` : '/clientes'}>Cancelar</Link>
+              </Button>
             </div>
           </form>
-        </section>
+          </CardContent>
+        </Card>
       </div>
     </>
   );
@@ -550,75 +608,41 @@ export function ClientDetailPage() {
     <>
       <PageChrome label="Cliente" />
 
-      <div className="client-page">
-        <section className="surface client-hero">
-          <div className="crumbs">
-            <Link to="/clientes">Clientes</Link>
-          </div>
+      <div className="grid gap-4">
+        <DetailHero
+          breadcrumbLabel="Clientes"
+          breadcrumbTo="/clientes"
+          mark={client.name.slice(0, 1).toUpperCase()}
+          title={client.name}
+          subtitle="Dados centrais do cliente."
+          meta={
+            <Badge
+              variant="outline"
+              className={cn('uppercase tracking-wide', CLIENT_TIER_CLASSES[client.clientType])}
+            >
+              {getClientTypeLabel(client.clientType)}
+            </Badge>
+          }
+        />
 
-          <div className="client-hero-grid">
-            <div className="client-identity">
-              <div className="identity-row">
-                <div className="client-mark" aria-hidden="true">{client.name.slice(0, 1).toUpperCase()}</div>
-                <div>
-                  <h1 className="client-name">{client.name}</h1>
-                  <p className="client-subtitle">Dados centrais do cliente.</p>
-                </div>
-              </div>
+        <DetailLayout>
+          <DetailStack>
+            <DetailSection title="Dados" note="Essenciais">
+              <DetailGrid>
+                <DetailItem label="Documento">{formatDocument(client.document)}</DetailItem>
+                <DetailItem label="Telefone">
+                  <a className="hover:text-primary" href={`tel:${client.phone}`}>{formatPhone(client.phone)}</a>
+                </DetailItem>
+                <DetailItem label="E-mail">
+                  <a className="hover:text-primary" href={`mailto:${client.email}`}>{client.email}</a>
+                </DetailItem>
+                <DetailItem label="Tipo">{getClientTypeLabel(client.clientType)}</DetailItem>
+                <DetailItem label="Parceria">{client.partner || '-'}</DetailItem>
+                <DetailItem label="Observações">{client.notes ? 'Disponíveis' : '-'}</DetailItem>
+              </DetailGrid>
+            </DetailSection>
 
-              <div className="identity-meta">
-                <span className={`meta-pill client-tier-pill client-tier-${client.clientType}`}>{getClientTypeLabel(client.clientType)}</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="client-layout">
-          <div className="stack">
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Dados</h2>
-                  <p className="section-note">Essenciais</p>
-                </div>
-              </div>
-
-              <div className="detail-grid">
-                <article className="detail-item">
-                  <span>Documento</span>
-                  <strong>{formatDocument(client.document)}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Telefone</span>
-                  <a href={`tel:${client.phone}`}>{formatPhone(client.phone)}</a>
-                </article>
-                <article className="detail-item">
-                  <span>E-mail</span>
-                  <a href={`mailto:${client.email}`}>{client.email}</a>
-                </article>
-                <article className="detail-item">
-                  <span>Tipo</span>
-                  <strong>{getClientTypeLabel(client.clientType)}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Parceria</span>
-                  <strong>{client.partner || '-'}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>Observações</span>
-                  <strong>{client.notes ? 'Disponíveis' : '-'}</strong>
-                </article>
-              </div>
-            </section>
-
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Processos</h2>
-                  <p className="section-note">{formatCount(relatedProcesses.length)}</p>
-                </div>
-              </div>
-
+            <DetailSection title="Processos" note={formatCount(relatedProcesses.length)}>
               <div className="list">
                 {relatedProcesses.length ? relatedProcesses.map((process) => (
                   <article key={process.id} className="process-item">
@@ -645,21 +669,14 @@ export function ClientDetailPage() {
                   />
                 )}
               </div>
-            </section>
-          </div>
+            </DetailSection>
+          </DetailStack>
 
-          <div className="stack">
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Compromissos</h2>
-                  <p className="section-note">
-                    {formatCount(upcomingEvents.length)} próximo{upcomingEvents.length === 1 ? '' : 's'}
-                    {pastEvents.length ? ` · ${formatCount(pastEvents.length)} anterior${pastEvents.length === 1 ? '' : 'es'}` : ''}
-                  </p>
-                </div>
-              </div>
-
+          <DetailStack>
+            <DetailSection
+              title="Compromissos"
+              note={`${formatCount(upcomingEvents.length)} próximo${upcomingEvents.length === 1 ? '' : 's'}${pastEvents.length ? ` · ${formatCount(pastEvents.length)} anterior${pastEvents.length === 1 ? '' : 'es'}` : ''}`}
+            >
               <div className="list">
                 {relatedEvents.length ? relatedEvents.map((event) => (
                   <article key={event.id} className="event-item">
@@ -686,20 +703,13 @@ export function ClientDetailPage() {
                 )}
               </div>
               {hiddenPastEventsCount > 0 && (
-                <button type="button" className="btn btn-secondary" onClick={() => setShowAllPastEvents(true)}>
+                <Button variant="outline" onClick={() => setShowAllPastEvents(true)}>
                   Ver mais {formatCount(hiddenPastEventsCount)} anterior{hiddenPastEventsCount === 1 ? '' : 'es'}
-                </button>
+                </Button>
               )}
-            </section>
+            </DetailSection>
 
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Observações</h2>
-                  <p className="section-note">Internas</p>
-                </div>
-              </div>
-
+            <DetailSection title="Observações" note="Internas">
               {client.notes ? (
                 <div className="note-box">{client.notes}</div>
               ) : (
@@ -708,9 +718,9 @@ export function ClientDetailPage() {
                   <p>Nenhuma nota registrada.</p>
                 </div>
               )}
-            </section>
-          </div>
-        </div>
+            </DetailSection>
+          </DetailStack>
+        </DetailLayout>
 
         <ClientDocuments client={client} />
       </div>

@@ -1,5 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Plus, Search } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { DEADLINE_STATUS_COLUMNS } from '../data';
 import { TaskTimer } from '../components/productivity';
@@ -285,40 +290,39 @@ export function DeadlinesPage() {
     <>
       <PageChrome label="Prazos" />
 
-      <div className="deadlines-page">
-        <section className="surface deadlines-intro">
-          <div className="section-head">
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 className="intro-title">Prazos</h1>
-              <p className="section-note">Organização dos prazos fatais</p>
+              <p className="font-serif text-3xl text-foreground">Prazos</p>
+              <p className="mt-1 text-sm text-muted-foreground">Organização dos prazos fatais</p>
             </div>
-            <div className="deadlines-head-actions">
-              <span className="badge gold">
-                {formatCount(filteredDeadlines.length, 'prazo', 'prazos')}
-              </span>
-              <Link className="btn" to={deadlineCreatePath()} data-tour="page-primary-action">
-                Novo prazo
-              </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge>{formatCount(filteredDeadlines.length, 'prazo', 'prazos')}</Badge>
+              <Button asChild>
+                <Link to={deadlineCreatePath()} data-tour="page-primary-action">
+                  <Plus className="size-4" />
+                  Novo prazo
+                </Link>
+              </Button>
             </div>
           </div>
+        </section>
 
-          <div className="deadlines-toolbar">
-            <div className="deadline-filter-grid">
-              <label className="toolbar-search" aria-label="Buscar prazos">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
-                <input
-                  type="search"
-                  placeholder="Buscar por prazo, processo ou cliente"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                />
-              </label>
+        <Card>
+          <CardContent className="flex flex-wrap items-center gap-3 py-4">
+            <label className="toolbar-search flex-1 basis-full sm:basis-auto" aria-label="Buscar prazos">
+              <Search className="size-[17px]" strokeWidth={1.8} />
+              <input
+                type="search"
+                placeholder="Buscar por prazo, processo ou cliente"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </label>
 
+            <div className="w-full sm:w-[200px]">
               <Select
-                className="filter-select"
                 aria-label="Filtrar por responsavel"
                 value={responsible}
                 onChange={(event) => setResponsible(event.target.value)}
@@ -330,9 +334,10 @@ export function DeadlinesPage() {
                   </option>
                 ))}
               </Select>
+            </div>
 
+            <div className="w-full sm:w-[200px]">
               <Select
-                className="filter-select"
                 aria-label="Filtrar por processo"
                 value={processId}
                 onChange={(event) => setProcessId(event.target.value)}
@@ -345,8 +350,8 @@ export function DeadlinesPage() {
                 ))}
               </Select>
             </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
         {isDeadlinesLoading ? (
           <section className="surface section-card">

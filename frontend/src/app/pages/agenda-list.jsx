@@ -8,6 +8,13 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+
 import { useConfirmPopup } from "../hooks/use-confirm-popup";
 import { PageChrome } from "../layout";
 import { Select } from "../components/select";
@@ -248,120 +255,113 @@ export function AgendaListPage() {
       <PageChrome label="Agenda" />
 
       <div className="agenda-page">
-        <section className="surface agenda-intro">
-          <div className="section-head">
+        <section className="mb-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 className="intro-title">Agenda</h1>
-              <p className="section-note">Gerencie seus compromissos</p>
+              <p className="font-serif text-3xl text-foreground">Agenda</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {formatCount(filteredEvents.length)}
+              </p>
             </div>
-            <span className="badge gold">
-              {formatCount(filteredEvents.length)}
-            </span>
-          </div>
-
-          <div className="agenda-toolbar">
-            <div className="toolbar-main">
-              <label
-                className="toolbar-search"
-                aria-label="Buscar compromissos"
-              >
-                <svg
-                  width="17"
-                  height="17"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
-                <input
-                  type="search"
-                  placeholder="Buscar"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                />
-              </label>
-
-              <div className="toolbar-filters">
-                <Select
-                  className="filter-select"
-                  aria-label="Filtrar por tipo"
-                  value={eventType}
-                  onChange={(event) => setEventType(event.target.value)}
-                >
-                  <option value="">Tipo</option>
-                  {typeOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </Select>
-                <Select
-                  className="filter-select"
-                  aria-label="Filtrar por responsável"
-                  value={responsible}
-                  onChange={(event) => setResponsible(event.target.value)}
-                >
-                  <option value="">Responsável</option>
-                  {responsibleOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </Select>
-                <Select
-                  className="filter-select"
-                  aria-label="Filtrar por status"
-                  value={status}
-                  onChange={(event) => setStatus(event.target.value)}
-                >
-                  <option value="">Status</option>
-                  {statusOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </Select>
-                <Select
-                  className="filter-select"
-                  aria-label="Filtrar por período"
-                  value={period}
-                  onChange={(event) => setPeriod(event.target.value)}
-                >
-                  <option value="">Período</option>
-                  <option value="today">Hoje</option>
-                  <option value="week">7 dias</option>
-                  <option value="month">Mês</option>
-                </Select>
-              </div>
-            </div>
-
-            <div className="toolbar-side">
-              <div className="toolbar-actions">
-                <Link className="btn" to="/agenda/novo" data-tour="page-primary-action">
-                  Novo
-                </Link>
-              </div>
-            </div>
+            <Button asChild>
+              <Link to="/agenda/novo" data-tour="page-primary-action">
+                <Plus className="size-4" />
+                Novo compromisso
+              </Link>
+            </Button>
           </div>
         </section>
 
-        <div className="agenda-layout">
-          <section className="surface calendar-panel">
-            <div className="calendar-top">
+        <Card className="mb-4">
+          <CardContent className="flex flex-wrap items-center gap-3 py-4">
+            <label
+              className="toolbar-search"
+              aria-label="Buscar compromissos"
+            >
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                type="search"
+                placeholder="Buscar"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </label>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Select
+                aria-label="Filtrar por tipo"
+                value={eventType}
+                onChange={(event) => setEventType(event.target.value)}
+              >
+                <option value="">Tipo</option>
+                {typeOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                aria-label="Filtrar por responsável"
+                value={responsible}
+                onChange={(event) => setResponsible(event.target.value)}
+              >
+                <option value="">Responsável</option>
+                {responsibleOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                aria-label="Filtrar por status"
+                value={status}
+                onChange={(event) => setStatus(event.target.value)}
+              >
+                <option value="">Status</option>
+                {statusOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                aria-label="Filtrar por período"
+                value={period}
+                onChange={(event) => setPeriod(event.target.value)}
+              >
+                <option value="">Período</option>
+                <option value="today">Hoje</option>
+                <option value="week">7 dias</option>
+                <option value="month">Mês</option>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader className="flex-row items-center justify-between space-y-0">
               <div>
-                <h2 className="section-title">Calendário</h2>
-                <p className="section-note">Visão mensal</p>
+                <h2 className="font-serif text-lg text-foreground">Calendário</h2>
+                <p className="text-xs text-muted-foreground">Visão mensal</p>
               </div>
 
-              <div className="calendar-controls">
-                <button
-                  className="icon-control"
-                  type="button"
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
                   aria-label="Mês anterior"
                   onClick={() =>
                     setViewDate(
@@ -374,23 +374,14 @@ export function AgendaListPage() {
                     )
                   }
                 >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m15 18-6-6 6-6" />
-                  </svg>
-                </button>
-                <div className="calendar-month">{monthLabel(viewDate)}</div>
-                <button
-                  className="icon-control"
-                  type="button"
+                  <ChevronLeft className="size-4" />
+                </Button>
+                <div className="min-w-[8ch] text-center text-sm font-medium text-foreground">
+                  {monthLabel(viewDate)}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   aria-label="Próximo mês"
                   onClick={() =>
                     setViewDate(
@@ -403,22 +394,12 @@ export function AgendaListPage() {
                     )
                   }
                 >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
-                </button>
+                  <ChevronRight className="size-4" />
+                </Button>
               </div>
-            </div>
+            </CardHeader>
 
+            <CardContent>
             <div className="calendar-legend">
               <span className="legend-chip legend-chip-audiencia">
                 Audiência
@@ -517,76 +498,67 @@ export function AgendaListPage() {
                 <p>Ajuste os filtros ou crie um novo registro.</p>
               </div>
             ) : null}
-          </section>
+            </CardContent>
+          </Card>
 
-          <aside className="agenda-rail">
-            <section className="surface rail-panel">
-              <div className="rail-sections">
-                <div className="rail-block">
-                  <div className="section-head">
-                    <div>
-                      <h2 className="section-title">Hoje</h2>
-                      <p className="section-note">
-                        {todayEvents.length
-                          ? "Compromissos do dia"
-                          : "Sem compromissos hoje"}
-                      </p>
-                    </div>
-                  </div>
-                  <RailList
-                    events={todayEvents}
-                    clients={clients}
-                    processes={processes}
-                    emptyTitle="Sem compromissos hoje."
-                    emptyCopy="A agenda do dia aparece aqui."
-                    onDelete={handleQuickDelete}
-                  />
+          <Card>
+            <CardContent className="flex flex-col gap-4 py-5">
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <h2 className="font-serif text-base text-foreground">Hoje</h2>
+                  {todayEvents.length ? (
+                    <Badge variant="default">{todayEvents.length}</Badge>
+                  ) : null}
                 </div>
-
-                <div className="rail-block">
-                  <div className="section-head">
-                    <div>
-                      <h2 className="section-title">Próximos</h2>
-                      <p className="section-note">
-                        {upcomingEvents.length
-                          ? "Em ordem cronológica"
-                          : "Sem próximos compromissos"}
-                      </p>
-                    </div>
-                  </div>
-                  <RailList
-                    events={upcomingEvents}
-                    clients={clients}
-                    processes={processes}
-                    emptyTitle="Sem próximos compromissos."
-                    emptyCopy="Os próximos registros aparecem aqui."
-                    onDelete={handleQuickDelete}
-                  />
-                </div>
-
-                <div className="rail-block">
-                  <div className="section-head">
-                    <div>
-                      <h2 className="section-title">Atrasados</h2>
-                      <p className="section-note">
-                        {overdueEvents.length
-                          ? "Pedem atenção"
-                          : "Nada em atraso"}
-                      </p>
-                    </div>
-                  </div>
-                  <RailList
-                    events={overdueEvents}
-                    clients={clients}
-                    processes={processes}
-                    emptyTitle="Sem atrasos."
-                    emptyCopy="Nenhum compromisso vencido."
-                    onDelete={handleQuickDelete}
-                  />
-                </div>
+                <RailList
+                  events={todayEvents}
+                  clients={clients}
+                  processes={processes}
+                  emptyTitle="Sem compromissos hoje."
+                  emptyCopy="A agenda do dia aparece aqui."
+                  onDelete={handleQuickDelete}
+                />
               </div>
-            </section>
-          </aside>
+
+              <Separator />
+
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <h2 className="font-serif text-base text-foreground">Próximos</h2>
+                  {upcomingEvents.length ? (
+                    <Badge variant="outline">{upcomingEvents.length}</Badge>
+                  ) : null}
+                </div>
+                <RailList
+                  events={upcomingEvents}
+                  clients={clients}
+                  processes={processes}
+                  emptyTitle="Sem próximos compromissos."
+                  emptyCopy="Os próximos registros aparecem aqui."
+                  onDelete={handleQuickDelete}
+                />
+              </div>
+
+              <Separator />
+
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <h2 className="font-serif text-base text-foreground">Atrasados</h2>
+                  {overdueEvents.length ? (
+                    <Badge variant="destructive">{overdueEvents.length}</Badge>
+                  ) : null}
+                </div>
+                <RailList
+                  events={overdueEvents}
+                  clients={clients}
+                  processes={processes}
+                  emptyTitle="Sem atrasos."
+                  emptyCopy="Nenhum compromisso vencido."
+                  onDelete={handleQuickDelete}
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </>

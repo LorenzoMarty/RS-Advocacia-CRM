@@ -1,0 +1,33 @@
+/* Ponte Tailwind/Shadcn <-> design system existente.
+   Preflight desligado (ver tailwind.config.js) — este arquivo só adiciona
+   utilities e as CSS vars que os componentes shadcn/ui esperam, derivadas
+   1:1 da paleta em styles/base/variables.css (mesmo tema escuro/dourado).
+   Nomes prefixados com --tw- para não colidir com os tokens legados. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --tw-background: 229 84% 5%;      /* #020617 (--bg) */
+    --tw-foreground: 220 13% 91%;     /* #e5e7eb (--text) */
+    --tw-card: 222 47% 11%;           /* aprox. --panel sobre --bg */
+    --tw-card-foreground: 220 13% 91%;
+    --tw-primary: 46 65% 52%;         /* #D4AF37 (--gold) */
+    --tw-primary-foreground: 229 84% 5%;
+    --tw-secondary: 215 25% 27%;
+    --tw-secondary-foreground: 220 13% 91%;
+    --tw-muted: 215 19% 35%;
+    --tw-muted-foreground: 215 20% 65%; /* aprox. --muted */
+    --tw-accent: 46 65% 52%;
+    --tw-accent-foreground: 229 84% 5%;
+    --tw-destructive: 0 79% 71%;      /* #ef7a7a (--danger) */
+    --tw-destructive-foreground: 229 84% 5%;
+    --tw-success: 159 52% 64%;        /* #73d3b1 (--success) */
+    --tw-warn: 37 75% 64%;            /* #e8b25c (--warn) */
+    --tw-border: 215 20% 65%;   /* alpha aplicado via hsl(var(...) / <alpha-value>) */
+    --tw-input: 215 20% 65%;
+    --tw-ring: 46 65% 52%;
+    --tw-radius: 0.875rem; /* 14px, alinhado ao raio de card do legado */
+  }
+}

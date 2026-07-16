@@ -1,11 +1,3 @@
-.agenda-day-page{display:grid;gap:var(--gap-page)}
-.agenda-day-intro{padding:var(--pad-card)}
-.day-intro-head{display:grid;gap:14px;margin-top:14px}
-.day-nav-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
-.day-nav-controls{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
-.day-title{margin:0;font-family:var(--serif);font-size:clamp(1.5rem,3vw,2.4rem);font-weight:400;letter-spacing:-.05em;line-height:1;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.day-summary{display:flex;align-items:center;gap:8px}
-
 /* Day number link in calendar */
 .day-number-link{color:inherit;transition:color .15s ease}
 .day-number-link:hover{color:var(--gold-soft)}
@@ -13,7 +5,6 @@
 .day-card.is-overdue .day-number-link{color:#f0b0b0}
 
 /* Timeline */
-.agenda-day-timeline{overflow:hidden}
 .timeline-grid{display:grid}
 .timeline-row{
     display:grid;
@@ -202,9 +193,6 @@
 .timeline-day-empty a{color:var(--gold-soft)}
 
 @media(max-width:640px){
-    .agenda-day-intro{padding:16px}
-    .day-nav-controls{gap:8px}
-    .day-title{font-size:1.3rem}
     .timeline-row{grid-template-columns:56px 1fr}
     .timeline-hour{padding:14px 0 0 14px}
     .timeline-slot{padding:8px 14px 8px 0}

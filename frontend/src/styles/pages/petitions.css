@@ -1,8 +1,4 @@
-.petitions-page{display:grid;gap:var(--gap-page)}
-.petition-form-page{display:grid;gap:var(--gap-page)}
-.petitions-intro,.petition-form-intro,.petition-form-panel{padding:var(--pad-card)}
-.petitions-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
-.petitions-toolbar{display:grid;grid-template-columns:minmax(260px,1fr) minmax(220px,.36fr);gap:10px}
+.petition-form-panel{padding:var(--pad-card)}
 .petition-form{display:grid;gap:var(--gap-page)}
 .petition-form .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .petition-form .span-2{grid-column:1/-1}
@@ -193,9 +189,7 @@
     .petitions-board{grid-template-columns:repeat(4,minmax(230px,1fr));overflow-x:auto;padding:18px 18px 4px}
 }
 @media (max-width:820px){
-    .petitions-intro,.petition-form-intro,.petition-form-panel{padding:16px}
-    .petitions-head-actions{justify-content:flex-start}
-    .petitions-toolbar{grid-template-columns:1fr}
+    .petition-form-panel{padding:16px}
     .petition-form .form-grid{grid-template-columns:1fr}
     .petitions-board{grid-template-columns:1fr;overflow:visible;padding:14px}
     .petition-column{padding:12px;border-radius:18px}
