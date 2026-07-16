@@ -1,11 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import { getStatusTone } from '../utils';
-import { NotFoundState } from './common';
+import {
+  DetailGrid,
+  DetailItem,
+  DetailHero,
+  DetailSection,
+  NotFoundState,
+} from './common';
 import {
   buildDeadlineTitle,
   dateInputValue,
@@ -196,168 +205,112 @@ export function DeadlineDetailPage() {
   return (
     <>
       {confirmPopup}
-      <PageChrome
-        label="Prazo"
-        actions={
-          <>
-            <Link className="btn btn-secondary" to={`/prazos/${deadline.id}/editar`}>
-              Editar
-            </Link>
-            <button className="btn btn-danger" type="button" onClick={handleDelete}>
-              Excluir
-            </button>
-          </>
-        }
-      />
+      <PageChrome label="Prazo" />
 
-      <div className="deadline-detail-page">
-        <section className="surface deadline-detail-hero">
-          <div className="crumbs">
-            <Link to={`/prazos?data=${encodeURIComponent(dateInputValue(deadlineMoment(deadline)))}`}>
-              Prazos
-            </Link>
-          </div>
-
-          <div className="deadline-detail-head">
-            <div>
-              <h1 className="intro-title">{deadlineTitle}</h1>
-              <p className="section-note">Prazo fatal do processo</p>
-            </div>
+      <div className="grid gap-4">
+        <DetailHero
+          breadcrumbLabel="Prazos"
+          breadcrumbTo={`/prazos?data=${encodeURIComponent(dateInputValue(deadlineMoment(deadline)))}`}
+          mark="PZ"
+          title={deadlineTitle}
+          subtitle="Prazo fatal do processo"
+          meta={
             <StatusBadge tone={getStatusTone(statusLabel, deadline.completed)}>
               {statusLabel}
             </StatusBadge>
-          </div>
-        </section>
-
-        <div className="deadline-detail-layout">
-          <section className="surface deadline-timer-panel">
-            <div className="deadline-timer-copy">
-              <span>Tempo gasto</span>
-              <strong>{formatDuration(elapsedSeconds)}</strong>
-              <p>{isTimerRunning ? 'Timer em andamento.' : 'Timer pausado.'}</p>
-            </div>
-
-            <div className="deadline-timer-actions">
-              <button
-                className="btn"
-                type="button"
-                onClick={handleTimerStart}
-                disabled={isTimerRunning || isTimerSaving}
+          }
+          actions={
+            <>
+              <Button asChild variant="outline">
+                <Link to={`/prazos/${deadline.id}/editar`}>Editar</Link>
+              </Button>
+              <Button
+                variant="outline"
+                className="text-destructive hover:bg-destructive/10"
+                onClick={handleDelete}
               >
+                Excluir
+              </Button>
+            </>
+          }
+        />
+
+        <DetailSection title="Tempo gasto" note={isTimerRunning ? 'Timer em andamento.' : 'Timer pausado.'}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <strong className="font-serif text-3xl text-foreground">{formatDuration(elapsedSeconds)}</strong>
+            <div className="flex gap-2">
+              <Button onClick={handleTimerStart} disabled={isTimerRunning || isTimerSaving}>
                 Iniciar
-              </button>
-              <button
-                className="btn btn-secondary"
-                type="button"
-                onClick={handleTimerPause}
-                disabled={!isTimerRunning || isTimerSaving}
-              >
+              </Button>
+              <Button variant="outline" onClick={handleTimerPause} disabled={!isTimerRunning || isTimerSaving}>
                 Pausar
-              </button>
+              </Button>
             </div>
-          </section>
+          </div>
+        </DetailSection>
 
-          <section className="surface deadline-detail-panel">
-            <div className="section-head">
-              <div>
-                <h2 className="section-title">Documento no Drive</h2>
-                <p className="section-note">Arquivo da pasta do processo</p>
-              </div>
-              {deadline.driveFileId ? (
-                <StatusBadge tone="success">Documento criado</StatusBadge>
+        <DetailSection
+          title="Documento no Drive"
+          note="Arquivo da pasta do processo"
+          badge={deadline.driveFileId ? <Badge>Documento criado</Badge> : null}
+        >
+          <input
+            ref={docInputRef}
+            type="file"
+            hidden
+            onChange={handleUploadDoc}
+          />
+
+          {deadline.driveFileId || deadline.driveLink ? (
+            <div className="flex flex-wrap gap-2">
+              {deadline.driveLink ? (
+                <Button asChild>
+                  <a href={deadline.driveLink} target="_blank" rel="noreferrer">Abrir no Drive</a>
+                </Button>
               ) : null}
+              <Button
+                variant="outline"
+                className="text-destructive hover:bg-destructive/10"
+                onClick={handleRemoveDoc}
+                disabled={isDocBusy}
+              >
+                Remover
+              </Button>
             </div>
-
-            <input
-              ref={docInputRef}
-              type="file"
-              hidden
-              onChange={handleUploadDoc}
-            />
-
-            {deadline.driveFileId || deadline.driveLink ? (
-              <div className="deadline-doc-actions">
-                {deadline.driveLink ? (
-                  <a className="btn" href={deadline.driveLink} target="_blank" rel="noreferrer">
-                    Abrir no Drive
-                  </a>
-                ) : null}
-                <button
-                  className="btn btn-danger"
-                  type="button"
-                  onClick={handleRemoveDoc}
-                  disabled={isDocBusy}
-                >
-                  Remover
-                </button>
-              </div>
-            ) : (
-              <div className="deadline-doc-actions">
-                <button
-                  className="btn"
-                  type="button"
-                  onClick={handleCreateDoc}
-                  disabled={isDocBusy}
-                >
-                  {isDocBusy ? 'Criando…' : 'Criar documento'}
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  type="button"
-                  onClick={() => docInputRef.current?.click()}
-                  disabled={isDocBusy}
-                >
-                  Enviar arquivo
-                </button>
-              </div>
-            )}
-          </section>
-
-          <section className="surface deadline-detail-panel">
-            <div className="section-head">
-              <div>
-                <h2 className="section-title">Descrição</h2>
-                <p className="section-note">Tarefa vinculada ao prazo</p>
-              </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleCreateDoc} disabled={isDocBusy}>
+                {isDocBusy ? 'Criando…' : 'Criar documento'}
+              </Button>
+              <Button variant="outline" onClick={() => docInputRef.current?.click()} disabled={isDocBusy}>
+                Enviar arquivo
+              </Button>
             </div>
+          )}
+        </DetailSection>
 
-            <div className="deadline-description-box">
-              {deadline.description || 'Sem descrição cadastrada.'}
-            </div>
-          </section>
+        <DetailSection title="Descrição" note="Tarefa vinculada ao prazo">
+          <div className="deadline-description-box">
+            {deadline.description || 'Sem descrição cadastrada.'}
+          </div>
+        </DetailSection>
 
-          <section className="surface deadline-detail-panel">
-            <div className="section-head">
-              <div>
-                <h2 className="section-title">Dados</h2>
-                <p className="section-note">Vinculos do prazo</p>
-              </div>
-            </div>
-
-            <div className="detail-grid">
-              <article className="detail-item">
-                <span>Processo</span>
-                {process ? <Link to={`/processos/${process.id}`}>{process.number}</Link> : <strong>-</strong>}
-              </article>
-              <article className="detail-item">
-                <span>Responsável</span>
-                <strong>{deadline.responsibleName || '-'}</strong>
-              </article>
-              <article className="detail-item">
-                <span>Cliente</span>
-                {client ? <Link to={`/clientes/${client.id}`}>{client.name}</Link> : <strong>-</strong>}
-              </article>
-              <article className="detail-item">
-                <span>Status</span>
-                <div className="detail-badge-wrap">
-                  <StatusBadge tone={getStatusTone(statusLabel, deadline.completed)}>
-                    {statusLabel}
-                  </StatusBadge>
-                </div>
-              </article>
-            </div>
-          </section>
-        </div>
+        <DetailSection title="Dados" note="Vinculos do prazo">
+          <DetailGrid>
+            <DetailItem label="Processo">
+              {process ? <Link className="hover:text-primary" to={`/processos/${process.id}`}>{process.number}</Link> : '-'}
+            </DetailItem>
+            <DetailItem label="Responsável">{deadline.responsibleName || '-'}</DetailItem>
+            <DetailItem label="Cliente">
+              {client ? <Link className="hover:text-primary" to={`/clientes/${client.id}`}>{client.name}</Link> : '-'}
+            </DetailItem>
+            <DetailItem label="Status">
+              <StatusBadge tone={getStatusTone(statusLabel, deadline.completed)}>
+                {statusLabel}
+              </StatusBadge>
+            </DetailItem>
+          </DetailGrid>
+        </DetailSection>
       </div>
     </>
   );

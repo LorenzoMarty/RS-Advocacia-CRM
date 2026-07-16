@@ -4,6 +4,12 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
 import { useConfirmPopup } from "../hooks/use-confirm-popup";
 import { PageChrome } from "../layout";
 import { useAppState } from "../store";
@@ -128,55 +134,44 @@ export function AgendaDayPage() {
       {confirmPopup}
       <PageChrome label={dayLabel(date)} />
 
-      <div className="agenda-day-page">
-        <section className="surface agenda-day-intro">
-          <div className="crumbs">
-            <Link to="/agenda">Agenda</Link>
-          </div>
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <Link
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to="/agenda"
+          >
+            Agenda
+          </Link>
 
-          <div className="day-intro-head">
-            <div className="day-nav-row">
-              <div className="day-nav-controls">
-                <button
-                  className="icon-control"
-                  type="button"
-                  aria-label="Dia anterior"
-                  onClick={() => goDay(-1)}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m15 18-6-6 6-6" />
-                  </svg>
-                </button>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" aria-label="Dia anterior" onClick={() => goDay(-1)}>
+                <ChevronLeft className="size-4" />
+              </Button>
+              <p className="min-w-[16ch] text-center font-serif text-2xl text-foreground">
+                {dayLabel(date)}
+              </p>
+              <Button variant="ghost" size="icon" aria-label="Próximo dia" onClick={() => goDay(1)}>
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
 
-                <h1 className="day-title">{dayLabel(date)}</h1>
-
-                <button
-                  className="icon-control"
-                  type="button"
-                  aria-label="Próximo dia"
-                  onClick={() => goDay(1)}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
-                </button>
-              </div>
-
-              <Link className="btn" to={`/agenda/novo?data=${params.date}`}>
+            <Button asChild>
+              <Link to={`/agenda/novo?data=${params.date}`}>
+                <Plus className="size-4" />
                 Novo
               </Link>
-            </div>
+            </Button>
+          </div>
 
-            <div className="day-summary">
-              <span className="badge gold">
-                {formatCount(dayEvents.length, "compromisso", "compromissos")}
-              </span>
-              {isToday && <span className="badge">Hoje</span>}
-            </div>
+          <div className="mt-3 flex items-center gap-2">
+            <Badge>{formatCount(dayEvents.length, "compromisso", "compromissos")}</Badge>
+            {isToday && <Badge variant="outline">Hoje</Badge>}
           </div>
         </section>
 
-        <section className="surface agenda-day-timeline">
+        <Card>
+          <CardContent className="py-5">
           {!dayEvents.length && (
             <div className="timeline-day-empty">
               <strong>Nenhum compromisso neste dia.</strong>
@@ -298,7 +293,8 @@ export function AgendaDayPage() {
               );
             })}
           </div>
-        </section>
+          </CardContent>
+        </Card>
       </div>
     </>
   );

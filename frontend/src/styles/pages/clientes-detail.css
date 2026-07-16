@@ -3,16 +3,8 @@
         gap:var(--gap-page);
     }
 
-    .client-hero,
     .section-card{
         padding:var(--pad-card);
-    }
-
-    .client-hero-grid{
-        display:grid;
-        grid-template-columns:minmax(0, 1.2fr) 320px;
-        gap:var(--gap-page);
-        align-items:stretch;
     }
 
     .crumbs{
@@ -30,11 +22,6 @@
     .crumbs::after{
         content:"/";
         opacity:.5;
-    }
-
-    .client-identity{
-        display:grid;
-        gap:var(--gap-page);
     }
 
     .identity-row{
@@ -57,95 +44,6 @@
         letter-spacing:.02em;
         background:rgba(212,175,55,.08);
         border:1px solid rgba(212,175,55,.18);
-    }
-
-    .client-page .client-name{
-        margin:0;
-        font-family:var(--serif);
-        font-size:clamp(2.35rem, 4vw, 3.4rem);
-        line-height:.95;
-        font-weight:400;
-        letter-spacing:-.06em;
-    }
-
-    .client-subtitle{
-        margin:10px 0 0;
-        color:var(--soft);
-        font-size:.96rem;
-    }
-
-    .identity-meta{
-        display:flex;
-        flex-wrap:wrap;
-        gap:10px;
-    }
-
-    .meta-pill{
-        display:inline-flex;
-        align-items:center;
-        min-height:34px;
-        max-width:100%;
-        padding:0 12px;
-        border-radius:999px;
-        border:1px solid var(--line);
-        background:var(--ghost);
-        color:var(--soft);
-        font-size:.8rem;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-    }
-
-    .client-tier-pill{
-        font-weight:700;
-        letter-spacing:.12em;
-        text-transform:uppercase;
-    }
-
-    .client-tier-esporadico{
-        color:var(--soft);
-        background:rgba(255,255,255,.03);
-    }
-
-    .client-tier-mensalista{
-        color:var(--gold-soft);
-        background:rgba(212,175,55,.1);
-        border-color:rgba(212,175,55,.2);
-    }
-
-    .hero-summary{
-        display:grid;
-        gap:10px;
-    }
-
-    .summary-card{
-        padding:18px;
-        border-radius:20px;
-        border:1px solid var(--line);
-        background:var(--ghost);
-    }
-
-    .summary-card span{
-        display:block;
-        color:var(--muted);
-        font-size:.72rem;
-        font-weight:700;
-        letter-spacing:.14em;
-        text-transform:uppercase;
-    }
-
-    .summary-card strong{
-        display:block;
-        margin-top:10px;
-        font-size:2rem;
-        line-height:1;
-        letter-spacing:-.05em;
-    }
-
-    .client-layout{
-        display:grid;
-        grid-template-columns:minmax(0, 1.05fr) minmax(320px, .95fr);
-        gap:var(--gap-page);
     }
 
     .stack{
@@ -312,15 +210,7 @@
         flex-wrap:wrap;
     }
 
-    @media (max-width:1180px){
-        .client-hero-grid,
-        .client-layout{
-            grid-template-columns:1fr;
-        }
-    }
-
 @media (max-width:700px){
-    .client-hero,
     .section-card{
         padding:16px;
     }
@@ -341,39 +231,6 @@
         height:48px;
         border-radius:16px;
         font-size:.92rem;
-    }
-
-    .client-page .client-name{
-        font-size:clamp(1.9rem, 11vw, 2.45rem);
-    }
-
-    .client-subtitle{
-        margin-top:8px;
-        font-size:.86rem;
-    }
-
-    .identity-meta{
-        gap:8px;
-    }
-
-    .meta-pill{
-        min-height:30px;
-        padding:0 10px;
-        font-size:.74rem;
-    }
-
-    .client-tier-pill{
-        font-size:.68rem;
-    }
-
-    .summary-card{
-        padding:14px;
-        border-radius:18px;
-    }
-
-    .summary-card strong{
-        margin-top:8px;
-        font-size:1.55rem;
     }
 
     .detail-grid{

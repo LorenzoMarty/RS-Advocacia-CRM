@@ -10,7 +10,17 @@ import { motion as Motion, staggerContainer, staggerItem } from '../motion';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, normalizeText } from '../utils';
 import { Select } from '../components/select';
-import { EmptyState, Field, NotFoundState } from './common';
+import {
+  DetailGrid,
+  DetailHero,
+  DetailItem,
+  DetailLayout,
+  DetailSection,
+  DetailStack,
+  EmptyState,
+  Field,
+  NotFoundState,
+} from './common';
 
 const USER_PROFILE_OPTIONS = ['Administrador', 'Advogado', 'Estagiário'];
 
@@ -318,75 +328,34 @@ export function UserDetailPage() {
     <>
       <PageChrome label="Usuário" />
 
-      <div className="user-page">
-        <section className="surface user-hero">
-          <div className="crumbs">
-            <Link to="/usuarios">Usuários</Link>
-          </div>
+      <div className="grid gap-4">
+        <DetailHero
+          breadcrumbLabel="Usuários"
+          breadcrumbTo="/usuarios"
+          mark={user.name.slice(0, 1).toUpperCase()}
+          title={user.name}
+          subtitle={user.email}
+          summary={[
+            { label: 'Perfil', value: linkedProfile },
+            { label: 'Processos', value: relatedProcesses.length },
+            { label: 'Compromissos', value: relatedEvents.length },
+          ]}
+        />
 
-          <div className="user-hero-grid">
-            <div className="user-identity">
-              <div className="identity-row">
-                <div className="user-mark" aria-hidden="true">{user.name.slice(0, 1).toUpperCase()}</div>
-                <div>
-                  <h1 className="user-name">{user.name}</h1>
-                  <p className="user-subtitle">{user.email}</p>
-                </div>
-              </div>
-
-              <aside className="hero-summary">
-                <article className="summary-card">
-                  <span>Perfil</span>
-                  <strong>{linkedProfile}</strong>
-                </article>
-                <article className="summary-card">
-                  <span>Processos</span>
-                  <strong>{relatedProcesses.length}</strong>
-                </article>
-                <article className="summary-card">
-                  <span>Compromissos</span>
-                  <strong>{relatedEvents.length}</strong>
-                </article>
-              </aside>
-            </div>
-          </div>
-        </section>
-
-        <div className="user-layout">
-          <div className="stack">
-            <section className="surface section-card">
-              <div className="section-head">
-                <div>
-                  <h2 className="section-title">Dados</h2>
-                  <p className="section-note">Essenciais</p>
-                </div>
-              </div>
-
-              <div className="detail-grid">
-                <article className="detail-item">
-                  <span>Nome</span>
-                  <strong>{user.name}</strong>
-                </article>
-                <article className="detail-item">
-                  <span>E-mail</span>
-                  <a href={`mailto:${user.email}`}>{user.email}</a>
-                </article>
-                <article className="detail-item">
-                  <span>Perfil</span>
-                  <strong>{linkedProfile}</strong>
-                </article>
-              </div>
-            </section>
+        <DetailLayout>
+          <DetailStack>
+            <DetailSection title="Dados" note="Essenciais">
+              <DetailGrid>
+                <DetailItem label="Nome">{user.name}</DetailItem>
+                <DetailItem label="E-mail">
+                  <a className="hover:text-primary" href={`mailto:${user.email}`}>{user.email}</a>
+                </DetailItem>
+                <DetailItem label="Perfil">{linkedProfile}</DetailItem>
+              </DetailGrid>
+            </DetailSection>
 
             {relatedProcesses.length ? (
-              <section className="surface section-card">
-                <div className="section-head">
-                  <div>
-                    <h2 className="section-title">Processos</h2>
-                    <p className="section-note">{formatCount(relatedProcesses.length)}</p>
-                  </div>
-                </div>
-
+              <DetailSection title="Processos" note={formatCount(relatedProcesses.length)}>
                 <div className="related-list">
                   {relatedProcesses.map((process) => (
                     <article key={process.id} className="related-item">
@@ -399,20 +368,13 @@ export function UserDetailPage() {
                     </article>
                   ))}
                 </div>
-              </section>
+              </DetailSection>
             ) : null}
-          </div>
+          </DetailStack>
 
-          <div className="stack">
+          <DetailStack>
             {relatedEvents.length ? (
-              <section className="surface section-card">
-                <div className="section-head">
-                  <div>
-                    <h2 className="section-title">Compromissos</h2>
-                    <p className="section-note">{formatCount(relatedEvents.length)}</p>
-                  </div>
-                </div>
-
+              <DetailSection title="Compromissos" note={formatCount(relatedEvents.length)}>
                 <div className="related-list">
                   {relatedEvents.map((event) => (
                     <article key={event.id} className="related-item">
@@ -425,11 +387,10 @@ export function UserDetailPage() {
                     </article>
                   ))}
                 </div>
-              </section>
+              </DetailSection>
             ) : null}
-
-          </div>
-        </div>
+          </DetailStack>
+        </DetailLayout>
       </div>
     </>
   );

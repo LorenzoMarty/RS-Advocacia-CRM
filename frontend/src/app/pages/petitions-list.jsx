@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Plus, Search } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { PETITION_STATUS_COLUMNS } from '../data';
 import { TaskTimer } from '../components/productivity';
@@ -357,29 +362,34 @@ export function PetitionsPage() {
     <>
       {confirmPopup}
       <PageChrome label="Petições ou contestações" />
-      <div className="petitions-page">
-        <section className="surface petitions-intro">
-          <div className="section-head">
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 className="intro-title">Petições ou contestações</h1>
-              <p className="section-note">Kanban separado para peças, protocolo e acompanhamento.</p>
+              <p className="font-serif text-3xl text-foreground">Petições ou contestações</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Kanban separado para peças, protocolo e acompanhamento.
+              </p>
             </div>
-            <div className="petitions-head-actions">
-              <span className="badge gold">
-                {formatCount(filteredPetitions.length, 'peça', 'peças')}
-              </span>
-              <Link className="btn" to="/peticoes-contestacoes/novo" data-tour="page-primary-action">
-                Nova peça
-              </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge>{formatCount(filteredPetitions.length, 'peça', 'peças')}</Badge>
+              <Button asChild>
+                <Link to="/peticoes-contestacoes/novo" data-tour="page-primary-action">
+                  <Plus className="size-4" />
+                  Nova peça
+                </Link>
+              </Button>
             </div>
           </div>
+        </section>
 
-          <div className="petitions-toolbar">
-            <label className="toolbar-search" aria-label="Buscar petições ou contestações">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
+        <Card>
+          <CardContent className="flex flex-wrap items-center gap-3 py-4">
+            <label
+              className="toolbar-search flex-1"
+              aria-label="Buscar petições ou contestações"
+            >
+              <Search className="size-[17px]" strokeWidth={1.8} />
               <input
                 type="search"
                 placeholder="Buscar por cliente, adverso, tipo ou área"
@@ -388,19 +398,20 @@ export function PetitionsPage() {
               />
             </label>
 
-            <Select
-              className="filter-select"
-              aria-label="Filtrar por petições ou contestações"
-              value={typeFilter}
-              onChange={(event) => setTypeFilter(event.target.value)}
-            >
-              <option value="">Petições ou contestações</option>
-              {PETITION_TYPE_OPTIONS.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </Select>
-          </div>
-        </section>
+            <div className="w-full sm:w-[240px]">
+              <Select
+                aria-label="Filtrar por petições ou contestações"
+                value={typeFilter}
+                onChange={(event) => setTypeFilter(event.target.value)}
+              >
+                <option value="">Petições ou contestações</option>
+                {PETITION_TYPE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
         {clientOptions.length ? (
           <section className={`petitions-board${draggingPetitionId ? ' is-dragging' : ''}`} aria-label="Kanban de petições ou contestações">

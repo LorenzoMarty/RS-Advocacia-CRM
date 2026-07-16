@@ -8,6 +8,11 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
 import { PageChrome } from "../layout";
 import { Select } from "../components/select";
 import { useAppState } from "../store";
@@ -160,42 +165,26 @@ export function EventFormPage() {
     <>
       <PageChrome label={formTitle} />
 
-      <div className="event-create-page">
-        <section className="surface event-intro">
-          <div className="intro-grid">
-            <Link
-              className="intro-link"
-              to={backTarget}
-            >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-              {backLabel}
-            </Link>
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <Link
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to={backTarget}
+          >
+            <ArrowLeft className="size-3.5" />
+            {backLabel}
+          </Link>
 
-            <div>
-              <h1 className="intro-title">
-                {formTitle}
-              </h1>
-              <p className="intro-note">
-                {isEditing
-                  ? "Ajuste o agendamento e mantenha os vínculos essenciais atualizados."
-                  : "Cadastro direto, com foco em agendamento e vínculos essenciais."}
-              </p>
-            </div>
-          </div>
+          <p className="mt-3 font-serif text-3xl text-foreground">{formTitle}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isEditing
+              ? "Ajuste o agendamento e mantenha os vínculos essenciais atualizados."
+              : "Cadastro direto, com foco em agendamento e vínculos essenciais."}
+          </p>
         </section>
 
-        <section className="surface event-form-panel">
+        <Card>
+          <CardContent className="py-5">
           <form className="event-form" onSubmit={handleSubmit}>
             <section className="form-section">
               <div className="section-headline">
@@ -474,18 +463,16 @@ export function EventFormPage() {
             </section>
 
             <div className="form-actions">
-              <button className="btn" type="submit">
+              <Button type="submit">
                 {isEditing ? "Atualizar" : "Salvar"}
-              </button>
-              <Link
-                className="btn btn-secondary"
-                to={isEditing ? `/agenda/${eventItem.id}` : "/agenda"}
-              >
-                Cancelar
-              </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to={isEditing ? `/agenda/${eventItem.id}` : "/agenda"}>Cancelar</Link>
+              </Button>
             </div>
           </form>
-        </section>
+          </CardContent>
+        </Card>
       </div>
     </>
   );
