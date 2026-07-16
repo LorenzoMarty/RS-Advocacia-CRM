@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
+from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -345,28 +346,6 @@ def _usuario_api_payload(request):
     return data
 
 
-LIMITE_PADRAO = 100
-LIMITE_MAXIMO = 300
-
-
-def _limite(request):
-    try:
-        limite = int(request.GET.get("limit") or LIMITE_PADRAO)
-    except (TypeError, ValueError):
-        return LIMITE_PADRAO
-    if limite <= 0:
-        return LIMITE_PADRAO
-    return min(limite, LIMITE_MAXIMO)
-
-
-def _offset(request):
-    try:
-        offset = int(request.GET.get("offset") or 0)
-    except (TypeError, ValueError):
-        return 0
-    return max(0, offset)
-
-
 @app_permissions_required("usuarios.view_usuario")
 def listar_usuarios(request):
     if request.method != "GET":
@@ -374,17 +353,9 @@ def listar_usuarios(request):
 
     _ensure_default_cargos()
     usuarios = Usuario.objects.order_by("nome")
-    total = usuarios.count()
-    limit = _limite(request)
-    offset = _offset(request)
-    pagina = usuarios[offset : offset + limit]
+    pagina, paginacao = paginar(usuarios, request)
     resposta = _usuarios_response(pagina)
-    resposta["paginacao"] = {
-        "offset": offset,
-        "limit": limit,
-        "total": total,
-        "tem_mais": offset + limit < total,
-    }
+    resposta["paginacao"] = paginacao
     return resposta_sucesso(resposta)
 
 

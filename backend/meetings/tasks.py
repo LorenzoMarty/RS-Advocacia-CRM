@@ -102,6 +102,12 @@ def processar_gravacao(self, gravacao_id: int) -> None:
         logger.warning("Gravacao %s nao encontrada para processamento.", gravacao_id)
         return
 
+    if gravacao.status == Gravacao.Status.CONCLUIDA:
+        # Idempotency guard: a duplicate .delay() (manual retry racing the
+        # original enqueue) must not re-transcribe and re-refine the summary.
+        logger.info("Gravacao %s ja concluida, ignorando disparo duplicado.", gravacao.pk)
+        return
+
     try:
         gravacao.status = Gravacao.Status.TRANSCRIBINDO
         gravacao.processamento_iniciado_em = timezone.now()

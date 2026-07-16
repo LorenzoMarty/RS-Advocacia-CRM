@@ -36,6 +36,13 @@ class Evento(models.Model):
     concluido = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["data_inicio"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["tipo_evento"]),
+        ]
+
     def clean(self):
         if "prazo" in slugify(self.tipo_evento or ""):
             raise ValidationError("Prazos devem ser cadastrados no modulo de prazos.")

@@ -8,46 +8,16 @@ from core.utils import (
     isoformat_ou_nulo,
     ler_corpo_json,
     metodo_nao_permitido,
+    resolver_criador,
     resposta_erro,
     resposta_sucesso,
 )
 from documentos import services as documentos_services
-from integrations.google.exceptions import (
-    GoogleApiError,
-    GoogleAuthorizationRequired,
-    GoogleConfigurationError,
-)
+from integrations.google.exceptions import GOOGLE_ERRORS
 from integrations.google.oauth import current_usuario
 from integrations.google.responses import mapear_erro_google
 from peticoes.forms import PeticaoForm
 from peticoes.models import Peticao
-
-_GOOGLE_ERRORS = (
-    GoogleConfigurationError,
-    GoogleAuthorizationRequired,
-    GoogleApiError,
-)
-
-
-def _resolver_criador_peticao(request):
-    nome_sessao = (request.session.get("usuario_nome") or "").strip()
-    if nome_sessao:
-        return nome_sessao
-
-    usuario_requisicao = getattr(request, "user", None)
-    if usuario_requisicao and getattr(usuario_requisicao, "is_authenticated", False):
-        obter_nome_completo = getattr(usuario_requisicao, "get_full_name", None)
-        if callable(obter_nome_completo):
-            nome_completo = obter_nome_completo().strip()
-            if nome_completo:
-                return nome_completo
-
-        for atributo in ("first_name", "username", "email"):
-            valor = (getattr(usuario_requisicao, atributo, "") or "").strip()
-            if valor:
-                return valor
-
-    return "Interno"
 
 
 def serialize_peticao(peticao: Peticao):
@@ -123,7 +93,7 @@ def criar_peticao(request):
     form = PeticaoForm(payload)
     if form.is_valid():
         peticao = form.save(commit=False)
-        peticao.criado_por = _resolver_criador_peticao(request)
+        peticao.criado_por = resolver_criador(request)
         peticao.save()
         peticao = Peticao.objects.select_related("cliente", "processo").get(
             pk=peticao.pk
@@ -194,7 +164,7 @@ def editar_peticao(request, peticao_id):
                     file_id=peticao.drive_file_id,
                     processo=peticao.processo,
                 )
-            except _GOOGLE_ERRORS:
+            except GOOGLE_ERRORS:
                 pass
         serialized = serialize_peticao(peticao)
         alteracoes = auditoria_services.calcular_diff(antes, serialized)
@@ -250,7 +220,7 @@ def documento_peticao(request, peticao_id):
             meta = documentos_services.criar_documento_branco(
                 usuario, parent_id=parent_id, nome=nome
             )
-        except _GOOGLE_ERRORS as exc:
+        except GOOGLE_ERRORS as exc:
             return mapear_erro_google(exc)
 
         peticao.drive_file_id = meta["id"]
@@ -283,7 +253,7 @@ def documento_peticao(request, peticao_id):
     if apagar and peticao.drive_file_id:
         try:
             documentos_services.excluir_arquivo(usuario, peticao.drive_file_id)
-        except _GOOGLE_ERRORS as exc:
+        except GOOGLE_ERRORS as exc:
             return mapear_erro_google(exc)
 
     peticao.drive_file_id = ""

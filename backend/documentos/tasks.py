@@ -22,19 +22,13 @@ from django.utils import timezone
 
 from integrations.google import drive
 from integrations.google.client import drive_service
-from integrations.google.exceptions import (
-    GoogleApiError,
-    GoogleAuthorizationRequired,
-    GoogleConfigurationError,
-)
+from integrations.google.exceptions import GOOGLE_ERRORS, GoogleAuthorizationRequired
 from integrations.models import GoogleAccount, GoogleDriveSync
 
 from . import importacao, services
 from .models import ClienteDrive, DocumentoCliente, ProcessoDrive
 
 logger = logging.getLogger(__name__)
-
-_ERROS_GOOGLE = (GoogleConfigurationError, GoogleAuthorizationRequired, GoogleApiError)
 
 
 @shared_task(name="documentos.sincronizar_drive")
@@ -56,7 +50,7 @@ def sincronizar_drive() -> dict:
     for account in GoogleAccount.objects.filter(revoked_at__isnull=True):
         try:
             parcial = _sincronizar_conta(account)
-        except _ERROS_GOOGLE as exc:
+        except GOOGLE_ERRORS as exc:
             logger.warning(
                 "sincronizar_drive: falha ao sincronizar conta %s: %s",
                 account.email,
@@ -144,7 +138,7 @@ def _processar_mudancas(usuario, changes: list[dict]) -> dict:
 @shared_task(
     bind=True,
     ignore_result=True,
-    autoretry_for=_ERROS_GOOGLE,
+    autoretry_for=GOOGLE_ERRORS,
     retry_backoff=True,
     retry_backoff_max=120,
     max_retries=3,
@@ -176,7 +170,7 @@ def renomear_pasta_cliente(self, cliente_id, usuario_id, novo_nome: str) -> None
 @shared_task(
     bind=True,
     ignore_result=True,
-    autoretry_for=_ERROS_GOOGLE,
+    autoretry_for=GOOGLE_ERRORS,
     retry_backoff=True,
     retry_backoff_max=120,
     max_retries=3,

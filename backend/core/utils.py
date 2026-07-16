@@ -88,3 +88,28 @@ def isoformat_ou_nulo(valor: Any) -> str | None:
     if valor is None:
         return None
     return valor.isoformat()
+
+
+def resolver_criador(request: HttpRequest) -> str:
+    """Best-effort display name of who's making the request, for a "criado_por"
+    audit field. Session name wins (set at login), then the authenticated
+    user's full name / first_name / username / email, falling back to
+    "Interno" so the field is never blank."""
+    nome_sessao = (request.session.get("usuario_nome") or "").strip()
+    if nome_sessao:
+        return nome_sessao
+
+    usuario_requisicao = getattr(request, "user", None)
+    if usuario_requisicao and getattr(usuario_requisicao, "is_authenticated", False):
+        obter_nome_completo = getattr(usuario_requisicao, "get_full_name", None)
+        if callable(obter_nome_completo):
+            nome_completo = obter_nome_completo().strip()
+            if nome_completo:
+                return nome_completo
+
+        for atributo in ("first_name", "username", "email"):
+            valor = (getattr(usuario_requisicao, atributo, "") or "").strip()
+            if valor:
+                return valor
+
+    return "Interno"

@@ -11,15 +11,13 @@ from core.utils import (
     isoformat_ou_nulo,
     ler_corpo_json,
     metodo_nao_permitido,
+    resolver_criador,
     resposta_erro,
     resposta_sucesso,
 )
-from integrations.google.exceptions import (
-    GoogleApiError,
-    GoogleAuthorizationRequired,
-    GoogleConfigurationError,
-)
+from integrations.google.exceptions import GOOGLE_ERRORS
 from integrations.google.oauth import current_usuario
+from integrations.google.responses import mapear_erro_google
 from meetings import services
 from meetings.audio import (
     SUPPORTED_AUDIO_EXTENSIONS,
@@ -91,15 +89,6 @@ def _resposta_falha_processamento_inline(gravacao, exc):
     )
 
 
-def _resolver_criador(request):
-    nome = (request.session.get("usuario_nome") or "").strip()
-    if nome:
-        return nome
-    user = getattr(request, "user", None)
-    full_name = getattr(user, "get_full_name", lambda: "")()
-    return (full_name or getattr(user, "username", "")).strip()
-
-
 def _ordem_int(valor) -> int:
     """Parse a segment index from request data; clamps to >= 0."""
     try:
@@ -125,23 +114,6 @@ def _extensao_arquivo_audio(arquivo):
 
 def _mime_audio_suportado(arquivo):
     return mime_audio_suportado(getattr(arquivo, "content_type", "") or "")
-
-
-def _mapear_erro_google(exc):
-    """Translate Drive/auth exceptions into the JSON envelope (no stack leak)."""
-    if isinstance(exc, GoogleConfigurationError):
-        return resposta_erro(str(exc), status=503)
-    if isinstance(exc, GoogleAuthorizationRequired):
-        return resposta_erro(str(exc), status=401)
-    if isinstance(exc, GoogleApiError):
-        logger.warning("Erro da API Google Drive: %s", exc)
-        detalhe = "Não foi possível concluir a operação no Google Drive."
-        if settings.DEBUG:
-            causa = exc.__cause__
-            status = getattr(getattr(causa, "resp", None), "status", None)
-            detalhe = f"{detalhe} [debug status={status}] {str(causa)[:400]}"
-        return resposta_erro(detalhe, status=502)
-    return None
 
 
 def serialize_gravacao(gravacao: Gravacao):
@@ -243,7 +215,7 @@ def criar_reuniao(request):
         return resposta_erro(erros_formulario(form), status=400)
 
     reuniao = form.save(commit=False)
-    reuniao.criado_por = _resolver_criador(request)
+    reuniao.criado_por = resolver_criador(request)
     reuniao.save()
     reuniao = Reuniao.objects.select_related("cliente").get(pk=reuniao.pk)
     return resposta_sucesso(
@@ -317,12 +289,8 @@ def finalizar_reuniao(request, reuniao_id):
         resultado = services.finalizar_reuniao(usuario, reuniao)
     except ValueError as exc:
         return resposta_erro({"reuniao": [str(exc)]}, status=400)
-    except (
-        GoogleConfigurationError,
-        GoogleAuthorizationRequired,
-        GoogleApiError,
-    ) as exc:
-        return _mapear_erro_google(exc)
+    except GOOGLE_ERRORS as exc:
+        return mapear_erro_google(exc)
 
     reuniao = (
         Reuniao.objects.select_related("cliente")
@@ -560,12 +528,8 @@ def criar_sessao_upload_gravacao(request, reuniao_id):
             mime_type=mime_type,
             tamanho_bytes=tamanho_bytes,
         )
-    except (
-        GoogleConfigurationError,
-        GoogleAuthorizationRequired,
-        GoogleApiError,
-    ) as exc:
-        return _mapear_erro_google(exc)
+    except GOOGLE_ERRORS as exc:
+        return mapear_erro_google(exc)
 
     return resposta_sucesso(sessao)
 
@@ -610,11 +574,7 @@ def confirmar_gravacao(request, reuniao_id):
         )
     except ValueError as exc:
         return resposta_erro({"audio": [str(exc)]}, status=400)
-    except (
-        GoogleConfigurationError,
-        GoogleAuthorizationRequired,
-        GoogleApiError,
-    ) as exc:
-        return _mapear_erro_google(exc)
+    except GOOGLE_ERRORS as exc:
+        return mapear_erro_google(exc)
 
     return _processar_ou_enfileirar(gravacao)

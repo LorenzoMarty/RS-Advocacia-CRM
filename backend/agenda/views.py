@@ -16,6 +16,7 @@ from core.utils import (
     isoformat_ou_nulo,
     ler_corpo_json,
     metodo_nao_permitido,
+    resolver_criador,
     resposta_erro,
     resposta_sucesso,
 )
@@ -46,27 +47,6 @@ logger = logging.getLogger(__name__)
 
 def _eventos_compromisso_queryset():
     return Evento.objects.exclude(tipo_evento__icontains="prazo")
-
-
-def _resolver_criador_evento(request):
-    nome_sessao = (request.session.get("usuario_nome") or "").strip()
-    if nome_sessao:
-        return nome_sessao
-
-    usuario_requisicao = getattr(request, "user", None)
-    if usuario_requisicao and getattr(usuario_requisicao, "is_authenticated", False):
-        obter_nome_completo = getattr(usuario_requisicao, "get_full_name", None)
-        if callable(obter_nome_completo):
-            nome_completo = obter_nome_completo().strip()
-            if nome_completo:
-                return nome_completo
-
-        for atributo in ("first_name", "username", "email"):
-            valor = (getattr(usuario_requisicao, atributo, "") or "").strip()
-            if valor:
-                return valor
-
-    return "Interno"
 
 
 def _usuario_google_atual(request):
@@ -190,7 +170,7 @@ def criar_evento(request):
     form = EventoForm(payload)
     if form.is_valid():
         evento = form.save(commit=False)
-        evento.criado_por = _resolver_criador_evento(request)
+        evento.criado_por = resolver_criador(request)
         evento.save()
 
         google_sync = _sincronizar_evento_se_conectado(request, evento)

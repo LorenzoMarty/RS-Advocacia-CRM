@@ -769,7 +769,7 @@ export function PetitionFormPage() {
           <section className="surface petition-form-panel">
             <form className="petition-form" onSubmit={handleSubmit}>
               <div className="form-grid">
-                <Field id="petition-client" label="Cliente" className="span-2" error={errors.clientId}>
+                <Field id="petition-client" label="Cliente" className="span-2" error={errors.clientId} required>
                   <Select
                     id="petition-client"
                     value={form.clientId}
@@ -792,7 +792,7 @@ export function PetitionFormPage() {
                   </Select>
                 </Field>
 
-                <Field id="petition-process" label="Processo vinculado" className="span-2" error={errors.processId}>
+                <Field id="petition-process" label="Processo vinculado" className="span-2" error={errors.processId} required>
                   <Select
                     id="petition-process"
                     value={form.processId}
@@ -819,7 +819,7 @@ export function PetitionFormPage() {
                   </Select>
                 </Field>
 
-                <Field id="petition-type" label="Tipo de peça" error={errors.type}>
+                <Field id="petition-type" label="Tipo de peça" error={errors.type} required>
                   <Select
                     id="petition-type"
                     value={form.type}
@@ -831,7 +831,7 @@ export function PetitionFormPage() {
                   </Select>
                 </Field>
 
-                <Field id="petition-adversary" label="Adverso" error={errors.adversary}>
+                <Field id="petition-adversary" label="Adverso" error={errors.adversary} required>
                   <input
                     id="petition-adversary"
                     value={form.adversary}
@@ -839,7 +839,7 @@ export function PetitionFormPage() {
                   />
                 </Field>
 
-                <Field id="petition-responsible" label="Responsável pela ação" error={errors.responsible}>
+                <Field id="petition-responsible" label="Responsável pela ação" error={errors.responsible} required>
                   <Select
                     id="petition-responsible"
                     value={form.responsible}

@@ -71,6 +71,12 @@ class Lancamento(models.Model):
 
     class Meta:
         ordering = ("-data_vencimento", "id")
+        indexes = [
+            models.Index(fields=["tipo"]),
+            models.Index(fields=["categoria"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["data_vencimento"]),
+        ]
 
     def clean(self):
         if self.valor is not None and self.valor < Decimal("0"):
