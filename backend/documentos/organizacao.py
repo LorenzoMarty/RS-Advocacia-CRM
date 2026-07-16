@@ -236,10 +236,39 @@ def sugerir_organizacao(usuario, cliente) -> dict:
     # de processo ainda não cadastradas para propor a criação junto do plano.
     processos_sugeridos = sugerir_plano(arvore, cliente)["processos_sugeridos"]
 
+    # Pastas com indício de processo mas número incompleto/inválido: a mesma
+    # chamada de IA já sinaliza (evita um segundo round-trip de IA); validamos
+    # só o pasta_id contra a árvore escaneada, sem confiar no número.
+    numeros_certos = {item["numero_processo"] for item in processos_sugeridos}
+    avisos_brutos = dados.get("avisos_processos") or []
+    if not isinstance(avisos_brutos, list):
+        avisos_brutos = []
+    avisos_processos = []
+    for aviso in avisos_brutos[: settings.DRIVE_AI_MAX_OPERACOES]:
+        if not isinstance(aviso, dict):
+            continue
+        pasta_id = str(aviso.get("pasta_id") or "").strip()
+        titulo = str(aviso.get("titulo") or "").strip()
+        if pasta_id not in pastas or not titulo:
+            continue
+        numero_parcial = str(aviso.get("numero_parcial") or "").strip()
+        if numero_parcial in numeros_certos:
+            continue
+        avisos_processos.append(
+            {
+                "origem_pasta_id": pasta_id,
+                "origem_pasta_nome": pastas[pasta_id],
+                "titulo": titulo[:200],
+                "numero_parcial": numero_parcial,
+                "motivo": str(aviso.get("motivo") or "")[:300],
+            }
+        )
+
     return {
         "operacoes": validas,
         "descartadas": len(rejeitadas),
         "processos_sugeridos": processos_sugeridos,
+        "avisos_processos": avisos_processos,
     }
 
 
