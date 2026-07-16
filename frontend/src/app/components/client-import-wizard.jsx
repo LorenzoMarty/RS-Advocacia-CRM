@@ -182,7 +182,10 @@ export function ClientImportWizard({ clientId, onClose, onImported }) {
                   />
                   <div className="import-wizard-row-copy">
                     <strong>{item.numeroProcesso}</strong>
-                    <span>{item.originFolderName}</span>
+                    <span>
+                      {item.originFolderName}
+                      {item.needsHabilitacao && ' · advogado não habilitado'}
+                    </span>
                   </div>
                 </div>
               ))}

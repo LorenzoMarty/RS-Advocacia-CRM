@@ -105,11 +105,32 @@ class SugerirPlanoTests(TestCase):
         plano = importacao.sugerir_plano(arvore, self.cliente)
 
         self.assertEqual(len(plano["processos_sugeridos"]), 1)
+        self.assertFalse(plano["processos_sugeridos"][0]["precisa_habilitar"])
         self.assertEqual(plano["processos_sugeridos"][0]["numero_processo"], CNJ_VALIDO)
         self.assertEqual(len(plano["documentos_sugeridos"]), 1)
         doc = plano["documentos_sugeridos"][0]
         self.assertEqual(doc["numero_processo_sugerido"], CNJ_VALIDO)
         self.assertEqual(doc["categoria_sugerida"], DocumentoCliente.CATEGORIA_PETICAO)
+
+    def test_sinaliza_precisa_habilitar_por_sufixo_na_pasta(self):
+        arvore = {
+            "id": "raiz",
+            "nome": "",
+            "arquivos": [],
+            "subpastas": [
+                {
+                    "id": "sub",
+                    "nome": f"3_{CNJ_VALIDO} - HABILITAR",
+                    "arquivos": [],
+                    "subpastas": [],
+                }
+            ],
+        }
+
+        plano = importacao.sugerir_plano(arvore, self.cliente)
+
+        self.assertEqual(len(plano["processos_sugeridos"]), 1)
+        self.assertTrue(plano["processos_sugeridos"][0]["precisa_habilitar"])
 
     def test_nao_sugere_processo_ja_existente(self):
         Processo.objects.create(cliente=self.cliente, numero_processo=CNJ_VALIDO)
@@ -182,9 +203,26 @@ class ConfirmarImportacaoTests(TestCase):
         self.assertEqual(
             ProcessoDrive.objects.get(processo=processo).pasta_id, "pasta-1"
         )
+        self.assertTrue(processo.advogado_habilitado)
         documento = DocumentoCliente.objects.get(drive_file_id="f1")
         self.assertEqual(documento.processo, processo)
         self.assertEqual(documento.cliente, self.cliente)
+
+    def test_marca_advogado_nao_habilitado_quando_sinalizado(self):
+        importacao.confirmar_importacao(
+            self.cliente,
+            processos=[
+                {
+                    "numero_processo": CNJ_VALIDO,
+                    "origem_pasta_id": "pasta-1",
+                    "precisa_habilitar": True,
+                }
+            ],
+            documentos=[],
+        )
+
+        processo = Processo.objects.get(numero_processo=CNJ_VALIDO)
+        self.assertFalse(processo.advogado_habilitado)
 
     def test_idempotente_ao_reenviar_o_mesmo_payload(self):
         payload_processos = [

@@ -124,6 +124,7 @@ function processSuggestionFromApi(item) {
     legalArea: item.area_juridica || '',
     description: item.descricao || '',
     origin: item.origem || 'heuristica',
+    needsHabilitacao: Boolean(item.precisa_habilitar),
   };
 }
 
@@ -180,6 +181,7 @@ export async function confirmClientDriveImport(clientId, { processes, documents 
         origem_pasta_id: item.originFolderId,
         area_juridica: item.legalArea || '',
         descricao: item.description || '',
+        precisa_habilitar: Boolean(item.needsHabilitacao),
       })),
       documentos: documents.map((item) => ({
         drive_file_id: item.driveFileId,
@@ -266,6 +268,7 @@ export async function applyDriveOrganization(clientId, operations, processes = [
         origem_pasta_id: item.originFolderId,
         area_juridica: item.legalArea || '',
         descricao: item.description || '',
+        precisa_habilitar: Boolean(item.needsHabilitacao),
       })),
     }),
   });

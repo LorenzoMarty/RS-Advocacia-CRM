@@ -46,6 +46,9 @@ const ProcessRow = memo(function ProcessRow({ process, clientName, onDelete }) {
 
       <div className="process-status">
         <StatusBadge tone={getStatusTone(process.status)}>{process.status}</StatusBadge>
+        {!process.lawyerEnabled && (
+          <StatusBadge tone="warn">Advogado não habilitado</StatusBadge>
+        )}
       </div>
 
       <div className="process-actions">
@@ -188,6 +191,7 @@ export function ProcessFormPage() {
     area: process?.area || '',
     court: process?.court || '',
     description: process?.description || '',
+    lawyerEnabled: process?.lawyerEnabled ?? true,
   }));
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -223,6 +227,7 @@ export function ProcessFormPage() {
       area: process.area || '',
       court: process.court || '',
       description: process.description || '',
+      lawyerEnabled: process.lawyerEnabled ?? true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [process]);
@@ -276,6 +281,7 @@ export function ProcessFormPage() {
       area: form.area.trim(),
       court: form.court.trim(),
       description: form.description.trim(),
+      lawyerEnabled: form.lawyerEnabled,
     });
     setIsSubmitting(false);
 
@@ -396,6 +402,17 @@ export function ProcessFormPage() {
                     onChange={(value) => updateField('court', value)}
                   />
                 </Field>
+                <Field id="process-lawyer-enabled" label="Situação do advogado">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      id="process-lawyer-enabled"
+                      type="checkbox"
+                      checked={form.lawyerEnabled}
+                      onChange={(event) => updateField('lawyerEnabled', event.target.checked)}
+                    />
+                    <span>Advogado habilitado nos autos</span>
+                  </label>
+                </Field>
               </div>
             </section>
 
@@ -484,6 +501,12 @@ export function ProcessDetailPage() {
                   <span>Status</span>
                   <StatusBadge tone={getStatusTone(process.status)}>{process.status}</StatusBadge>
                 </article>
+                {!process.lawyerEnabled && (
+                  <article className="summary-card">
+                    <span>Advogado</span>
+                    <StatusBadge tone="warn">Não habilitado</StatusBadge>
+                  </article>
+                )}
                 <article className="summary-card">
                   <span>Compromissos</span>
                   <strong>{relatedEvents.length}</strong>
