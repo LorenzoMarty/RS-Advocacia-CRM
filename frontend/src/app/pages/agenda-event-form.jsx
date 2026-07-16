@@ -21,6 +21,7 @@ import {
   EVENT_TYPE_OPTIONS,
 } from "../data";
 import {
+  ComboField,
   Field,
   NotFoundState,
 } from "./common";
@@ -64,9 +65,6 @@ export function EventFormPage() {
     completed: eventItem?.completed || false,
   }));
   const [errors, setErrors] = useState({});
-  const [typeMode, setTypeMode] = useState(() =>
-    allEventTypes.includes(eventItem?.type || initialType || EVENT_TYPE_OPTIONS[0]) ? 'select' : 'custom',
-  );
 
   useEffect(() => {
     if (!eventItem) {
@@ -91,8 +89,7 @@ export function EventFormPage() {
       notes: eventItem.notes || "",
       completed: eventItem.completed || false,
     });
-    setTypeMode(allEventTypes.includes(eventItem.type || '') ? 'select' : 'custom');
-  }, [eventItem]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [eventItem]);
 
   const availableProcesses = processes.filter(
     (process) => !form.clientId || process.clientId === form.clientId,
@@ -234,48 +231,15 @@ export function EventFormPage() {
                   error={errors.type}
                   required
                 >
-                  {typeMode === 'custom' ? (
-                    <div className="type-combo">
-                      <input
-                        id="event-type"
-                        value={form.type}
-                        placeholder="Ex: Perícia, Diligência..."
-                        autoFocus
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, type: e.target.value }))
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="type-combo-back"
-                        onClick={() => {
-                          setTypeMode('select');
-                          setForm((f) => ({ ...f, type: allEventTypes[0] || EVENT_TYPE_OPTIONS[0] }));
-                        }}
-                      >
-                        ← Selecionar
-                      </button>
-                    </div>
-                  ) : (
-                    <Select
-                      id="event-type"
-                      value={form.type}
-                      onChange={(e) => {
-                        if (e.target.value === '__custom__') {
-                          setTypeMode('custom');
-                          setForm((f) => ({ ...f, type: '' }));
-                        } else {
-                          setForm((f) => ({ ...f, type: e.target.value }));
-                        }
-                      }}
-                    >
-                      <option value="">Selecione o tipo</option>
-                      {allEventTypes.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                      <option value="__custom__">+ Digitar novo tipo...</option>
-                    </Select>
-                  )}
+                  <ComboField
+                    id="event-type"
+                    value={form.type}
+                    options={allEventTypes}
+                    onChange={(value) => setForm((f) => ({ ...f, type: value }))}
+                    selectPlaceholder="Selecione o tipo"
+                    customLabel="+ Digitar novo tipo..."
+                    customPlaceholder="Ex: Perícia, Diligência..."
+                  />
                 </Field>
 
                 <Field
