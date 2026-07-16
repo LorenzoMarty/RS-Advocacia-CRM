@@ -80,6 +80,7 @@ def serialize_processo(processo: Processo):
             if processo.advogado_responsavel_id
             else ""
         ),
+        "advogado_habilitado": processo.advogado_habilitado,
         "data_ultima_movimentacao": isoformat_ou_nulo(
             processo.data_ultima_movimentacao
         ),

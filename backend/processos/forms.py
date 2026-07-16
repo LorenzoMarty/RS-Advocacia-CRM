@@ -19,6 +19,9 @@ class ProcessoForm(forms.ModelForm):
     area_juridica = forms.CharField(max_length=100, label="Área jurídica")
     vara = forms.CharField(max_length=100, label="Vara")
     status = forms.CharField(max_length=50, label="Status")
+    advogado_habilitado = forms.BooleanField(
+        required=False, initial=True, label="Advogado habilitado"
+    )
 
     class Meta:
         model = Processo
@@ -30,6 +33,7 @@ class ProcessoForm(forms.ModelForm):
             "area_juridica",
             "status",
             "advogado_responsavel",
+            "advogado_habilitado",
         ]
         widgets = {
             "descricao": forms.Textarea(attrs={"rows": 4}),

@@ -16,7 +16,15 @@ class Processo(models.Model):
         blank=True,
         related_name="processos_responsavel",
     )
+    advogado_habilitado = models.BooleanField(default=True)
     data_ultima_movimentacao = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["area_juridica"]),
+            models.Index(fields=["vara"]),
+        ]
 
     def registrar_movimentacao(self):
         """Bump data_ultima_movimentacao without touching other fields."""

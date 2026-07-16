@@ -158,7 +158,10 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
                   />
                   <div className="import-wizard-row-copy">
                     <strong>Criar processo "{item.numeroProcesso}"</strong>
-                    <span>Origem: pasta "{item.originFolderName}"</span>
+                    <span>
+                      Origem: pasta "{item.originFolderName}"
+                      {item.needsHabilitacao && ' · advogado não habilitado'}
+                    </span>
                   </div>
                 </div>
               ))}

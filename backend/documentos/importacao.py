@@ -124,6 +124,9 @@ def sugerir_plano(arvore: dict, cliente) -> dict:
             "numero_processo": numero,
             "origem_pasta_id": pasta_id,
             "origem_pasta_nome": pasta_nome,
+            # Convenção do escritório: pasta com sufixo "- HABILITAR" indica que o
+            # advogado ainda não foi habilitado nos autos.
+            "precisa_habilitar": "habilitar" in pasta_nome.lower(),
         }
 
     def _percorrer(no: dict, cnj_herdado: str, categoria_herdada: str | None) -> None:
@@ -353,6 +356,7 @@ def confirmar_importacao(
             defaults={
                 "descricao": item.get("descricao", ""),
                 "area_juridica": item.get("area_juridica", ""),
+                "advogado_habilitado": not item.get("precisa_habilitar", False),
             },
         )
         pasta_id = item.get("origem_pasta_id")

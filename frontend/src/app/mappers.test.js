@@ -246,7 +246,13 @@ describe('processFromApi / processToPayload', () => {
       area_juridica: 'a',
       status: 's',
       advogado_responsavel: '5',
+      advogado_habilitado: true,
     });
+  });
+
+  it('defaults lawyerEnabled to true unless explicitly false', () => {
+    expect(processFromApi({ id: 1, advogado_habilitado: false }).lawyerEnabled).toBe(false);
+    expect(processFromApi({ id: 1 }).lawyerEnabled).toBe(true);
   });
 });
 

@@ -320,6 +320,7 @@ export function processFromApi(process) {
     status: process.status || '',
     owner: process.advogado_responsavel ? String(process.advogado_responsavel) : '',
     ownerName: process.advogado_responsavel_nome || '',
+    lawyerEnabled: process.advogado_habilitado !== false,
     lastMovementAt: process.data_ultima_movimentacao || null,
   };
 }
@@ -403,6 +404,7 @@ export function processToPayload(process) {
     area_juridica: process.area,
     status: process.status,
     advogado_responsavel: process.owner || null,
+    advogado_habilitado: process.lawyerEnabled !== false,
   };
 }
 
