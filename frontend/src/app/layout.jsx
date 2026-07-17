@@ -180,7 +180,7 @@ function SidebarNavLink({ item, collapsed }) {
             icon={item.key}
             className={cn(
               'size-5 shrink-0 transition-colors',
-              isActive ? 'text-primary drop-shadow-[0_0_10px_rgba(212,175,55,.18)]' : 'text-muted-foreground group-hover:text-foreground',
+              isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
             )}
           />
           <span
@@ -240,7 +240,7 @@ function BottomNavigation() {
               className={({ isActive }) =>
                 cn(
                   'grid min-h-16 place-items-center gap-1.5 rounded-2xl border border-transparent px-2 py-2.5 text-muted-foreground transition-all',
-                  isActive && 'border-primary/30 bg-gradient-to-b from-primary to-primary/80 text-primary-foreground shadow-md',
+                  isActive && 'border-primary/30 bg-primary text-primary-foreground',
                 )
               }
             >
@@ -345,7 +345,9 @@ function useReminderToasts({ addFlash, currentUser, deadlines, events, isLoading
 }
 
 function useShellPreferences() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('rs-advocacia-sidebar-collapsed') === 'true');
+  // Colapsada por padrão (rail mínimo) — usuário expande explicitamente se quiser
+  // os rótulos visíveis; a preferência dele é lembrada depois disso.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('rs-advocacia-sidebar-collapsed') !== 'false');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -445,7 +447,7 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
         onClick={() => setOpen((p) => !p)}
       >
         <div
-          className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary/80 font-bold text-primary-foreground"
+          className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary font-bold text-primary-foreground"
           aria-hidden="true"
         >
           {currentUser.name.slice(0, 1).toUpperCase()}
@@ -620,7 +622,12 @@ export function ProtectedLayout() {
             {sidebarCollapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
           </Button>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden px-4.5 pt-4.5">
+          <div
+            className={cn(
+              'flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden pt-4.5',
+              sidebarCollapsed ? 'px-2.5' : 'px-4.5',
+            )}
+          >
             <Link
               className={cn(
                 'flex items-center gap-3 rounded-[20px] p-2',
@@ -631,7 +638,7 @@ export function ProtectedLayout() {
               title="Início"
             >
               <div
-                className="grid size-11 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/20 to-primary/5 text-primary"
+                className="grid size-11 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-primary"
                 aria-hidden="true"
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">

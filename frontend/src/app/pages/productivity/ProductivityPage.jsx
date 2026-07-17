@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { Card, CardContent } from '@/components/ui/card';
+
 import { PageChrome } from '../../layout';
 import { useAppState } from '../../store';
 import { EmptyState } from '../common';
@@ -44,12 +46,12 @@ export function ProductivityPage() {
   return (
     <>
       <PageChrome label="Produtividade" />
-      <div className="office-productivity-page">
-        <section className="surface section-card">
-          <div className="section-head">
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 className="intro-title">Minha produtividade</h1>
-              <p className="section-note">Seu tempo e suas entregas no período</p>
+              <p className="font-serif text-3xl text-foreground">Minha produtividade</p>
+              <p className="mt-1 text-sm text-muted-foreground">Seu tempo e suas entregas no período</p>
             </div>
             <PeriodFilter
               period={period}
@@ -60,7 +62,10 @@ export function ProductivityPage() {
               setCustomEnd={setCustomEnd}
             />
           </div>
+        </section>
 
+        <Card>
+          <CardContent className="py-5">
           <div className="productivity-kpis">
             {kpis.map((item) => (
               <div key={item.label} className="productivity-kpi">
@@ -74,12 +79,15 @@ export function ProductivityPage() {
               </div>
             ))}
           </div>
-        </section>
+          </CardContent>
+        </Card>
 
         {isLoading ? (
-          <section className="surface section-card productivity-loading">
-            <p className="section-note">Carregando sua produtividade...</p>
-          </section>
+          <Card>
+            <CardContent className="py-5">
+              <p className="text-sm text-muted-foreground">Carregando sua produtividade...</p>
+            </CardContent>
+          </Card>
         ) : (
           <>
             <TimeDistributionChart
