@@ -4,7 +4,6 @@
 @import "./styles/pages/clientes-list.css";
 @import "./styles/pages/clientes-form.css";
 @import "./styles/pages/clientes-detail.css";
-@import "./styles/pages/processos-list.css";
 @import "./styles/pages/processos-form.css";
 @import "./styles/pages/processos-detail.css";
 @import "./styles/pages/agenda-list.css";
@@ -16,7 +15,6 @@
 @import "./styles/pages/productivity.css";
 @import "./styles/pages/productivity-dashboard.css";
 @import "./styles/pages/audit.css";
-@import "./styles/pages/usuarios-list.css";
 @import "./styles/pages/usuarios-form.css";
 @import "./styles/pages/usuarios-detail.css";
 @import "./styles/pages/api-test.css";

@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Plus } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { FINANCE_CATEGORIES, FINANCE_TABS } from '../data';
 import { api } from '../api';
@@ -190,17 +194,24 @@ export function FinanceiroPage() {
     <>
       {confirmPopup}
       <PageChrome label="Financeiro" />
-      <div className="financeiro-page">
-        <section className="surface financeiro-shell">
-          <div className="financeiro-intro">
-            <div className="section-head">
-              <div>
-                <h1 className="intro-title">Financeiro</h1>
-                <p className="section-note">Receitas, despesas e fluxo do escritório</p>
-              </div>
-              <Link className="btn" to="/financeiro/novo" data-tour="page-primary-action">Novo lançamento</Link>
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="font-serif text-3xl text-foreground">Financeiro</p>
+              <p className="mt-1 text-sm text-muted-foreground">Receitas, despesas e fluxo do escritório</p>
             </div>
+            <Button asChild>
+              <Link to="/financeiro/novo" data-tour="page-primary-action">
+                <Plus className="size-4" />
+                Novo lançamento
+              </Link>
+            </Button>
+          </div>
+        </section>
 
+        <Card>
+          <CardContent className="grid gap-4 py-5">
             {dashboardError ? (
               <div className="empty" role="alert">
                 <strong>Não foi possível carregar as métricas.</strong>
@@ -230,9 +241,11 @@ export function FinanceiroPage() {
               <CategoryDonut title="Receita por categoria" data={dashboard.receitaPorCategoria} onSelect={(category) => focusCategory('receita', category)} />
               <CategoryDonut title="Despesa por categoria" data={dashboard.despesaPorCategoria} onSelect={(category) => focusCategory('despesa', category)} />
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="financeiro-panel">
+        <Card>
+          <CardContent className="grid gap-3.5 py-5">
             <div className="financeiro-tabs" role="tablist" aria-label="Filtrar lançamentos por status">
               {FINANCE_TABS.map((item) => (
                 <button
@@ -251,19 +264,22 @@ export function FinanceiroPage() {
               ))}
             </div>
 
-            <div className="financeiro-toolbar">
-              <PageSearch value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Buscar lançamento" />
-              <Select
-                className="filter-select"
-                aria-label="Filtrar por categoria"
-                value={categoryFilter}
-                onChange={(event) => { setCategoryFilter(event.target.value); setPage(1); }}
-              >
-                <option value="">Categoria</option>
-                {categoryOptions.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </Select>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="min-w-[180px] flex-1">
+                <PageSearch value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Buscar lançamento" />
+              </div>
+              <div className="w-full sm:w-[220px]">
+                <Select
+                  aria-label="Filtrar por categoria"
+                  value={categoryFilter}
+                  onChange={(event) => { setCategoryFilter(event.target.value); setPage(1); }}
+                >
+                  <option value="">Categoria</option>
+                  {categoryOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </Select>
+              </div>
             </div>
 
             {pageRows.length ? (
@@ -332,8 +348,8 @@ export function FinanceiroPage() {
                 actions={<Link className="btn" to="/financeiro/novo">Novo lançamento</Link>}
               />
             )}
-          </div>
-        </section>
+          </CardContent>
+        </Card>
       </div>
     </>
   );

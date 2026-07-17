@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
 
+import { Card, CardContent } from '@/components/ui/card';
+
 export function ProcessStatusPanel({ processStatus = [], staleProcesses = { count: 0, itens: [] } }) {
   return (
-    <section className="audit-card surface section-card">
+    <Card className="audit-card">
+    <CardContent className="py-5">
       <div className="section-head">
         <div>
           <h2 className="section-title">Processos</h2>
@@ -54,6 +57,7 @@ export function ProcessStatusPanel({ processStatus = [], staleProcesses = { coun
           </div>
         )}
       </div>
-    </section>
+    </CardContent>
+    </Card>
   );
 }

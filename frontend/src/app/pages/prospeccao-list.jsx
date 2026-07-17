@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Plus } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { INTERACTION_TYPE_OPTIONS, PROSPECT_STATUS_COLUMNS } from '../data';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
@@ -255,48 +259,68 @@ export function ProspectKanbanPage() {
   return (
     <>
       <PageChrome label="Prospecção" />
-      <div className="prospeccao-page">
-        <section className="surface prospeccao-intro">
-          <div className="section-head">
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 className="intro-title">Prospecção</h1>
-              <p className="section-note">Funil de captação de clientes</p>
+              <p className="font-serif text-3xl text-foreground">Prospecção</p>
+              <p className="mt-1 text-sm text-muted-foreground">Funil de captação de clientes</p>
             </div>
-            <Link className="btn" to="/prospeccao/novo" data-tour="page-primary-action">Novo prospect</Link>
-          </div>
-
-          <Motion.div
-            className="prospeccao-metrics"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            <Motion.article className="metric" variants={pop}><span>Total</span><strong>{metrics.total}</strong></Motion.article>
-            <Motion.article className="metric" variants={pop}><span>Novos no mês</span><strong>{metrics.novosMes}</strong></Motion.article>
-            <Motion.article className="metric" variants={pop}><span>Convertidos</span><strong>{metrics.convertidos}</strong></Motion.article>
-            <Motion.article className="metric" variants={pop}><span>Perdidos</span><strong>{metrics.perdidos}</strong></Motion.article>
-            <Motion.article className="metric" variants={pop}><span>Taxa conversão</span><strong>{metrics.taxa}%</strong></Motion.article>
-          </Motion.div>
-
-          <div className="prospeccao-toolbar">
-            <PageSearch
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar por nome, e-mail ou demanda"
-            />
-            <Select
-              className="filter-select"
-              aria-label="Filtrar por responsável"
-              value={responsibleFilter}
-              onChange={(event) => setResponsibleFilter(event.target.value)}
-            >
-              <option value="">Responsável</option>
-              {responsibleOptions.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </Select>
+            <Button asChild>
+              <Link to="/prospeccao/novo" data-tour="page-primary-action">
+                <Plus className="size-4" />
+                Novo prospect
+              </Link>
+            </Button>
           </div>
         </section>
+
+        <Motion.div
+          className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <Motion.div variants={pop}>
+            <Card><CardContent className="py-4"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Total</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.total}</strong></CardContent></Card>
+          </Motion.div>
+          <Motion.div variants={pop}>
+            <Card><CardContent className="py-4"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Novos no mês</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.novosMes}</strong></CardContent></Card>
+          </Motion.div>
+          <Motion.div variants={pop}>
+            <Card><CardContent className="py-4"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Convertidos</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.convertidos}</strong></CardContent></Card>
+          </Motion.div>
+          <Motion.div variants={pop}>
+            <Card><CardContent className="py-4"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Perdidos</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.perdidos}</strong></CardContent></Card>
+          </Motion.div>
+          <Motion.div variants={pop}>
+            <Card><CardContent className="py-4"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Taxa conversão</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.taxa}%</strong></CardContent></Card>
+          </Motion.div>
+        </Motion.div>
+
+        <Card>
+          <CardContent className="flex flex-wrap items-center gap-3 py-4">
+            <div className="min-w-[180px] flex-1">
+              <PageSearch
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Buscar por nome, e-mail ou demanda"
+              />
+            </div>
+            <div className="w-full sm:w-[220px]">
+              <Select
+                aria-label="Filtrar por responsável"
+                value={responsibleFilter}
+                onChange={(event) => setResponsibleFilter(event.target.value)}
+              >
+                <option value="">Responsável</option>
+                {responsibleOptions.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
         {prospects.length ? (
           <section className={`prospeccao-board${draggingId ? ' is-dragging' : ''}`} aria-label="Funil de prospecção">

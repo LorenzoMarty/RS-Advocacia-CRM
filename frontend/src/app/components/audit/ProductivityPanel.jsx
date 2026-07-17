@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+import { Card, CardContent } from '@/components/ui/card';
+
 function horasFmt(horas) {
   const h = Math.floor(horas);
   const m = Math.round((horas - h) * 60);
@@ -14,7 +16,8 @@ export function ProductivityPanel({ productivity = {} }) {
   }
 
   return (
-    <section className="audit-card surface section-card">
+    <Card className="audit-card">
+    <CardContent className="py-5">
       <div className="section-head">
         <div>
           <h2 className="section-title">Produtividade</h2>
@@ -47,6 +50,7 @@ export function ProductivityPanel({ productivity = {} }) {
           );
         })}
       </ul>
-    </section>
+    </CardContent>
+    </Card>
   );
 }

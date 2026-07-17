@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+import { Card, CardContent } from '@/components/ui/card';
+
 function KpiTile({ label, value, tone }) {
   return (
     <div className={`audit-deadline-tile is-${tone}`}>
@@ -12,7 +14,8 @@ function KpiTile({ label, value, tone }) {
 export function DeadlinesPanel({ prazos = {} }) {
   const { overdue = 0, today = 0, dueSoon = 0, done = 0 } = prazos;
   return (
-    <section className="audit-card surface section-card">
+    <Card className="audit-card">
+    <CardContent className="py-5">
       <div className="section-head">
         <div>
           <h2 className="section-title">Prazos</h2>
@@ -26,6 +29,7 @@ export function DeadlinesPanel({ prazos = {} }) {
         <KpiTile label="Vencendo em breve" value={dueSoon} tone={dueSoon ? 'gold' : 'neutral'} />
         <KpiTile label="Concluídos" value={done} tone="success" />
       </div>
-    </section>
+    </CardContent>
+    </Card>
   );
 }

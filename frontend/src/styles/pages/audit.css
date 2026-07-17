@@ -7,26 +7,9 @@
    ============================================================ */
 
 .audit-page{display:grid}
-.audit-card.section-card{
-    padding:var(--pad-card);
-}
 .audit-card .section-head{margin-bottom:var(--gap-page)}
 .audit-card .section-note{font-size:.82rem}
 
-/* ---------- Hero de risco ---------- */
-.audit-hero-card{
-    background:transparent;
-    box-shadow:none;
-    border-radius:0;
-}
-.audit-hero-card .intro-title{
-    margin:0;
-    font-family:var(--serif);
-    font-size:clamp(1.8rem,3.4vw,2.6rem);
-    font-weight:400;
-    letter-spacing:-.04em;
-    line-height:1;
-}
 .audit-risk-hero{
     display:grid;
     grid-template-columns:minmax(260px,330px) minmax(0,1fr);

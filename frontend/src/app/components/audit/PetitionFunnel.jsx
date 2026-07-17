@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+import { Card, CardContent } from '@/components/ui/card';
+
 const STATUS_TONE = {
   'Pendente': 'gold',
   'Em andamento': 'warn',
@@ -11,7 +13,8 @@ export function PetitionFunnel({ petitionFunnel = [] }) {
   const total = petitionFunnel.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <section className="audit-card surface section-card">
+    <Card className="audit-card">
+    <CardContent className="py-5">
       <div className="section-head">
         <div>
           <h2 className="section-title">Petições</h2>
@@ -42,6 +45,7 @@ export function PetitionFunnel({ petitionFunnel = [] }) {
           <p className="audit-empty-note">Nenhuma petição cadastrada.</p>
         )}
       </div>
-    </section>
+    </CardContent>
+    </Card>
   );
 }

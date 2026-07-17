@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 
+import { Card, CardContent } from '@/components/ui/card';
+
 import { motion } from '../../motion';
 import { formatDateTime } from '../../utils';
 import { EmptyState } from '../../pages/common';
@@ -303,7 +305,8 @@ export function ActivityTimeline({ entries, filters, pagination, onFilterChange,
   const groups = useMemo(() => groupEntries(entries), [entries]);
 
   return (
-    <section className="audit-card surface section-card audit-activity">
+    <Card className="audit-card">
+    <CardContent className="py-5">
       <div className="section-head">
         <div>
           <h2 className="section-title">Atividade recente</h2>
@@ -365,6 +368,7 @@ export function ActivityTimeline({ entries, filters, pagination, onFilterChange,
           copy="Criações, edições e exclusões de processos, prazos, petições e compromissos aparecem aqui."
         />
       )}
-    </section>
+    </CardContent>
+    </Card>
   );
 }

@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+import { Card, CardContent } from '@/components/ui/card';
+
 import { StatusBadge } from '../../layout';
 import { formatDate } from '../../utils';
 import { EmptyState } from '../../pages/common';
@@ -7,7 +9,8 @@ import { EmptyState } from '../../pages/common';
 // Área B — "Precisa de atenção agora": top itens ordenados por severidade.
 export function PriorityActions({ actions }) {
   return (
-    <section className="audit-card surface section-card audit-priority">
+    <Card className="audit-card">
+    <CardContent className="py-5">
       <div className="section-head">
         <div>
           <h2 className="section-title">Precisa de atenção agora</h2>
@@ -38,6 +41,7 @@ export function PriorityActions({ actions }) {
           copy="Sem prazos críticos ou processos parados. Bom trabalho."
         />
       )}
-    </section>
+    </CardContent>
+    </Card>
   );
 }
