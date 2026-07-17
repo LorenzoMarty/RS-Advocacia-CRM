@@ -2,11 +2,56 @@ import { Children, cloneElement, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
 
 import { AnimatePresence, motion as Motion } from '../motion';
 import { Select } from '../components/select';
+import { useAppState } from '../store';
+import { formatPhone, getClientTypeLabel } from '../utils';
+
+// Mini-cartão reusável em qualquer tela que só referencia o cliente pelo
+// nome (Processos, Prazos, Financeiro...) — contato, tier e nº de processos
+// no hover, sem precisar navegar até Clientes.
+export function ClientHoverCard({ clientId, children }) {
+  const { clients, processes } = useAppState();
+  const client = clients.find((item) => item.id === clientId);
+
+  if (!client) {
+    return children;
+  }
+
+  const processCount = processes.filter((process) => process.clientId === clientId).length;
+
+  return (
+    <HoverCard openDelay={150}>
+      <HoverCardTrigger asChild>{children}</HoverCardTrigger>
+      <HoverCardContent align="start">
+        <div className="flex items-start gap-3">
+          <div
+            className="grid size-9 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-sm font-bold text-primary"
+            aria-hidden="true"
+          >
+            {client.name.slice(0, 1).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-foreground">{client.name}</p>
+            <Badge variant="outline" className="mt-1 uppercase tracking-wide">
+              {getClientTypeLabel(client.clientType)}
+            </Badge>
+          </div>
+        </div>
+        <div className="mt-3 grid gap-1 text-xs text-muted-foreground">
+          {client.email ? <span className="truncate">{client.email}</span> : null}
+          {client.phone ? <span>{formatPhone(client.phone)}</span> : null}
+          <span>{processCount} processo{processCount === 1 ? '' : 's'}</span>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
 
 // Padrão compartilhado de tela de detalhe (Cliente/Processo/Usuário/Compromisso):
 // breadcrumb + hero com marca/título/subtítulo + resumo opcional, layout 2 colunas
