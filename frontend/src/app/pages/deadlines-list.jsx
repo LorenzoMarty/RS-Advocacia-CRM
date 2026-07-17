@@ -26,6 +26,7 @@ import {
   formatDate,
   getStatusTone,
   normalizeText,
+  startOfDay,
 } from '../utils';
 import { Select } from '../components/select';
 import { EmptyState } from './common';
@@ -70,12 +71,13 @@ function DeadlineCard({
   const interactions = isDragging ? {} : cardHover;
   const statusLabel = deadlineStatusLabel(deadline);
   const currentColumnKey = deadlineColumnKey(deadline);
+  const isOverdue = currentColumnKey !== 'protocolado' && startOfDay(deadlineMoment(deadline)) < startOfDay(new Date());
 
   return (
     <MotionArticle
       {...kanbanCardMotion}
       {...interactions}
-      className={`deadline-card is-clickable${isDragging ? ' is-dragging' : ''}${isMoving ? ' is-moving' : ''}`}
+      className={`deadline-card is-clickable${isDragging ? ' is-dragging' : ''}${isMoving ? ' is-moving' : ''}${isOverdue ? ' is-overdue' : ''}`}
       draggable
       onDragStart={(event) => onDragStart(event, deadline.id)}
       onDragEnd={onDragEnd}

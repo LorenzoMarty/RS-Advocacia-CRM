@@ -77,7 +77,7 @@ export const pop = {
 export const cardHover = reduce
   ? {}
   : {
-      whileHover: { y: -3, transition: { duration: DURATION.fast, ease: EASE_OUT } },
+      whileHover: { y: -2, transition: { duration: DURATION.fast, ease: EASE_OUT } },
       whileTap: { scale: 0.985 },
     };
 
