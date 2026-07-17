@@ -267,9 +267,10 @@
     padding:7px 10px;border-radius:8px;
     background:var(--ghost);display:grid;gap:2px;
 }
-.audit-event-title{font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.audit-event-meta{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.audit-event-date{font-size:.68rem;color:var(--soft)}
+.audit-event-main{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.audit-event-title{font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.audit-event-meta{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.audit-event-date{font-size:.68rem;color:var(--soft);margin-left:auto;white-space:nowrap;flex:none}
 
 /* ---------- Petition funnel ---------- */
 .audit-funnel{display:grid;gap:6px}
