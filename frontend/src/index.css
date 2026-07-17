@@ -183,9 +183,7 @@ html:not([data-theme="light"]) #root .main :where(
   .rs-select-trigger
 ) {
   border-color: var(--select-field-border);
-  background:
-    linear-gradient(180deg, rgba(30,41,59,.86), rgba(15,23,42,.98)),
-    var(--select-field-solid);
+  background: var(--select-field-solid);
   color: var(--text);
 }
 
@@ -198,16 +196,14 @@ html:not([data-theme="light"]) #root .main :where(
   -moz-appearance: none;
   padding-right: 40px;
   background:
-    linear-gradient(180deg, rgba(30,41,59,.86), rgba(15,23,42,.98)),
     linear-gradient(45deg, transparent 50%, var(--gold-soft) 50%),
     linear-gradient(135deg, var(--gold-soft) 50%, transparent 50%),
     var(--select-field-solid);
   background-position:
-    0 0,
     calc(100% - 20px) calc(50% - 3px),
     calc(100% - 14px) calc(50% - 3px),
     0 0;
-  background-size: 100% 100%, 6px 6px, 6px 6px, auto;
+  background-size: 6px 6px, 6px 6px, auto;
   background-repeat: no-repeat;
 }
 
