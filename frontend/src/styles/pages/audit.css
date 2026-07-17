@@ -205,7 +205,7 @@
 .audit-diff-to{color:var(--success)}
 
 /* ---------- Macro overview grid ---------- */
-.audit-macro-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-grid)}
+.audit-macro-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:var(--gap-grid)}
 @media(max-width:860px){.audit-macro-grid{grid-template-columns:1fr}}
 
 /* ---------- Process status panel ---------- */
