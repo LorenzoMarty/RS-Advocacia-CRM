@@ -82,7 +82,7 @@
         padding:0 0 var(--bottom-nav-offset);
     }
     .page-wrap{
-        padding-top:0;
+        padding:0 14px 14px;
     }
     .main{gap:0}
     .surface{border-radius:0}
