@@ -53,11 +53,10 @@
     padding:12px 14px 12px 20px;
     border-radius:16px;
     border:1px solid var(--line);
-    background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(11,12,16,.98));
-    box-shadow:0 8px 18px rgba(0,0,0,.14);
+    background:var(--ghost);
     color:var(--text);
     cursor:grab;
-    transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+    transition:transform .18s ease,border-color .18s ease;
     overflow:hidden;
 }
 .timeline-event.is-dragging{opacity:.5;cursor:grabbing;}
@@ -74,7 +73,6 @@
 .timeline-event:hover{
     transform:translateY(-2px);
     border-color:rgba(255,255,255,.12);
-    box-shadow:0 14px 28px rgba(0,0,0,.2);
 }
 .timeline-event.type-audiencia{--event-accent:#D4AF37}
 .timeline-event.type-reuniao{--event-accent:#7893d1}

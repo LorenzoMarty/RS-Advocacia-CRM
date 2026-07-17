@@ -20,17 +20,14 @@
         padding-right:40px;
         border-color:rgba(255,255,255,.1);
         background:
-            linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
             linear-gradient(45deg, transparent 50%, var(--gold-soft) 50%),
             linear-gradient(135deg, var(--gold-soft) 50%, transparent 50%),
             var(--ghost);
-        background-position:0 0,calc(100% - 20px) calc(50% - 3px),calc(100% - 14px) calc(50% - 3px),0 0;
-        background-size:100% 100%,6px 6px,6px 6px,auto;
+        background-position:calc(100% - 20px) calc(50% - 3px),calc(100% - 14px) calc(50% - 3px),0 0;
+        background-size:6px 6px,6px 6px,auto;
         background-repeat:no-repeat;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
     }
     .filter-select:hover{
-        transform:translateY(-1px);
         border-color:rgba(212,175,55,.18);
         background-color:var(--ghost-strong);
     }
@@ -62,23 +59,20 @@
         padding:14px 12px 12px;
         border-radius:22px;
         border:1px solid var(--line);
-        background:linear-gradient(180deg, rgba(15,23,42,.96), rgba(2,6,23,.94));
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.02), 0 14px 28px rgba(0,0,0,.12);
+        background:var(--ghost);
         display:grid;
         align-content:start;
         gap:12px;
-        transition:border-color .2s ease,background .2s ease,transform .2s ease,box-shadow .2s ease;
+        transition:border-color .2s ease,background .2s ease,transform .2s ease;
     }
     .day-card:hover{
         transform:translateY(-2px);
         border-color:rgba(212,175,55,.16);
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.03), 0 18px 30px rgba(0,0,0,.16);
     }
     .day-card.is-muted{opacity:.62}
     .day-card.is-today{
         border-color:rgba(212,175,55,.3);
-        background:linear-gradient(180deg, rgba(30,41,59,.98), rgba(11,12,16,.96));
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.03), 0 16px 30px rgba(212,175,55,.12);
+        background:rgba(212,175,55,.05);
     }
     .day-card.is-overdue{border-color:rgba(239,122,122,.2)}
     .day-head{display:flex;align-items:center;justify-content:flex-start;gap:8px}
@@ -102,11 +96,10 @@
         padding:10px 10px 10px 14px;
         border-radius:14px;
         border:1px solid var(--line);
-        background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(11,12,16,.98));
-        box-shadow:0 10px 20px rgba(0,0,0,.18);
+        background:var(--ghost);
         color:var(--text);
         cursor:grab;
-        transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+        transition:transform .18s ease,border-color .18s ease;
         overflow:hidden;
     }
     .calendar-event.is-dragging{opacity:.5;cursor:grabbing;}
@@ -123,7 +116,6 @@
     .calendar-event:hover{
         transform:translateY(-1px);
         border-color:rgba(255,255,255,.12);
-        box-shadow:0 14px 24px rgba(0,0,0,.22);
     }
     .calendar-event.type-audiencia{--event-accent:#D4AF37}
     .calendar-event.type-reuniao{--event-accent:#7893d1}

@@ -19,9 +19,7 @@
     padding:30px;
     border-radius:30px;
     border:1px solid var(--line);
-    background:
-        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.018)),
-        var(--panel);
+    background:var(--panel);
     box-shadow:0 28px 70px rgba(0,0,0,.28);
     backdrop-filter:blur(18px);
     overflow:hidden;
@@ -53,7 +51,7 @@
     font-size:.94rem;
     font-weight:800;
     letter-spacing:.12em;
-    background:linear-gradient(145deg, rgba(212,175,55,.18), rgba(212,175,55,.05));
+    background:rgba(212,175,55,.1);
     border:1px solid rgba(212,175,55,.18);
 }
 

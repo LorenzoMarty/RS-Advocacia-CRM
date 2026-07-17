@@ -124,7 +124,7 @@
     display:block;
     height:100%;
     border-radius:999px;
-    background:linear-gradient(90deg,var(--gold),#73d3b1);
+    background:var(--gold);
 }
 
 .productivity-block{
