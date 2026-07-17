@@ -33,3 +33,4 @@ coverage/
 .mypy_cache/
 .cache/
 .claude/knowledge/
+.claude/specs/
