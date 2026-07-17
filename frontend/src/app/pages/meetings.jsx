@@ -358,7 +358,7 @@ export function MeetingsPage() {
                   </label>
                   <div className="meeting-form-actions">
                     <Button type="submit" disabled={isSaving}>
-                      {isSaving ? 'Salvando...' : isEditingMeeting ? 'Salvar edição' : 'Criar reunião'}
+                      {isSaving ? 'Salvando…' : isEditingMeeting ? 'Salvar edição' : 'Criar reunião'}
                     </Button>
                     <Button
                       variant="outline"
@@ -418,7 +418,7 @@ export function MeetingsPage() {
                       disabled={isFinalizing}
                     >
                       {isFinalizing
-                        ? 'Salvando...'
+                        ? 'Salvando…'
                         : selectedMeeting.documentLink
                           ? 'Atualizar documento'
                           : 'Finalizar reunião'}

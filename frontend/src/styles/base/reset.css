@@ -27,4 +27,7 @@ svg,img{display:block}
 ::selection{background:var(--selection)}
 ::-webkit-scrollbar{width:8px}
 ::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:999px}
-:focus-visible{outline:none}
+/* Anel de foco visível por padrão em todo elemento focável — componentes que
+   já definem seu próprio :focus-visible (botões, select) sobrescrevem isto
+   com outline:none + box-shadow próprio, então não há conflito visual. */
+:focus-visible{outline:2px solid var(--gold-soft);outline-offset:2px}

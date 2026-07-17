@@ -188,7 +188,7 @@ export function DeadlineFormPage() {
 
               <div className="form-actions">
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar prazo' : 'Salvar prazo'}
+                  {isSubmitting ? 'Salvando…' : isEditing ? 'Atualizar prazo' : 'Salvar prazo'}
                 </Button>
                 {isEditing ? (
                   <Button

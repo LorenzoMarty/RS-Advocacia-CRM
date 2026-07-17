@@ -116,7 +116,7 @@ export function DashboardPage() {
     <div className="dashboard-page">
       <PageChrome label="Painel" />
 
-      <section className="mb-6">
+      <section className="mb-2">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="font-serif text-3xl text-foreground">{greeting(currentUser?.name)}</p>

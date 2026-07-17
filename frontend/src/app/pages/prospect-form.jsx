@@ -106,6 +106,8 @@ export function ProspectFormPage() {
                   render={({ field }) => (
                     <input
                       id="prospect-phone"
+                      type="tel"
+                      autoComplete="tel"
                       {...field}
                       onChange={(event) => field.onChange(formatPhone(event.target.value))}
                     />
@@ -113,7 +115,7 @@ export function ProspectFormPage() {
                 />
               </Field>
               <Field id="prospect-email" label="E-mail">
-                <input id="prospect-email" type="email" {...register('email')} />
+                <input id="prospect-email" type="email" autoComplete="email" {...register('email')} />
               </Field>
               <Field id="prospect-origin" label="Origem do contato">
                 <Controller
@@ -125,8 +127,8 @@ export function ProspectFormPage() {
                       value={field.value}
                       options={originOptions}
                       selectPlaceholder="Selecione"
-                      customLabel="+ Digitar nova origem..."
-                      customPlaceholder="Ex: Evento, Parceria..."
+                      customLabel="+ Digitar nova origem…"
+                      customPlaceholder="Ex: Evento, Parceria…"
                       onChange={field.onChange}
                     />
                   )}
@@ -156,7 +158,7 @@ export function ProspectFormPage() {
                       value={field.value}
                       options={statusOptions}
                       selectPlaceholder="Selecione o status"
-                      customLabel="+ Digitar novo status..."
+                      customLabel="+ Digitar novo status…"
                       customPlaceholder="Nome do status"
                       onChange={field.onChange}
                     />

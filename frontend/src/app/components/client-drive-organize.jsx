@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppState } from '../store';
 import { applyDriveOrganization, suggestDriveOrganization } from '../services/documentos';
 
@@ -24,6 +24,14 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
   const [discarded, setDiscarded] = useState(0);
   const [processes, setProcesses] = useState([]);
   const [warnings, setWarnings] = useState([]);
+
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   async function handleSuggest() {
     setLoading(true);
@@ -132,7 +140,7 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
               processo). Nada é alterado até você revisar e aplicar.
             </p>
             <button type="button" className="btn" onClick={handleSuggest} disabled={loading}>
-              {loading ? 'Gerando plano...' : 'Gerar plano de organização'}
+              {loading ? 'Gerando plano…' : 'Gerar plano de organização'}
             </button>
           </div>
         )}
@@ -259,7 +267,7 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
                     warnings.every((item) => !item.included))
                 }
               >
-                {loading ? 'Aplicando...' : 'Aplicar selecionadas'}
+                {loading ? 'Aplicando…' : 'Aplicar selecionadas'}
               </button>
             </div>
           </div>

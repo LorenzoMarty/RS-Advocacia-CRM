@@ -171,7 +171,7 @@ function SidebarNavLink({ item, collapsed }) {
         <>
           <span
             className={cn(
-              'absolute left-1 top-1/2 h-0 w-[3px] -translate-y-1/2 rounded-full bg-primary opacity-0 transition-all duration-200',
+              'absolute left-1 top-1/2 h-0 w-[3px] -translate-y-1/2 rounded-full bg-primary opacity-0 transition-[height,opacity] duration-200',
               isActive && 'h-[56%] opacity-100',
             )}
             aria-hidden="true"
@@ -185,7 +185,7 @@ function SidebarNavLink({ item, collapsed }) {
           />
           <span
             className={cn(
-              'truncate transition-all duration-200',
+              'truncate transition-[max-width,opacity] duration-200',
               collapsed && 'pointer-events-none max-w-0 opacity-0',
             )}
           >
@@ -239,7 +239,7 @@ function BottomNavigation() {
               aria-label={item.label}
               className={({ isActive }) =>
                 cn(
-                  'grid min-h-16 place-items-center gap-1.5 rounded-2xl border border-transparent px-2 py-2.5 text-muted-foreground transition-all',
+                  'grid min-h-16 place-items-center gap-1.5 rounded-2xl border border-transparent px-2 py-2.5 text-muted-foreground transition-colors',
                   isActive && 'border-primary/30 bg-primary text-primary-foreground',
                 )
               }
@@ -424,8 +424,15 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
     function onOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
     }
+    function onKeyDown(e) {
+      if (e.key === 'Escape') setOpen(false);
+    }
     document.addEventListener('mousedown', onOutside);
-    return () => document.removeEventListener('mousedown', onOutside);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onOutside);
+      document.removeEventListener('keydown', onKeyDown);
+    };
   }, [open]);
 
   function handleAction(fn) {
@@ -463,7 +470,7 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
         )}
         <div
           className={cn(
-            'min-w-0 flex-1 overflow-hidden transition-all duration-200',
+            'min-w-0 flex-1 overflow-hidden transition-[max-width,opacity] duration-200',
             collapsed && 'max-w-0 flex-none opacity-0',
           )}
         >
@@ -651,7 +658,7 @@ export function ProtectedLayout() {
               </div>
               <div
                 className={cn(
-                  'min-w-0 max-w-[180px] overflow-hidden transition-all duration-200',
+                  'min-w-0 max-w-[180px] overflow-hidden transition-[max-width,opacity] duration-200',
                   sidebarCollapsed && 'pointer-events-none max-w-0 opacity-0',
                 )}
               >

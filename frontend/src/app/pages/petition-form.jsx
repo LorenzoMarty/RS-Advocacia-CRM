@@ -381,7 +381,7 @@ export function PetitionFormPage() {
 
               <div className="form-actions">
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar peça' : 'Salvar peça'}
+                  {isSubmitting ? 'Salvando…' : isEditing ? 'Atualizar peça' : 'Salvar peça'}
                 </Button>
                 {isEditing ? (
                   <Button

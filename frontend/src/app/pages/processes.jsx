@@ -24,6 +24,7 @@ import {
   EmptyState,
   Field,
   NotFoundState,
+  RelatedItem,
 } from './common';
 
 function validateProcessForm(form) {
@@ -203,7 +204,7 @@ export function ProcessesListPage() {
               {processesPagination.temMais ? (
                 <div className="mt-4 flex justify-center">
                   <Button variant="outline" onClick={handleLoadMore} disabled={loadingMore}>
-                    {loadingMore ? 'Carregando...' : 'Carregar mais'}
+                    {loadingMore ? 'Carregando…' : 'Carregar mais'}
                   </Button>
                 </div>
               ) : null}
@@ -212,7 +213,7 @@ export function ProcessesListPage() {
             <EmptyState
               title="Nenhum processo encontrado."
               copy="Ajuste a busca para localizar o registro desejado."
-              actions={<Link className="btn" to="/processos/novo">Novo</Link>}
+              actions={<Button asChild size="sm"><Link to="/processos/novo">Novo</Link></Button>}
             />
           )}
           </CardContent>
@@ -411,8 +412,8 @@ export function ProcessFormPage() {
                     value={form.status}
                     options={statusOptions}
                     selectPlaceholder="Selecione o status"
-                    customLabel="+ Digitar novo status..."
-                    customPlaceholder="Ex: Suspenso..."
+                    customLabel="+ Digitar novo status…"
+                    customPlaceholder="Ex: Suspenso…"
                     onChange={(value) => updateField('status', value)}
                   />
                 </Field>
@@ -431,8 +432,8 @@ export function ProcessFormPage() {
                     value={form.area}
                     options={areaOptions}
                     selectPlaceholder="Selecione a área jurídica"
-                    customLabel="+ Digitar nova área..."
-                    customPlaceholder="Ex: Penal, Previdenciário..."
+                    customLabel="+ Digitar nova área…"
+                    customPlaceholder="Ex: Penal, Previdenciário…"
                     onChange={(value) => updateField('area', value)}
                   />
                 </Field>
@@ -443,8 +444,8 @@ export function ProcessFormPage() {
                     value={form.court}
                     options={courtOptions}
                     selectPlaceholder="Selecione a vara"
-                    customLabel="+ Digitar nova vara..."
-                    customPlaceholder="Ex: 2ª Vara Criminal..."
+                    customLabel="+ Digitar nova vara…"
+                    customPlaceholder="Ex: 2ª Vara Criminal…"
                     onChange={(value) => updateField('court', value)}
                   />
                 </Field>
@@ -481,7 +482,7 @@ export function ProcessFormPage() {
 
             <div className="form-actions">
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
+                {isSubmitting ? 'Salvando…' : isEditing ? 'Atualizar' : 'Salvar'}
               </Button>
               <Button asChild variant="outline">
                 <Link to={isEditing ? `/processos/${process.id}` : '/processos'}>Cancelar</Link>
@@ -566,84 +567,72 @@ export function ProcessDetailPage() {
             </DetailSection>
 
             <DetailSection title="Compromissos" note={formatCount(relatedEvents.length)}>
-              <div className="list">
+              <div className="flex flex-col gap-2">
                 {relatedEvents.length ? relatedEvents.map((event) => (
-                  <article key={event.id} className="event-item">
-                    <div className="list-top">
-                      <div>
-                        <h3 className="list-title">{event.title}</h3>
-                        <p className="list-subtitle">{event.start.replace('T', ' ').slice(0, 16)}</p>
-                      </div>
-                      <StatusBadge tone={getStatusTone(event.status, event.completed)}>{event.status}</StatusBadge>
-                    </div>
-
-                    <div className="list-meta">
-                      <span className="meta-chip">{event.type || 'Compromisso'}</span>
-                      {event.responsibleName ? <span className="meta-chip">{event.responsibleName}</span> : null}
-                      {event.location ? <span className="meta-chip">{event.location}</span> : null}
-                    </div>
-                  </article>
+                  <RelatedItem
+                    key={event.id}
+                    title={event.title}
+                    subtitle={event.start.replace('T', ' ').slice(0, 16)}
+                    badge={<StatusBadge tone={getStatusTone(event.status, event.completed)}>{event.status}</StatusBadge>}
+                    chips={[
+                      event.type || 'Compromisso',
+                      event.responsibleName,
+                      event.location,
+                    ].filter(Boolean)}
+                  />
                 )) : (
                   <EmptyState
                     title="Sem compromissos."
                     copy="Adicione um novo compromisso para este processo."
-                    actions={<Link className="btn" to={`/agenda/novo?processo=${process.id}&cliente=${client?.id || ''}`}>Novo compromisso</Link>}
+                    actions={<Button asChild size="sm"><Link to={`/agenda/novo?processo=${process.id}&cliente=${client?.id || ''}`}>Novo compromisso</Link></Button>}
                   />
                 )}
               </div>
             </DetailSection>
 
-            <DetailSection title="Prazos" note={formatCount(relatedDeadlines.length, 'prazo', 'prazos')}><div className="list">
+            <DetailSection title="Prazos" note={formatCount(relatedDeadlines.length, 'prazo', 'prazos')}>
+              <div className="flex flex-col gap-2">
                 {relatedDeadlines.length ? relatedDeadlines.map((deadline) => (
-                  <article key={deadline.id} className="event-item">
-                    <div className="list-top">
-                      <div>
-                        <h3 className="list-title">{deadline.title}</h3>
-                        <p className="list-subtitle">{new Date(`${deadline.date}T12:00:00`).toLocaleDateString('pt-BR')}</p>
-                      </div>
-                      <StatusBadge tone={getStatusTone(deadline.status, deadline.completed)}>{deadline.status}</StatusBadge>
-                    </div>
-
-                    <div className="list-meta">
-                      {deadline.responsible ? <span className="meta-chip">{deadline.responsible}</span> : null}
-                    </div>
-                  </article>
+                  <RelatedItem
+                    key={deadline.id}
+                    title={deadline.title}
+                    subtitle={new Date(`${deadline.date}T12:00:00`).toLocaleDateString('pt-BR')}
+                    badge={<StatusBadge tone={getStatusTone(deadline.status, deadline.completed)}>{deadline.status}</StatusBadge>}
+                    chips={[deadline.responsible].filter(Boolean)}
+                  />
                 )) : (
                   <EmptyState
                     title="Sem prazos."
                     copy="Cadastre prazos na area de prazos, separados dos compromissos."
-                    actions={<Link className="btn" to="/prazos/novo">Novo prazo</Link>}
+                    actions={<Button asChild size="sm"><Link to="/prazos/novo">Novo prazo</Link></Button>}
                   />
                 )}
               </div>
             </DetailSection>
 
-            <DetailSection title="Petições ou contestações" note={formatCount(relatedPetitions.length, 'peça', 'peças')}><div className="list">
+            <DetailSection title="Petições ou contestações" note={formatCount(relatedPetitions.length, 'peça', 'peças')}>
+              <div className="flex flex-col gap-2">
                 {relatedPetitions.length ? relatedPetitions.map((petition) => (
-                  <article key={petition.id} className="event-item">
-                    <div className="list-top">
-                      <div>
-                        <h3 className="list-title">{petition.adversary || 'Adverso não informado'}</h3>
-                        <p className="list-subtitle">{petition.type || 'Petição'}</p>
-                      </div>
-                      <StatusBadge tone={getStatusTone(petition.status)}>{petition.status}</StatusBadge>
-                    </div>
-
-                    <div className="list-meta">
-                      {petition.responsible ? <span className="meta-chip">{petition.responsible}</span> : null}
-                      {petition.area ? <span className="meta-chip">{petition.area}</span> : null}
-                      {petition.driveLink ? (
-                        <a className="meta-chip" href={petition.driveLink} target="_blank" rel="noreferrer">
+                  <RelatedItem
+                    key={petition.id}
+                    title={petition.adversary || 'Adverso não informado'}
+                    subtitle={petition.type || 'Petição'}
+                    badge={<StatusBadge tone={getStatusTone(petition.status)}>{petition.status}</StatusBadge>}
+                    chips={[
+                      petition.responsible,
+                      petition.area,
+                      petition.driveLink ? (
+                        <a key="drive" href={petition.driveLink} target="_blank" rel="noreferrer" className="hover:text-foreground">
                           Drive
                         </a>
-                      ) : null}
-                    </div>
-                  </article>
+                      ) : null,
+                    ].filter(Boolean)}
+                  />
                 )) : (
                   <EmptyState
                     title="Sem peças."
                     copy="Vincule petições ou contestações a este processo."
-                    actions={<Link className="btn" to={`/peticoes-contestacoes/novo?processo=${process.id}&cliente=${client?.id || ''}`}>Nova peça</Link>}
+                    actions={<Button asChild size="sm"><Link to={`/peticoes-contestacoes/novo?processo=${process.id}&cliente=${client?.id || ''}`}>Nova peça</Link></Button>}
                   />
                 )}
               </div>
@@ -651,37 +640,53 @@ export function ProcessDetailPage() {
           </DetailStack>
 
           <DetailStack>
-            <DetailSection title="Cliente" note="Vinculado">{client ? (
-                <article className="client-card">
-                  <div className="client-card-head">
-                    <div className="client-mark" aria-hidden="true">{client.name.slice(0, 1).toUpperCase()}</div>
-                    <div>
-                      <h3 className="client-name">{client.name}</h3>
-                      <p className="client-copy">CPF/CNPJ {client.document}</p>
+            <DetailSection title="Cliente" note="Vinculado">
+              {client ? (
+                <article className="rounded-xl border border-border bg-accent/5 p-3.5">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="grid size-10 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-sm font-bold text-primary"
+                      aria-hidden="true"
+                    >
+                      {client.name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-semibold text-foreground">{client.name}</h3>
+                      <p className="truncate text-xs text-muted-foreground">CPF/CNPJ {client.document}</p>
                     </div>
                   </div>
 
-                  <div className="client-meta">
-                    <a className="meta-chip" href={`mailto:${client.email}`}>{client.email}</a>
-                    <a className="meta-chip" href={`tel:${client.phone}`}>{formatPhone(client.phone)}</a>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    <a
+                      className="inline-flex h-6 items-center truncate rounded-full border border-border bg-accent/10 px-2 text-xs text-muted-foreground hover:text-foreground"
+                      href={`mailto:${client.email}`}
+                    >
+                      {client.email}
+                    </a>
+                    <a
+                      className="inline-flex h-6 items-center truncate rounded-full border border-border bg-accent/10 px-2 text-xs text-muted-foreground hover:text-foreground"
+                      href={`tel:${client.phone}`}
+                    >
+                      {formatPhone(client.phone)}
+                    </a>
                   </div>
 
-                  <div className="empty-actions">
-                    <Link className="btn btn-secondary" to={`/clientes/${client.id}`}>Ver cliente</Link>
+                  <div className="mt-3">
+                    <Button asChild variant="outline" size="sm">
+                      <Link to={`/clientes/${client.id}`}>Ver cliente</Link>
+                    </Button>
                   </div>
                 </article>
               ) : (
-                <div className="note-box">Nenhum cliente vinculado.</div>
+                <p className="text-sm text-muted-foreground">Nenhum cliente vinculado.</p>
               )}
             </DetailSection>
 
-            <DetailSection title="Observações" note="Internas">{process.description ? (
-                <div className="note-box">{process.description}</div>
+            <DetailSection title="Observações" note="Internas">
+              {process.description ? (
+                <p className="whitespace-pre-line text-sm text-foreground">{process.description}</p>
               ) : (
-                <div className="empty">
-                  <strong>Sem observações.</strong>
-                  <p>Nenhuma nota registrada.</p>
-                </div>
+                <EmptyState title="Sem observações." copy="Nenhuma nota registrada." className="border-0 p-0" />
               )}
             </DetailSection>
           </DetailStack>

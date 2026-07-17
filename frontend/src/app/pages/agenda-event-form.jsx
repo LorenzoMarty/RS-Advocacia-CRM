@@ -226,8 +226,8 @@ export function EventFormPage() {
                     options={allEventTypes}
                     onChange={(value) => setForm((f) => ({ ...f, type: value }))}
                     selectPlaceholder="Selecione o tipo"
-                    customLabel="+ Digitar novo tipo..."
-                    customPlaceholder="Ex: Perícia, Diligência..."
+                    customLabel="+ Digitar novo tipo…"
+                    customPlaceholder="Ex: Perícia, Diligência…"
                   />
                 </Field>
 
