@@ -1,5 +1,5 @@
 import { createContext, Suspense, useContext, useEffect, useRef, useState } from 'react';
-import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Navigate, Outlet, useLocation, useMatch } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import {
   Bell,
@@ -153,46 +153,48 @@ function useVisibleNavItems() {
 }
 
 function SidebarNavLink({ item, collapsed }) {
+  // isActive é calculado aqui fora (useMatch) em vez de usar a forma função
+  // de className/children do NavLink: quando collapsed envolve este link num
+  // <TooltipTrigger asChild>, o Slot do Radix clona o elemento e serializa
+  // props em função como string ao mesclar — className virava o texto-fonte
+  // da função (bug visível: link do Painel com classe quebrada + tooltip
+  // presa). className/children aqui são valores simples, não funções.
+  const isActive = Boolean(useMatch({ path: item.to, end: item.to === '/' }));
+
   const link = (
     <NavLink
       to={item.to}
       end={item.to === '/'}
       aria-label={item.label}
       data-tour={`nav-${item.key}`}
-      className={({ isActive }) =>
-        cn(
-          'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground',
-          collapsed && 'justify-center px-0',
-          isActive && 'bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary',
-        )
-      }
-    >
-      {({ isActive }) => (
-        <>
-          <span
-            className={cn(
-              'absolute left-1 top-1/2 h-0 w-[3px] -translate-y-1/2 rounded-full bg-primary opacity-0 transition-[height,opacity] duration-200',
-              isActive && 'h-[56%] opacity-100',
-            )}
-            aria-hidden="true"
-          />
-          <NavigationIcon
-            icon={item.key}
-            className={cn(
-              'size-5 shrink-0 transition-colors',
-              isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
-            )}
-          />
-          <span
-            className={cn(
-              'truncate transition-[max-width,opacity] duration-200',
-              collapsed && 'pointer-events-none max-w-0 opacity-0',
-            )}
-          >
-            {item.label}
-          </span>
-        </>
+      className={cn(
+        'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground',
+        collapsed && 'justify-center px-0',
+        isActive && 'bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary',
       )}
+    >
+      <span
+        className={cn(
+          'absolute left-1 top-1/2 h-0 w-[3px] -translate-y-1/2 rounded-full bg-primary opacity-0 transition-[height,opacity] duration-200',
+          isActive && 'h-[56%] opacity-100',
+        )}
+        aria-hidden="true"
+      />
+      <NavigationIcon
+        icon={item.key}
+        className={cn(
+          'size-5 shrink-0 transition-colors',
+          isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
+        )}
+      />
+      <span
+        className={cn(
+          'truncate transition-[max-width,opacity] duration-200',
+          collapsed && 'pointer-events-none max-w-0 opacity-0',
+        )}
+      >
+        {item.label}
+      </span>
     </NavLink>
   );
 
