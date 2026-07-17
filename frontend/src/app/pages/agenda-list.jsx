@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import { useConfirmPopup } from "../hooks/use-confirm-popup";
 import { PageChrome } from "../layout";
@@ -482,9 +483,32 @@ export function AgendaListPage() {
                         </div>
                       ))}
                       {day.events.length > 2 ? (
-                        <span className="calendar-more">
-                          +{day.events.length - 2} compromissos
-                        </span>
+                        <HoverCard openDelay={150}>
+                          <HoverCardTrigger asChild>
+                            <span className="calendar-more" role="button" tabIndex={0}>
+                              +{day.events.length - 2} compromissos
+                            </span>
+                          </HoverCardTrigger>
+                          <HoverCardContent align="start" className="p-2">
+                            <div className="flex flex-col gap-1">
+                              {day.events.slice(2).map((event) => (
+                                <button
+                                  key={event.id}
+                                  type="button"
+                                  className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent/10"
+                                  onClick={() => navigate(`/agenda/${event.id}`)}
+                                >
+                                  <span className="w-12 shrink-0 text-xs tabular-nums text-muted-foreground">
+                                    {formatTime(event.start)}
+                                  </span>
+                                  <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                                    {event.title}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </HoverCardContent>
+                        </HoverCard>
                       ) : null}
                     </div>
                   </article>
