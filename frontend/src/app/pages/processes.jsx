@@ -13,6 +13,7 @@ import { useAppState } from '../store';
 import { formatCount, formatPhone, getStatusTone } from '../utils';
 import { Select } from '../components/select';
 import {
+  ClientHoverCard,
   ComboField,
   DetailGrid,
   DetailHero,
@@ -46,7 +47,11 @@ const ProcessRow = memo(function ProcessRow({ process, clientName, onDelete }) {
     >
       <div className="min-w-0">
         <h2 className="text-base font-semibold leading-snug text-foreground">{process.number}</h2>
-        <span className="mt-1.5 block text-sm text-muted-foreground">{clientName}</span>
+        <ClientHoverCard clientId={process.clientId}>
+          <span className="mt-1.5 block w-fit cursor-default text-sm text-muted-foreground underline decoration-dotted underline-offset-2">
+            {clientName}
+          </span>
+        </ClientHoverCard>
       </div>
 
       <div className="min-w-0">
