@@ -11,7 +11,7 @@
   padding: 14px;
   border-radius: 18px;
   border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .015));
+  background: rgba(255, 255, 255, .03);
   min-width: 0;
   transition: border-color .2s ease, background .2s ease;
 }
