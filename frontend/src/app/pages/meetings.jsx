@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { AudioRecorder } from '../components/audio-recorder';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
@@ -260,14 +264,15 @@ export function MeetingsPage() {
       <div className="meetings-page">
         <div className="meetings-layout">
           <aside className="surface section-card meetings-sidebar">
-            <div className="section-head">
+            <div className="mb-4 flex items-start justify-between gap-3">
               <div>
-                <h2 className="section-title">Reuniões</h2>
-                <p className="section-note">Gravação, transcrição e resumo por IA</p>
+                <p className="font-serif text-xl text-foreground">Reuniões</p>
+                <p className="mt-1 text-sm text-muted-foreground">Gravação, transcrição e resumo por IA</p>
               </div>
-              <button className="btn btn-compact" type="button" onClick={openCreateForm}>
-                + Nova
-              </button>
+              <Button size="sm" onClick={openCreateForm}>
+                <Plus className="size-4" />
+                Nova
+              </Button>
             </div>
 
             {isLoading ? <p className="section-note">Carregando...</p> : null}
@@ -309,14 +314,13 @@ export function MeetingsPage() {
 
           <section className="meetings-workspace">
             {isMeetingFormOpen ? (
-              <div className="surface section-card meeting-editor">
-                <div className="section-head">
-                  <div>
-                    <h2 className="section-title">
-                      {isEditingMeeting ? 'Editar reunião' : 'Nova reunião'}
-                    </h2>
-                    <p className="section-note">Contexto antes da gravação</p>
-                  </div>
+              <Card>
+                <CardContent className="py-5">
+                <div className="mb-4">
+                  <p className="font-serif text-xl text-foreground">
+                    {isEditingMeeting ? 'Editar reunião' : 'Nova reunião'}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">Contexto antes da gravação</p>
                 </div>
 
                 <form className="meeting-form" onSubmit={handleMeetingSubmit}>
@@ -352,20 +356,21 @@ export function MeetingsPage() {
                     </Select>
                   </label>
                   <div className="meeting-form-actions">
-                    <button className="btn" type="submit" disabled={isSaving}>
+                    <Button type="submit" disabled={isSaving}>
                       {isSaving ? 'Salvando...' : isEditingMeeting ? 'Salvar edição' : 'Criar reunião'}
-                    </button>
-                    <button
-                      className="btn btn-secondary"
+                    </Button>
+                    <Button
+                      variant="outline"
                       type="button"
                       disabled={isSaving}
                       onClick={closeMeetingForm}
                     >
                       Cancelar
-                    </button>
+                    </Button>
                   </div>
                 </form>
-              </div>
+                </CardContent>
+              </Card>
             ) : null}
 
             {selectedMeeting ? (
@@ -382,31 +387,31 @@ export function MeetingsPage() {
                   </div>
                   <div className="meeting-doc-actions">
                     {selectedMeeting.documentLink ? (
-                      <a
-                        className="btn btn-secondary btn-compact"
-                        href={selectedMeeting.documentLink}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Ver no Drive
-                      </a>
+                      <Button asChild variant="outline" size="sm">
+                        <a href={selectedMeeting.documentLink} target="_blank" rel="noreferrer">
+                          Ver no Drive
+                        </a>
+                      </Button>
                     ) : null}
-                    <button
-                      className="btn btn-secondary btn-compact"
+                    <Button
+                      variant="outline"
+                      size="sm"
                       type="button"
                       onClick={() => openEditForm(selectedMeeting)}
                     >
                       Editar
-                    </button>
-                    <button
-                      className="btn btn-danger btn-compact"
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/10"
                       type="button"
                       onClick={() => handleDeleteMeeting(selectedMeeting)}
                     >
                       Excluir
-                    </button>
-                    <button
-                      className="btn btn-compact"
+                    </Button>
+                    <Button
+                      size="sm"
                       type="button"
                       onClick={handleFinalizeMeeting}
                       disabled={isFinalizing}
@@ -416,7 +421,7 @@ export function MeetingsPage() {
                         : selectedMeeting.documentLink
                           ? 'Atualizar documento'
                           : 'Finalizar reunião'}
-                    </button>
+                    </Button>
                   </div>
                 </header>
 

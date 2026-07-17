@@ -29,6 +29,50 @@ function greeting() {
   return "Boa noite.";
 }
 
+const WEEKDAY_LETTERS = ["S", "T", "Q", "Q", "S", "S", "D"];
+
+function weekDays(today) {
+  const start = new Date(today);
+  const isoDay = start.getDay() || 7; // segunda=1 ... domingo=7
+  start.setDate(start.getDate() - isoDay + 1);
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    return date;
+  });
+}
+
+// Carga da semana: prazos vencendo + compromissos por dia, pra dar contexto
+// de "hoje é o dia mais cheio" sem virar mais um número solto no topo.
+function WeekLoadSpark({ today, deadlines, events }) {
+  const days = weekDays(today);
+  const counts = days.map((day) => {
+    const dueDeadlines = deadlines.filter(
+      (deadline) => !deadline.completed && isSameDay(deadline.date, day),
+    ).length;
+    const dayEvents = events.filter((event) => isSameDay(event.start, day)).length;
+    return dueDeadlines + dayEvents;
+  });
+  const max = Math.max(1, ...counts);
+
+  return (
+    <div className="mt-3 flex items-end gap-1.5" aria-hidden="true">
+      {days.map((day, index) => (
+        <div key={day.toISOString()} className="flex flex-col items-center gap-1">
+          <div
+            className={cn(
+              "w-1.5 rounded-sm bg-border",
+              isSameDay(day, today) && "bg-primary",
+            )}
+            style={{ height: `${4 + (counts[index] / max) * 18}px` }}
+          />
+          <span className="text-[.62rem] text-muted-foreground">{WEEKDAY_LETTERS[index]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const { clients, deadlines, events, processes } = useAppState();
   const today = new Date();
@@ -81,6 +125,7 @@ export function DashboardPage() {
                 ? focusParts.join(" · ")
                 : "Nada urgente agora — dia livre."}
             </p>
+            <WeekLoadSpark today={today} deadlines={deadlines} events={events} />
           </div>
           <Button asChild>
             <Link to="/agenda/novo">

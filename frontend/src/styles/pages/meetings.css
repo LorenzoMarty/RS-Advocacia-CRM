@@ -13,7 +13,6 @@
 .meeting-option.active{border-color:rgba(212,175,55,.34);background:rgba(212,175,55,.1)}
 
 /* ---- Editor (form de nova/editar reunião) ---- */
-.meeting-editor{display:grid;gap:var(--gap-page);padding:var(--pad-card)}
 .meeting-form{display:grid;gap:var(--gap-list)}
 .meeting-form label{display:grid;gap:8px;color:var(--soft);font-size:.82rem;font-weight:600}
 .meeting-form input,.meeting-form select,.meeting-form textarea{width:100%;border:1px solid var(--line);border-radius:13px;background:var(--ghost);color:var(--text);padding:12px 13px;font:inherit;outline:0}
@@ -132,7 +131,7 @@
   .meetings-sidebar{position:static}
 }
 @media (max-width:640px){
-  .meetings-sidebar,.meeting-editor{padding:var(--pad-card-mobile)}
+  .meetings-sidebar{padding:var(--pad-card-mobile)}
   .meeting-option{padding:12px 14px}
   .meeting-doc-sheet{padding:var(--pad-card-mobile)}
   .meeting-doc-bar{position:static;justify-content:stretch}
