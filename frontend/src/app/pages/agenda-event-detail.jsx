@@ -19,6 +19,7 @@ import {
   getStatusTone,
   isOverdueEvent,
   formatDateTime,
+  formatPhone,
   normalizeText,
 } from "../utils";
 import { Button } from "@/components/ui/button";
@@ -216,7 +217,7 @@ export function EventDetailPage() {
                         <span className="meta-chip">{client.email}</span>
                       ) : null}
                       {client.phone ? (
-                        <span className="meta-chip">{client.phone}</span>
+                        <span className="meta-chip">{formatPhone(client.phone)}</span>
                       ) : null}
                     </div>
                   </Link>
