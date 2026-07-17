@@ -1,5 +1,9 @@
 import { memo, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Plus } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { motion as Motion, staggerContainer, staggerItem } from '../motion';
 import { PROCESS_AREA_OPTIONS, PROCESS_STATUS_OPTIONS } from '../data';
@@ -36,36 +40,53 @@ function validateProcessForm(form) {
 
 const ProcessRow = memo(function ProcessRow({ process, clientName, onDelete }) {
   return (
-    <Motion.article className="process-row" variants={staggerItem}>
-      <div className="process-main">
-        <h2 className="process-number">{process.number}</h2>
-        <span className="process-client">{clientName}</span>
+    <Motion.article
+      className="grid grid-cols-1 items-start gap-3 rounded-2xl border border-border bg-accent/5 p-4 transition-colors hover:border-primary/20 hover:bg-primary/5 sm:grid-cols-[auto_1fr_auto] sm:items-center lg:grid-cols-[minmax(0,1.4fr)_minmax(180px,.9fr)_160px_minmax(0,160px)_252px]"
+      variants={staggerItem}
+    >
+      <div className="min-w-0">
+        <h2 className="text-base font-semibold leading-snug text-foreground">{process.number}</h2>
+        <span className="mt-1.5 block text-sm text-muted-foreground">{clientName}</span>
       </div>
 
-      <div className="process-meta">
-        <div className="meta-stack">
-          {process.area ? <span className="meta-chip">{process.area}</span> : null}
-          {process.court ? <span className="meta-chip">{process.court}</span> : null}
+      <div className="min-w-0">
+        <div className="grid gap-2">
+          {process.area ? (
+            <span className="inline-flex h-8 w-fit max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft">
+              {process.area}
+            </span>
+          ) : null}
+          {process.court ? (
+            <span className="inline-flex h-8 w-fit max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft">
+              {process.court}
+            </span>
+          ) : null}
         </div>
       </div>
 
-      <div className="process-owner">
-        <div className="owner-stack">
-          <span className="owner-chip">{process.ownerName}</span>
-        </div>
+      <div className="min-w-0">
+        <span className="inline-flex h-8 w-fit max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft">
+          {process.ownerName}
+        </span>
       </div>
 
-      <div className="process-status">
+      <div className="flex min-w-0 flex-col items-start gap-1.5">
         <StatusBadge tone={getStatusTone(process.status)}>{process.status}</StatusBadge>
         {!process.lawyerEnabled && (
           <StatusBadge tone="warn">Advogado não habilitado</StatusBadge>
         )}
       </div>
 
-      <div className="process-actions">
-        <Link className="action-link" to={`/processos/${process.id}`}>Ver</Link>
-        <Link className="action-link" to={`/processos/${process.id}/editar`}>Editar</Link>
-        <button className="action-link action-link-danger" type="button" onClick={() => onDelete(process)}>Excluir</button>
+      <div className="flex min-w-0 flex-wrap items-start justify-end gap-2 lg:justify-center">
+        <Button asChild variant="outline" size="sm">
+          <Link to={`/processos/${process.id}`}>Ver</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link to={`/processos/${process.id}/editar`}>Editar</Link>
+        </Button>
+        <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => onDelete(process)}>
+          Excluir
+        </Button>
       </div>
     </Motion.article>
   );
@@ -117,39 +138,49 @@ export function ProcessesListPage() {
       {confirmPopup}
       <PageChrome label="Processos" />
 
-      <div className="process-page">
-        <section className="surface process-intro">
-          <div className="section-head">
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 className="intro-title">Processos</h1>
-              <p className="section-note">Gerencie seus processos jurídicos</p>
+              <p className="font-serif text-3xl text-foreground">Processos</p>
+              <p className="mt-1 text-sm text-muted-foreground">{formatCount(processesPagination.total)}</p>
             </div>
-            <span className="badge gold" data-list-count>{formatCount(processesPagination.total)}</span>
+            <Button asChild>
+              <Link to="/processos/novo" data-tour="page-primary-action">
+                <Plus className="size-4" />
+                Novo
+              </Link>
+            </Button>
           </div>
+        </section>
 
-          <div className="list-intro-toolbar">
+        <Card>
+          <CardContent className="py-4">
             <PageSearch
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               label="Buscar processos"
             />
-            <Link className="btn list-intro-action" to="/processos/novo" data-tour="page-primary-action">Novo</Link>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
-        <section className="surface process-panel">
+        <Card>
+          <CardContent className="py-5">
           {processes.length ? (
             <>
-              <div className="process-head" aria-hidden="true">
+              <div
+                className="mb-3 hidden grid-cols-[minmax(0,1.4fr)_minmax(180px,.9fr)_160px_minmax(0,160px)_252px] gap-3.5 px-3.5 text-xs font-bold uppercase tracking-wide text-muted-foreground lg:grid"
+                aria-hidden="true"
+              >
                 <span>Processo</span>
                 <span>Área</span>
                 <span>Responsável</span>
                 <span>Status</span>
-                <span>Ações</span>
+                <span className="text-center">Ações</span>
               </div>
 
               <Motion.div
-                className="process-list"
+                className="grid gap-2.5"
                 variants={staggerContainer}
                 initial="hidden"
                 animate="visible"
@@ -165,10 +196,10 @@ export function ProcessesListPage() {
               </Motion.div>
 
               {processesPagination.temMais ? (
-                <div className="list-load-more">
-                  <button className="btn btn-secondary" type="button" onClick={handleLoadMore} disabled={loadingMore}>
+                <div className="mt-4 flex justify-center">
+                  <Button variant="outline" onClick={handleLoadMore} disabled={loadingMore}>
                     {loadingMore ? 'Carregando...' : 'Carregar mais'}
-                  </button>
+                  </Button>
                 </div>
               ) : null}
             </>
@@ -179,7 +210,8 @@ export function ProcessesListPage() {
               actions={<Link className="btn" to="/processos/novo">Novo</Link>}
             />
           )}
-        </section>
+          </CardContent>
+        </Card>
       </div>
     </>
   );
@@ -307,28 +339,26 @@ export function ProcessFormPage() {
     <>
       <PageChrome label={isEditing ? 'Editar processo' : 'Novo processo'} />
 
-      <div className="create-page">
-        <section className="surface create-intro">
-          <div className="intro-grid">
-            <Link className="intro-link" to={isEditing ? `/processos/${process.id}` : '/processos'}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-              {isEditing ? 'Voltar para o processo' : 'Voltar para processos'}
-            </Link>
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <Link
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to={isEditing ? `/processos/${process.id}` : '/processos'}
+          >
+            <ArrowLeft className="size-3.5" />
+            {isEditing ? 'Voltar para o processo' : 'Voltar para processos'}
+          </Link>
 
-            <div className="section-head">
-              <div>
-                <h1 className="intro-title">{isEditing ? 'Editar processo' : 'Novo processo'}</h1>
-                <p className="intro-note">
-                  {isEditing ? 'Ajuste os dados principais do processo sem trocar de fluxo.' : 'Registro claro e direto.'}
-                </p>
-              </div>
-            </div>
-          </div>
+          <p className="mt-3 font-serif text-3xl text-foreground">
+            {isEditing ? 'Editar processo' : 'Novo processo'}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isEditing ? 'Ajuste os dados principais do processo sem trocar de fluxo.' : 'Registro claro e direto.'}
+          </p>
         </section>
 
-        <section className="surface form-panel">
+        <Card>
+          <CardContent className="py-5">
           <form className="process-form" onSubmit={handleSubmit}>
             <section className="form-group">
               <div className="group-head">
@@ -445,13 +475,16 @@ export function ProcessFormPage() {
             </section>
 
             <div className="form-actions">
-              <button className="btn" type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
-              </button>
-              <Link className="btn btn-secondary" to={isEditing ? `/processos/${process.id}` : '/processos'}>Cancelar</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to={isEditing ? `/processos/${process.id}` : '/processos'}>Cancelar</Link>
+              </Button>
             </div>
           </form>
-        </section>
+          </CardContent>
+        </Card>
       </div>
     </>
   );

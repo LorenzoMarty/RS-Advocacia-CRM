@@ -1,46 +1,3 @@
-.prospeccao-page,
-.prospect-form-page,
-.prospect-detail-page {
-  display: grid;
-  gap: 16px;
-}
-
-/* Na rota /prospeccao, hero (intro) e main (board) ficam grudados, sem espaço. */
-.prospeccao-page {
-  gap: 0;
-}
-
-.prospeccao-intro {
-  display: grid;
-  gap: 16px;
-  padding: 20px;
-}
-
-.prospeccao-metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 12px;
-}
-
-.prospeccao-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-}
-.prospeccao-toolbar .page-search-inline {
-  width: auto;
-}
-.prospeccao-toolbar .filter-select {
-  width: 100%;
-  min-width: 260px;
-}
-@media (max-width: 640px) {
-  .prospeccao-toolbar {
-    grid-template-columns: 1fr;
-  }
-}
-
 .prospeccao-board {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -282,14 +239,6 @@
 .prospect-audit.is-critical {
   border-color: rgba(239, 122, 122, .45);
   color: var(--danger);
-}
-
-.prospect-detail-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 8px 0 14px;
 }
 
 .prospect-case-box {

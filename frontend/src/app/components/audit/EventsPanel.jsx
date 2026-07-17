@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+import { Card, CardContent } from '@/components/ui/card';
+
 import { formatDateTime } from '../../utils';
 
 function EventItem({ evento }) {
@@ -26,7 +28,8 @@ export function EventsPanel({ eventos = {} }) {
   }
 
   return (
-    <section className="audit-card surface section-card">
+    <Card className="audit-card">
+    <CardContent className="py-5">
       <div className="section-head">
         <div>
           <h2 className="section-title">Compromissos</h2>
@@ -58,6 +61,7 @@ export function EventsPanel({ eventos = {} }) {
           </div>
         )}
       </div>
-    </section>
+    </CardContent>
+    </Card>
   );
 }

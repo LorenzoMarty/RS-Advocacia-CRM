@@ -2,6 +2,10 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { FINANCE_CATEGORIES, FINANCE_TYPE_OPTIONS } from '../data';
 import { PageChrome } from '../layout';
@@ -86,18 +90,23 @@ export function LancamentoFormPage() {
   return (
     <>
       <PageChrome label={isEditing ? 'Editar lançamento' : 'Novo lançamento'} />
-      <div className="lancamento-form-page">
-        <section className="surface section-card">
-          <div className="intro-grid">
-            <Link className="intro-link" to="/financeiro">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-              Voltar para financeiro
-            </Link>
-            <h1 className="intro-title">{isEditing ? 'Editar lançamento' : 'Novo lançamento'}</h1>
-          </div>
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <Link
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to="/financeiro"
+          >
+            <ArrowLeft className="size-3.5" />
+            Voltar para financeiro
+          </Link>
 
+          <p className="mt-3 font-serif text-3xl text-foreground">
+            {isEditing ? 'Editar lançamento' : 'Novo lançamento'}
+          </p>
+        </section>
+
+        <Card>
+          <CardContent className="py-5">
           <form className="lancamento-form" onSubmit={handleSubmit(onSubmit)}>
             <div className="form-grid">
               <Field id="lanc-description" label="Descrição" className="span-2" error={errors.description?.message} required>
@@ -195,13 +204,16 @@ export function LancamentoFormPage() {
             </div>
 
             <div className="form-actions">
-              <button className="btn" type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
-              </button>
-              <Link className="btn btn-secondary" to="/financeiro">Cancelar</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/financeiro">Cancelar</Link>
+              </Button>
             </div>
           </form>
-        </section>
+          </CardContent>
+        </Card>
       </div>
     </>
   );

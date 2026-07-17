@@ -2,6 +2,10 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { PROSPECT_ORIGIN_OPTIONS, PROSPECT_PRIORITY_OPTIONS } from '../data';
 import { PageChrome } from '../layout';
@@ -73,18 +77,23 @@ export function ProspectFormPage() {
   return (
     <>
       <PageChrome label={isEditing ? 'Editar prospect' : 'Novo prospect'} />
-      <div className="prospect-form-page">
-        <section className="surface section-card">
-          <div className="intro-grid">
-            <Link className="intro-link" to="/prospeccao">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-              Voltar para prospecção
-            </Link>
-            <h1 className="intro-title">{isEditing ? 'Editar prospect' : 'Novo prospect'}</h1>
-          </div>
+      <div className="grid gap-4">
+        <section className="mb-2">
+          <Link
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to="/prospeccao"
+          >
+            <ArrowLeft className="size-3.5" />
+            Voltar para prospecção
+          </Link>
 
+          <p className="mt-3 font-serif text-3xl text-foreground">
+            {isEditing ? 'Editar prospect' : 'Novo prospect'}
+          </p>
+        </section>
+
+        <Card>
+          <CardContent className="py-5">
           <form className="prospect-form" onSubmit={handleSubmit(onSubmit)}>
             <div className="form-grid">
               <Field id="prospect-name" label="Nome" className="span-2" error={errors.name?.message} required>
@@ -167,11 +176,14 @@ export function ProspectFormPage() {
             </div>
 
             <div className="form-actions">
-              <button className="btn" type="submit" disabled={isSubmitting}>{isEditing ? 'Atualizar' : 'Salvar'}</button>
-              <Link className="btn btn-secondary" to="/prospeccao">Cancelar</Link>
+              <Button type="submit" disabled={isSubmitting}>{isEditing ? 'Atualizar' : 'Salvar'}</Button>
+              <Button asChild variant="outline">
+                <Link to="/prospeccao">Cancelar</Link>
+              </Button>
             </div>
           </form>
-        </section>
+          </CardContent>
+        </Card>
       </div>
     </>
   );

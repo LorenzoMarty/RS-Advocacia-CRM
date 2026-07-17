@@ -5,11 +5,11 @@ import { AlertCard } from './AlertCard';
 // Área A — card-líder no padrão do projeto: cabeçalho + período + score + faixa de KPIs.
 export function RiskSummary({ summary, risk, period, onPeriodChange }) {
   return (
-    <section className="surface section-card audit-card audit-hero-card">
-      <div className="section-head">
+    <div className="p-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="intro-title">Auditoria do escritório</h1>
-          <p className="section-note">Painel de controle — risco, urgência e ação</p>
+          <p className="font-serif text-3xl text-foreground">Auditoria do escritório</p>
+          <p className="mt-1 text-sm text-muted-foreground">Painel de controle — risco, urgência e ação</p>
         </div>
         <PeriodFilter value={period} onChange={onPeriodChange} />
       </div>
@@ -45,6 +45,6 @@ export function RiskSummary({ summary, risk, period, onPeriodChange }) {
           />
         </div>
       </div>
-    </section>
+    </div>
   );
 }
