@@ -358,13 +358,11 @@ export function ProspectKanbanPage() {
             ))}
           </section>
         ) : (
-          <section className="surface section-card">
-            <EmptyState
-              title="Nenhum prospect cadastrado."
-              copy="Cadastre um contato para iniciar o funil de prospecção."
-              actions={<Link className="btn" to="/prospeccao/novo">Novo prospect</Link>}
-            />
-          </section>
+          <EmptyState
+            title="Nenhum prospect cadastrado."
+            copy="Cadastre um contato para iniciar o funil de prospecção."
+            actions={<Link className="btn" to="/prospeccao/novo">Novo prospect</Link>}
+          />
         )}
       </div>
     </>

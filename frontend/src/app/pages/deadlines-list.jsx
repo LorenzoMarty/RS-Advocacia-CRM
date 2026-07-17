@@ -356,13 +356,15 @@ export function DeadlinesPage() {
         </Card>
 
         {isDeadlinesLoading ? (
-          <section className="surface section-card">
-            <div className="skeleton-stack">
-              <span className="skeleton" style={{ height: 22, width: '40%' }} />
-              <span className="skeleton" style={{ height: 120 }} />
-              <span className="skeleton" style={{ height: 120 }} />
-            </div>
-          </section>
+          <Card>
+            <CardContent className="py-5">
+              <div className="skeleton-stack">
+                <span className="skeleton" style={{ height: 22, width: '40%' }} />
+                <span className="skeleton" style={{ height: 120 }} />
+                <span className="skeleton" style={{ height: 120 }} />
+              </div>
+            </CardContent>
+          </Card>
         ) : allDeadlines.length ? (
           <section className={`deadlines-board${draggingDeadlineId ? ' is-dragging' : ''}`} aria-label="Kanban de prazos fatais">
             {DEADLINE_STATUS_COLUMNS.map((column) => (
@@ -431,13 +433,11 @@ export function DeadlinesPage() {
             ))}
           </section>
         ) : (
-          <section className="surface section-card">
-            <EmptyState
-              title="Nenhum prazo cadastrado."
-              copy="Crie uma tarefa de prazo para organiza-la no Kanban."
-              actions={<Link className="btn" to={deadlineCreatePath()}>Novo prazo</Link>}
-            />
-          </section>
+          <EmptyState
+            title="Nenhum prazo cadastrado."
+            copy="Crie uma tarefa de prazo para organiza-la no Kanban."
+            actions={<Link className="btn" to={deadlineCreatePath()}>Novo prazo</Link>}
+          />
         )}
       </div>
     </>

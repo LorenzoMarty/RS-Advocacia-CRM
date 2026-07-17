@@ -189,7 +189,7 @@ export function DashboardPage() {
                   <EmptyState
                     title="Sem compromissos hoje."
                     copy="Agenda livre."
-                    className="empty-inline"
+                    className="border-0 p-0"
                   />
                 )}
               </CardContent>
@@ -244,7 +244,7 @@ export function DashboardPage() {
                   <EmptyState
                     title="Sem prazos pendentes."
                     copy="Tudo em dia."
-                    className="empty-inline"
+                    className="border-0 p-0"
                   />
                 )}
               </CardContent>

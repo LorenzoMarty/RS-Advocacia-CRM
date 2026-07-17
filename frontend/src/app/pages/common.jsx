@@ -212,12 +212,10 @@ export function ComboField({
 
 export function EmptyState({ title, copy, actions = null, className = '' }) {
   return (
-    <div className={`empty-state${className ? ` ${className}` : ''}`}>
-      <div className="empty">
-        <strong>{title}</strong>
-        <p>{copy}</p>
-        {actions ? <div className="empty-actions">{actions}</div> : null}
-      </div>
+    <div className={cn('rounded-xl border border-dashed border-border px-6 py-10 text-center', className)}>
+      <strong className="block text-sm font-semibold text-foreground">{title}</strong>
+      {copy ? <p className="mt-1.5 text-sm text-muted-foreground">{copy}</p> : null}
+      {actions ? <div className="mt-4 flex flex-wrap items-center justify-center gap-2">{actions}</div> : null}
     </div>
   );
 }
@@ -282,11 +280,11 @@ export function Field({
 
 export function NotFoundState({ title = 'Registro não encontrado.', copy = 'Volte para a listagem e selecione outro item.' }) {
   return (
-    <div className="surface section-card">
-      <div className="empty">
-        <strong>{title}</strong>
-        <p>{copy}</p>
-      </div>
-    </div>
+    <Card>
+      <CardContent className="px-6 py-10 text-center">
+        <strong className="block text-sm font-semibold text-foreground">{title}</strong>
+        <p className="mt-1.5 text-sm text-muted-foreground">{copy}</p>
+      </CardContent>
+    </Card>
   );
 }

@@ -206,13 +206,11 @@ export function PetitionFormPage() {
     return (
       <>
         <PageChrome label="Peça" />
-        <section className="surface section-card">
-          <EmptyState
-            title="Peça não encontrada."
-            copy="Volte para o kanban de petições ou contestações."
-            actions={<Link className="btn" to="/peticoes-contestacoes">Voltar</Link>}
-          />
-        </section>
+        <EmptyState
+          title="Peça não encontrada."
+          copy="Volte para o kanban de petições ou contestações."
+          actions={<Link className="btn" to="/peticoes-contestacoes">Voltar</Link>}
+        />
       </>
     );
   }
@@ -403,13 +401,11 @@ export function PetitionFormPage() {
             </CardContent>
           </Card>
         ) : (
-          <section className="surface section-card">
-            <EmptyState
-              title="Nenhum cliente cadastrado."
-              copy="Cadastre um cliente antes de criar uma petição ou contestação."
-              actions={<Link className="btn" to="/clientes/novo">Novo cliente</Link>}
-            />
-          </section>
+          <EmptyState
+            title="Nenhum cliente cadastrado."
+            copy="Cadastre um cliente antes de criar uma petição ou contestação."
+            actions={<Link className="btn" to="/clientes/novo">Novo cliente</Link>}
+          />
         )}
 
         {isEditing && watchedClientId ? (

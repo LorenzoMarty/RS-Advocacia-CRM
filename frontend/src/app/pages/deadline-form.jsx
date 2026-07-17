@@ -208,13 +208,11 @@ export function DeadlineFormPage() {
             </CardContent>
           </Card>
         ) : (
-          <section className="surface section-card">
-            <EmptyState
-              title="Nenhum processo cadastrado."
-              copy="Cadastre um processo antes de criar uma tarefa de prazo."
-              actions={<Link className="btn" to="/processos/novo">Novo processo</Link>}
-            />
-          </section>
+          <EmptyState
+            title="Nenhum processo cadastrado."
+            copy="Cadastre um processo antes de criar uma tarefa de prazo."
+            actions={<Link className="btn" to="/processos/novo">Novo processo</Link>}
+          />
         )}
       </div>
     </>

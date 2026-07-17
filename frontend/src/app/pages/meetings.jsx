@@ -21,6 +21,7 @@ import {
 } from '../services/meetings';
 import { Select } from '../components/select';
 import { useAppState } from '../store';
+import { EmptyState } from './common';
 import { MeetingSummary, RecordingPipeline } from './meeting-summary';
 import { RecordingResult } from './recording-result';
 import {
@@ -277,10 +278,10 @@ export function MeetingsPage() {
 
             {isLoading ? <p className="section-note">Carregando...</p> : null}
             {!isLoading && !meetings.length ? (
-              <div className="empty">
-                <strong>Nenhuma reunião.</strong>
-                <p>Crie a primeira para habilitar a gravação.</p>
-              </div>
+              <EmptyState
+                title="Nenhuma reunião."
+                copy="Crie a primeira para habilitar a gravação."
+              />
             ) : (
               <div className="meeting-options">
                 {meetings.map((meeting) => {
@@ -469,11 +470,11 @@ export function MeetingsPage() {
                 ) : null}
               </section>
             ) : !isMeetingFormOpen ? (
-              <div className="surface meeting-doc-placeholder">
-                <div className="empty">
-                  <strong>Selecione ou crie uma reunião.</strong>
-                  <p>Use o botão Nova para iniciar um registro.</p>
-                </div>
+              <div className="meeting-doc-placeholder">
+                <EmptyState
+                  title="Selecione ou crie uma reunião."
+                  copy="Use o botão Nova para iniciar um registro."
+                />
               </div>
             ) : null}
           </section>
