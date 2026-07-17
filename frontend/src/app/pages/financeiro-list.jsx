@@ -230,11 +230,11 @@ export function FinanceiroPage() {
               initial="hidden"
               animate="visible"
             >
-              <Motion.article className="metric" variants={pop} whileHover={{ y: -3 }}><span>Recebido no mês</span><MetricValue value={dashboard.recebidoMes} /></Motion.article>
-              <Motion.article className="metric" variants={pop} whileHover={{ y: -3 }}><span>A receber</span><MetricValue value={dashboard.pendente} /></Motion.article>
-              <Motion.article className="metric metric-danger" variants={pop} whileHover={{ y: -3 }}><span>Atrasado</span><MetricValue value={dashboard.atrasado} /></Motion.article>
-              <Motion.article className="metric" variants={pop} whileHover={{ y: -3 }}><span>Despesas no mês</span><MetricValue value={dashboard.despesasMes} /></Motion.article>
-              <Motion.article className="metric" variants={pop} whileHover={{ y: -3 }}><span>Saldo estimado</span><MetricValue value={dashboard.saldo} /></Motion.article>
+              <Motion.article className="metric" variants={pop} whileHover={{ y: -2 }}><span>Recebido no mês</span><MetricValue value={dashboard.recebidoMes} /></Motion.article>
+              <Motion.article className="metric" variants={pop} whileHover={{ y: -2 }}><span>A receber</span><MetricValue value={dashboard.pendente} /></Motion.article>
+              <Motion.article className={`metric${dashboard.atrasado > 0 ? ' metric-danger' : ''}`} variants={pop} whileHover={{ y: -2 }}><span>Atrasado</span><MetricValue value={dashboard.atrasado} /></Motion.article>
+              <Motion.article className="metric" variants={pop} whileHover={{ y: -2 }}><span>Despesas no mês</span><MetricValue value={dashboard.despesasMes} /></Motion.article>
+              <Motion.article className="metric" variants={pop} whileHover={{ y: -2 }}><span>Saldo estimado</span><MetricValue value={dashboard.saldo} /></Motion.article>
             </Motion.div>
 
             <div className="financeiro-charts">
@@ -260,6 +260,9 @@ export function FinanceiroPage() {
                   onKeyDown={handleTabKeyDown}
                 >
                   {item.label}
+                  {tab === item.key ? (
+                    <Motion.span className="financeiro-tab-indicator" layoutId="financeiro-tab-indicator" />
+                  ) : null}
                 </button>
               ))}
             </div>
