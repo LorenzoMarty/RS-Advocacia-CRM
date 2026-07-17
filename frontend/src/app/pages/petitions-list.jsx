@@ -467,13 +467,11 @@ export function PetitionsPage() {
             ))}
           </section>
         ) : (
-          <section className="surface section-card">
-            <EmptyState
-              title="Nenhum cliente cadastrado."
-              copy="Cadastre um cliente antes de criar uma petição ou contestação."
-              actions={<Link className="btn" to="/clientes/novo">Novo cliente</Link>}
-            />
-          </section>
+          <EmptyState
+            title="Nenhum cliente cadastrado."
+            copy="Cadastre um cliente antes de criar uma petição ou contestação."
+            actions={<Link className="btn" to="/clientes/novo">Novo cliente</Link>}
+          />
         )}
 
       </div>

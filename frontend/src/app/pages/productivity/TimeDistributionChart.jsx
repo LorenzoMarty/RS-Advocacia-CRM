@@ -1,3 +1,5 @@
+import { Card, CardContent } from '@/components/ui/card';
+
 import { StatusBadge } from '../../layout';
 import { Donut } from './charts/Donut';
 import { formatMinutes, isTaskDone, taskTypeColor, taskTypeIcon, taskTypeLabel } from './productivity-data';
@@ -15,12 +17,11 @@ export function TimeDistributionChart({ byType, byTask, deadlines, petitions }) 
   const top = byTask.slice(0, VISIBLE);
 
   return (
-    <section className="surface section-card productivity-block">
-      <div className="section-head">
-        <div>
-          <h2 className="section-title">Distribuição do tempo</h2>
-          <p className="section-note">Onde o tempo foi investido no período</p>
-        </div>
+    <Card>
+      <CardContent className="py-5">
+      <div className="mb-4">
+        <p className="font-serif text-lg text-foreground">Distribuição do tempo</p>
+        <p className="text-xs text-muted-foreground">Onde o tempo foi investido no período</p>
       </div>
 
       {donutData.length ? (
@@ -50,13 +51,14 @@ export function TimeDistributionChart({ byType, byTask, deadlines, petitions }) 
                 })}
               </div>
             ) : (
-              <div className="note-box">Sem tarefas cronometradas no período.</div>
+              <p className="text-sm text-muted-foreground">Sem tarefas cronometradas no período.</p>
             )}
           </div>
         </div>
       ) : (
-        <div className="note-box">Sem tempo registrado no período.</div>
+        <p className="text-sm text-muted-foreground">Sem tempo registrado no período.</p>
       )}
-    </section>
+      </CardContent>
+    </Card>
   );
 }
