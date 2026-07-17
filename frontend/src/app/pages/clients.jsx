@@ -124,7 +124,7 @@ const ClientRow = memo(function ClientRow({ client, processCount, onDelete }) {
               className="inline-flex h-8 max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft"
               href={`tel:${client.phone}`}
             >
-              {client.phone}
+              {formatPhone(client.phone)}
             </a>
           ) : (
             <span className="inline-flex h-8 items-center px-2.5 text-sm text-muted-foreground">-</span>
