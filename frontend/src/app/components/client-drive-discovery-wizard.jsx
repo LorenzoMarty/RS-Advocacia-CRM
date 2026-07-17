@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppState } from '../store';
 import { discoverNewClients, confirmNewClients } from '../services/documentos.js';
 
@@ -17,6 +17,14 @@ export function ClientDriveDiscoveryWizard({ onClose }) {
   const [step, setStep] = useState('scan');
   const [loading, setLoading] = useState(false);
   const [candidates, setCandidates] = useState([]);
+
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   async function handleScan() {
     setLoading(true);
@@ -75,7 +83,7 @@ export function ClientDriveDiscoveryWizard({ onClose }) {
               onClick={handleScan}
               disabled={loading}
             >
-              {loading ? 'Escaneando...' : 'Escanear pasta "Clientes"'}
+              {loading ? 'Escaneando…' : 'Escanear pasta "Clientes"'}
             </button>
           </div>
         )}
@@ -131,7 +139,7 @@ export function ClientDriveDiscoveryWizard({ onClose }) {
                 onClick={handleConfirm}
                 disabled={loading || candidates.filter((item) => item.included).length === 0}
               >
-                {loading ? 'Confirmando...' : 'Confirmar importação'}
+                {loading ? 'Confirmando…' : 'Confirmar importação'}
               </button>
             </div>
           </div>

@@ -26,6 +26,7 @@ import {
   EmptyState,
   Field,
   NotFoundState,
+  RelatedItem,
 } from './common';
 
 const USER_PROFILE_OPTIONS = ['Administrador', 'Advogado', 'Estagiário'];
@@ -226,7 +227,7 @@ export function UsersListPage() {
               {usersPagination.temMais && !search ? (
                 <div className="mt-4 flex justify-center">
                   <Button variant="outline" onClick={handleLoadMore} disabled={loadingMore}>
-                    {loadingMore ? 'Carregando...' : 'Carregar mais'}
+                    {loadingMore ? 'Carregando…' : 'Carregar mais'}
                   </Button>
                 </div>
               ) : null}
@@ -235,7 +236,7 @@ export function UsersListPage() {
             <EmptyState
               title="Nenhum usuário encontrado."
               copy="Cadastre a equipe que acessa o sistema."
-              actions={<Link className="btn" to="/usuarios/novo">Novo usuário</Link>}
+              actions={<Button asChild size="sm"><Link to="/usuarios/novo">Novo usuário</Link></Button>}
             />
           )}
           </CardContent>
@@ -322,7 +323,7 @@ export function UserFormPage() {
               </Field>
 
               <Field id="user-email" label="E-mail" error={errors.email?.message} required>
-                <input id="user-email" type="email" {...register('email')} />
+                <input id="user-email" type="email" autoComplete="email" {...register('email')} />
               </Field>
 
               <Field
@@ -398,16 +399,14 @@ export function UserDetailPage() {
 
             {relatedProcesses.length ? (
               <DetailSection title="Processos" note={formatCount(relatedProcesses.length)}>
-                <div className="related-list">
+                <div className="flex flex-col gap-2">
                   {relatedProcesses.map((process) => (
-                    <article key={process.id} className="related-item">
-                      <h3 className="related-title">{process.number}</h3>
-                      <p className="related-copy">{process.area}</p>
-                      <div className="related-meta">
-                        {process.area ? <span className="meta-chip">{process.area}</span> : null}
-                        {process.status ? <span className="meta-chip">{process.status}</span> : null}
-                      </div>
-                    </article>
+                    <RelatedItem
+                      key={process.id}
+                      title={process.number}
+                      subtitle={process.area}
+                      chips={[process.area, process.status].filter(Boolean)}
+                    />
                   ))}
                 </div>
               </DetailSection>
@@ -417,16 +416,14 @@ export function UserDetailPage() {
           <DetailStack>
             {relatedEvents.length ? (
               <DetailSection title="Compromissos" note={formatCount(relatedEvents.length)}>
-                <div className="related-list">
+                <div className="flex flex-col gap-2">
                   {relatedEvents.map((event) => (
-                    <article key={event.id} className="related-item">
-                      <h3 className="related-title">{event.title}</h3>
-                      <p className="related-copy">{event.start.replace('T', ' ').slice(0, 16)}</p>
-                      <div className="related-meta">
-                        {event.type ? <span className="meta-chip">{event.type}</span> : null}
-                        {event.status ? <span className="meta-chip">{event.status}</span> : null}
-                      </div>
-                    </article>
+                    <RelatedItem
+                      key={event.id}
+                      title={event.title}
+                      subtitle={event.start.replace('T', ' ').slice(0, 16)}
+                      chips={[event.type, event.status].filter(Boolean)}
+                    />
                   ))}
                 </div>
               </DetailSection>

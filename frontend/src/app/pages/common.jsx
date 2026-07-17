@@ -135,6 +135,34 @@ export function DetailItem({ label, children, span }) {
   );
 }
 
+// Linha de item relacionado (compromisso/prazo/peça dentro de um DetailSection) —
+// título + subtítulo + badge de status + chips de metadados.
+export function RelatedItem({ title, subtitle, badge, chips }) {
+  return (
+    <article className="rounded-xl border border-border bg-accent/5 px-3.5 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-medium text-foreground">{title}</h3>
+          {subtitle ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</p> : null}
+        </div>
+        {badge}
+      </div>
+      {chips?.length ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {chips.map((chip, index) => (
+            <span
+              key={index}
+              className="inline-flex h-6 items-center truncate rounded-full border border-border bg-accent/10 px-2 text-xs text-muted-foreground"
+            >
+              {chip}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
 const CUSTOM_OPTION = '__custom__';
 
 const FIELD_ERROR_MOTION = {
@@ -153,7 +181,7 @@ export function ComboField({
   options,
   onChange,
   selectPlaceholder = 'Selecione',
-  customLabel = '+ Digitar novo...',
+  customLabel = '+ Digitar novo…',
   customPlaceholder = 'Digite o novo valor',
 }) {
   const known = [...new Set([...(value ? [value] : []), ...options].filter(Boolean))];

@@ -256,7 +256,7 @@ export function AgendaListPage() {
       <PageChrome label="Agenda" />
 
       <div className="agenda-page">
-        <section className="mb-6">
+        <section className="mb-2">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="font-serif text-3xl text-foreground">Agenda</p>

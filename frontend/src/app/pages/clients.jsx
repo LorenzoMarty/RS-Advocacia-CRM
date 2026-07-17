@@ -331,7 +331,7 @@ export function ClientsListPage() {
               {clientsPagination.temMais ? (
                 <div className="mt-4 flex justify-center">
                   <Button variant="outline" onClick={handleLoadMore} disabled={loadingMore}>
-                    {loadingMore ? 'Carregando...' : 'Carregar mais'}
+                    {loadingMore ? 'Carregando…' : 'Carregar mais'}
                   </Button>
                 </div>
               ) : null}
@@ -499,7 +499,7 @@ export function ClientFormPage() {
                         value={field.value || ''}
                         options={partnerOptions}
                         selectPlaceholder="Sem parceria"
-                        customLabel="+ Digitar novo parceiro..."
+                        customLabel="+ Digitar novo parceiro…"
                         customPlaceholder="Nome do parceiro"
                         onChange={field.onChange}
                       />
@@ -522,6 +522,8 @@ export function ClientFormPage() {
                     render={({ field }) => (
                       <input
                         id="client-phone"
+                        type="tel"
+                        autoComplete="tel"
                         {...field}
                         onChange={(e) => field.onChange(formatPhone(e.target.value))}
                       />
@@ -530,7 +532,7 @@ export function ClientFormPage() {
                 </Field>
 
                 <Field id="client-email" label="E-mail" error={errors.email?.message} required>
-                  <input id="client-email" type="email" {...register('email')} />
+                  <input id="client-email" type="email" autoComplete="email" {...register('email')} />
                 </Field>
               </div>
             </section>

@@ -142,7 +142,7 @@ export function LancamentoFormPage() {
                       value={field.value}
                       options={categories}
                       selectPlaceholder="Selecione"
-                      customLabel="+ Digitar nova categoria..."
+                      customLabel="+ Digitar nova categoria…"
                       customPlaceholder="Nome da categoria"
                       onChange={field.onChange}
                     />
@@ -205,7 +205,7 @@ export function LancamentoFormPage() {
 
             <div className="form-actions">
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Salvar'}
+                {isSubmitting ? 'Salvando…' : isEditing ? 'Atualizar' : 'Salvar'}
               </Button>
               <Button asChild variant="outline">
                 <Link to="/financeiro">Cancelar</Link>

@@ -60,7 +60,7 @@ export function LoginPage() {
             onClick={handleGoogleRedirect}
           >
             {isRedirecting
-              ? 'Redirecionando...'
+              ? 'Redirecionando…'
               : requiresConsent
                 ? 'Autorizar Google Calendar'
                 : 'Entrar com Google'}

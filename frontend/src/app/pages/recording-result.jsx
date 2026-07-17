@@ -83,7 +83,7 @@ export function RecordingResult({ onDelete, onSaveTranscript, recording }) {
             />
             <div className="transcript-actions">
               <button className="btn" type="submit" disabled={isSavingTranscript}>
-                {isSavingTranscript ? 'Salvando...' : 'Salvar transcrição'}
+                {isSavingTranscript ? 'Salvando…' : 'Salvar transcrição'}
               </button>
               <button
                 className="btn btn-secondary"

@@ -124,7 +124,7 @@ function ProspectCard({ prospect, deadlines, onDragStart, onDragEnd, isDragging,
             />
             <div className="prospect-quick-form-actions">
               <button className="btn btn-compact" type="submit" disabled={isSaving}>
-                {isSaving ? 'Salvando...' : 'Registrar'}
+                {isSaving ? 'Salvando…' : 'Registrar'}
               </button>
               <button
                 className="btn btn-secondary btn-compact"
@@ -361,7 +361,7 @@ export function ProspectKanbanPage() {
           <EmptyState
             title="Nenhum prospect cadastrado."
             copy="Cadastre um contato para iniciar o funil de prospecção."
-            actions={<Link className="btn" to="/prospeccao/novo">Novo prospect</Link>}
+            actions={<Button asChild size="sm"><Link to="/prospeccao/novo">Novo prospect</Link></Button>}
           />
         )}
       </div>

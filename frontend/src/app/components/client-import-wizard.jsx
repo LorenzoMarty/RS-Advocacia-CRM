@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppState } from '../store';
 import { scanClientDriveImport, confirmClientDriveImport } from '../services/documentos.js';
 
@@ -28,6 +28,14 @@ export function ClientImportWizard({ clientId, onClose, onImported }) {
   const [loading, setLoading] = useState(false);
   const [processes, setProcesses] = useState([]);
   const [documents, setDocuments] = useState([]);
+
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
   const [warnings, setWarnings] = useState([]);
 
   async function handleScan() {
@@ -158,7 +166,7 @@ export function ClientImportWizard({ clientId, onClose, onImported }) {
               onClick={handleScan}
               disabled={loading}
             >
-              {loading ? 'Escaneando...' : 'Escanear pasta'}
+              {loading ? 'Escaneando…' : 'Escanear pasta'}
             </button>
           </div>
         )}
@@ -296,7 +304,7 @@ export function ClientImportWizard({ clientId, onClose, onImported }) {
                 onClick={handleConfirm}
                 disabled={loading}
               >
-                {loading ? 'Confirmando...' : 'Confirmar importação'}
+                {loading ? 'Confirmando…' : 'Confirmar importação'}
               </button>
             </div>
           </div>
