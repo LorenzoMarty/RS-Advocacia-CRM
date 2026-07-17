@@ -76,42 +76,27 @@
     padding:0 46px 0 15px;
     border-radius:16px;
     border:1px solid var(--select-field-border);
-    background:
-        linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.018)),
-        var(--select-field-solid);
+    background:var(--select-field-solid);
     color:var(--text);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.045),
-        0 10px 24px rgba(0,0,0,.08);
-    transition:border-color .2s ease,background .2s ease,box-shadow .2s ease,transform .2s ease,color .2s ease;
+    transition:border-color .2s ease,background .2s ease,box-shadow .2s ease,color .2s ease;
 }
 
 .rs-select-trigger:hover{
     border-color:rgba(212,175,55,.18);
-    background:
-        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.022)),
-        var(--select-field-hover);
-    transform:translateY(-1px);
+    background:var(--select-field-hover);
 }
 
 .rs-select.is-open .rs-select-trigger,
 .rs-select-trigger:focus-visible{
     outline:0;
     border-color:var(--select-field-border-strong);
-    background:
-        linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025)),
-        var(--select-field-hover);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.05),
-        0 0 0 4px rgba(212,175,55,.08),
-        0 14px 28px rgba(0,0,0,.12);
+    background:var(--select-field-hover);
+    box-shadow:0 0 0 4px rgba(212,175,55,.08);
 }
 
 .rs-select.is-invalid .rs-select-trigger{
     border-color:rgba(239,122,122,.42);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.035),
-        0 0 0 4px rgba(239,122,122,.08);
+    box-shadow:0 0 0 4px rgba(239,122,122,.08);
 }
 
 .rs-select.is-disabled .rs-select-trigger{
@@ -164,9 +149,7 @@
     padding:8px;
     border-radius:20px;
     border:1px solid var(--select-field-border);
-    background:
-        linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.012)),
-        var(--select-dropdown-bg);
+    background:var(--select-dropdown-bg);
     box-shadow:var(--select-shadow);
     backdrop-filter:blur(16px);
     opacity:0;
@@ -274,10 +257,7 @@
 .rs-select-option.is-selected{
     color:var(--text);
     border-color:var(--select-option-selected-border);
-    background:
-        linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015)),
-        var(--select-option-selected);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+    background:var(--select-option-selected);
 }
 
 .rs-select-option.is-selected .rs-select-option-mark{

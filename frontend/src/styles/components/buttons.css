@@ -8,61 +8,30 @@
     padding:0 15px;
     border-radius:13px;
     border:1px solid transparent;
-    background:linear-gradient(180deg, var(--gold), #b5952f);
+    background:var(--gold);
     color:#020617;
     font-size:.88rem;
     font-weight:700;
     white-space:nowrap;
-    overflow:hidden;
-    transition:transform var(--motion) var(--ease-out),
-               filter var(--motion) var(--ease-out),
-               box-shadow var(--motion) var(--ease-out),
-               border-color var(--motion) var(--ease-out),
-               background var(--motion) var(--ease-out);
-    box-shadow:0 12px 24px rgba(212,175,55,.2);
-}
-
-/* Brilho sutil que cruza o botão primário no hover (sheen). */
-.btn::after{
-    content:"";
-    position:absolute;
-    top:0;
-    left:-60%;
-    width:45%;
-    height:100%;
-    background:linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent);
-    transform:skewX(-18deg);
-    opacity:0;
-    pointer-events:none;
-    transition:opacity var(--motion-fast) var(--ease-out);
+    transition:background var(--motion) var(--ease-out),
+               border-color var(--motion) var(--ease-out);
 }
 
 .btn:hover{
-    transform:translateY(-1px);
-    filter:brightness(1.04);
-    box-shadow:0 16px 30px rgba(212,175,55,.26);
+    background:var(--gold-soft);
 }
 
-.btn:hover::after{
-    opacity:1;
-    animation:btn-sheen var(--motion-slow) var(--ease-out);
+.btn:active{
+    background:var(--gold);
 }
-
-.btn:active{transform:translateY(0) scale(.985);filter:brightness(.99)}
 
 .btn:focus-visible{
     outline:none;
-    box-shadow:0 0 0 3px rgba(212,175,55,.4),0 12px 24px rgba(212,175,55,.2);
+    box-shadow:0 0 0 3px rgba(212,175,55,.35);
 }
 
-@keyframes btn-sheen{
-    from{left:-60%}
-    to{left:130%}
-}
-
-.btn-secondary{background:var(--ghost);color:var(--text);border-color:var(--line);box-shadow:none}
-.btn-secondary::after{display:none}
-.btn-secondary:hover{border-color:rgba(212,175,55,.2);background:var(--hover);box-shadow:none;filter:none}
+.btn-secondary{background:var(--ghost);color:var(--text);border-color:var(--line)}
+.btn-secondary:hover{border-color:rgba(212,175,55,.2);background:var(--hover)}
 .btn-secondary:focus-visible{
     outline:none;
     border-color:rgba(212,175,55,.32);
@@ -72,16 +41,11 @@
     background:rgba(239,122,122,.14);
     color:#ffe3e3;
     border-color:rgba(239,122,122,.28);
-    box-shadow:none;
 }
-.btn-danger::after{display:none}
 .btn-danger:hover{
     background:rgba(239,122,122,.18);
-    box-shadow:none;
-    filter:none;
 }
 .btn-danger:focus-visible{
     outline:none;
     box-shadow:0 0 0 3px rgba(239,122,122,.3);
 }
-

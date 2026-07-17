@@ -22,11 +22,11 @@ const SHORTCUTS = [
   { to: "/peticoes-contestacoes", label: "Petições", tour: "shortcut-peticoes", Icon: FileText },
 ];
 
-function greeting() {
+function greeting(name) {
   const hour = new Date().getHours();
-  if (hour < 12) return "Bom dia.";
-  if (hour < 18) return "Boa tarde.";
-  return "Boa noite.";
+  const firstName = name?.split(" ")[0] || "";
+  const period = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
+  return firstName ? `${period}, ${firstName}.` : `${period}.`;
 }
 
 const WEEKDAY_LETTERS = ["S", "T", "Q", "Q", "S", "S", "D"];
@@ -74,7 +74,7 @@ function WeekLoadSpark({ today, deadlines, events }) {
 }
 
 export function DashboardPage() {
-  const { clients, deadlines, events, processes } = useAppState();
+  const { clients, currentUser, deadlines, events, processes } = useAppState();
   const today = new Date();
 
   const eventsToday = events
@@ -119,11 +119,11 @@ export function DashboardPage() {
       <section className="mb-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="font-serif text-3xl text-foreground">{greeting()}</p>
+            <p className="font-serif text-3xl text-foreground">{greeting(currentUser?.name)}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {focusParts.length
                 ? focusParts.join(" · ")
-                : "Nada urgente agora — dia livre."}
+                : "Nada urgente agora."}
             </p>
             <WeekLoadSpark today={today} deadlines={deadlines} events={events} />
           </div>
@@ -200,7 +200,7 @@ export function DashboardPage() {
             <Card>
               <CardHeader className="flex-row items-center justify-between space-y-0">
                 <div>
-                  <h2 className="font-serif text-lg text-foreground">Prazos críticos</h2>
+                  <h2 className="font-serif text-lg text-foreground">Prazos fatais</h2>
                   <p className="text-xs text-muted-foreground">Ordenados por urgência</p>
                 </div>
                 {pendingDeadlines.length ? (
