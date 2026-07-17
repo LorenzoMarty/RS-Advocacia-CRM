@@ -26,7 +26,7 @@
     --sidebar:calc(228px * var(--ui-scale));
     --sidebar-collapsed:calc(68px * var(--ui-scale));
     --page-max-width:1480px;
-    --layout-gutter:calc(14px * var(--ui-scale) * var(--space-scale));
+    --layout-gutter:calc(28px * var(--ui-scale) * var(--space-scale));
 
     /* Espaçamento "vivo" dos contêineres — escala com a preferência do usuário.
        Aplicado nas páginas principais (cards full-bleed + gaps de seção). */
