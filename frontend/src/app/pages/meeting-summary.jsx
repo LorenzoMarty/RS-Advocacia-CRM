@@ -9,13 +9,24 @@ export function RecordingPipeline({ status }) {
   const activeIndex = currentIndex === -1 ? 0 : currentIndex;
 
   return (
-    <ol className="recording-pipeline" aria-label="Progresso do processamento">
+    <ol className="m-0 flex list-none flex-wrap items-center gap-x-3.5 gap-y-1.5 p-0" aria-label="Progresso do processamento">
       {PROCESSING_STEPS.map((step, index) => {
         const state = index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'pending';
         return (
-          <li key={step.key} className={`recording-step recording-step-${state}`}>
-            <span className="recording-step-dot" aria-hidden="true" />
-            <span className="recording-step-label">{step.label}</span>
+          <li key={step.key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span
+              className={
+                state === 'done'
+                  ? 'h-2 w-2 flex-none rounded-full border border-success bg-success'
+                  : state === 'active'
+                    ? 'h-2 w-2 flex-none animate-pulse rounded-full border border-primary bg-primary'
+                    : 'h-2 w-2 flex-none rounded-full border border-border bg-border'
+              }
+              aria-hidden="true"
+            />
+            <span className={state === 'done' ? 'text-muted-foreground' : state === 'active' ? 'font-semibold text-foreground' : ''}>
+              {step.label}
+            </span>
           </li>
         );
       })}
@@ -147,11 +158,14 @@ function renderTextBlock(value, keyPrefix) {
   function flushLists() {
     if (checklistItems.length) {
       blocks.push(
-        <ul className="summary-checklist" key={`${keyPrefix}-check-${blocks.length}`}>
+        <ul className="m-0 grid list-none gap-1.5 p-0" key={`${keyPrefix}-check-${blocks.length}`}>
           {checklistItems.map((item, index) => (
-            <li className="summary-checkitem" key={`${keyPrefix}-check-item-${index}`}>
-              <span aria-hidden="true" />
-              <p>{cleanSummaryLine(item)}</p>
+            <li className="flex items-start gap-2" key={`${keyPrefix}-check-item-${index}`}>
+              <span
+                aria-hidden="true"
+                className="mt-0.5 h-[15px] w-[15px] flex-none rounded-[5px] border border-primary/35 bg-primary/10"
+              />
+              <p className="m-0">{cleanSummaryLine(item)}</p>
             </li>
           ))}
         </ul>,
@@ -161,7 +175,7 @@ function renderTextBlock(value, keyPrefix) {
 
     if (listItems.length) {
       blocks.push(
-        <ul className="summary-list" key={`${keyPrefix}-list-${blocks.length}`}>
+        <ul className="m-0 grid gap-1.5 pl-[18px] marker:text-primary" key={`${keyPrefix}-list-${blocks.length}`}>
           {listItems.map((item, index) => (
             <li key={`${keyPrefix}-list-item-${index}`}>{cleanSummaryLine(item)}</li>
           ))}
@@ -189,7 +203,7 @@ function renderTextBlock(value, keyPrefix) {
     }
 
     flushLists();
-    blocks.push(<p key={`${keyPrefix}-p-${blocks.length}`}>{line}</p>);
+    blocks.push(<p className="m-0" key={`${keyPrefix}-p-${blocks.length}`}>{line}</p>);
   });
 
   flushLists();
@@ -209,16 +223,21 @@ function renderSummaryNodes(nodes, level = 0, keyPrefix = 'summary') {
 
     return (
       <section
-        className={`summary-section${level > 0 ? ' summary-section-nested' : ''}`}
+        className={
+          level > 0
+            ? 'grid gap-2 rounded-xl bg-white/[.028] p-3'
+            : 'grid gap-2 rounded-xl border border-border bg-muted/40 p-4'
+        }
         key={key}
       >
-        <header className="summary-section-header">
-          <h4>{node.title}</h4>
+        <header className="flex items-center gap-2">
+          <span aria-hidden="true" className="h-[7px] w-[7px] flex-none rounded-full bg-primary" />
+          <h4 className="m-0 text-xs font-bold uppercase tracking-wide text-foreground">{node.title}</h4>
         </header>
-        <div className="summary-section-body">
+        <div className="grid gap-2 text-sm leading-relaxed text-muted-foreground">
           {textChildren.flatMap((child, childIndex) => renderTextBlock(child.value, `${key}-text-${childIndex}`))}
           {sectionChildren.length ? (
-            <div className="summary-subsections">
+            <div className="grid gap-2">
               {renderSummaryNodes(sectionChildren, level + 1, key)}
             </div>
           ) : null}
@@ -236,7 +255,7 @@ export function MeetingSummary({ value }) {
     : parseMarkdownSummary(normalizedValue);
 
   return (
-    <div className="summary-report">
+    <div className="grid gap-3">
       {nodes.length ? renderSummaryNodes(nodes) : renderTextBlock(normalizedValue, 'summary-plain')}
     </div>
   );

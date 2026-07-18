@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+
 import { StatusBadge } from '../layout';
 import { MeetingSummary, RecordingPipeline } from './meeting-summary';
 import { statusTone } from './meetings-utils';
@@ -27,66 +30,60 @@ export function RecordingResult({ onDelete, onSaveTranscript, recording }) {
   }
 
   return (
-    <article className="recording-result">
-      <div className="recording-result-head">
+    <article className="grid gap-3 rounded-xl border border-border bg-muted/40 p-4">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <strong>{recording.filename}</strong>
-          <p>{recording.transcriptionModel || 'Aguardando processamento'}</p>
+          <p className="m-0 mt-1 text-xs text-muted-foreground">
+            {recording.transcriptionModel || 'Aguardando processamento'}
+          </p>
         </div>
-        <div className="recording-result-actions">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <StatusBadge tone={statusTone(recording.status)}>
             {recording.statusLabel || recording.status}
           </StatusBadge>
-          <button
-            className="btn btn-danger btn-compact"
-            type="button"
-            onClick={() => onDelete(recording)}
-          >
+          <Button variant="destructive" size="sm" type="button" onClick={() => onDelete(recording)}>
             Excluir
-          </button>
+          </Button>
         </div>
       </div>
 
       <RecordingPipeline status={recording.status} />
 
       {recording.processingError ? (
-        <p className="recording-failure">{recording.processingError}</p>
+        <p className="m-0 text-sm text-destructive">{recording.processingError}</p>
       ) : null}
 
       {recording.summary ? (
-        <div className="ai-output">
-          <h3>Resumo</h3>
+        <div className="grid gap-2">
+          <h3 className="m-0 text-sm uppercase tracking-wide text-primary">Resumo</h3>
           <MeetingSummary value={recording.summary} />
         </div>
       ) : null}
 
-      <div className="transcript-panel">
-        <div className="transcript-head">
-          <h3>Transcrição</h3>
+      <div className="grid gap-2.5 rounded-lg border border-border bg-white/[.028] p-3.5">
+        <div className="flex items-center justify-between gap-2.5">
+          <h3 className="m-0 text-xs font-bold uppercase tracking-wide text-primary">Transcrição</h3>
           {!isEditingTranscript ? (
-            <button
-              className="btn btn-secondary btn-compact"
-              type="button"
-              onClick={() => setIsEditingTranscript(true)}
-            >
+            <Button variant="secondary" size="sm" type="button" onClick={() => setIsEditingTranscript(true)}>
               {recording.transcript ? 'Editar transcrição' : 'Adicionar transcrição'}
-            </button>
+            </Button>
           ) : null}
         </div>
 
         {isEditingTranscript ? (
-          <form className="transcript-editor" onSubmit={handleTranscriptSubmit}>
-            <textarea
-              rows="10"
+          <form className="grid gap-2.5" onSubmit={handleTranscriptSubmit}>
+            <Textarea
+              rows={10}
               value={transcriptDraft}
               onChange={(event) => setTranscriptDraft(event.target.value)}
             />
-            <div className="transcript-actions">
-              <button className="btn" type="submit" disabled={isSavingTranscript}>
+            <div className="flex flex-wrap gap-2.5">
+              <Button type="submit" disabled={isSavingTranscript}>
                 {isSavingTranscript ? 'Salvando…' : 'Salvar transcrição'}
-              </button>
-              <button
-                className="btn btn-secondary"
+              </Button>
+              <Button
+                variant="secondary"
                 type="button"
                 disabled={isSavingTranscript}
                 onClick={() => {
@@ -95,11 +92,13 @@ export function RecordingResult({ onDelete, onSaveTranscript, recording }) {
                 }}
               >
                 Cancelar
-              </button>
+              </Button>
             </div>
           </form>
         ) : (
-          <p>{recording.transcript || 'Transcrição ainda não disponível.'}</p>
+          <p className="m-0 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+            {recording.transcript || 'Transcrição ainda não disponível.'}
+          </p>
         )}
       </div>
     </article>
