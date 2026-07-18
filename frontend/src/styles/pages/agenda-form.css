@@ -1,9 +1,4 @@
-.intro-grid{
-        display:grid;
-        gap:14px;
-    }
-
-    .intro-link{
+.intro-link{
         display:inline-flex;
         align-items:center;
         gap:8px;
@@ -180,8 +175,11 @@
 
     .type-combo{display:flex;gap:8px;align-items:stretch}
     .type-combo input{flex:1;min-width:0}
+    .type-combo .rs-select{flex:1;min-width:0}
     .type-combo-back{flex:0 0 auto;min-height:50px;padding:0 14px;border-radius:16px;border:1px solid var(--line);background:var(--ghost);color:var(--muted);cursor:pointer;font-size:.8rem;font-weight:600;white-space:nowrap;transition:border-color .2s ease,background .2s ease}
     .type-combo-back:hover{border-color:rgba(212,175,55,.18);background:var(--ghost-strong);color:var(--text)}
+    .type-combo-delete{flex:0 0 auto;display:grid;place-items:center;width:50px;min-height:50px;border-radius:16px;border:1px solid var(--line);background:var(--ghost);color:var(--muted);cursor:pointer;transition:border-color .2s ease,background .2s ease,color .2s ease}
+    .type-combo-delete:hover{border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.08);color:var(--danger)}
 
     .form-actions{
         display:flex;
@@ -232,7 +230,8 @@
         border-radius:14px;
     }
 
-    .type-combo-back{min-height:44px;border-radius:14px}
+    .type-combo-back,
+    .type-combo-delete{min-height:44px;border-radius:14px}
 
     .field textarea{
         min-height:118px;

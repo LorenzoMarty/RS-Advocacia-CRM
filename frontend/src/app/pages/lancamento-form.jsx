@@ -139,6 +139,7 @@ export function LancamentoFormPage() {
                   render={({ field }) => (
                     <ComboField
                       id="lanc-category"
+                      campo={`financeiro_categoria_${watchedType}`}
                       value={field.value}
                       options={categories}
                       selectPlaceholder="Selecione"

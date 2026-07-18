@@ -222,6 +222,7 @@ export function EventFormPage() {
                 >
                   <ComboField
                     id="event-type"
+                    campo="evento_tipo"
                     value={form.type}
                     options={allEventTypes}
                     onChange={(value) => setForm((f) => ({ ...f, type: value }))}

@@ -19,4 +19,5 @@ urlpatterns = [
     path("", include("meetings.urls")),
     path("", include("documentos.urls")),
     path("", include("notificacoes.urls")),
+    path("", include("opcoes.urls")),
 ]

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, isApiEnabled } from '../api';
 
 const POLL_INTERVAL_MS = 30_000;
-const NOTIFICATIONS_ENABLED = false;
+const NOTIFICATIONS_ENABLED = true;
 
 export function useNotifications() {
   const [notificacoes, setNotificacoes] = useState([]);

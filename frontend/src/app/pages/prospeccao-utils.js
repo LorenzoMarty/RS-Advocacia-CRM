@@ -78,5 +78,7 @@ export function idleLabel(days) {
 export function nextStatusOf(status) {
   const index = PROSPECT_STATUS_COLUMNS.findIndex((column) => column.label === status);
   if (index === -1) return null;
-  return PROSPECT_STATUS_COLUMNS[index + 1]?.label || null;
+  const next = PROSPECT_STATUS_COLUMNS[index + 1];
+  if (!next || TERMINAL_STATUSES.includes(next.label)) return null;
+  return next.label;
 }

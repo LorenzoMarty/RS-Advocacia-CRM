@@ -135,6 +135,17 @@ def processar_gravacao(self, gravacao_id: int) -> None:
         gravacao.status = Gravacao.Status.CONCLUIDA
         gravacao.processada_em = timezone.now()
         gravacao.save(update_fields=["status", "processada_em"])
+
+        if gravacao.enviada_por_id:
+            from notificacoes.services import criar_notificacao
+
+            criar_notificacao(
+                gravacao.enviada_por,
+                "reuniao",
+                f"Reunião processada: {gravacao.reuniao.titulo}",
+                mensagem="Transcrição e resumo da gravação estão prontos.",
+                link=f"/reunioes/{gravacao.reuniao_id}",
+            )
     except GoogleAuthorizationRequired:
         # Permanent: no usable token to download the audio; retrying won't help.
         logger.exception("Gravacao %s sem autorizacao Google.", gravacao.pk)

@@ -496,6 +496,7 @@ export function ClientFormPage() {
                     render={({ field }) => (
                       <ComboField
                         id="client-partner"
+                        campo="cliente_parceiro"
                         value={field.value || ''}
                         options={partnerOptions}
                         selectPlaceholder="Sem parceria"

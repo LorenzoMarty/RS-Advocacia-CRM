@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
-import { PageChrome, StatusBadge } from '../layout';
+import { StatusBadge } from '../layout';
 import {
   belongsToUser,
   formatTimerSeconds,
@@ -12,7 +11,6 @@ import {
 } from '../productivity-utils';
 import { Select } from './select';
 import { useAppState } from '../store';
-import { EmptyState } from '../pages/common';
 
 const PAGE_SIZE = 20;
 
@@ -660,168 +658,5 @@ function ProductivityUserContent({ user, readOnly = false }) {
       </section>
 
     </div>
-  );
-}
-
-export function UserProductivitySection({ user, isAdmin = false }) {
-  const { currentUser } = useAppState();
-  const canView = isAdmin || currentUser?.id === user.id;
-
-  if (!canView) {
-    return (
-      <section className="surface section-card">
-        <div className="section-head">
-          <div>
-            <h2 className="section-title">Produtividade</h2>
-            <p className="section-note">Visível apenas para o próprio usuário ou admin</p>
-          </div>
-        </div>
-        <div className="note-box">Dados de produtividade restritos.</div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="surface section-card">
-      <div className="section-head">
-        <div>
-          <h2 className="section-title">Produtividade</h2>
-          <p className="section-note">Entregas, tempo e timers</p>
-        </div>
-      </div>
-      <ProductivityUserContent user={user} readOnly={isAdmin && currentUser?.id !== user.id} />
-    </section>
-  );
-}
-
-export function OfficeProductivityPage() {
-  const {
-    currentRole,
-    currentUser,
-    deadlines,
-    events,
-    petitions,
-    timeEntries,
-    users,
-  } = useAppState();
-  const isAdmin = currentRole?.name === 'Administrador';
-  const [now, setNow] = useState(() => Date.now());
-  const [period, setPeriod] = useState('week');
-  const [customStart, setCustomStart] = useState(dateInputValue(startOfWeek()));
-  const [customEnd, setCustomEnd] = useState(dateInputValue(new Date()));
-  const [selectedUserId, setSelectedUserId] = useState('');
-  const bounds = periodBounds(period, customStart, customEnd);
-  const filteredEntries = timeEntries.filter((entry) => isEntryInRange(entry, bounds));
-  const totalSeconds = filteredEntries.reduce((total, entry) => total + timeEntryElapsedSeconds(entry, now), 0);
-  const runningCount = timeEntries.filter((entry) => entry.status === 'running').length;
-
-  // Entregas do escritório no período (agregado, sem recorte por usuário).
-  const officeDoneDeadlines = deadlines.filter((deadline) =>
-    isDeadlineDone(deadline) && isDateInRange(deadlineDoneDate(deadline), bounds),
-  );
-  const officeDonePetitions = petitions.filter((petition) =>
-    isPetitionDone(petition) && isDateInRange(petitionDoneDate(petition), bounds),
-  );
-  const officeAttendedEvents = events.filter((event) =>
-    isEventAttended(event, now) && isDateInRange(event.start, bounds),
-  );
-  const officeProcessIds = new Set(
-    [
-      ...filteredEntries.map((entry) => entry.processId),
-      ...officeDoneDeadlines.map((deadline) => deadline.processId),
-      ...officeDonePetitions.map((petition) => petition.processId),
-      ...officeAttendedEvents.map((event) => event.processId),
-    ].filter(Boolean),
-  );
-
-  const selectedUser = users.find((user) => user.id === selectedUserId) || null;
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(intervalId);
-  }, []);
-
-  if (!isAdmin) {
-    return (
-      <>
-        <PageChrome label="Produtividade" />
-        <div className="office-productivity-page">
-          <section className="surface section-card">
-            <div className="section-head">
-              <div>
-                <h1 className="intro-title">Minha produtividade</h1>
-                <p className="section-note">Entregas, tempo e timers</p>
-              </div>
-            </div>
-            {currentUser ? <ProductivityUserContent user={currentUser} /> : null}
-          </section>
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <PageChrome label="Produtividade" />
-      <div className="office-productivity-page">
-        <section className="surface section-card">
-          <div className="section-head">
-            <div>
-              <h1 className="intro-title">Produtividade do escritório</h1>
-              <p className="section-note">Entregas e tempo no período</p>
-            </div>
-            <PeriodFilter
-              period={period}
-              setPeriod={setPeriod}
-              customStart={customStart}
-              setCustomStart={setCustomStart}
-              customEnd={customEnd}
-              setCustomEnd={setCustomEnd}
-            />
-          </div>
-
-          <ProductivityKpis
-            items={[
-              { label: 'Total de horas', value: formatHoursCompact(totalSeconds) },
-              { label: 'Prazos realizados', value: officeDoneDeadlines.length },
-              { label: 'Petições realizadas', value: officeDonePetitions.length },
-              { label: 'Compromissos', value: officeAttendedEvents.length },
-              { label: 'Processos acompanhados', value: officeProcessIds.size },
-              { label: 'Timers rodando', value: runningCount },
-            ]}
-          />
-        </section>
-
-        <section className="surface section-card">
-          <div className="section-head">
-            <div>
-              <h2 className="section-title">Detalhe por usuário</h2>
-              <p className="section-note">Tempo gasto em cada tarefa de cada pessoa</p>
-            </div>
-            {users.length ? (
-              <Select
-                className="productivity-user-select"
-                value={selectedUserId}
-                onChange={(event) => setSelectedUserId(event.target.value)}
-                aria-label="Selecionar usuário"
-              >
-                <option value="">Selecione um usuário</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>{user.name}</option>
-                ))}
-              </Select>
-            ) : null}
-          </div>
-
-          {!users.length ? (
-            <EmptyState title="Sem usuários." copy="Cadastre usuários para acompanhar produtividade." actions={<Link className="btn" to="/usuarios/novo">Novo usuário</Link>} />
-          ) : selectedUser ? (
-            <ProductivityUserContent user={selectedUser} readOnly />
-          ) : (
-            <div className="note-box">Selecione um usuário para ver o tempo por tarefa.</div>
-          )}
-        </section>
-      </div>
-    </>
   );
 }

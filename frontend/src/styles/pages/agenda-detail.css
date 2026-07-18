@@ -1,9 +1,4 @@
-.event-page{
-        display:grid;
-        gap:var(--gap-page);
-    }
-
-    .section-card{
+.section-card{
         padding:var(--pad-card);
     }
 

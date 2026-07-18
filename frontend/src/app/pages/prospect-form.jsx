@@ -41,7 +41,7 @@ export function ProspectFormPage() {
       email: prospect?.email || '',
       origin: prospect?.origin || '',
       responsibleId: prospect?.responsibleId || '',
-      status: prospect?.status || 'Novo',
+      status: prospect?.status || 'Em contato',
       priority: prospect?.priority || 'Media',
       notes: prospect?.notes || '',
     },
@@ -124,6 +124,7 @@ export function ProspectFormPage() {
                   render={({ field }) => (
                     <ComboField
                       id="prospect-origin"
+                      campo="prospect_origem"
                       value={field.value}
                       options={originOptions}
                       selectPlaceholder="Selecione"
@@ -149,21 +150,11 @@ export function ProspectFormPage() {
                 </div>
               ) : null}
               <Field id="prospect-status" label="Status">
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <ComboField
-                      id="prospect-status"
-                      value={field.value}
-                      options={statusOptions}
-                      selectPlaceholder="Selecione o status"
-                      customLabel="+ Digitar novo status…"
-                      customPlaceholder="Nome do status"
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
+                <Select id="prospect-status" {...register('status')}>
+                  {statusOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </Select>
               </Field>
               <Field id="prospect-priority" label="Prioridade">
                 <Select id="prospect-priority" {...register('priority')}>

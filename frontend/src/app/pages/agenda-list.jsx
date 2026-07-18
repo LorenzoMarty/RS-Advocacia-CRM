@@ -45,6 +45,7 @@ export function AgendaListPage() {
     currentUser,
     deleteEvent,
     events,
+    markEventAttendance,
     moveEvent,
     processes,
     syncGoogleCalendarEvents,
@@ -541,6 +542,7 @@ export function AgendaListPage() {
                   emptyTitle="Sem compromissos hoje."
                   emptyCopy="A agenda do dia aparece aqui."
                   onDelete={handleQuickDelete}
+                  onAttendance={markEventAttendance}
                 />
               </div>
 
@@ -560,6 +562,7 @@ export function AgendaListPage() {
                   emptyTitle="Sem próximos compromissos."
                   emptyCopy="Os próximos registros aparecem aqui."
                   onDelete={handleQuickDelete}
+                  onAttendance={markEventAttendance}
                 />
               </div>
 
@@ -579,6 +582,7 @@ export function AgendaListPage() {
                   emptyTitle="Sem atrasos."
                   emptyCopy="Nenhum compromisso vencido."
                   onDelete={handleQuickDelete}
+                  onAttendance={markEventAttendance}
                 />
               </div>
             </CardContent>

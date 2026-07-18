@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
@@ -9,7 +10,7 @@ from processos.models import Processo
 from usuarios.models import Usuario
 
 from .models import Notificacao
-from .tasks import checar_lembretes
+from .tasks import checar_lembretes, checar_prazos
 
 
 def _usuario(nome="User A", email="a@test.com"):
@@ -20,7 +21,11 @@ def _usuario(nome="User A", email="a@test.com"):
 def _cliente():
     c, _ = Cliente.objects.get_or_create(
         nome="Cliente Teste",
-        defaults={"tipo": "pessoa_fisica", "cpf_cnpj": "000.000.000-00"},
+        defaults={
+            "email": "cliente@test.com",
+            "telefone": "11999999999",
+            "tipo_cliente": "esporadico",
+        },
     )
     return c
 
@@ -28,7 +33,13 @@ def _cliente():
 def _processo(cliente):
     p, _ = Processo.objects.get_or_create(
         numero_processo="0001",
-        defaults={"cliente": cliente, "tipo": "civel", "status": "ativo", "descricao": ""},
+        defaults={
+            "cliente": cliente,
+            "vara": "1ª Vara Cível",
+            "area_juridica": "Cível",
+            "status": "Ativo",
+            "descricao": "",
+        },
     )
     return p
 
@@ -70,11 +81,14 @@ class MarcarLidaViewTests(TestCase):
         self.usuario = _usuario()
 
     def _login(self):
-        from django.contrib.sessions.backends.db import SessionStore
-        session = SessionStore()
+        auth_user = get_user_model().objects.create_superuser(
+            username=self.usuario.email, email=self.usuario.email
+        )
+        self.client.force_login(auth_user)
+        session = self.client.session
         session["usuario_id"] = self.usuario.pk
+        session["usuario_nome"] = self.usuario.nome
         session.save()
-        self.client.cookies["sessionid"] = session.session_key
 
     def test_marcar_lida(self):
         self._login()
@@ -133,3 +147,120 @@ class ChecarLembretesTaskTests(TestCase):
         )
         criados = checar_lembretes()
         self.assertEqual(criados, 0)
+
+
+class ChecarPrazosTaskTests(TestCase):
+    def setUp(self):
+        self.usuario = _usuario()
+        self.cliente = _cliente()
+        self.processo = _processo(self.cliente)
+
+    def _prazo(self, dias=2, concluido=False, notificacao_enviada=False, responsavel=True):
+        from prazos.models import Prazo
+
+        return Prazo.objects.create(
+            titulo="Contestação",
+            descricao="",
+            data_limite=timezone.localdate() + timedelta(days=dias),
+            processo=self.processo,
+            responsavel=self.usuario if responsavel else None,
+            status="a_fazer",
+            concluido=concluido,
+            notificacao_enviada=notificacao_enviada,
+        )
+
+    def test_cria_notificacao_para_prazo_proximo(self):
+        self._prazo(dias=2)
+        criados = checar_prazos()
+        self.assertEqual(criados, 1)
+        n = Notificacao.objects.get(usuario=self.usuario)
+        self.assertEqual(n.tipo, "prazo")
+        self.assertIn("Contestação", n.titulo)
+
+    def test_ignora_prazo_fora_da_janela(self):
+        self._prazo(dias=10)
+        criados = checar_prazos()
+        self.assertEqual(criados, 0)
+
+    def test_nao_duplica_prazo_ja_notificado(self):
+        self._prazo(dias=1, notificacao_enviada=True)
+        criados = checar_prazos()
+        self.assertEqual(criados, 0)
+
+    def test_ignora_prazo_concluido(self):
+        self._prazo(dias=1, concluido=True)
+        criados = checar_prazos()
+        self.assertEqual(criados, 0)
+
+    def test_ignora_prazo_sem_responsavel(self):
+        self._prazo(dias=1, responsavel=False)
+        criados = checar_prazos()
+        self.assertEqual(criados, 0)
+
+
+class NotificarAtribuicaoTests(TestCase):
+    def setUp(self):
+        self.usuario = _usuario()
+        self.cliente = _cliente()
+
+    def test_notifica_ao_criar_processo_com_responsavel(self):
+        Processo.objects.create(
+            numero_processo="1111",
+            cliente=self.cliente,
+            vara="1ª Vara Cível",
+            area_juridica="Cível",
+            status="Ativo",
+            advogado_responsavel=self.usuario,
+        )
+        n = Notificacao.objects.get(usuario=self.usuario, tipo="atribuicao")
+        self.assertIn("1111", n.titulo)
+
+    def test_notifica_ao_trocar_responsavel_do_processo(self):
+        outro = _usuario(nome="User B", email="b@test.com")
+        processo = Processo.objects.create(
+            numero_processo="2222",
+            cliente=self.cliente,
+            vara="1ª Vara Cível",
+            area_juridica="Cível",
+            status="Ativo",
+            advogado_responsavel=self.usuario,
+        )
+        Notificacao.objects.filter(usuario=self.usuario).delete()
+
+        processo.advogado_responsavel = outro
+        processo.save()
+
+        self.assertTrue(
+            Notificacao.objects.filter(usuario=outro, tipo="atribuicao").exists()
+        )
+        self.assertFalse(
+            Notificacao.objects.filter(usuario=self.usuario, tipo="atribuicao").exists()
+        )
+
+    def test_nao_duplica_notificacao_em_update_sem_troca_de_responsavel(self):
+        processo = Processo.objects.create(
+            numero_processo="3333",
+            cliente=self.cliente,
+            vara="1ª Vara Cível",
+            area_juridica="Cível",
+            status="Ativo",
+            advogado_responsavel=self.usuario,
+        )
+        processo.descricao = "atualizado"
+        processo.save()
+
+        self.assertEqual(
+            Notificacao.objects.filter(usuario=self.usuario, tipo="atribuicao").count(), 1
+        )
+
+    def test_notifica_ao_criar_prospect_com_responsavel(self):
+        from prospeccao.models import Prospect
+
+        Prospect.objects.create(
+            nome="Lead Teste",
+            status_prospeccao="Em contato",
+            prioridade="Media",
+            responsavel_interno=self.usuario,
+        )
+        n = Notificacao.objects.get(usuario=self.usuario, tipo="atribuicao")
+        self.assertIn("Lead Teste", n.titulo)

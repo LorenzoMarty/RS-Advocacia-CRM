@@ -409,6 +409,7 @@ export function ProcessFormPage() {
                 <Field id="process-status" label="Status" error={errors.status} required>
                   <ComboField
                     id="process-status"
+                    campo="processo_status"
                     value={form.status}
                     options={statusOptions}
                     selectPlaceholder="Selecione o status"
@@ -429,6 +430,7 @@ export function ProcessFormPage() {
                 <Field id="process-area" label="Área jurídica" error={errors.area} required>
                   <ComboField
                     id="process-area"
+                    campo="processo_area"
                     value={form.area}
                     options={areaOptions}
                     selectPlaceholder="Selecione a área jurídica"
@@ -441,6 +443,7 @@ export function ProcessFormPage() {
                 <Field id="process-court" label="Vara" error={errors.court} required>
                   <ComboField
                     id="process-court"
+                    campo="processo_vara"
                     value={form.court}
                     options={courtOptions}
                     selectPlaceholder="Selecione a vara"

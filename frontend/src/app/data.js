@@ -14,12 +14,9 @@ export const NAV_ITEMS = [
 ];
 
 export const PROSPECT_STATUS_COLUMNS = [
-  { key: 'novo', label: 'Novo' },
   { key: 'em_contato', label: 'Em contato' },
-  { key: 'reuniao_agendada', label: 'Reunião agendada' },
   { key: 'proposta_enviada', label: 'Proposta enviada' },
   { key: 'aguardando_retorno', label: 'Aguardando retorno' },
-  { key: 'convertido', label: 'Convertido' },
   { key: 'perdido', label: 'Perdido' },
 ];
 export const PROSPECT_PRIORITY_OPTIONS = ['Alta', 'Media', 'Baixa'];
@@ -40,7 +37,6 @@ export const FINANCE_CATEGORIES = {
   receita: ['Honorários', 'Consulta', 'Êxito', 'Mensalidade', 'Acordo'],
   despesa: ['Custas processuais', 'Escritório', 'Software', 'Marketing', 'Impostos', 'Outros'],
 };
-export const FINANCE_STATUS_OPTIONS = ['Pendente', 'Pago', 'Cancelado'];
 export const FINANCE_TABS = [
   { key: 'receber', label: 'A Receber' },
   { key: 'pagas', label: 'Pagas' },
@@ -73,10 +69,6 @@ export const EVENT_STATUS_OPTIONS = [
   'Atrasado',
   'Compareceu',
   'Não compareceu',
-];
-export const CLIENT_TYPE_OPTIONS = [
-  { value: 'esporadico', label: 'Esporádico' },
-  { value: 'mensalista', label: 'Mensalista' },
 ];
 export const PROCESS_STATUS_OPTIONS = ['Ativo', 'Em andamento', 'Aguardando despacho', 'Arquivado', 'Concluído'];
 export const PROCESS_AREA_OPTIONS = ['Cível', 'Trabalhista', 'Empresarial', 'Tributário'];
