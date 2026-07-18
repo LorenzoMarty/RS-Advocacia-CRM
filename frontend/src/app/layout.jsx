@@ -640,7 +640,7 @@ export function ProtectedLayout() {
             <Link
               className={cn(
                 'flex items-center gap-3 rounded-[20px] p-2',
-                sidebarCollapsed && 'justify-center',
+                sidebarCollapsed && 'justify-center gap-0 p-0',
               )}
               to="/"
               aria-label="Ir para a área inicial"
