@@ -297,6 +297,7 @@ export const api = {
   },
   getAuditPanel: (periodo = 7) => apiRequest(`/api/auditoria/painel/?periodo=${periodo}`),
   getAuditOverview: (periodo = 7) => apiRequest(`/api/auditoria/visao-geral/?periodo=${periodo}`),
+  listAuditAutores: () => apiRequest('/api/auditoria/autores/'),
   listNotificacoes: () => apiRequest('/api/notificacoes/'),
   marcarNotificacaoLida: (id) => apiRequest(`/api/notificacoes/${id}/ler/`, { method: 'POST' }),
   marcarTodasLidas: () => apiRequest('/api/notificacoes/ler-todas/', { method: 'POST' }),

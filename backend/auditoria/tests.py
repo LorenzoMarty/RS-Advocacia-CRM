@@ -749,3 +749,78 @@ class VisaoGeralTests(_AuditoriaBaseTestCase):
 
         response = self.client.get(reverse("visao_geral"))
         self.assertEqual(response.status_code, 403)
+
+
+@override_settings(SECURE_SSL_REDIRECT=False)
+class AuditoriaListarAutoresTests(_AuditoriaBaseTestCase):
+    def _criar_registro(self, **kwargs):
+        defaults = dict(
+            acao=RegistroAuditoria.ACAO_CRIADO,
+            entidade_tipo=RegistroAuditoria.ENTIDADE_PROCESSO,
+            entidade_id="1",
+            entidade_rotulo="X",
+            autor_nome="Advogada",
+            processo_rotulo="Proc 001",
+            resumo="Processo 'X' criado",
+        )
+        defaults.update(kwargs)
+        return RegistroAuditoria.objects.create(**defaults)
+
+    def test_retorna_nomes_distintos_ordenados_alfabeticamente(self):
+        self._criar_registro(autor_nome="João", entidade_id="1")
+        self._criar_registro(autor_nome="Maria", entidade_id="2")
+        self._criar_registro(autor_nome="Maria", entidade_id="3")
+        self._criar_registro(autor_nome="Ana", entidade_id="4")
+
+        response = self.client.get(reverse("listar_autores"))
+        dados = response.json()["dados"]
+        self.assertEqual(dados["autores"], ["Ana", "João", "Maria"])
+
+    def test_exclui_autor_nome_vazio(self):
+        self._criar_registro(autor_nome="", entidade_id="1")
+        self._criar_registro(autor_nome="Maria", entidade_id="2")
+
+        response = self.client.get(reverse("listar_autores"))
+        dados = response.json()["dados"]
+        self.assertEqual(dados["autores"], ["Maria"])
+
+    def test_inclui_autor_historico_de_usuario_removido(self):
+        # autor_nome é snapshot no momento do evento — sobrevive mesmo que o
+        # Usuario original seja depois deletado, diferente de listar usuários
+        # ativos do sistema.
+        usuario_removido = Usuario.objects.create(
+            nome="Ex-Funcionario",
+            email="ex@example.com",
+            cargo="Advogado",
+        )
+        self._criar_registro(autor_nome=usuario_removido.nome, entidade_id="1")
+        usuario_removido.delete()
+
+        response = self.client.get(reverse("listar_autores"))
+        dados = response.json()["dados"]
+        self.assertIn("Ex-Funcionario", dados["autores"])
+
+    def test_nao_admin_403(self):
+        usuario_comum = Usuario.objects.create(
+            nome="Estagiario",
+            email="estagiario4@example.com",
+            cargo="Estagiario",
+        )
+        from django.contrib.auth.models import Permission
+
+        auth_user = get_user_model().objects.create_user(
+            username=usuario_comum.email,
+            email=usuario_comum.email,
+            password="x",
+        )
+        auth_user.user_permissions.add(
+            Permission.objects.get(codename="view_processo"),
+            Permission.objects.get(codename="view_prazo"),
+        )
+        self.client.force_login(auth_user)
+        session = self.client.session
+        session["usuario_id"] = usuario_comum.pk
+        session.save()
+
+        response = self.client.get(reverse("listar_autores"))
+        self.assertEqual(response.status_code, 403)

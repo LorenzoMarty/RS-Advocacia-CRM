@@ -43,6 +43,7 @@ function AuditDashboard({
   onPeriodChange,
   auditFilters,
   auditPagination,
+  auditAutores,
   onFilterChange,
   onLoadMore,
 }) {
@@ -79,6 +80,7 @@ function AuditDashboard({
         entries={auditEntries}
         filters={auditFilters}
         pagination={auditPagination}
+        autores={auditAutores}
         onFilterChange={onFilterChange}
         onLoadMore={onLoadMore}
       />
@@ -92,11 +94,13 @@ export function AuditPage() {
     auditEntries,
     auditOverview,
     auditPagination,
+    auditAutores,
     currentRole,
     isLoading,
     loadAudit,
     loadMoreAudit,
     loadAuditOverview,
+    loadAuditAutores,
   } = useAppState();
   const isAdmin = currentRole?.name === 'Administrador';
   const [period, setPeriod] = useState(7);
@@ -106,10 +110,10 @@ export function AuditPage() {
   useEffect(() => {
     if (!isAdmin) return;
     setAuditDataLoading(true);
-    Promise.all([loadAudit({}), loadAuditOverview(period)]).finally(() => {
+    Promise.all([loadAudit({}), loadAuditOverview(period), loadAuditAutores()]).finally(() => {
       setAuditDataLoading(false);
     });
-    // loadAudit/loadAuditOverview estáveis; recarrega só quando o papel muda.
+    // loadAudit/loadAuditOverview/loadAuditAutores estáveis; recarrega só quando o papel muda.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
@@ -149,6 +153,7 @@ export function AuditPage() {
             onPeriodChange={handlePeriodChange}
             auditFilters={auditFilters}
             auditPagination={auditPagination}
+            auditAutores={auditAutores}
             onFilterChange={handleFilterChange}
             onLoadMore={loadMoreAudit}
           />

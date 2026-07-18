@@ -129,6 +129,25 @@ def _parse_date(value):
 
 
 @app_permissions_required("processos.view_processo", "prazos.view_prazo")
+def listar_autores(request: HttpRequest):
+    if request.method != "GET":
+        return metodo_nao_permitido(["GET"])
+
+    erro_admin = _exigir_admin(request)
+    if erro_admin is not None:
+        return erro_admin
+
+    nomes = (
+        RegistroAuditoria.objects.exclude(autor_nome="")
+        .order_by("autor_nome")
+        .values_list("autor_nome", flat=True)
+        .distinct()
+    )
+
+    return resposta_sucesso({"autores": list(nomes)})
+
+
+@app_permissions_required("processos.view_processo", "prazos.view_prazo")
 def listar_auditoria(request: HttpRequest):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
