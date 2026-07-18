@@ -30,14 +30,4 @@
     --tw-ring: 46 65% 52%;
     --tw-radius: 0.875rem; /* 14px, alinhado ao raio de card do legado */
   }
-
-  /* Preflight off (ver tailwind.config.js) não seta border-style:solid, e o
-     reset.css legado zera border em <button> (button{border:0}) — sem isso a
-     classe `.border` do Tailwind (só border-width) fica sem efeito visual em
-     qualquer componente shadcn baseado em <button> (SelectTrigger, Button
-     variant="outline", etc). Restaura só essa peça do preflight, sem herdar o
-     resto (que zeraria .btn/.surface/.field). */
-  *, ::before, ::after {
-    border-style: solid;
-  }
 }
