@@ -145,6 +145,7 @@ export function AppStateProvider({ children }) {
   const [auditOverview, setAuditOverview] = useState(null);
   const [auditPagination, setAuditPagination] = useState({ offset: 0, limit: 100, total: 0, temMais: false });
   const [auditFilters, setAuditFilters] = useState({});
+  const [auditAutores, setAuditAutores] = useState([]);
   const DEFAULT_PAGINATION = { offset: 0, limit: 100, total: 0, temMais: false };
   const [clientsPagination, setClientsPagination] = useState(DEFAULT_PAGINATION);
   const [processesPagination, setProcessesPagination] = useState(DEFAULT_PAGINATION);
@@ -1187,6 +1188,15 @@ export function AppStateProvider({ children }) {
     }
   }
 
+  async function loadAuditAutores() {
+    try {
+      const payload = await api.listAuditAutores();
+      setAuditAutores(payload.autores || []);
+    } catch (error) {
+      addFlash(errorMessage(error), 'error');
+    }
+  }
+
   // Memoizado por dados, nao por funcoes: as funcoes abaixo sao redefinidas a
   // cada render (fecham sobre o estado atual), mas o objeto so ganha nova
   // identidade quando algum dado listado nas deps realmente muda. Isso evita
@@ -1208,9 +1218,11 @@ export function AppStateProvider({ children }) {
       auditEntries,
       auditOverview,
       auditPagination,
+      auditAutores,
       loadAudit,
       loadMoreAudit,
       loadAuditOverview,
+      loadAuditAutores,
       clientsPagination,
       loadClients,
       loadMoreClients,
@@ -1289,6 +1301,7 @@ export function AppStateProvider({ children }) {
       auditEntries,
       auditOverview,
       auditPagination,
+      auditAutores,
       clientsPagination,
       processesPagination,
       usersPagination,

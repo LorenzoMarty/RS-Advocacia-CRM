@@ -246,7 +246,7 @@ function ActivityItem({ entry, index, entityLabel }) {
   );
 }
 
-function ActivityFilters({ filters, onChange }) {
+function ActivityFilters({ filters, onChange, autores }) {
   const debounceRef = useRef(null);
 
   function handleChange(key, value) {
@@ -296,14 +296,20 @@ function ActivityFilters({ filters, onChange }) {
             ))}
           </SelectContent>
         </Select>
-        <Input
-          type="text"
-          className="w-auto min-w-[110px] max-w-[180px]"
-          placeholder="Responsável"
-          value={filters.autor_nome || ''}
-          onChange={(e) => handleChange('autor_nome', e.target.value)}
-          aria-label="Filtrar por responsável"
-        />
+        <Select
+          value={filters.autor_nome || ALL_VALUE}
+          onValueChange={(value) => handleChange('autor_nome', value === ALL_VALUE ? '' : value)}
+        >
+          <SelectTrigger className="w-auto min-w-[150px] max-w-[220px]" aria-label="Filtrar por responsável">
+            <SelectValue placeholder="Responsável" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_VALUE}>Todos os responsáveis</SelectItem>
+            {autores.map((nome) => (
+              <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Input
           type="date"
           className="w-auto min-w-[110px] max-w-[180px]"
@@ -330,7 +336,7 @@ function ActivityFilters({ filters, onChange }) {
   );
 }
 
-export function ActivityTimeline({ entries, filters, pagination, onFilterChange, onLoadMore }) {
+export function ActivityTimeline({ entries, filters, pagination, autores = [], onFilterChange, onLoadMore }) {
   const groups = useMemo(() => groupEntries(entries), [entries]);
 
   return (
@@ -346,7 +352,7 @@ export function ActivityTimeline({ entries, filters, pagination, onFilterChange,
         </div>
       </div>
       {onFilterChange && (
-        <ActivityFilters filters={filters || {}} onChange={onFilterChange} />
+        <ActivityFilters filters={filters || {}} onChange={onFilterChange} autores={autores} />
       )}
       {groups.length ? (
         <>
