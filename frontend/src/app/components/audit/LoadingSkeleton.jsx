@@ -1,10 +1,12 @@
+import { Skeleton } from '@/components/ui/skeleton';
+
 // Skeleton exibido enquanto o store carrega as coleções.
 export function LoadingSkeleton() {
   return (
-    <div className="audit-page" aria-busy="true" aria-label="Carregando auditoria">
-      <div className="audit-skel audit-skel-hero" />
-      <div className="audit-skel audit-skel-block" />
-      <div className="audit-skel audit-skel-block" />
+    <div className="grid gap-4 p-5" aria-busy="true" aria-label="Carregando auditoria">
+      <Skeleton className="h-[190px] rounded-xl" />
+      <Skeleton className="h-[220px] rounded-xl" />
+      <Skeleton className="h-[220px] rounded-xl" />
     </div>
   );
 }
