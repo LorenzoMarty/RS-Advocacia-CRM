@@ -1,14 +1,4 @@
-.create-page{
-        display:grid;
-        gap:var(--gap-page);
-    }
-
-    .intro-grid{
-        display:grid;
-        gap:14px;
-    }
-
-    .intro-link{
+.intro-link{
         display:inline-flex;
         align-items:center;
         gap:8px;

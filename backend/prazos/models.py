@@ -25,6 +25,7 @@ class Prazo(models.Model):
     link_drive = models.URLField(max_length=500, blank=True)
     drive_file_id = models.CharField(max_length=255, blank=True, default="")
     concluido = models.BooleanField(default=False)
+    notificacao_enviada = models.BooleanField(default=False)
     tempo_decorrido_segundos = models.PositiveIntegerField(default=0)
     timer_iniciado_em = models.DateTimeField(blank=True, null=True)
     criado_por = models.CharField(max_length=100, blank=True)

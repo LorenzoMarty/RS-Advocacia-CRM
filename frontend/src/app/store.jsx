@@ -521,7 +521,7 @@ export function AppStateProvider({ children }) {
     });
   }
 
-  async function markEventAttendance(eventId) {
+  async function markEventAttendance(eventId, attended) {
     try {
       const currentEvent = events.find((event) => event.id === eventId);
       const eventToUpdate = currentEvent || await loadEvent(eventId);
@@ -531,7 +531,11 @@ export function AppStateProvider({ children }) {
 
       const response = await api.updateEvent(
         eventId,
-        eventToPayload({ ...eventToUpdate, completed: true }),
+        eventToPayload({
+          ...eventToUpdate,
+          completed: true,
+          status: attended ? 'Compareceu' : 'Não compareceu',
+        }),
       );
       const savedEvent = eventFromResponse(response);
       if (!savedEvent) {

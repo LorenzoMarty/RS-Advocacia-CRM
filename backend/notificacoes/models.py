@@ -6,6 +6,7 @@ class Notificacao(models.Model):
         ("prazo", "Prazo"),
         ("evento", "Evento"),
         ("reuniao", "Reunião"),
+        ("atribuicao", "Atribuição"),
         ("sistema", "Sistema"),
     ]
 

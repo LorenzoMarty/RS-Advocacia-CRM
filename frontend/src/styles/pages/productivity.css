@@ -55,8 +55,7 @@
     color:#ffd5d5;
 }
 
-.productivity-section,
-.office-productivity-page{
+.productivity-section{
     display:grid;
     gap:16px;
 }
@@ -106,12 +105,6 @@
 
 .kpi-delta-up{color:var(--success);}
 .kpi-delta-down{color:var(--danger);}
-
-.productivity-loading{
-    display:grid;
-    place-items:center;
-    min-height:120px;
-}
 
 .productivity-bar{
     height:7px;
@@ -167,18 +160,13 @@
 }
 
 .productivity-filters select,
-.productivity-filters input,
-.productivity-user-select{
+.productivity-filters input{
     min-height:36px;
     padding:0 10px;
     border-radius:11px;
     border:1px solid var(--line);
     background:var(--ghost);
     color:var(--text);
-}
-
-.productivity-user-select{
-    min-width:200px;
 }
 
 .productivity-active-list,

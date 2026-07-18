@@ -15,6 +15,16 @@
     max-width:none;
     min-width:0;
     margin:0;
-    padding:0 var(--layout-gutter) var(--layout-gutter);
+    /* Sem padding à esquerda no desktop: o conteúdo encosta na sidebar fixa
+       (o respiro dela vem do próprio --sidebar/--sidebar-collapsed via
+       margin-left do .page). Abaixo de 1201px a sidebar vira bottom-nav, então
+       o gutter esquerdo volta a existir simetricamente. */
+    padding:0 var(--layout-gutter) var(--layout-gutter) 0;
     background:transparent;
+}
+
+@media (max-width:1200px){
+    .page-wrap{
+        padding-left:var(--layout-gutter);
+    }
 }

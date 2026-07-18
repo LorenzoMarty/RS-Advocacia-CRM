@@ -227,6 +227,13 @@
     .side-title{margin:0;font-size:.96rem;line-height:1.4;font-weight:600}
     .side-time{margin:6px 0 0;color:var(--soft);font-size:.82rem;line-height:1.45}
     .side-meta{display:flex;flex-wrap:wrap;gap:8px}
+    .side-item-attend{display:flex;gap:8px;margin-top:2px}
+    .side-item-attend-yes,
+    .side-item-attend-no{border:none;border-radius:9px;padding:6px 12px;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s ease,color .15s ease}
+    .side-item-attend-yes{background:rgba(74,222,128,.15);color:var(--success,#4ade80)}
+    .side-item-attend-yes:hover{background:rgba(74,222,128,.3)}
+    .side-item-attend-no{background:rgba(239,122,122,.15);color:var(--danger)}
+    .side-item-attend-no:hover{background:rgba(239,122,122,.3)}
     .meta-chip,.status-badge{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:var(--ghost);color:var(--soft);font-size:.76rem}
     .status-badge{gap:8px;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
     .status-badge::before{content:"";width:6px;height:6px;border-radius:999px;background:currentColor}

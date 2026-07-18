@@ -17,7 +17,6 @@
 @import "./styles/pages/audit.css";
 @import "./styles/pages/usuarios-form.css";
 @import "./styles/pages/usuarios-detail.css";
-@import "./styles/pages/api-test.css";
 @import "./styles/utilities/tablet.css";
 @import "./styles/tailwind.css";
 
@@ -64,11 +63,6 @@ button.action-link {
   padding: 0;
 }
 
-.login-link {
-  border: 0;
-  background: transparent;
-}
-
 .not-found-shell {
   display: grid;
   gap: 16px;
@@ -106,9 +100,7 @@ button.action-link {
   .user-hero,
   .create-intro,
   .event-intro,
-  .form-panel,
-  .api-test-hero,
-  .api-test-list
+  .form-panel
 ) {
   border-radius: 0;
   border-color: transparent;
@@ -137,8 +129,7 @@ html[data-theme="light"] #root .main :where(
   .event-hero,
   .user-hero,
   .create-intro,
-  .event-intro,
-  .api-test-hero
+  .event-intro
 ) {
   background: #ffffff;
 }
@@ -148,19 +139,13 @@ html[data-theme="light"] #root .main :where(
   .agenda-page,
   .agenda-day-page,
   .event-create-page,
-  .event-page,
-  .api-test-page,
   .clients-page,
-  .client-page,
-  .create-page,
   .deadlines-page,
   .deadline-form-page,
   .deadline-detail-page,
   .petitions-page,
   .petition-form-page,
-  .office-productivity-page,
   .audit-page,
-  .process-page,
   .meetings-page,
   .user-page,
   .users-page,
@@ -252,7 +237,6 @@ html:not([data-theme="light"]) #root .main select:not(.rs-native-select) :where(
   .event-item,
   .related-item,
   .permission-item,
-  .api-test-item,
   .deadline-column,
   .deadline-card,
   .deadline-column-empty,

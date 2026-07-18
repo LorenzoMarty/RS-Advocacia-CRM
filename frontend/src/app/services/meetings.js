@@ -219,11 +219,6 @@ export async function uploadRecording(meetingId, recording, { onProgress } = {})
   }
 }
 
-export async function getRecording(recordingId) {
-  const payload = await apiRequest(`/api/reunioes/gravacoes/${recordingId}/`);
-  return recordingFromApi(payload.gravacao);
-}
-
 export async function getMeeting(meetingId) {
   const payload = await apiRequest(`/api/reunioes/${meetingId}/`);
   return meetingFromApi(payload.reuniao);

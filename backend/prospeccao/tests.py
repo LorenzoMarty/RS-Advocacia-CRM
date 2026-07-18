@@ -35,7 +35,7 @@ class ProspeccaoViewsTests(TestCase):
             "tipo_demanda_juridica": "Trabalhista",
             "descricao_caso": "Rescisão indireta",
             "responsavel_interno": self.usuario.pk,
-            "status_prospeccao": "Novo",
+            "status_prospeccao": "Em contato",
             "prioridade": "Alta",
             "proxima_acao": "Ligar amanhã",
             "observacoes": "",
@@ -51,7 +51,7 @@ class ProspeccaoViewsTests(TestCase):
         self.assertEqual(response.status_code, 201, response.json())
         self.assertEqual(Prospect.objects.count(), 1)
         dados = response.json()["dados"]["prospect"]
-        self.assertEqual(dados["status_prospeccao"], "Novo")
+        self.assertEqual(dados["status_prospeccao"], "Em contato")
         self.assertEqual(dados["responsavel_nome"], "Advogada")
 
     def test_editar_prospect_muda_status(self):

@@ -300,4 +300,7 @@ export const api = {
   listNotificacoes: () => apiRequest('/api/notificacoes/'),
   marcarNotificacaoLida: (id) => apiRequest(`/api/notificacoes/${id}/ler/`, { method: 'POST' }),
   marcarTodasLidas: () => apiRequest('/api/notificacoes/ler-todas/', { method: 'POST' }),
+  listOpcoes: (campo) => apiRequest(`/api/opcoes/${campo}/`),
+  criarOpcao: (campo, valor) => apiRequest(`/api/opcoes/${campo}/criar/`, jsonOptions('POST', { valor })),
+  apagarOpcao: (campo, id) => apiRequest(`/api/opcoes/${campo}/${id}/excluir/`, { method: 'DELETE' }),
 };

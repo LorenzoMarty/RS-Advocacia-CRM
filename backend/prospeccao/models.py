@@ -2,12 +2,9 @@ from django.db import models
 from django.utils import timezone
 
 STATUS_PROSPECCAO = (
-    "Novo",
     "Em contato",
-    "Reunião agendada",
     "Proposta enviada",
     "Aguardando retorno",
-    "Convertido",
     "Perdido",
 )
 
@@ -32,7 +29,7 @@ class Prospect(models.Model):
         blank=True,
         related_name="prospects",
     )
-    status_prospeccao = models.CharField(max_length=50, default="Novo")
+    status_prospeccao = models.CharField(max_length=50, default="Em contato")
     prioridade = models.CharField(max_length=20, default="Media")
     proxima_acao = models.CharField(max_length=200, blank=True)
     observacoes = models.TextField(blank=True)

@@ -14,6 +14,10 @@ app.conf.beat_schedule = {
         "task": "notificacoes.checar_lembretes",
         "schedule": crontab(minute="*/15"),
     },
+    "checar-prazos-every-15-min": {
+        "task": "notificacoes.checar_prazos",
+        "schedule": crontab(minute="*/15"),
+    },
     "sincronizar-drive-every-10-min": {
         "task": "documentos.sincronizar_drive",
         "schedule": crontab(minute="*/10"),

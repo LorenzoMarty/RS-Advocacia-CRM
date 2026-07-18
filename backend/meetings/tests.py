@@ -308,3 +308,22 @@ class MeetingTaskTests(TemporaryMediaTestCase):
         # Summary is meeting-level (refined per segment), not on the recording.
         self.gravacao.reuniao.refresh_from_db()
         self.assertEqual(self.gravacao.reuniao.resumo, "Resumo")
+
+    @patch("meetings.tasks.refine_summary", return_value="Resumo")
+    @patch("meetings.tasks.transcribe_audio", return_value="Transcricao")
+    def test_processamento_notifica_quem_enviou(self, _transcribe, _refine):
+        from usuarios.models import Usuario
+
+        from meetings.tasks import processar_gravacao
+        from notificacoes.models import Notificacao
+
+        usuario = Usuario.objects.create(
+            nome="Advogada", email="advogada@example.com", cargo="Administrador"
+        )
+        self.gravacao.enviada_por = usuario
+        self.gravacao.save(update_fields=["enviada_por"])
+
+        processar_gravacao(self.gravacao.pk)
+
+        n = Notificacao.objects.get(usuario=usuario, tipo="reuniao")
+        self.assertIn(self.gravacao.reuniao.titulo, n.titulo)

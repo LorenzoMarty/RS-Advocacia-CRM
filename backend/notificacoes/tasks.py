@@ -43,3 +43,39 @@ def checar_lembretes():
         logger.info("checar_lembretes: %d notificação(ões) criada(s).", criados)
 
     return criados
+
+
+@shared_task(name="notificacoes.checar_prazos")
+def checar_prazos():
+    from prazos.models import Prazo
+
+    from .models import Notificacao
+
+    hoje = timezone.localdate()
+    limite = hoje + timedelta(days=3)
+
+    prazos = Prazo.objects.filter(
+        data_limite__gte=hoje,
+        data_limite__lte=limite,
+        concluido=False,
+        notificacao_enviada=False,
+        responsavel__isnull=False,
+    ).select_related("responsavel", "processo")
+
+    criados = 0
+    for prazo in prazos:
+        Notificacao.objects.create(
+            usuario=prazo.responsavel,
+            tipo="prazo",
+            titulo=f"Prazo próximo: {prazo.titulo}",
+            mensagem=f"Vence em {prazo.data_limite.strftime('%d/%m/%Y')}.",
+            link=f"/prazos/{prazo.pk}",
+        )
+        prazo.notificacao_enviada = True
+        prazo.save(update_fields=["notificacao_enviada"])
+        criados += 1
+
+    if criados:
+        logger.info("checar_prazos: %d notificação(ões) criada(s).", criados)
+
+    return criados

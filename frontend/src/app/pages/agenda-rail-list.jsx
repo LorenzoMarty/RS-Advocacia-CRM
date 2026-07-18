@@ -5,9 +5,10 @@ import {
   formatTime,
   getStatusTone,
   isOverdueEvent,
+  normalizeText,
 } from "../utils";
 
-export function RailList({ events, clients, processes, emptyTitle, emptyCopy, onDelete }) {
+export function RailList({ events, clients, processes, emptyTitle, emptyCopy, onDelete, onAttendance }) {
   const navigate = useNavigate();
 
   if (!events.length) {
@@ -64,6 +65,32 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
               </span>
             ) : null}
           </div>
+          {onAttendance && !event.completed && !normalizeText(event.status || '').includes('compareceu') ? (
+            <div className="side-item-attend">
+              <button
+                type="button"
+                className="side-item-attend-yes"
+                aria-label="Marcar como compareceu"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAttendance(event.id, true);
+                }}
+              >
+                Compareceu
+              </button>
+              <button
+                type="button"
+                className="side-item-attend-no"
+                aria-label="Marcar como não compareceu"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAttendance(event.id, false);
+                }}
+              >
+                Não compareceu
+              </button>
+            </div>
+          ) : null}
           {onDelete && (
             <button
               className="side-item-delete"

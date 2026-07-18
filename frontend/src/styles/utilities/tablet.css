@@ -99,7 +99,6 @@
   .audit-filter-input,
   .productivity-filters select,
   .productivity-filters input,
-  .productivity-user-select,
   .prospect-quick-form select,
   .prospect-quick-form input,
   .prospect-interaction-form input {
@@ -243,5 +242,18 @@
 
   .petition-form .form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Touch devices (tablet incluso) não têm :hover — ações reveladas só no hover
+   (excluir/marcar comparecimento) ficam sempre visíveis para não virar
+   descoberta impossível no toque. */
+@media (hover: none) {
+  .side-item-delete,
+  .calendar-event-delete,
+  .timeline-event-delete,
+  .timeline-event-attend {
+    opacity: 1;
+    pointer-events: auto;
   }
 }

@@ -1,12 +1,14 @@
 import { Children, cloneElement, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
 
+import { api } from '../api';
+import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { AnimatePresence, motion as Motion } from '../motion';
 import { Select } from '../components/select';
 import { useAppState } from '../store';
@@ -172,11 +174,14 @@ const FIELD_ERROR_MOTION = {
   transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
 };
 
-// Select com opção de digitar um valor novo (combobox). Usa o <Select> custom; no modo "custom"
-// renderiza um input no lugar. O <Select> é um componente React (sem manipulação imperativa da DOM),
-// então alternar entre os dois modos é seguro — sem o antigo problema de removeChild.
+// Select com opção de digitar um valor novo (combobox), persistido no backend por "campo"
+// (ver opcoes app) — o valor digitado vira uma opção reutilizável, que pode ser apagada
+// depois. Usa o <Select> custom; no modo "custom" renderiza um input no lugar. O <Select> é
+// um componente React (sem manipulação imperativa da DOM), então alternar entre os dois modos
+// é seguro — sem o antigo problema de removeChild.
 export function ComboField({
   id,
+  campo,
   value,
   options,
   onChange,
@@ -184,9 +189,26 @@ export function ComboField({
   customLabel = '+ Digitar novo…',
   customPlaceholder = 'Digite o novo valor',
 }) {
-  const known = [...new Set([...(value ? [value] : []), ...options].filter(Boolean))];
+  const { addFlash } = useAppState();
+  const { confirm, confirmPopup } = useConfirmPopup();
+  const [persisted, setPersisted] = useState([]);
   const [mode, setMode] = useState(() => (value && !options.filter(Boolean).includes(value) ? 'custom' : 'select'));
+  const [draft, setDraft] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    let active = true;
+    if (!campo) return undefined;
+    api.listOpcoes(campo)
+      .then((data) => {
+        if (active) setPersisted(data.itens || []);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [campo]);
 
   useEffect(() => {
     if (mode === 'custom') {
@@ -194,47 +216,112 @@ export function ComboField({
     }
   }, [mode]);
 
+  const persistedValues = persisted.map((item) => item.valor);
+  const known = [...new Set([...(value ? [value] : []), ...options, ...persistedValues].filter(Boolean))];
   const isCustom = mode === 'custom';
+  const currentOption = persisted.find((item) => item.valor === value) || null;
 
-  return isCustom ? (
-    <div className="type-combo">
-      <input
-        ref={inputRef}
-        id={id}
-        value={value}
-        placeholder={customPlaceholder}
-        onChange={(event) => onChange(event.target.value)}
-      />
-      <button
-        type="button"
-        className="type-combo-back"
-        onClick={() => {
-          setMode('select');
-          onChange(known[0] || '');
-        }}
-      >
-        ← Selecionar
-      </button>
-    </div>
-  ) : (
-    <Select
-      id={id}
-      value={value}
-      onChange={(event) => {
-        if (event.target.value === CUSTOM_OPTION) {
-          setMode('custom');
-          onChange('');
-        } else {
-          onChange(event.target.value);
-        }
-      }}
-    >
-      <option value="">{selectPlaceholder}</option>
-      {known.map((option) => (
-        <option key={option} value={option}>{option}</option>
-      ))}
-      <option value={CUSTOM_OPTION}>{customLabel}</option>
-    </Select>
+  async function handleSaveCustom() {
+    const valor = draft.trim();
+    if (!valor || isSaving) return;
+    setIsSaving(true);
+    try {
+      const data = await api.criarOpcao(campo, valor);
+      const opcao = data.opcao;
+      setPersisted((prev) => (prev.some((item) => item.id === opcao.id) ? prev : [...prev, opcao]));
+      onChange(opcao.valor);
+      setMode('select');
+      setDraft('');
+    } catch {
+      addFlash('Não foi possível salvar a opção.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDeleteCurrent() {
+    if (!currentOption) return;
+    const ok = await confirm({
+      title: 'Remover opção?',
+      message: `"${currentOption.valor}" será removida da lista de opções.`,
+      confirmLabel: 'Remover',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    try {
+      await api.apagarOpcao(campo, currentOption.id);
+      setPersisted((prev) => prev.filter((item) => item.id !== currentOption.id));
+      onChange('');
+    } catch {
+      addFlash('Não foi possível remover a opção.', 'error');
+    }
+  }
+
+  return (
+    <>
+      {confirmPopup}
+      {isCustom ? (
+        <div className="type-combo">
+          <input
+            ref={inputRef}
+            id={id}
+            value={draft}
+            placeholder={customPlaceholder}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                handleSaveCustom();
+              }
+            }}
+          />
+          <button type="button" className="btn btn-compact" onClick={handleSaveCustom} disabled={isSaving || !draft.trim()}>
+            {isSaving ? 'Salvando…' : 'Salvar'}
+          </button>
+          <button
+            type="button"
+            className="type-combo-back"
+            onClick={() => {
+              setMode('select');
+              setDraft('');
+            }}
+          >
+            ← Selecionar
+          </button>
+        </div>
+      ) : (
+        <div className="type-combo">
+          <Select
+            id={id}
+            value={value}
+            onChange={(event) => {
+              if (event.target.value === CUSTOM_OPTION) {
+                setMode('custom');
+                setDraft('');
+              } else {
+                onChange(event.target.value);
+              }
+            }}
+          >
+            <option value="">{selectPlaceholder}</option>
+            {known.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+            <option value={CUSTOM_OPTION}>{customLabel}</option>
+          </Select>
+          {currentOption ? (
+            <button
+              type="button"
+              className="type-combo-delete"
+              aria-label={`Apagar opção "${currentOption.valor}"`}
+              onClick={handleDeleteCurrent}
+            >
+              <Trash2 className="size-4" />
+            </button>
+          ) : null}
+        </div>
+      )}
+    </>
   );
 }
 
