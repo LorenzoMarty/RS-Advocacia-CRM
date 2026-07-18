@@ -14,9 +14,9 @@ export function RiskSummary({ summary, risk, period, onPeriodChange }) {
         <PeriodFilter value={period} onChange={onPeriodChange} />
       </div>
 
-      <div className="audit-risk-hero">
+      <div className="mt-4 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[minmax(260px,330px)_minmax(0,1fr)]">
         <RiskScoreCard {...risk} />
-        <div className="productivity-kpis audit-kpis">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           <AlertCard
             label="Prazos vencidos"
             value={summary.overdue}

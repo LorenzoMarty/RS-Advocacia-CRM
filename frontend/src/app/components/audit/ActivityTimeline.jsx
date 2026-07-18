@@ -1,13 +1,30 @@
 import { useMemo, useRef, useState } from 'react';
 
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { motion } from '../../motion';
 import { formatDateTime } from '../../utils';
 import { EmptyState } from '../../pages/common';
-import { Select } from '../select';
 
-const MotionItem = motion.li;
+const MotionLi = motion.li;
+
+const ALL_VALUE = '__all__';
 
 const FIELD_LABELS = {
   numero_processo: 'Número',
@@ -48,6 +65,12 @@ const ACTION_LABELS = {
   excluido: 'excluiu',
 };
 
+const ACTION_DOT = {
+  criado: 'bg-success shadow-[0_0_0_4px_hsl(var(--tw-success)/0.1)]',
+  atualizado: 'bg-primary shadow-[0_0_0_4px_hsl(var(--tw-primary)/0.1)]',
+  excluido: 'bg-destructive shadow-[0_0_0_4px_hsl(var(--tw-destructive)/0.1)]',
+};
+
 const ENTITY_META = {
   prazo: { label: 'Prazos', singular: 'Prazo', order: 1 },
   peticao: { label: 'Petições', singular: 'Petição', order: 2 },
@@ -56,7 +79,7 @@ const ENTITY_META = {
 };
 
 const ENTITY_OPTIONS = [
-  { value: '', label: 'Todos os tipos' },
+  { value: ALL_VALUE, label: 'Todos os tipos' },
   { value: 'processo', label: 'Processos' },
   { value: 'prazo', label: 'Prazos' },
   { value: 'peticao', label: 'Petições' },
@@ -64,7 +87,7 @@ const ENTITY_OPTIONS = [
 ];
 
 const ACTION_OPTIONS = [
-  { value: '', label: 'Qualquer ação' },
+  { value: ALL_VALUE, label: 'Qualquer ação' },
   { value: 'criado', label: 'Criação' },
   { value: 'atualizado', label: 'Edição' },
   { value: 'excluido', label: 'Exclusão' },
@@ -162,13 +185,13 @@ function ChangeList({ changes }) {
   if (!entries.length) return null;
 
   return (
-    <ul className="audit-diff">
+    <ul className="mt-1 mb-0.5 grid list-none gap-1 rounded-md bg-muted/60 p-2 pl-2">
       {entries.map(([key, { de, para }]) => (
-        <li key={key} className="audit-diff-row">
-          <span className="audit-diff-field">{fieldLabel(key)}</span>
-          <span className="audit-diff-from">{formatValue(de)}</span>
-          <span className="audit-diff-arrow" aria-hidden="true">→</span>
-          <span className="audit-diff-to">{formatValue(para)}</span>
+        <li key={key} className="flex flex-wrap items-center gap-1.5 text-xs">
+          <span className="min-w-[78px] text-muted-foreground">{fieldLabel(key)}</span>
+          <span className="text-muted-foreground/80 line-through">{formatValue(de)}</span>
+          <span className="text-muted-foreground" aria-hidden="true">→</span>
+          <span className="text-success">{formatValue(para)}</span>
         </li>
       ))}
     </ul>
@@ -183,31 +206,34 @@ function ActivityItem({ entry, index, entityLabel }) {
   const entityName = entityLabel.toLowerCase();
 
   return (
-    <MotionItem
-      className="audit-timeline-item"
+    <MotionLi
+      className="grid grid-cols-[auto_1fr] gap-1.5 border-b border-border/60 py-1.5 last:border-b-0"
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.16, delay: Math.min(index * 0.015, 0.2) }}
     >
-      <span className={`audit-action-badge is-${entry.action}`} aria-hidden="true" />
-      <div className="audit-timeline-main">
-        <div className="audit-timeline-head">
-          <strong className="audit-timeline-label">
+      <span
+        className={`mt-1.5 h-2 w-2 flex-shrink-0 rounded-full ${ACTION_DOT[entry.action] || ACTION_DOT.atualizado}`}
+        aria-hidden="true"
+      />
+      <div className="grid min-w-0 gap-0.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <strong className="truncate text-sm">
             {entry.author || 'Sistema'} {actionLabel} {entityName}
           </strong>
-          <span className="audit-entity-name">{entry.entityLabel || '—'}</span>
+          <span className="min-w-0 truncate text-sm text-muted-foreground">{entry.entityLabel || '—'}</span>
         </div>
         {hasChanges ? (
-          <p className="audit-timeline-summary">Alterou: {changedFields}</p>
+          <p className="m-0 text-xs text-muted-foreground">Alterou: {changedFields}</p>
         ) : entry.summary ? (
-          <p className="audit-timeline-summary">{entry.summary}</p>
+          <p className="m-0 text-xs text-muted-foreground">{entry.summary}</p>
         ) : null}
-        <div className="audit-timeline-meta">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
           <span>{formatDateTime(entry.createdAt)}</span>
           {hasChanges ? (
             <button
               type="button"
-              className="audit-diff-toggle"
+              className="bg-transparent p-0 text-xs text-primary underline"
               onClick={() => setOpen((value) => !value)}
             >
               {open ? 'Ocultar detalhes' : 'Ver detalhes'}
@@ -216,7 +242,7 @@ function ActivityItem({ entry, index, entityLabel }) {
         </div>
         {open && hasChanges ? <ChangeList changes={entry.changes} /> : null}
       </div>
-    </MotionItem>
+    </MotionLi>
   );
 }
 
@@ -235,66 +261,69 @@ function ActivityFilters({ filters, onChange }) {
   }
 
   return (
-    <div className="audit-filters">
-      <input
+    <div className="mb-3 grid gap-2">
+      <Input
         type="text"
-        className="audit-filter-search"
         placeholder="Buscar por resumo, responsável, processo…"
         defaultValue={filters.q || ''}
         onChange={handleQ}
         aria-label="Buscar no log"
       />
-      <div className="audit-filter-row">
+      <div className="flex flex-wrap items-center gap-2">
         <Select
-          value={filters.entidade_tipo || ''}
-          onChange={(e) => handleChange('entidade_tipo', e.target.value)}
-          aria-label="Tipo de entidade"
+          value={filters.entidade_tipo || ALL_VALUE}
+          onValueChange={(value) => handleChange('entidade_tipo', value === ALL_VALUE ? '' : value)}
         >
-          {ENTITY_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
+          <SelectTrigger className="w-auto min-w-[150px] max-w-[220px]" aria-label="Tipo de entidade">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ENTITY_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
         </Select>
         <Select
-          value={filters.acao || ''}
-          onChange={(e) => handleChange('acao', e.target.value)}
-          aria-label="Tipo de ação"
+          value={filters.acao || ALL_VALUE}
+          onValueChange={(value) => handleChange('acao', value === ALL_VALUE ? '' : value)}
         >
-          {ACTION_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
+          <SelectTrigger className="w-auto min-w-[150px] max-w-[220px]" aria-label="Tipo de ação">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ACTION_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
         </Select>
-        <input
+        <Input
           type="text"
-          className="audit-filter-input"
+          className="w-auto min-w-[110px] max-w-[180px]"
           placeholder="Responsável"
           value={filters.autor_nome || ''}
           onChange={(e) => handleChange('autor_nome', e.target.value)}
           aria-label="Filtrar por responsável"
         />
-        <input
+        <Input
           type="date"
-          className="audit-filter-input"
+          className="w-auto min-w-[110px] max-w-[180px]"
           value={filters.desde || ''}
           onChange={(e) => handleChange('desde', e.target.value)}
           aria-label="A partir de"
           title="A partir de"
         />
-        <input
+        <Input
           type="date"
-          className="audit-filter-input"
+          className="w-auto min-w-[110px] max-w-[180px]"
           value={filters.ate || ''}
           onChange={(e) => handleChange('ate', e.target.value)}
           aria-label="Até"
           title="Até"
         />
         {Object.values(filters).some(Boolean) && (
-          <button
-            type="button"
-            className="btn btn-secondary btn-compact"
-            onClick={() => onChange({})}
-          >
+          <Button type="button" variant="secondary" size="sm" onClick={() => onChange({})}>
             Limpar
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -305,7 +334,7 @@ export function ActivityTimeline({ entries, filters, pagination, onFilterChange,
   const groups = useMemo(() => groupEntries(entries), [entries]);
 
   return (
-    <Card className="audit-card">
+    <Card>
     <CardContent className="py-5">
       <div className="section-head">
         <div>
@@ -321,44 +350,52 @@ export function ActivityTimeline({ entries, filters, pagination, onFilterChange,
       )}
       {groups.length ? (
         <>
-          <div className="audit-activity-grid">
+          {/* Grupos por tipo colapsados por padrão — reduz densidade do log,
+              cada tipo mostra a contagem sem expor todas as entradas de cara. */}
+          <Accordion type="multiple" className="grid gap-1">
             {groups.map((typeGroup) => (
-              <article key={typeGroup.key} className="audit-type-card">
-                <header className="audit-type-head">
-                  <div>
-                    <h3>{typeGroup.label}</h3>
-                    <span>{typeGroup.processes.length} processo(s)</span>
+              <AccordionItem key={typeGroup.key} value={typeGroup.key} className="rounded-lg border-b-0 bg-muted/30 px-3">
+                <AccordionTrigger className="py-2.5 hover:no-underline">
+                  <div className="flex flex-1 items-center justify-between gap-2 pr-2">
+                    <div className="text-left">
+                      <h3 className="text-xs font-medium uppercase tracking-wide text-foreground">{typeGroup.label}</h3>
+                      <span className="text-xs text-muted-foreground">{typeGroup.processes.length} processo(s)</span>
+                    </div>
+                    <Badge variant="default">{typeGroup.count}</Badge>
                   </div>
-                  <strong>{typeGroup.count}</strong>
-                </header>
-                <div className="audit-process-list">
-                  {typeGroup.processes.map((processGroup) => (
-                    <section key={processGroup.key} className="audit-process-group">
-                      <header className="audit-process-head">
-                        <span>{processGroup.label}</span>
-                        <strong>{processGroup.entries.length}</strong>
-                      </header>
-                      <ol className="audit-timeline">
-                        {processGroup.entries.map((entry, index) => (
-                          <ActivityItem
-                            key={entry.id}
-                            entry={entry}
-                            index={index}
-                            entityLabel={typeGroup.singular}
-                          />
-                        ))}
-                      </ol>
-                    </section>
-                  ))}
-                </div>
-              </article>
+                </AccordionTrigger>
+                <AccordionContent className="pt-0">
+                  <div className="grid gap-1">
+                    {typeGroup.processes.map((processGroup) => (
+                      <section key={processGroup.key} className="border-b border-border/60 py-1.5 pl-2 last:border-b-0">
+                        <header className="mb-0.5 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                          <span className="truncate">{processGroup.label}</span>
+                          <strong className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-muted text-[0.68rem] tabular-nums text-muted-foreground">
+                            {processGroup.entries.length}
+                          </strong>
+                        </header>
+                        <ol className="grid list-none gap-0 p-0">
+                          {processGroup.entries.map((entry, index) => (
+                            <ActivityItem
+                              key={entry.id}
+                              entry={entry}
+                              index={index}
+                              entityLabel={typeGroup.singular}
+                            />
+                          ))}
+                        </ol>
+                      </section>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
           {pagination?.temMais && onLoadMore && (
-            <div className="audit-load-more">
-              <button type="button" className="audit-load-more-btn" onClick={onLoadMore}>
+            <div className="flex justify-center py-3">
+              <Button type="button" variant="outline" size="sm" onClick={onLoadMore}>
                 Carregar mais
-              </button>
+              </Button>
             </div>
           )}
         </>
