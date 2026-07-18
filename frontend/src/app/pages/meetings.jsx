@@ -3,6 +3,21 @@ import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 import { AudioRecorder } from '../components/audio-recorder';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
@@ -19,7 +34,6 @@ import {
   updateRecording,
   uploadRecording,
 } from '../services/meetings';
-import { Select } from '../components/select';
 import { useAppState } from '../store';
 import { EmptyState } from './common';
 import { MeetingSummary, RecordingPipeline } from './meeting-summary';
@@ -30,6 +44,8 @@ import {
   formatDateTime,
   meetingToForm,
 } from './meetings-utils';
+
+const NO_CLIENT_VALUE = '__none__';
 
 export function MeetingsPage() {
   const { addFlash, clients } = useAppState();
@@ -262,58 +278,69 @@ export function MeetingsPage() {
     <>
       <PageChrome label="Reuniões" />
       {confirmPopup}
-      <div className="meetings-page">
-        <div className="meetings-layout">
-          <aside className="surface section-card meetings-sidebar">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <p className="font-serif text-xl text-foreground">Reuniões</p>
-                <p className="mt-1 text-sm text-muted-foreground">Gravação, transcrição e resumo por IA</p>
+      <div className="grid gap-4">
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(260px,.55fr)_minmax(0,1.6fr)]">
+          <Card className="lg:sticky lg:top-[18px]">
+            <CardContent className="grid gap-4 py-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-serif text-xl text-foreground">Reuniões</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Gravação, transcrição e resumo por IA</p>
+                </div>
+                <Button size="sm" onClick={openCreateForm}>
+                  <Plus className="size-4" />
+                  Nova
+                </Button>
               </div>
-              <Button size="sm" onClick={openCreateForm}>
-                <Plus className="size-4" />
-                Nova
-              </Button>
-            </div>
 
-            {isLoading ? <p className="section-note">Carregando...</p> : null}
-            {!isLoading && !meetings.length ? (
-              <EmptyState
-                title="Nenhuma reunião."
-                copy="Crie a primeira para habilitar a gravação."
-              />
-            ) : (
-              <div className="meeting-options">
-                {meetings.map((meeting) => {
-                  const done = meeting.recordings?.some((rec) => rec.status === 'concluida');
-                  const processing = meeting.recordings?.some(
-                    (rec) => rec.status !== 'concluida' && rec.status !== 'falhou',
-                  );
-                  return (
-                    <button
-                      className={`meeting-option-main meeting-option${meeting.id === selectedId ? ' active' : ''}`}
-                      type="button"
-                      key={meeting.id}
-                      onClick={() => setSelectedId(meeting.id)}
-                    >
-                      <span className="meeting-option-title">
-                        <strong>{meeting.title}</strong>
-                        {processing ? (
-                          <StatusBadge tone="gold">Processando</StatusBadge>
-                        ) : done ? (
-                          <StatusBadge tone="success">Pronta</StatusBadge>
-                        ) : null}
-                      </span>
-                      <span>{formatDateTime(meeting.meetingAt)}</span>
-                      <span>{meeting.clientName || 'Sem cliente vinculado'}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </aside>
+              {isLoading ? <p className="text-sm text-muted-foreground">Carregando...</p> : null}
+              {!isLoading && !meetings.length ? (
+                <EmptyState
+                  title="Nenhuma reunião."
+                  copy="Crie a primeira para habilitar a gravação."
+                />
+              ) : (
+                <div className="grid gap-2.5">
+                  {meetings.map((meeting) => {
+                    const done = meeting.recordings?.some((rec) => rec.status === 'concluida');
+                    const processing = meeting.recordings?.some(
+                      (rec) => rec.status !== 'concluida' && rec.status !== 'falhou',
+                    );
+                    const isActive = meeting.id === selectedId;
+                    return (
+                      <button
+                        className={`grid w-full min-w-0 gap-1.5 rounded-2xl border px-4 py-3.5 text-left transition-colors ${
+                          isActive
+                            ? 'border-primary/35 bg-primary/10'
+                            : 'border-border bg-muted/40 hover:border-border/80 hover:bg-muted/60'
+                        }`}
+                        type="button"
+                        key={meeting.id}
+                        onClick={() => setSelectedId(meeting.id)}
+                      >
+                        <span className="flex items-center justify-between gap-2">
+                          <strong className="truncate text-sm">{meeting.title}</strong>
+                          {processing ? (
+                            <StatusBadge tone="gold">Processando</StatusBadge>
+                          ) : done ? (
+                            <StatusBadge tone="success">Pronta</StatusBadge>
+                          ) : null}
+                        </span>
+                        <span className="text-xs leading-relaxed text-muted-foreground">
+                          {formatDateTime(meeting.meetingAt)}
+                        </span>
+                        <span className="text-xs leading-relaxed text-muted-foreground">
+                          {meeting.clientName || 'Sem cliente vinculado'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-          <section className="meetings-workspace">
+          <section className="grid min-w-0 gap-4">
             {isMeetingFormOpen ? (
               <Card>
                 <CardContent className="py-5">
@@ -324,39 +351,46 @@ export function MeetingsPage() {
                   <p className="mt-1 text-sm text-muted-foreground">Contexto antes da gravação</p>
                 </div>
 
-                <form className="meeting-form" onSubmit={handleMeetingSubmit}>
-                  <label>
-                    Título
-                    <input
+                <form className="grid gap-3" onSubmit={handleMeetingSubmit}>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="meeting-title">Título</Label>
+                    <Input
+                      id="meeting-title"
                       value={form.title}
                       onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
                       required
                     />
-                  </label>
-                  <label>
-                    Data e horário
-                    <input
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="meeting-at">Data e horário</Label>
+                    <Input
+                      id="meeting-at"
                       type="datetime-local"
                       value={form.meetingAt}
                       onChange={(event) => setForm((current) => ({ ...current, meetingAt: event.target.value }))}
                     />
-                  </label>
-                  <label>
-                    Cliente
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="meeting-client">Cliente</Label>
                     <Select
-                      value={form.clientId}
-                      onChange={(event) => setForm((current) => ({
+                      value={form.clientId || NO_CLIENT_VALUE}
+                      onValueChange={(value) => setForm((current) => ({
                         ...current,
-                        clientId: event.target.value,
+                        clientId: value === NO_CLIENT_VALUE ? '' : value,
                       }))}
                     >
-                      <option value="">Sem vínculo</option>
-                      {clients.map((client) => (
-                        <option key={client.id} value={client.id}>{client.name}</option>
-                      ))}
+                      <SelectTrigger id="meeting-client">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_CLIENT_VALUE}>Sem vínculo</SelectItem>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
-                  </label>
-                  <div className="meeting-form-actions">
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
                     <Button type="submit" disabled={isSaving}>
                       {isSaving ? 'Salvando…' : isEditingMeeting ? 'Salvar edição' : 'Criar reunião'}
                     </Button>
@@ -375,18 +409,21 @@ export function MeetingsPage() {
             ) : null}
 
             {selectedMeeting ? (
-              <section className="surface section-card meeting-doc-sheet">
-                <header className="meeting-doc-head">
-                  <div className="meeting-doc-head-text">
-                    <p className="meeting-doc-eyebrow">Ata de reunião</p>
-                    <h1 className="meeting-doc-title">{selectedMeeting.title}</h1>
-                    <p className="meeting-doc-meta">
+              <Card className="mx-auto w-full max-w-[860px]">
+                <CardContent className="grid gap-4 py-5">
+                <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
+                  <div className="grid min-w-0 gap-1.5">
+                    <p className="m-0 text-xs font-bold uppercase tracking-[.18em] text-primary">Ata de reunião</p>
+                    <h1 className="m-0 font-serif text-[clamp(2rem,4vw,3rem)] font-normal leading-none tracking-tight text-foreground">
+                      {selectedMeeting.title}
+                    </h1>
+                    <p className="m-0 text-sm text-muted-foreground">
                       {selectedMeeting.clientName || 'Sem cliente vinculado'}
                       <span aria-hidden="true"> · </span>
                       {formatDateTime(selectedMeeting.meetingAt)}
                     </p>
                   </div>
-                  <div className="meeting-doc-actions">
+                  <div className="flex flex-wrap items-center gap-2">
                     {selectedMeeting.documentLink ? (
                       <Button asChild variant="outline" size="sm">
                         <a href={selectedMeeting.documentLink} target="_blank" rel="noreferrer">
@@ -429,10 +466,10 @@ export function MeetingsPage() {
                 <AudioRecorder onUpload={handleUpload} />
 
                 {activeRecording ? (
-                  <div className="meeting-doc-processing">
-                    <span className="capture-live-pulse" aria-hidden="true" />
-                    <strong>Processando o áudio…</strong>
-                    <span>Esta tela atualiza sozinha quando terminar.</span>
+                  <div className="flex flex-wrap items-center gap-2.5 rounded-2xl border border-primary/25 bg-primary/[.07] px-4 py-4">
+                    <span className="h-3 w-3 flex-none animate-ping rounded-full bg-destructive" aria-hidden="true" />
+                    <strong className="text-sm text-foreground">Processando o áudio…</strong>
+                    <span className="text-sm text-muted-foreground">Esta tela atualiza sozinha quando terminar.</span>
                     <RecordingPipeline status={activeRecording.status} />
                   </div>
                 ) : null}
@@ -440,37 +477,54 @@ export function MeetingsPage() {
                 {selectedMeeting.summary ? (
                   <MeetingSummary value={selectedMeeting.summary} />
                 ) : !activeRecording ? (
-                  <div className="meeting-doc-empty">
-                    <strong>Ainda sem resumo.</strong>
-                    <p>Grave a reunião ou envie um arquivo de áudio para gerar o documento.</p>
+                  <div className="grid gap-1.5 rounded-2xl border border-dashed border-border p-6 text-center">
+                    <strong className="text-foreground">Ainda sem resumo.</strong>
+                    <p className="m-0 text-sm text-muted-foreground">
+                      Grave a reunião ou envie um arquivo de áudio para gerar o documento.
+                    </p>
                   </div>
                 ) : null}
 
-                {selectedMeeting.transcript ? (
-                  <details className="meeting-doc-fold">
-                    <summary>Transcrição completa</summary>
-                    <p className="meeting-transcript-text">{selectedMeeting.transcript}</p>
-                  </details>
-                ) : null}
+                {selectedMeeting.transcript || recordings.length ? (
+                  <Accordion type="multiple" className="grid gap-1">
+                    {selectedMeeting.transcript ? (
+                      <AccordionItem value="transcript" className="rounded-lg border-b-0 bg-muted/30 px-3">
+                        <AccordionTrigger className="py-2.5 text-xs font-bold uppercase tracking-wide text-primary hover:no-underline">
+                          Transcrição completa
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <p className="m-0 max-h-[360px] overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                            {selectedMeeting.transcript}
+                          </p>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ) : null}
 
-                {recordings.length ? (
-                  <details className="meeting-doc-fold">
-                    <summary>Trechos gravados ({recordings.length})</summary>
-                    <div className="recording-results">
-                      {recordings.map((recording) => (
-                        <RecordingResult
-                          key={recording.id}
-                          onDelete={handleDeleteRecording}
-                          onSaveTranscript={handleSaveTranscript}
-                          recording={recording}
-                        />
-                      ))}
-                    </div>
-                  </details>
+                    {recordings.length ? (
+                      <AccordionItem value="recordings" className="rounded-lg border-b-0 bg-muted/30 px-3">
+                        <AccordionTrigger className="py-2.5 text-xs font-bold uppercase tracking-wide text-primary hover:no-underline">
+                          Trechos gravados ({recordings.length})
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="grid gap-2.5">
+                            {recordings.map((recording) => (
+                              <RecordingResult
+                                key={recording.id}
+                                onDelete={handleDeleteRecording}
+                                onSaveTranscript={handleSaveTranscript}
+                                recording={recording}
+                              />
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ) : null}
+                  </Accordion>
                 ) : null}
-              </section>
+                </CardContent>
+              </Card>
             ) : !isMeetingFormOpen ? (
-              <div className="meeting-doc-placeholder">
+              <div className="grid place-items-center p-[clamp(30px,6vw,60px)]">
                 <EmptyState
                   title="Selecione ou crie uma reunião."
                   copy="Use o botão Nova para iniciar um registro."
