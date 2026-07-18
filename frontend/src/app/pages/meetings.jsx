@@ -278,7 +278,7 @@ export function MeetingsPage() {
     <>
       <PageChrome label="Reuniões" />
       {confirmPopup}
-      <div className="grid gap-4">
+      <div className="grid gap-4 pt-5">
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(260px,.55fr)_minmax(0,1.6fr)]">
           <Card className="lg:sticky lg:top-[18px]">
             <CardContent className="grid gap-4 py-5">
