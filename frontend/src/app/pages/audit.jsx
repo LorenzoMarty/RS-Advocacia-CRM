@@ -49,7 +49,7 @@ function AuditDashboard({
   const data = overview || EMPTY_OVERVIEW;
 
   return (
-    <div className="grid gap-4 p-5">
+    <div className="grid gap-4">
       <RiskSummary
         summary={data.summary}
         risk={data.risk}

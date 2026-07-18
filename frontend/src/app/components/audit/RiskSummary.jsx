@@ -5,7 +5,7 @@ import { AlertCard } from './AlertCard';
 // Área A — card-líder no padrão do projeto: cabeçalho + período + score + faixa de KPIs.
 export function RiskSummary({ summary, risk, period, onPeriodChange }) {
   return (
-    <div className="p-5">
+    <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-serif text-3xl text-foreground">Auditoria do escritório</p>
