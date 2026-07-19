@@ -22,7 +22,6 @@ function hasValidCnjShape(value) {
 export function ClientImportWizard({ clientId, onClose, onImported }) {
   const { addFlash, refreshProcesses } = useAppState();
   const [step, setStep] = useState('scan');
-  const [folderId, setFolderId] = useState('');
   const [useAi, setUseAi] = useState(false);
   const [aiNotice, setAiNotice] = useState('');
   const [loading, setLoading] = useState(false);
@@ -41,7 +40,7 @@ export function ClientImportWizard({ clientId, onClose, onImported }) {
   async function handleScan() {
     setLoading(true);
     try {
-      const resultado = await scanClientDriveImport(clientId, folderId.trim(), { useAi });
+      const resultado = await scanClientDriveImport(clientId, '', { useAi });
       setProcesses(
         resultado.suggestedProcesses.map((item) => ({ ...item, included: true }))
       );
@@ -139,16 +138,6 @@ export function ClientImportWizard({ clientId, onClose, onImported }) {
               palavras-chave, quais arquivos parecem processos e quais parecem
               documentos pessoais. Nada é gravado até você revisar e confirmar.
             </p>
-            <label className="import-wizard-field">
-              <span>Pasta do Drive (opcional — usa a pasta do cliente por padrão)</span>
-              <input
-                type="text"
-                className="import-wizard-input"
-                value={folderId}
-                onChange={(event) => setFolderId(event.target.value)}
-                placeholder="ID da pasta no Drive"
-              />
-            </label>
             <label className="import-wizard-field import-wizard-checkbox">
               <input
                 type="checkbox"

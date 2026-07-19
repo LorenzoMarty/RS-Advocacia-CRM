@@ -6,13 +6,9 @@ function hasValidCnjShape(value) {
   return value.replace(/\D/g, '').length === 20;
 }
 
-function operationLabel(item) {
-  if (item.type === 'create_folder') {
-    return `Criar pasta "${item.name}"`;
-  }
-  if (item.type === 'rename') {
-    return `Renomear para "${item.newName}"`;
-  }
+function operationTitle(item) {
+  if (item.type === 'create_folder') return 'Criar pasta';
+  if (item.type === 'rename') return 'Renomear pasta';
   return 'Mover para outra pasta';
 }
 
@@ -47,7 +43,7 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
           included: hasValidCnjShape(item.partialNumber),
         }))
       );
-      setStep('review');
+      setStep('review-processos');
     } catch (error) {
       addFlash(
         error.message || 'Não foi possível gerar o plano de organização.',
@@ -56,6 +52,21 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  const reviewSteps = ['review-processos'];
+  if (warnings.length > 0) reviewSteps.push('review-avisos');
+  reviewSteps.push('review-operacoes');
+  const reviewStepIndex = reviewSteps.indexOf(step);
+
+  function goToNextReviewStep() {
+    const next = reviewSteps[reviewStepIndex + 1];
+    if (next) setStep(next);
+  }
+
+  function goToPreviousReviewStep() {
+    const previous = reviewSteps[reviewStepIndex - 1];
+    setStep(previous || 'start');
   }
 
   function updateOperation(index, changes) {
@@ -145,37 +156,43 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
           </div>
         )}
 
-        {step === 'review' && (
+        {reviewStepIndex >= 0 && (
           <div className="import-wizard-body">
-            <section className="import-wizard-section">
-              <h4>Processos identificados ({processes.length})</h4>
-              {processes.length === 0 && (
-                <p className="import-wizard-hint">
-                  Nenhuma pasta com número de processo ainda não cadastrado foi
-                  encontrada.
-                </p>
-              )}
-              {processes.map((item, index) => (
-                <div className="import-wizard-row" key={`processo-${item.numeroProcesso}`}>
-                  <input
-                    type="checkbox"
-                    checked={item.included}
-                    onChange={(event) =>
-                      updateProcess(index, { included: event.target.checked })
-                    }
-                  />
-                  <div className="import-wizard-row-copy">
-                    <strong>Criar processo "{item.numeroProcesso}"</strong>
-                    <span>
-                      Origem: pasta "{item.originFolderName}"
-                      {item.needsHabilitacao && ' · advogado não habilitado'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </section>
+            <p className="import-wizard-hint import-wizard-step-indicator">
+              Etapa {reviewStepIndex + 1} de {reviewSteps.length}
+            </p>
 
-            {warnings.length > 0 && (
+            {step === 'review-processos' && (
+              <section className="import-wizard-section">
+                <h4>Processos identificados ({processes.length})</h4>
+                {processes.length === 0 && (
+                  <p className="import-wizard-hint">
+                    Nenhuma pasta com número de processo ainda não cadastrado foi
+                    encontrada.
+                  </p>
+                )}
+                {processes.map((item, index) => (
+                  <div className="import-wizard-row" key={`processo-${item.numeroProcesso}`}>
+                    <input
+                      type="checkbox"
+                      checked={item.included}
+                      onChange={(event) =>
+                        updateProcess(index, { included: event.target.checked })
+                      }
+                    />
+                    <div className="import-wizard-row-copy">
+                      <strong>Criar processo "{item.numeroProcesso}"</strong>
+                      <span>
+                        Origem: pasta "{item.originFolderName}"
+                        {item.needsHabilitacao && ' · advogado não habilitado'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </section>
+            )}
+
+            {step === 'review-avisos' && (
               <section className="import-wizard-section">
                 <h4>Possíveis processos com número incompleto ({warnings.length})</h4>
                 <p className="import-wizard-hint">
@@ -217,58 +234,93 @@ export function ClientDriveOrganize({ clientId, onClose, onApplied }) {
               </section>
             )}
 
-            <section className="import-wizard-section">
-              <h4>Operações sugeridas ({operations.length})</h4>
-              {discarded > 0 && (
-                <p className="import-wizard-hint">
-                  {discarded} sugestão(ões) inválida(s) da IA foram descartadas
-                  automaticamente.
-                </p>
-              )}
-              {operations.length === 0 && (
-                <p className="import-wizard-hint">
-                  A pasta já parece organizada — nenhuma operação sugerida.
-                </p>
-              )}
-              {operations.map((item, index) => (
-                <div className="import-wizard-row" key={`${item.type}-${index}`}>
-                  <input
-                    type="checkbox"
-                    checked={item.included}
-                    onChange={(event) =>
-                      updateOperation(index, { included: event.target.checked })
-                    }
-                  />
-                  <div className="import-wizard-row-copy">
-                    <strong>{operationLabel(item)}</strong>
-                    <span>{item.reason}</span>
+            {step === 'review-operacoes' && (
+              <section className="import-wizard-section">
+                <h4>Operações sugeridas ({operations.length})</h4>
+                {discarded > 0 && (
+                  <p className="import-wizard-hint">
+                    {discarded} sugestão(ões) inválida(s) da IA foram descartadas
+                    automaticamente.
+                  </p>
+                )}
+                {operations.length === 0 && (
+                  <p className="import-wizard-hint">
+                    A pasta já parece organizada — nenhuma operação sugerida.
+                  </p>
+                )}
+                {operations.map((item, index) => (
+                  <div className="import-wizard-row" key={`${item.type}-${index}`}>
+                    <input
+                      type="checkbox"
+                      checked={item.included}
+                      onChange={(event) =>
+                        updateOperation(index, { included: event.target.checked })
+                      }
+                    />
+                    <div className="import-wizard-row-copy">
+                      <strong>{operationTitle(item)}</strong>
+                      <span>{item.reason}</span>
+                    </div>
+                    {item.type === 'create_folder' && (
+                      <input
+                        type="text"
+                        className="import-wizard-input"
+                        value={item.name}
+                        aria-label="Nome da pasta a criar"
+                        onChange={(event) =>
+                          updateOperation(index, { name: event.target.value })
+                        }
+                      />
+                    )}
+                    {item.type === 'rename' && (
+                      <input
+                        type="text"
+                        className="import-wizard-input"
+                        value={item.newName}
+                        aria-label="Novo nome da pasta"
+                        onChange={(event) =>
+                          updateOperation(index, { newName: event.target.value })
+                        }
+                      />
+                    )}
                   </div>
-                </div>
-              ))}
-            </section>
+                ))}
+              </section>
+            )}
 
             <div className="import-wizard-actions">
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={handleSuggest}
+                onClick={reviewStepIndex === 0 ? handleSuggest : goToPreviousReviewStep}
                 disabled={loading}
               >
-                Gerar novamente
+                {reviewStepIndex === 0 ? 'Gerar novamente' : 'Voltar'}
               </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={handleApply}
-                disabled={
-                  loading ||
-                  (operations.every((item) => !item.included) &&
-                    processes.every((item) => !item.included) &&
-                    warnings.every((item) => !item.included))
-                }
-              >
-                {loading ? 'Aplicando…' : 'Aplicar selecionadas'}
-              </button>
+              {reviewStepIndex < reviewSteps.length - 1 ? (
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={goToNextReviewStep}
+                  disabled={loading}
+                >
+                  Próxima etapa
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={handleApply}
+                  disabled={
+                    loading ||
+                    (operations.every((item) => !item.included) &&
+                      processes.every((item) => !item.included) &&
+                      warnings.every((item) => !item.included))
+                  }
+                >
+                  {loading ? 'Aplicando…' : 'Aplicar selecionadas'}
+                </button>
+              )}
             </div>
           </div>
         )}
