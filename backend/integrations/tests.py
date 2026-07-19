@@ -116,6 +116,9 @@ class GoogleOAuthTests(TestCase):
         post,
         verify_token,
     ):
+        Usuario.objects.create(
+            nome="User", email="user@example.com", cargo="Administrador"
+        )
         session = self.client.session
         session["google_oauth_state"] = {
             "value": "state",
@@ -148,6 +151,50 @@ class GoogleOAuthTests(TestCase):
         self.assertEqual(account.refresh_token, "refresh-token")
         self.assertTrue(account.calendars.filter(calendar_id="primary").exists())
         self.assertEqual(self.client.session["usuario_id"], account.usuario_id)
+
+    @override_settings(
+        GOOGLE_CLIENT_ID="client-id",
+        GOOGLE_CLIENT_SECRET="secret",
+        GOOGLE_REDIRECT_URI=CALLBACK,
+        FRONTEND_URL="http://localhost:5173",
+    )
+    @patch("integrations.google.oauth.verify_identity_token")
+    @patch("integrations.google.oauth.requests.post")
+    def test_callback_recusa_email_nao_cadastrado_e_nao_cria_usuario(
+        self, post, verify_token
+    ):
+        session = self.client.session
+        session["google_oauth_state"] = {
+            "value": "state",
+            "usuario_id": None,
+            "next": "/",
+        }
+        session.save()
+        post.return_value.status_code = 200
+        post.return_value.json.return_value = {
+            "id_token": "id-token",
+            "access_token": "access-token",
+            "refresh_token": "refresh-token",
+            "expires_in": 3600,
+        }
+        verify_token.return_value = {
+            "sub": "google-sub-novo",
+            "email": "desconhecido@example.com",
+            "email_verified": True,
+            "name": "Desconhecido",
+        }
+
+        response = self.client.get(
+            reverse("google_callback"),
+            {"code": "code", "state": "state"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("google_error", response["Location"])
+        self.assertFalse(
+            Usuario.objects.filter(email="desconhecido@example.com").exists()
+        )
+        self.assertNotIn("usuario_id", self.client.session)
 
     @override_settings(
         GOOGLE_CLIENT_ID="client-id",

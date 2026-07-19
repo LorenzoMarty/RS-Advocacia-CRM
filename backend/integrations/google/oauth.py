@@ -224,8 +224,6 @@ def _token_expiry(payload: dict):
 
 
 def _resolve_usuario(claims: dict, initiating_user_id: int | None) -> Usuario:
-    from usuarios.views import ESTAGIARIO_CARGO_NAME, _ensure_default_cargos
-
     sub = str(claims.get("sub") or "").strip()
     email = str(claims.get("email") or "").strip().lower()
     name = str(claims.get("name") or "").strip() or email.split("@")[0]
@@ -252,14 +250,10 @@ def _resolve_usuario(claims: dict, initiating_user_id: int | None) -> Usuario:
     else:
         found = Usuario.objects.filter(email__iexact=email).first()
         if found is None:
-            _ensure_default_cargos()
-            cargo = (
-                getattr(settings, "GOOGLE_DEFAULT_CARGO", "").strip()
-                or ESTAGIARIO_CARGO_NAME
+            raise ValueError(
+                "Usuário não cadastrado. Procure um administrador para liberar seu acesso."
             )
-            usuario = Usuario.objects.create(nome=name, email=email, cargo=cargo)
-        else:
-            usuario = found
+        usuario = found
 
     update_fields = []
     if usuario.nome != name:
