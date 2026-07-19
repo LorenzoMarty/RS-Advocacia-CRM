@@ -1,3 +1,0 @@
-/* Auditoria migrada para Tailwind + shadcn/ui (frontend/src/app/pages/audit.jsx e
-   frontend/src/app/components/audit/*.jsx) — sem CSS legado próprio. Reusa .section-head/
-   .section-title/.section-note globais em src/styles/components/cards.css. */
