@@ -646,7 +646,7 @@ export function ClientDetailPage() {
             </DetailSection>
 
             <DetailSection title="Processos" note={formatCount(relatedProcesses.length)}>
-              <div className="list">
+              <div className={cn('list', relatedProcesses.length > 4 && 'max-h-[480px] overflow-y-auto pr-1')}>
                 {relatedProcesses.length ? relatedProcesses.map((process) => (
                   <article key={process.id} className="process-item">
                     <Link className="process-link" to={`/processos/${process.id}`}>

@@ -62,30 +62,30 @@ export function ClientHoverCard({ clientId, children }) {
 export function DetailHero({ breadcrumbLabel, breadcrumbTo, mark, title, subtitle, meta, summary, actions }) {
   return (
     <section className="mb-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          to={breadcrumbTo}
-        >
-          <ArrowLeft className="size-3.5" />
-          {breadcrumbLabel}
-        </Link>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <div
+            className="grid size-14 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 font-serif text-xl text-primary"
+            aria-hidden="true"
+          >
+            {mark}
+          </div>
+          <div className="min-w-0">
+            <h1 className="truncate font-serif text-3xl leading-none text-foreground">{title}</h1>
+            {subtitle ? <p className="mt-1.5 truncate text-sm text-muted-foreground">{subtitle}</p> : null}
+            {meta ? <div className="mt-2 flex flex-wrap gap-1.5">{meta}</div> : null}
+          </div>
+        </div>
         {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
       </div>
 
-      <div className="mt-4 flex items-center gap-4">
-        <div
-          className="grid size-14 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 font-serif text-xl text-primary"
-          aria-hidden="true"
-        >
-          {mark}
-        </div>
-        <div className="min-w-0">
-          <h1 className="truncate font-serif text-3xl leading-none text-foreground">{title}</h1>
-          {subtitle ? <p className="mt-1.5 truncate text-sm text-muted-foreground">{subtitle}</p> : null}
-          {meta ? <div className="mt-2 flex flex-wrap gap-1.5">{meta}</div> : null}
-        </div>
-      </div>
+      <Link
+        className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        to={breadcrumbTo}
+      >
+        <ArrowLeft className="size-3.5" />
+        {breadcrumbLabel}
+      </Link>
 
       {summary?.length ? (
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
