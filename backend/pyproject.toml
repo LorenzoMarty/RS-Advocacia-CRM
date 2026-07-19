@@ -36,6 +36,7 @@ dev = [
     "pytest>=8",
     "pytest-django>=4.9",
     "pytest-cov>=6",
+    "vulture>=2.13",
 ]
 
 [tool.isort]

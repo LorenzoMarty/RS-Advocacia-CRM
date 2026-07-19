@@ -4,6 +4,7 @@ from django.utils import timezone
 from clientes.forms import ClienteForm
 from clientes.models import Cliente
 from clientes.views import serialize_cliente
+from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -110,8 +111,14 @@ def listar_prospects(request):
             | Q(telefone__icontains=busca)
         )
 
+    # Limite alto (não paginação de UI): frontend carrega tudo no store
+    # global — isto é só um teto de segurança.
+    pagina, paginacao = paginar(prospects, request, limite_padrao=1000, limite_maximo=5000)
     return resposta_sucesso(
-        {"prospects": [serialize_prospect(prospect) for prospect in prospects]}
+        {
+            "prospects": [serialize_prospect(prospect) for prospect in pagina],
+            "paginacao": paginacao,
+        }
     )
 
 

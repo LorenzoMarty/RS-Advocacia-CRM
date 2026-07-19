@@ -18,7 +18,7 @@ export function dateInputValue(value = new Date()) {
   return localDate.toISOString().slice(0, 10);
 }
 
-export function dateFromInput(value) {
+function dateFromInput(value) {
   return value ? new Date(`${value}T12:00:00`) : null;
 }
 

@@ -31,11 +31,11 @@ Periodic sync (``documentos.tasks.sincronizar_drive``, no human in the loop)
 
 from __future__ import annotations
 
-from django.db import transaction
-from django.db.models import Q
-
 import logging
 import re
+
+from django.db import transaction
+from django.db.models import Q
 
 from ai.services import drive_import as ai_drive
 from clientes.models import Cliente
@@ -44,10 +44,10 @@ from integrations.google import drive
 from integrations.google.client import drive_service
 from processos.models import Processo
 
-logger = logging.getLogger(__name__)
-
 from . import services
 from .models import ClienteDrive, DocumentoCliente, ProcessoDrive
+
+logger = logging.getLogger(__name__)
 
 # Safety bounds: a personal Drive folder scan must not run away on a huge or
 # accidentally-shared tree.

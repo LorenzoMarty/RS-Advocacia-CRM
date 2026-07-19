@@ -99,7 +99,6 @@ def current_usuario(request: HttpRequest) -> Usuario | None:
 def begin_authorization(
     request: HttpRequest,
     *,
-    force_consent: bool = False,
     next_path: str = "/",
     link_to_session: bool = False,
 ) -> HttpResponseRedirect:

@@ -7,6 +7,7 @@ from django.utils.dateparse import parse_datetime
 
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
+from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -85,7 +86,12 @@ def listar_prazos(request):
         return metodo_nao_permitido(["GET"])
 
     prazos = Prazo.objects.select_related("processo__cliente", "responsavel").all()
-    return resposta_sucesso({"prazos": [serialize_prazo(prazo) for prazo in prazos]})
+    # Limite alto (não paginação de UI): frontend carrega tudo pro kanban de
+    # prazos no store global — isto é só um teto de segurança.
+    pagina, paginacao = paginar(prazos, request, limite_padrao=1000, limite_maximo=5000)
+    return resposta_sucesso(
+        {"prazos": [serialize_prazo(prazo) for prazo in pagina], "paginacao": paginacao}
+    )
 
 
 @app_permissions_required("prazos.add_prazo")

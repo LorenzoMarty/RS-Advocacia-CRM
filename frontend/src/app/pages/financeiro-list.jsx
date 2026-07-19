@@ -53,8 +53,8 @@ export function FinanceiroPage() {
         categoria: categoryFilter,
         q: search,
         ordenar: sortToOrdenar(sort),
-        page,
-        page_size: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
+        limit: PAGE_SIZE,
       };
       api.listLancamentos(new URLSearchParams(
         Object.entries(params).filter(([, value]) => value != null && value !== ''),
@@ -62,8 +62,9 @@ export function FinanceiroPage() {
         .then((response) => {
           if (!active) return;
           const dados = response?.dados || response;
+          const total = dados.paginacao?.total ?? dados.total ?? 0;
           setRows(lancamentosFromResponse(response));
-          setRowsMeta({ total: dados.total ?? 0, numPages: dados.num_pages ?? 1 });
+          setRowsMeta({ total, numPages: Math.max(1, Math.ceil(total / PAGE_SIZE)) });
         })
         .catch((error) => {
           if (!active) return;

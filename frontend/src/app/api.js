@@ -16,7 +16,7 @@ function buildUrl(path, baseUrl = apiBaseUrl) {
   return `${baseUrl}${normalizedPath}`;
 }
 
-export function apiUrl(path) {
+function apiUrl(path) {
   return buildUrl(path);
 }
 
@@ -28,7 +28,7 @@ function buildQuery(params = {}) {
   ).toString();
 }
 
-export function getCookie(name) {
+function getCookie(name) {
   let cookieValue = '';
 
   if (document.cookie && document.cookie !== '') {
@@ -206,7 +206,7 @@ export const api = {
   carregarInicializacao: () => apiRequest('/api/inicializacao/'),
   obterUsuarioAtual: () => apiRequest('/api/usuarios/atual/'),
   urlLoginGoogle: () => apiUrl('/api/autenticacao/google'),
-  urlReauthorizeGoogle: () => `${apiUrl('/api/autenticacao/google')}?force_consent=1&next=/agenda`,
+  urlReauthorizeGoogle: () => `${apiUrl('/api/autenticacao/google')}?next=/agenda`,
   sair: () => apiRequest('/api/autenticacao/sair/', { method: 'POST' }),
   listClients: (params = {}) => {
     const query = buildQuery(params);

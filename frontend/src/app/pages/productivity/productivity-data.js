@@ -4,13 +4,10 @@
 
 import {
   belongsToUser,
-  formatTimerSeconds,
   isDeadlineDone,
   isEventAttended,
   isPetitionDone,
 } from '../../productivity-utils';
-
-export { formatTimerSeconds };
 
 // ---------------------------------------------------------------------------
 // Formatação
@@ -81,26 +78,6 @@ export function taskTypeColor(type) {
   return TYPE_COLOR[type] || 'var(--chart-4)';
 }
 
-export const CHART_PALETTE = [
-  'var(--chart-1)',
-  'var(--chart-2)',
-  'var(--chart-3)',
-  'var(--chart-4)',
-  'var(--chart-5)',
-];
-
-export function statusLabel(status) {
-  if (status === 'running') return 'Rodando';
-  if (status === 'paused') return 'Pausado';
-  return 'Encerrado';
-}
-
-export function statusTone(status) {
-  if (status === 'running') return 'success';
-  if (status === 'paused') return 'warn';
-  return 'muted';
-}
-
 // ---------------------------------------------------------------------------
 // Datas / períodos
 // ---------------------------------------------------------------------------
@@ -148,22 +125,11 @@ export function periodBounds(period, customStart, customEnd) {
   return { start: startOfWeek(), end: new Date() };
 }
 
-// Período anterior de mesma duração, imediatamente antes do início.
-export function previousBounds(bounds) {
-  if (!bounds.start || !bounds.end) {
-    return { start: null, end: null };
-  }
-  const duration = bounds.end.getTime() - bounds.start.getTime();
-  const end = new Date(bounds.start.getTime());
-  const start = new Date(bounds.start.getTime() - duration);
-  return { start, end };
-}
-
-export function entryReferenceDate(entry) {
+function entryReferenceDate(entry) {
   return entry?.endedAt || entry?.startedAt || null;
 }
 
-function isDateInRange(value, bounds) {
+export function isDateInRange(value, bounds) {
   if (!value) return false;
   const time = new Date(value).getTime();
   if (Number.isNaN(time)) return false;
@@ -179,93 +145,6 @@ export function isEntryInRange(entry, bounds) {
 export function variationPercent(current, previous) {
   if (!previous) return null;
   return Math.round(((current - previous) / previous) * 1000) / 10;
-}
-
-// ---------------------------------------------------------------------------
-// Agregação (mesmo shape do endpoint /resumo/)
-// ---------------------------------------------------------------------------
-
-export function aggregateEntries(entries, now = Date.now()) {
-  const byUser = new Map();
-  const byType = new Map();
-  const byProcess = new Map();
-  const byTask = new Map();
-  const byDay = new Map();
-  let total = 0;
-
-  for (const entry of entries) {
-    const seconds = timeEntryElapsedSeconds(entry, now);
-    total += seconds;
-
-    const userKey = entry.userId || 'sem-usuario';
-    const u = byUser.get(userKey) || { userId: entry.userId, userName: entry.userName || '', seconds: 0, count: 0 };
-    u.seconds += seconds;
-    u.count += 1;
-    byUser.set(userKey, u);
-
-    const t = byType.get(entry.taskType) || { taskType: entry.taskType, seconds: 0, count: 0 };
-    t.seconds += seconds;
-    t.count += 1;
-    byType.set(entry.taskType, t);
-
-    const procKey = entry.processId || entry.processNumber || 'sem-processo';
-    const p = byProcess.get(procKey) || {
-      key: procKey,
-      processId: entry.processId || '',
-      label: entry.processNumber || 'Sem processo',
-      seconds: 0,
-    };
-    p.seconds += seconds;
-    byProcess.set(procKey, p);
-
-    const taskKey = `${entry.taskType}:${entry.taskId}`;
-    const tk = byTask.get(taskKey) || {
-      key: taskKey,
-      taskId: entry.taskId,
-      taskType: entry.taskType,
-      label: entry.taskName || taskTypeLabel(entry.taskType),
-      processNumber: entry.processNumber || '',
-      seconds: 0,
-      count: 0,
-    };
-    tk.seconds += seconds;
-    tk.count += 1;
-    if (!tk.processNumber && entry.processNumber) tk.processNumber = entry.processNumber;
-    byTask.set(taskKey, tk);
-
-    const ref = entryReferenceDate(entry);
-    if (ref) {
-      const dayKey = dateInputValue(ref);
-      byDay.set(dayKey, (byDay.get(dayKey) || 0) + seconds);
-    }
-  }
-
-  const bySeconds = (a, b) => b.seconds - a.seconds;
-  return {
-    totalSeconds: total,
-    byUser: [...byUser.values()].sort(bySeconds),
-    byType: [...byType.values()].sort(bySeconds),
-    byProcess: [...byProcess.values()].sort(bySeconds),
-    byTask: [...byTask.values()].sort(bySeconds),
-    byDay: [...byDay.entries()].map(([date, seconds]) => ({ date, seconds })).sort((a, b) => a.date.localeCompare(b.date)),
-  };
-}
-
-// Série contínua de dias dentro dos limites (preenche lacunas com 0).
-export function buildDaySeries(bounds, byDay) {
-  if (!bounds.start || !bounds.end) return [];
-  const map = new Map(byDay.map((item) => [item.date, item.seconds]));
-  const series = [];
-  const cursor = startOfDay(bounds.start);
-  const last = startOfDay(bounds.end);
-  let guard = 0;
-  while (cursor.getTime() <= last.getTime() && guard < 370) {
-    const key = dateInputValue(cursor);
-    series.push({ date: key, seconds: map.get(key) || 0 });
-    cursor.setDate(cursor.getDate() + 1);
-    guard += 1;
-  }
-  return series;
 }
 
 // ---------------------------------------------------------------------------

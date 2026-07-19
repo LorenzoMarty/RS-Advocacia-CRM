@@ -9,9 +9,11 @@ from agenda.models import Evento
 from agenda.tasks import sincronizar_evento_google_calendar
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
+from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     converter_campos_datahora,
+    dados_com_aliases,
     erros_formulario,
     isoformat_ou_nulo,
     ler_corpo_json,
@@ -105,8 +107,7 @@ def serialize_evento(evento: Evento):
 
 def _evento_api_payload(request):
     payload = ler_corpo_json(request)
-    if "completed" in payload and "concluido" not in payload:
-        payload["concluido"] = payload["completed"]
+    payload = dados_com_aliases(payload, {"completed": "concluido"})
     return converter_campos_datahora(payload, EVENTO_DATETIME_FIELDS)
 
 
@@ -153,8 +154,14 @@ def listar_eventos(request):
         eventos = eventos.filter(data_inicio__lte=data_fim)
 
     eventos = eventos.order_by("data_inicio")
-    serialized = [serialize_evento(evento) for evento in eventos]
-    return resposta_sucesso({"eventos": serialized})
+    # Limite alto (não paginação de UI): o frontend carrega a coleção inteira
+    # de uma vez no store global — isto é só um teto de segurança contra
+    # query sem limite, não uma tela paginada.
+    pagina, paginacao = paginar(
+        eventos, request, limite_padrao=1000, limite_maximo=5000
+    )
+    serialized = [serialize_evento(evento) for evento in pagina]
+    return resposta_sucesso({"eventos": serialized, "paginacao": paginacao})
 
 
 @app_permissions_required("agenda.add_evento")
