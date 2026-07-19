@@ -44,16 +44,6 @@ urlpatterns = [
         name="upload_drive",
     ),
     path(
-        "api/clientes/<int:cliente_id>/drive/importar/escanear/",
-        views.escanear_importacao_view,
-        name="escanear_importacao",
-    ),
-    path(
-        "api/clientes/<int:cliente_id>/drive/importar/confirmar/",
-        views.confirmar_importacao_view,
-        name="confirmar_importacao",
-    ),
-    path(
         "api/clientes/<int:cliente_id>/drive/organizar/sugerir/",
         views.sugerir_organizacao_view,
         name="sugerir_organizacao_drive",
