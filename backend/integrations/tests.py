@@ -92,17 +92,6 @@ class GoogleOAuthTests(TestCase):
         GOOGLE_CLIENT_ID="client-id",
         GOOGLE_CLIENT_SECRET="secret",
         GOOGLE_REDIRECT_URI=CALLBACK,
-    )
-    def test_reautorizacao_forca_consentimento_no_mesmo_fluxo(self):
-        response = self.client.get(reverse("login_google"), {"force_consent": "1"})
-        query = parse_qs(urlsplit(response["Location"]).query)
-
-        self.assertEqual(query["prompt"], ["consent select_account"])
-
-    @override_settings(
-        GOOGLE_CLIENT_ID="client-id",
-        GOOGLE_CLIENT_SECRET="secret",
-        GOOGLE_REDIRECT_URI=CALLBACK,
         FRONTEND_URL="http://localhost:5173",
     )
     @patch("integrations.google.oauth.verify_identity_token")

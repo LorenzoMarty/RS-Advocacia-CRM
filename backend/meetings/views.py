@@ -5,6 +5,7 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
+from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -195,8 +196,14 @@ def listar_reunioes(request):
     reunioes = (
         Reuniao.objects.select_related("cliente").prefetch_related("gravacoes").all()
     )
+    # Limite alto (não paginação de UI): frontend carrega tudo no store
+    # global — isto é só um teto de segurança.
+    pagina, paginacao = paginar(reunioes, request, limite_padrao=1000, limite_maximo=5000)
     return resposta_sucesso(
-        {"reunioes": [serialize_reuniao(item) for item in reunioes]}
+        {
+            "reunioes": [serialize_reuniao(item) for item in pagina],
+            "paginacao": paginacao,
+        }
     )
 
 

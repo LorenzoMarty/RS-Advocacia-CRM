@@ -16,7 +16,7 @@ export const DURATION = {
 
 // Espelha --ease-out / --ease-spring de variables.css.
 export const EASE_OUT = [0.22, 1, 0.36, 1];
-export const EASE_SPRING = [0.34, 1.56, 0.64, 1];
+const EASE_SPRING = [0.34, 1.56, 0.64, 1];
 
 /** True quando o ambiente pede movimento reduzido (SSR-safe). */
 export function prefersReducedMotion() {

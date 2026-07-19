@@ -1,11 +1,11 @@
 from datetime import date
 
-from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
+from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -125,28 +125,13 @@ def listar_lancamentos(request):
         ORDENACOES_PERMITIDAS.get(ordenar, "-data_vencimento"), "id"
     )
 
-    try:
-        page = int(request.GET.get("page", 1))
-    except (TypeError, ValueError):
-        page = 1
-    try:
-        page_size = int(request.GET.get("page_size", 20))
-    except (TypeError, ValueError):
-        page_size = 20
-    page_size = max(1, min(page_size, 200))
-
-    paginator = Paginator(lancamentos, page_size)
-    page_obj = paginator.get_page(page)
+    pagina, paginacao = paginar(lancamentos, request)
 
     return resposta_sucesso(
         {
-            "lancamentos": [
-                serialize_lancamento(item) for item in page_obj.object_list
-            ],
-            "total": paginator.count,
-            "page": page_obj.number,
-            "page_size": page_size,
-            "num_pages": paginator.num_pages,
+            "lancamentos": [serialize_lancamento(item) for item in pagina],
+            "total": paginacao["total"],
+            "paginacao": paginacao,
         }
     )
 

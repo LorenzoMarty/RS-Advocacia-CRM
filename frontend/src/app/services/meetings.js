@@ -105,7 +105,7 @@ export function chooseUploadStrategy({ sessionErrorStatus, blobSize }) {
   return 'fail';
 }
 
-export async function createRecordingUploadSession(meetingId, { filename, contentType, size }) {
+async function createRecordingUploadSession(meetingId, { filename, contentType, size }) {
   return apiRequest(`/api/reunioes/${meetingId}/gravacoes/sessao-upload/`, {
     method: 'POST',
     body: JSON.stringify({
@@ -116,7 +116,7 @@ export async function createRecordingUploadSession(meetingId, { filename, conten
   });
 }
 
-export function uploadBlobToDrive(uploadUrl, blob, { onProgress } = {}) {
+function uploadBlobToDrive(uploadUrl, blob, { onProgress } = {}) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', uploadUrl);
@@ -149,7 +149,7 @@ export function uploadBlobToDrive(uploadUrl, blob, { onProgress } = {}) {
   });
 }
 
-export async function confirmRecording(meetingId, { driveFileId, filename, contentType, ordem = 0 }) {
+async function confirmRecording(meetingId, { driveFileId, filename, contentType, ordem = 0 }) {
   const payload = await apiRequest(`/api/reunioes/${meetingId}/gravacoes/confirmar/`, {
     method: 'POST',
     body: JSON.stringify({

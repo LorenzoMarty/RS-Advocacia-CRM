@@ -1,5 +1,6 @@
 import { INTERACTION_TYPE_OPTIONS, PROSPECT_STATUS_COLUMNS } from '../data';
 import { normalizeText } from '../utils';
+import { todayIso } from './financeiro-utils';
 
 export const STATUS_LABELS = PROSPECT_STATUS_COLUMNS.map((column) => column.label);
 
@@ -17,12 +18,6 @@ export function priorityTone(priority) {
   if (normalized.includes('alta')) return 'danger';
   if (normalized.includes('baixa')) return 'success';
   return 'warn';
-}
-
-export function todayIso() {
-  const date = new Date();
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 10);
 }
 
 export function isThisMonth(value) {

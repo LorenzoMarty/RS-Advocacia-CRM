@@ -9,38 +9,21 @@ import {
   isEventAttended,
   isPetitionDone,
 } from '../productivity-utils';
+import {
+  dateInputValue,
+  endOfDay,
+  formatHoursCompact,
+  isDateInRange,
+  isEntryInRange,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  timeEntryElapsedSeconds,
+} from '../pages/productivity/productivity-data';
 import { Select } from './select';
 import { useAppState } from '../store';
 
 const PAGE_SIZE = 20;
-
-function formatHoursCompact(totalSeconds) {
-  const safeSeconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-
-  if (!hours && !minutes) {
-    return '0h';
-  }
-
-  return `${hours ? `${hours}h` : ''}${hours && minutes ? ' ' : ''}${minutes ? `${minutes}m` : ''}`;
-}
-
-function timeEntryElapsedSeconds(entry, currentTime = Date.now()) {
-  const totalSeconds = Math.max(0, Math.floor(Number(entry?.totalSeconds) || 0));
-
-  if (entry?.status !== 'running') {
-    return totalSeconds;
-  }
-
-  const baseTime = new Date(entry.resumedAt || entry.startedAt).getTime();
-
-  if (Number.isNaN(baseTime)) {
-    return totalSeconds;
-  }
-
-  return totalSeconds + Math.max(0, Math.floor((currentTime - baseTime) / 1000));
-}
 
 function taskLoggedSeconds(timeEntries, userId, taskId, taskType, currentTime = Date.now()) {
   return (timeEntries || []).reduce((total, entry) => {
@@ -56,45 +39,11 @@ function taskLoggedSeconds(timeEntries, userId, taskId, taskType, currentTime = 
   }, 0);
 }
 
-function dateInputValue(value = new Date()) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return localDate.toISOString().slice(0, 10);
-}
-
-function startOfDay(value = new Date()) {
-  const date = new Date(value);
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function startOfWeek(value = new Date()) {
-  const date = startOfDay(value);
-  const day = date.getDay() || 7;
-  date.setDate(date.getDate() - day + 1);
-  return date;
-}
-
-function endOfDay(value = new Date()) {
-  const date = startOfDay(value);
-  date.setHours(23, 59, 59, 999);
-  return date;
-}
-
 function endOfWeek(value = new Date()) {
   const date = startOfWeek(value);
   date.setDate(date.getDate() + 6);
   date.setHours(23, 59, 59, 999);
   return date;
-}
-
-function startOfMonth(value = new Date()) {
-  const date = new Date(value);
-  return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
 function endOfMonth(value = new Date()) {
@@ -115,32 +64,6 @@ function periodBounds(period, customStart, customEnd) {
   }
 
   return { start: startOfWeek(), end: endOfWeek() };
-}
-
-function isDateInRange(value, bounds) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return false;
-  }
-
-  if (bounds.start && date < bounds.start) {
-    return false;
-  }
-
-  if (bounds.end && date > bounds.end) {
-    return false;
-  }
-
-  return true;
-}
-
-function entryDate(entry) {
-  return new Date(entry.endedAt || entry.startedAt);
-}
-
-function isEntryInRange(entry, bounds) {
-  return isDateInRange(entryDate(entry), bounds);
 }
 
 function deadlineDoneDate(deadline) {

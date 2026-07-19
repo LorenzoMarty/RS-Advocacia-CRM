@@ -1,3 +1,5 @@
+import { formatDateTimeInput } from '../utils';
+
 export const EMPTY_FORM = {
   title: '',
   meetingAt: '',
@@ -31,20 +33,6 @@ export function formatDateTime(value) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value));
-}
-
-export function formatDateTimeInput(value) {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return localDate.toISOString().slice(0, 16);
 }
 
 export function errorText(error) {

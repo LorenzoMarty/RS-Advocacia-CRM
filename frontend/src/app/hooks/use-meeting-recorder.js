@@ -10,12 +10,12 @@ const AUDIO_FORMATS = [
 // file, uploaded and transcribed on its own, so the whole meeting never travels
 // through a single request. Meeting length is effectively unlimited;
 // SAFETY_MAX just stops a forgotten recording.
-export const SEGMENT_DURATION_MS = 5 * 60 * 1000;
-export const SAFETY_MAX_RECORDING_MS = 4 * 60 * 60 * 1000;
+const SEGMENT_DURATION_MS = 5 * 60 * 1000;
+const SAFETY_MAX_RECORDING_MS = 4 * 60 * 60 * 1000;
 export const MAX_RECORDING_BYTES = 25 * 1024 * 1024;
 const MEETING_AUDIO_BITS_PER_SECOND = 64000;
 
-export function pickSupportedFormat() {
+function pickSupportedFormat() {
   if (typeof MediaRecorder === 'undefined') {
     return null;
   }

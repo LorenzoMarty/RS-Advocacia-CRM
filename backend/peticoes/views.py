@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
+from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -75,8 +76,14 @@ def listar_peticoes(request):
         return metodo_nao_permitido(["GET"])
 
     peticoes = Peticao.objects.select_related("cliente", "processo").all()
+    # Limite alto (não paginação de UI): frontend carrega tudo no store
+    # global — isto é só um teto de segurança.
+    pagina, paginacao = paginar(peticoes, request, limite_padrao=1000, limite_maximo=5000)
     return resposta_sucesso(
-        {"peticoes": [serialize_peticao(peticao) for peticao in peticoes]}
+        {
+            "peticoes": [serialize_peticao(peticao) for peticao in pagina],
+            "paginacao": paginacao,
+        }
     )
 
 

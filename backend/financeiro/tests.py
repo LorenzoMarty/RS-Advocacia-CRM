@@ -120,6 +120,26 @@ class FinanceiroAdminViewsTests(TestCase):
         self.assertEqual(dados["total"], 1)
         self.assertEqual(dados["lancamentos"][0]["tipo"], "despesa")
 
+    def test_paginacao_usa_contrato_offset_limit_compartilhado(self):
+        for i in range(3):
+            Lancamento.objects.create(
+                descricao=f"Lancamento {i}",
+                tipo="receita",
+                categoria="Honorários",
+                valor="10.00",
+                data_vencimento="2026-06-30",
+                status="Pendente",
+            )
+        response = self.client.get(
+            reverse("listar_lancamentos"), {"limit": "2", "offset": "1"}
+        )
+        dados = response.json()["dados"]
+        self.assertEqual(len(dados["lancamentos"]), 2)
+        self.assertEqual(
+            dados["paginacao"],
+            {"offset": 1, "limit": 2, "total": 3, "tem_mais": False},
+        )
+
 
 class FinanceiroPermissaoTests(TestCase):
     """Usuário comum (sem permissões financeiro) → 403."""

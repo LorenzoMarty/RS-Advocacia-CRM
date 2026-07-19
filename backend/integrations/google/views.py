@@ -38,7 +38,6 @@ def login_google(request: HttpRequest):
     try:
         return begin_authorization(
             request,
-            force_consent=request.GET.get("force_consent") == "1",
             next_path=request.GET.get("next", "/"),
             link_to_session=request.GET.get("vincular") == "1",
         )
