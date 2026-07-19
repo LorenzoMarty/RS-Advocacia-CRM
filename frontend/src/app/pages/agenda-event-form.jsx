@@ -167,20 +167,20 @@ export function EventFormPage() {
 
       <div className="grid gap-4">
         <section className="mb-2">
-          <Link
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to={backTarget}
-          >
-            <ArrowLeft className="size-3.5" />
-            {backLabel}
-          </Link>
-
-          <p className="mt-3 font-serif text-3xl text-foreground">{formTitle}</p>
+          <p className="font-serif text-3xl text-foreground">{formTitle}</p>
           <p className="mt-1 text-sm text-muted-foreground">
             {isEditing
               ? "Ajuste o agendamento e mantenha os vínculos essenciais atualizados."
               : "Cadastro direto, com foco em agendamento e vínculos essenciais."}
           </p>
+
+          <Link
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to={backTarget}
+          >
+            <ArrowLeft className="size-3.5" />
+            {backLabel}
+          </Link>
         </section>
 
         <Card>

@@ -79,17 +79,17 @@ export function ProspectFormPage() {
       <PageChrome label={isEditing ? 'Editar prospect' : 'Novo prospect'} />
       <div className="grid gap-4">
         <section className="mb-2">
+          <p className="font-serif text-3xl text-foreground">
+            {isEditing ? 'Editar prospect' : 'Novo prospect'}
+          </p>
+
           <Link
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             to="/prospeccao"
           >
             <ArrowLeft className="size-3.5" />
             Voltar para prospecção
           </Link>
-
-          <p className="mt-3 font-serif text-3xl text-foreground">
-            {isEditing ? 'Editar prospect' : 'Novo prospect'}
-          </p>
         </section>
 
         <Card>

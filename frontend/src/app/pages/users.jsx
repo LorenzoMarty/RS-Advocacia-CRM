@@ -298,20 +298,20 @@ export function UserFormPage() {
 
       <div className="grid gap-4">
         <section className="mb-2">
-          <Link
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to={isEditing ? `/usuarios/${user.id}` : '/usuarios'}
-          >
-            <ArrowLeft className="size-3.5" />
-            {isEditing ? 'Voltar para o usuário' : 'Voltar para usuários'}
-          </Link>
-
-          <p className="mt-3 font-serif text-3xl text-foreground">
+          <p className="font-serif text-3xl text-foreground">
             {isEditing ? 'Editar usuário' : 'Novo usuário'}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {isEditing ? 'Atualize os dados do perfil sem perder o contexto atual.' : 'Cadastre um membro da equipe e defina o perfil de acesso.'}
           </p>
+
+          <Link
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to={isEditing ? `/usuarios/${user.id}` : '/usuarios'}
+          >
+            <ArrowLeft className="size-3.5" />
+            {isEditing ? 'Voltar para o usuário' : 'Voltar para usuários'}
+          </Link>
         </section>
 
         <Card>

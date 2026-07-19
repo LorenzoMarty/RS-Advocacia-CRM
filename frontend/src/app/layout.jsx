@@ -168,7 +168,7 @@ function SidebarNavLink({ item, collapsed }) {
       aria-label={item.label}
       data-tour={`nav-${item.key}`}
       className={cn(
-        'group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground',
+        'group relative flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground',
         collapsed && 'mx-auto size-10 justify-center gap-0 px-0 py-0',
         isActive && 'bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary',
       )}
