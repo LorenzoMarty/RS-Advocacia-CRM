@@ -439,20 +439,20 @@ export function ClientFormPage() {
 
       <div className="grid gap-4">
         <section className="mb-2">
-          <Link
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to={isEditing ? `/clientes/${client.id}` : '/clientes'}
-          >
-            <ArrowLeft className="size-3.5" />
-            {isEditing ? 'Voltar para o cliente' : 'Voltar para clientes'}
-          </Link>
-
-          <p className="mt-3 font-serif text-3xl text-foreground">
+          <p className="font-serif text-3xl text-foreground">
             {isEditing ? 'Editar cliente' : 'Novo cliente'}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {isEditing ? 'Atualize os dados do cadastro com o mesmo fluxo da criação.' : 'Cadastro direto e objetivo.'}
           </p>
+
+          <Link
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to={isEditing ? `/clientes/${client.id}` : '/clientes'}
+          >
+            <ArrowLeft className="size-3.5" />
+            {isEditing ? 'Voltar para o cliente' : 'Voltar para clientes'}
+          </Link>
         </section>
 
         <Card>

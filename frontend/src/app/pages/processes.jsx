@@ -347,20 +347,20 @@ export function ProcessFormPage() {
 
       <div className="grid gap-4">
         <section className="mb-2">
-          <Link
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to={isEditing ? `/processos/${process.id}` : '/processos'}
-          >
-            <ArrowLeft className="size-3.5" />
-            {isEditing ? 'Voltar para o processo' : 'Voltar para processos'}
-          </Link>
-
-          <p className="mt-3 font-serif text-3xl text-foreground">
+          <p className="font-serif text-3xl text-foreground">
             {isEditing ? 'Editar processo' : 'Novo processo'}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {isEditing ? 'Ajuste os dados principais do processo sem trocar de fluxo.' : 'Registro claro e direto.'}
           </p>
+
+          <Link
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to={isEditing ? `/processos/${process.id}` : '/processos'}
+          >
+            <ArrowLeft className="size-3.5" />
+            {isEditing ? 'Voltar para o processo' : 'Voltar para processos'}
+          </Link>
         </section>
 
         <Card>

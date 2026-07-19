@@ -92,17 +92,17 @@ export function LancamentoFormPage() {
       <PageChrome label={isEditing ? 'Editar lançamento' : 'Novo lançamento'} />
       <div className="grid gap-4">
         <section className="mb-2">
+          <p className="font-serif text-3xl text-foreground">
+            {isEditing ? 'Editar lançamento' : 'Novo lançamento'}
+          </p>
+
           <Link
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             to="/financeiro"
           >
             <ArrowLeft className="size-3.5" />
             Voltar para financeiro
           </Link>
-
-          <p className="mt-3 font-serif text-3xl text-foreground">
-            {isEditing ? 'Editar lançamento' : 'Novo lançamento'}
-          </p>
         </section>
 
         <Card>

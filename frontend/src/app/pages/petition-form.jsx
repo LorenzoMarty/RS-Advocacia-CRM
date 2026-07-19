@@ -265,18 +265,18 @@ export function PetitionFormPage() {
 
       <div className="grid gap-4">
         <section className="mb-2">
+          <p className="font-serif text-3xl text-foreground">
+            {isEditing ? 'Editar peça' : 'Nova peça'}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Cadastro de petição ou contestação.</p>
+
           <Link
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             to="/peticoes-contestacoes"
           >
             <ArrowLeft className="size-3.5" />
             Voltar para petições
           </Link>
-
-          <p className="mt-3 font-serif text-3xl text-foreground">
-            {isEditing ? 'Editar peça' : 'Nova peça'}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">Cadastro de petição ou contestação.</p>
         </section>
 
         {clientOptions.length ? (

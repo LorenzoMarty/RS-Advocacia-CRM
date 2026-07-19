@@ -137,18 +137,18 @@ export function DeadlineFormPage() {
 
       <div className="grid gap-4">
         <section className="mb-2">
+          <p className="font-serif text-3xl text-foreground">
+            {isEditing ? 'Editar prazo' : 'Novo prazo'}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Preencha os campos do prazo.</p>
+
           <Link
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             to={`/prazos?data=${encodeURIComponent(date)}`}
           >
             <ArrowLeft className="size-3.5" />
             Voltar para prazos
           </Link>
-
-          <p className="mt-3 font-serif text-3xl text-foreground">
-            {isEditing ? 'Editar prazo' : 'Novo prazo'}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">Preencha os campos do prazo.</p>
         </section>
 
         {processes.length ? (
