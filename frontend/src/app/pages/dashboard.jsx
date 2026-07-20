@@ -3,7 +3,6 @@ import { Plus, Users, Briefcase, FileClock, FileText, ChevronRight } from "lucid
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { PageChrome, StatusBadge } from "../layout";
@@ -15,11 +14,11 @@ import { EmptyState } from "./common";
 const MotionLink = motion(Link);
 
 const SHORTCUTS = [
-  { to: "/agenda/novo", label: "Compromisso", tour: "shortcut-novo-compromisso", Icon: Plus },
-  { to: "/clientes/novo", label: "Cliente", tour: "shortcut-novo-cliente", Icon: Users },
-  { to: "/processos/novo", label: "Processo", tour: "shortcut-novo-processo", Icon: Briefcase },
-  { to: "/prazos/novo", label: "Prazo", tour: "shortcut-novo-prazo", Icon: FileClock },
-  { to: "/peticoes-contestacoes", label: "Petições", tour: "shortcut-peticoes", Icon: FileText },
+  { to: "/agenda/novo", label: "Novo compromisso", tour: "shortcut-novo-compromisso", Icon: Plus },
+  { to: "/clientes/novo", label: "Novo cliente", tour: "shortcut-novo-cliente", Icon: Users },
+  { to: "/processos/novo", label: "Novo processo", tour: "shortcut-novo-processo", Icon: Briefcase },
+  { to: "/prazos/novo", label: "Novo prazo", tour: "shortcut-novo-prazo", Icon: FileClock },
+  { to: "/peticoes-contestacoes", label: "Ver petições e contestações", tour: "shortcut-peticoes", Icon: FileText },
 ];
 
 function greeting(name) {
@@ -117,22 +116,14 @@ export function DashboardPage() {
       <PageChrome label="Painel" />
 
       <section className="mb-2">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="font-serif text-3xl text-foreground">{greeting(currentUser?.name)}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {focusParts.length
-                ? focusParts.join(" · ")
-                : "Nada urgente agora."}
-            </p>
-            <WeekLoadSpark today={today} deadlines={deadlines} events={events} />
-          </div>
-          <Button asChild>
-            <Link to="/agenda/novo">
-              <Plus className="size-4" />
-              Novo compromisso
-            </Link>
-          </Button>
+        <div>
+          <p className="font-serif text-3xl text-foreground">{greeting(currentUser?.name)}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {focusParts.length
+              ? focusParts.join(" · ")
+              : "Nada urgente agora."}
+          </p>
+          <WeekLoadSpark today={today} deadlines={deadlines} events={events} />
         </div>
       </section>
 
