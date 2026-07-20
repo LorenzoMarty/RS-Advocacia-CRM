@@ -46,6 +46,7 @@ FRONTEND_ACCESS_PERMISSIONS = (
     "usuarios.view_usuario",
     "usuarios.add_usuario",
     "usuarios.change_usuario",
+    "ai.view_configuracaoia",
 )
 
 

@@ -11,7 +11,6 @@ from ai.services.drive_import import RespostaIAInvalida
 
 
 @override_settings(
-    OPENAI_API_KEY="test-key",
     OPENAI_TRANSCRIPTION_MODEL="gpt-4o-transcribe",
     OPENAI_SUMMARY_MODEL="gpt-4.1-mini",
 )
@@ -88,7 +87,6 @@ class OpenAIProviderTests(SimpleTestCase):
 
 
 @override_settings(
-    OPENAI_API_KEY="test-key",
     OPENAI_TRANSCRIPTION_MODEL="gpt-4o-transcribe",
     OPENAI_SUMMARY_MODEL="gpt-4.1-mini",
 )
@@ -128,7 +126,6 @@ class AIServiceTests(SimpleTestCase):
 
 
 @override_settings(
-    OPENAI_API_KEY="test-key",
     OPENAI_CLASSIFICATION_MODEL="gpt-4.1-mini",
 )
 class DriveImportProviderTests(SimpleTestCase):

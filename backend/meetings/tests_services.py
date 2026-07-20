@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from ai.models import ConfiguracaoIA
 from clientes.models import Cliente
 from integrations.google.exceptions import (
     GoogleApiError,
@@ -17,7 +18,6 @@ from usuarios.models import Usuario
 ROOT = "root-folder-id"
 
 PROCESSING_SETTINGS = {
-    "OPENAI_API_KEY": "test-key",
     "CELERY_BROKER_URL": "memory://",
     "MEETINGS_PROCESSING_MODE": "celery",
     "GOOGLE_DRIVE_ROOT_FOLDER_ID": ROOT,
@@ -188,6 +188,9 @@ class GravacaoDriveViewsTests(TestCase):
 
         self.cliente = _cliente()
         self.reuniao = Reuniao.objects.create(titulo="Reuniao", cliente=self.cliente)
+        config = ConfiguracaoIA()
+        config.set_api_key("sk-test-key")
+        config.save()
 
     def _post_json(self, url_name, payload):
         return self.client.post(

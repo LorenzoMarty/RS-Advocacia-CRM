@@ -20,4 +20,5 @@ urlpatterns = [
     path("", include("documentos.urls")),
     path("", include("notificacoes.urls")),
     path("", include("opcoes.urls")),
+    path("", include("ai.urls")),
 ]

@@ -5,6 +5,7 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
+from ai.models import ConfiguracaoIA
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
@@ -43,10 +44,10 @@ def _modo_processamento():
 def _erros_configuracao_processamento():
     erros = {}
     modo = _modo_processamento()
-    if not settings.OPENAI_API_KEY:
+    if not ConfiguracaoIA.obter_api_key_ativa():
         erros["openai"] = [
-            "OPENAI_API_KEY não configurada no backend. "
-            "Defina a variavel de ambiente e reinicie o servidor."
+            "Nenhuma API key da OpenAI cadastrada. "
+            "Cadastre uma em Configurações para processar gravações."
         ]
     if modo not in PROCESSING_MODES:
         erros["processamento"] = [
@@ -77,7 +78,7 @@ def _resposta_falha_processamento_inline(gravacao, exc):
     gravacao.refresh_from_db()
     mensagem = (
         "Não foi possível transcrever/resumir a gravação nesta requisição. "
-        "Verifique OPENAI_API_KEY e tamanho do audio."
+        "Verifique a API key da OpenAI em Configurações e o tamanho do áudio."
     )
     logger.exception("Falha ao processar gravacao %s em modo inline.", gravacao.pk)
     return resposta_erro(

@@ -202,6 +202,13 @@ function financeiroRequest(path = '', options = {}) {
   });
 }
 
+function iaRequest(path = '', options = {}) {
+  return apiRequest(`/api/ia/${path}`, options, {
+    baseUrl: apiBaseUrl,
+    requireConfiguredApi: false,
+  });
+}
+
 export const api = {
   carregarInicializacao: () => apiRequest('/api/inicializacao/'),
   obterUsuarioAtual: () => apiRequest('/api/usuarios/atual/'),
@@ -291,6 +298,10 @@ export const api = {
   marcarLancamentoPago: (id, payload) => financeiroRequest(`${id}/marcar-pago/`, jsonOptions('POST', payload)),
   cancelarLancamento: (id) => financeiroRequest(`${id}/cancelar/`, jsonOptions('POST', {})),
   dashboardFinanceiro: () => financeiroRequest('dashboard/'),
+  getConfiguracaoIA: () => iaRequest('configuracao/'),
+  salvarConfiguracaoIA: (apiKey) => iaRequest('configuracao/', jsonOptions('POST', { api_key: apiKey })),
+  removerConfiguracaoIA: () => iaRequest('configuracao/', { method: 'DELETE' }),
+  getCustoIA: () => iaRequest('custo/'),
   listAudit: (params = {}) => {
     const query = buildQuery(params);
     return apiRequest(`/api/auditoria/${query ? `?${query}` : ''}`);

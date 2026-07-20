@@ -7,6 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from ai.models import ConfiguracaoIA
 from clientes.models import Cliente
 from meetings.models import Gravacao, Reuniao
 
@@ -42,9 +43,11 @@ class MeetingAPITests(TemporaryMediaTestCase):
             titulo="Reuniao inicial",
             cliente=self.cliente,
         )
+        config = ConfiguracaoIA()
+        config.set_api_key("sk-test-key")
+        config.save()
 
     @override_settings(
-        OPENAI_API_KEY="test-key",
         CELERY_BROKER_URL="memory://",
         MEETINGS_PROCESSING_MODE="celery",
     )
@@ -63,7 +66,6 @@ class MeetingAPITests(TemporaryMediaTestCase):
         delay.assert_called_once_with(gravacao.pk)
 
     @override_settings(
-        OPENAI_API_KEY="test-key",
         CELERY_BROKER_URL="",
         MEETINGS_PROCESSING_MODE="inline",
     )
@@ -91,7 +93,6 @@ class MeetingAPITests(TemporaryMediaTestCase):
         processar.assert_called_once_with(gravacao.pk)
 
     @override_settings(
-        OPENAI_API_KEY="test-key",
         CELERY_BROKER_URL="",
         MEETINGS_PROCESSING_MODE="inline",
     )
@@ -114,7 +115,6 @@ class MeetingAPITests(TemporaryMediaTestCase):
         self.assertEqual(Gravacao.objects.get().nome_original, "reuniao.webm")
 
     @override_settings(
-        OPENAI_API_KEY="test-key",
         CELERY_BROKER_URL="",
         MEETINGS_PROCESSING_MODE="inline",
     )
@@ -138,11 +138,11 @@ class MeetingAPITests(TemporaryMediaTestCase):
         self.assertEqual(gravacao.nome_original, "reuniao.webm")
 
     @override_settings(
-        OPENAI_API_KEY="",
         CELERY_BROKER_URL="memory://",
         MEETINGS_PROCESSING_MODE="celery",
     )
     def test_upload_exige_openai_api_key(self):
+        ConfiguracaoIA.objects.all().delete()
         audio = SimpleUploadedFile("reuniao.webm", b"audio", content_type="audio/webm")
 
         response = self.client.post(
@@ -155,7 +155,6 @@ class MeetingAPITests(TemporaryMediaTestCase):
         self.assertFalse(Gravacao.objects.exists())
 
     @override_settings(
-        OPENAI_API_KEY="test-key",
         CELERY_BROKER_URL="",
         MEETINGS_PROCESSING_MODE="celery",
     )
@@ -172,7 +171,6 @@ class MeetingAPITests(TemporaryMediaTestCase):
         self.assertFalse(Gravacao.objects.exists())
 
     @override_settings(
-        OPENAI_API_KEY="test-key",
         CELERY_BROKER_URL="redis://localhost:6379/0",
         MEETINGS_PROCESSING_MODE="celery",
     )
@@ -194,7 +192,6 @@ class MeetingAPITests(TemporaryMediaTestCase):
         self.assertIn("fila", response.json()["erros"])
 
     @override_settings(
-        OPENAI_API_KEY="test-key",
         CELERY_BROKER_URL="memory://",
         MEETINGS_PROCESSING_MODE="celery",
     )
