@@ -3,6 +3,7 @@ import { Link, NavLink, Navigate, Outlet, useLocation, useMatch } from 'react-ro
 import { Toaster } from 'sonner';
 import {
   Bell,
+  BookOpen,
   Briefcase,
   Calendar,
   CalendarCheck,
@@ -559,6 +560,14 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
                 Aparência
               </button>
             )}
+            <Link
+              to="/manual"
+              className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground"
+              onClick={() => setOpen(false)}
+            >
+              <BookOpen className="size-4" strokeWidth={1.8} />
+              Manual do sistema
+            </Link>
             {onStartTour && (
               <button
                 type="button"
@@ -652,7 +661,7 @@ export function ProtectedLayout() {
                 className="grid size-11 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-primary"
                 aria-hidden="true"
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="translate-y-0.5" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 3v18" />
                   <path d="m19 8 3 8a5 5 0 0 1-6 0z" />
                   <path d="m5 8 3 8a5 5 0 0 1-6 0z" />
