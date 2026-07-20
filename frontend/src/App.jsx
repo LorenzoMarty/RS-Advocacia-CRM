@@ -123,6 +123,9 @@ const ConfiguracoesPage = lazy(() =>
     default: m.ConfiguracoesPage,
   })),
 );
+const ManualPage = lazy(() =>
+  retryImport(() => import("./app/pages/manual")).then((m) => ({ default: m.ManualPage })),
+);
 const PrivacyPolicyPage = lazy(() =>
   retryImport(() => import("./app/pages/privacy-policy")).then((m) => ({
     default: m.PrivacyPolicyPage,
@@ -314,6 +317,8 @@ export default function App() {
                 </RequirePermission>
               }
             />
+
+            <Route path="/manual" element={<ManualPage />} />
 
           </Route>
 
