@@ -15,6 +15,7 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
   ShieldCheck,
   Sparkles,
   Timer,
@@ -53,6 +54,7 @@ const NAV_ICONS = {
   financeiro: DollarSign,
   auditoria: ShieldCheck,
   usuarios: UserCog,
+  configuracoes: Settings,
 };
 
 const PageChromeContext = createContext(() => {});

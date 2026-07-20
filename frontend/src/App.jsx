@@ -118,6 +118,11 @@ const AuditPage = lazy(() =>
 const MeetingsPage = lazy(() =>
   retryImport(() => import("./app/pages/meetings")).then((m) => ({ default: m.MeetingsPage })),
 );
+const ConfiguracoesPage = lazy(() =>
+  retryImport(() => import("./app/pages/configuracoes")).then((m) => ({
+    default: m.ConfiguracoesPage,
+  })),
+);
 const PrivacyPolicyPage = lazy(() =>
   retryImport(() => import("./app/pages/privacy-policy")).then((m) => ({
     default: m.PrivacyPolicyPage,
@@ -297,6 +302,15 @@ export default function App() {
               element={
                 <RequirePermission permission="usuarios.change_usuario">
                   <UserFormRoute />
+                </RequirePermission>
+              }
+            />
+
+            <Route
+              path="/configuracoes"
+              element={
+                <RequirePermission permission="ai.view_configuracaoia">
+                  <ConfiguracoesPage />
                 </RequirePermission>
               }
             />

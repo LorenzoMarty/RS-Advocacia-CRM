@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from openai import OpenAI
 
+from ai.models import ConfiguracaoIA
 from ai.prompts.drive_import import (
     CLASSIFICACAO_ARVORE_INSTRUCTIONS,
     ORGANIZACAO_ARVORE_INSTRUCTIONS,
@@ -20,15 +21,37 @@ from ai.prompts.meetings import (
 MAX_CONTEXTO_ANTERIOR_CHARS = 600
 
 
+def _usage_from_response(response, modelo: str) -> dict:
+    """Best-effort token extraction — the OpenAI SDK response shape for usage
+    varies by endpoint and isn't always present, so every field is optional."""
+    usage = getattr(response, "usage", None)
+    tokens_entrada = getattr(usage, "input_tokens", None) or getattr(
+        usage, "prompt_tokens", 0
+    )
+    tokens_saida = getattr(usage, "output_tokens", None) or getattr(
+        usage, "completion_tokens", 0
+    )
+    return {
+        "modelo": modelo,
+        "tokens_entrada": tokens_entrada or 0,
+        "tokens_saida": tokens_saida or 0,
+    }
+
+
 class OpenAIProvider:
     def __init__(self, client=None):
-        api_key = getattr(settings, "OPENAI_API_KEY", "")
-        if client is None and not api_key:
-            raise ImproperlyConfigured(
-                "Defina OPENAI_API_KEY para processar gravações."
-            )
+        self.last_usage: dict = {}
+        if client is not None:
+            self.client = client
+        else:
+            api_key = ConfiguracaoIA.obter_api_key_ativa()
+            if not api_key:
+                raise ImproperlyConfigured(
+                    "Cadastre a API key da OpenAI em Configurações para usar "
+                    "recursos de IA."
+                )
+            self.client = OpenAI(api_key=api_key)
 
-        self.client = client or OpenAI(api_key=api_key)
         self.transcription_model = settings.OPENAI_TRANSCRIPTION_MODEL
         self.summary_model = settings.OPENAI_SUMMARY_MODEL
         self.classification_model = settings.OPENAI_CLASSIFICATION_MODEL
@@ -50,6 +73,7 @@ class OpenAIProvider:
             file=(filename, audio_file, content_type or "application/octet-stream"),
             prompt=prompt,
         )
+        self.last_usage = _usage_from_response(transcription, self.transcription_model)
         return transcription.text.strip()
 
     def summarize(self, transcript: str) -> str:
@@ -60,6 +84,7 @@ class OpenAIProvider:
             max_output_tokens=1200,
             store=False,
         )
+        self.last_usage = _usage_from_response(response, self.summary_model)
         return response.output_text.strip()
 
     def refine_summary(self, resumo_atual: str, novo_trecho: str) -> str:
@@ -74,6 +99,7 @@ class OpenAIProvider:
             max_output_tokens=1600,
             store=False,
         )
+        self.last_usage = _usage_from_response(response, self.summary_model)
         return response.output_text.strip()
 
     def classify_drive_tree(self, *, arvore_texto: str, contexto: str) -> str:
@@ -88,6 +114,7 @@ class OpenAIProvider:
             max_output_tokens=4000,
             store=False,
         )
+        self.last_usage = _usage_from_response(response, self.classification_model)
         return response.output_text.strip()
 
     def plan_drive_organization(self, *, arvore_texto: str, contexto: str) -> str:
@@ -102,4 +129,5 @@ class OpenAIProvider:
             max_output_tokens=4000,
             store=False,
         )
+        self.last_usage = _usage_from_response(response, self.classification_model)
         return response.output_text.strip()

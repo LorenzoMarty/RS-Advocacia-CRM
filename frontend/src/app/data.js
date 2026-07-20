@@ -11,6 +11,7 @@ export const NAV_ITEMS = [
   { key: 'financeiro', label: 'Financeiro', mobileLabel: 'Financeiro', to: '/financeiro', permission: 'financeiro.view_lancamento' },
   { key: 'auditoria', label: 'Auditoria', mobileLabel: 'Audit', to: '/auditoria' },
   { key: 'usuarios', label: 'Usuários', mobileLabel: 'Usuários', to: '/usuarios', permission: 'usuarios.view_usuario' },
+  { key: 'configuracoes', label: 'Configurações', mobileLabel: 'Config', to: '/configuracoes', permission: 'ai.view_configuracaoia' },
 ];
 
 export const PROSPECT_STATUS_COLUMNS = [

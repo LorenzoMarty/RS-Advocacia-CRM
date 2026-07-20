@@ -336,7 +336,6 @@ DRIVE_MAX_FILE_SIZE_MB = int(os.getenv("DRIVE_MAX_FILE_SIZE_MB", "").strip() or 
 DEMO_DATA_ENABLED = _env_flag("DEMO_DATA_ENABLED", default=False)
 
 AI_PROVIDER = os.getenv("AI_PROVIDER", "openai").strip() or "openai"
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_TRANSCRIPTION_MODEL = (
     os.getenv("OPENAI_TRANSCRIPTION_MODEL", "gpt-4o-transcribe").strip()
     or "gpt-4o-transcribe"

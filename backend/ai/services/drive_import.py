@@ -1,6 +1,8 @@
 import json
 
+from ai.models import UsoIA
 from ai.providers import get_provider
+from ai.services.usage import registrar_uso_seguro
 
 
 class RespostaIAInvalida(Exception):
@@ -48,16 +50,20 @@ def _parse_json(texto: str) -> dict:
 
 
 def classificar_arvore(arvore: dict, contexto_cliente: str) -> dict:
-    resposta = get_provider().classify_drive_tree(
+    provider = get_provider()
+    resposta = provider.classify_drive_tree(
         arvore_texto=serializar_arvore_para_ia(arvore),
         contexto=contexto_cliente,
     )
+    registrar_uso_seguro(UsoIA.OPERACAO_DRIVE, provider)
     return _parse_json(resposta)
 
 
 def sugerir_organizacao(arvore: dict, contexto_cliente: str) -> dict:
-    resposta = get_provider().plan_drive_organization(
+    provider = get_provider()
+    resposta = provider.plan_drive_organization(
         arvore_texto=serializar_arvore_para_ia(arvore),
         contexto=contexto_cliente,
     )
+    registrar_uso_seguro(UsoIA.OPERACAO_DRIVE, provider)
     return _parse_json(resposta)
