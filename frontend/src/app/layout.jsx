@@ -171,8 +171,8 @@ function SidebarNavLink({ item, collapsed }) {
       aria-label={item.label}
       data-tour={`nav-${item.key}`}
       className={cn(
-        'group relative flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground',
-        collapsed && 'mx-auto size-10 justify-center gap-0 px-0 py-0',
+        'group relative flex items-center gap-3 rounded-2xl px-3 py-2 mr-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground',
+        collapsed && 'mx-auto mr-auto size-10 justify-center gap-0 px-0 py-0',
         isActive && 'bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary',
       )}
     >
@@ -644,7 +644,7 @@ export function ProtectedLayout() {
 
           <div
             className={cn(
-              'flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden pt-4.5',
+              'flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden pt-8',
               sidebarCollapsed ? 'px-2.5' : 'px-4.5',
             )}
           >

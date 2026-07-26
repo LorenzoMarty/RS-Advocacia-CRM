@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 function storageKey(userId) {
   return `onboarding:${userId}`;
@@ -25,11 +25,18 @@ function writeState(userId, next) {
 }
 
 export function useOnboardingProgress(userId) {
+  const [loadedUserId, setLoadedUserId] = useState(userId);
   const [state, setState] = useState(() => readState(userId));
 
-  useEffect(() => {
+  // Ajuste durante o render (não em useEffect): se fosse efeito, o
+  // onboarding-launcher rodaria seu próprio effect no mesmo commit ainda com
+  // o state antigo (tourSeen: false) e disparava o tour de novo para quem já
+  // tinha concluído — a troca de userId (login/refresh) tem que refletir
+  // antes de qualquer outro effect ler `tourSeen`.
+  if (userId !== loadedUserId) {
+    setLoadedUserId(userId);
     setState(readState(userId));
-  }, [userId]);
+  }
 
   // Chamado quando o tour é fechado/concluído. `completed` = chegou ao
   // último passo (driver.js "Concluir"); caso contrário foi abandonado no
