@@ -630,9 +630,9 @@ export function ProtectedLayout() {
           style={{ width: sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar)' }}
         >
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="absolute right-[-21px] top-1/2 z-10 size-10 -translate-y-1/2 rounded-full opacity-0 shadow-lg backdrop-blur transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+            className="absolute right-[-21px] top-1/2 z-10 size-10 -translate-y-1/2 rounded-full bg-background opacity-0 shadow-lg backdrop-blur transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
             aria-controls="app-sidebar"
             aria-expanded={sidebarCollapsed ? 'false' : 'true'}
             aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
