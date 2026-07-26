@@ -1,5 +1,8 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 
+from django.core.cache import cache
+from django.db import connections
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -38,6 +41,11 @@ from usuarios.views import serialize_usuarios
 # em .../views.py), só evita que o payload do boot cresça sem limite conforme
 # o histórico do escritório aumenta.
 LIMITE_BOOTSTRAP_COLECAO = 2000
+
+# TTL curto do cache de /api/inicializacao/: absorve os refreshes repetidos de
+# tela (todo mount de rota recarrega o boot da SPA) sem atrasar a propagação
+# de escritas reais além do razoável.
+CACHE_TTL_INICIALIZACAO_SEGUNDOS = 15
 
 FRONTEND_ACCESS_PERMISSIONS = (
     "financeiro.view_lancamento",
@@ -98,6 +106,28 @@ def painel(request):
     )
 
 
+def _executar_em_paralelo(tarefas):
+    """Roda cada tarefa (sem args) numa thread própria, com sua própria conexão
+    de banco, e devolve {chave: resultado} na ordem de conclusão. Cada tarefa
+    precisa fechar sua conexão ao terminar (feito aqui) para não vazar
+    conexões do pool entre chamadas."""
+
+    def _rodar(tarefa):
+        try:
+            return tarefa()
+        finally:
+            connections.close_all()
+
+    resultados = {}
+    with ThreadPoolExecutor(max_workers=max(len(tarefas), 1)) as executor:
+        futuros = {
+            executor.submit(_rodar, tarefa): chave for chave, tarefa in tarefas.items()
+        }
+        for futuro in futuros:
+            resultados[futuros[futuro]] = futuro.result()
+    return resultados
+
+
 @app_permissions_required(
     "agenda.view_evento",
     "peticoes.view_peticao",
@@ -109,78 +139,102 @@ def inicializacao(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    clientes = Cliente.objects.all()[:LIMITE_BOOTSTRAP_COLECAO]
-    processos = Processo.objects.select_related("cliente").all()[
-        :LIMITE_BOOTSTRAP_COLECAO
-    ]
-    eventos = (
-        Evento.objects.exclude(tipo_evento__icontains="prazo")
-        .select_related("cliente", "processo", "responsavel")
-        .all()
-    )
-    peticoes = Peticao.objects.select_related("cliente", "processo").all()
-    prazos = Prazo.objects.select_related("processo__cliente").all()
-    serialized_clientes = [serialize_cliente(cliente) for cliente in clientes]
-    serialized_processos = [serialize_processo(processo) for processo in processos]
-    serialized_eventos = [serialize_evento(evento) for evento in eventos]
-    serialized_peticoes = [serialize_peticao(peticao) for peticao in peticoes]
-    serialized_prazos = [serialize_prazo(prazo) for prazo in prazos]
     usuario_atual = _current_usuario(request)
+    cache_key = f"inicializacao:{request.session.get('usuario_id') or 'anon'}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return resposta_sucesso(cached)
 
-    data = {
-        "clientes": serialized_clientes,
-        "processos": serialized_processos,
-        "eventos": serialized_eventos,
-        "peticoes": serialized_peticoes,
-        "prazos": serialized_prazos,
-        "acessos": {
-            permission: user_has_permission(request, permission)
-            for permission in FRONTEND_ACCESS_PERMISSIONS
-        },
+    acessos = {
+        permission: user_has_permission(request, permission)
+        for permission in FRONTEND_ACCESS_PERMISSIONS
+    }
+    pode_ver_usuarios = acessos["usuarios.view_usuario"]
+    pode_ver_timeentry = user_has_permission(request, "productivity.view_timeentry")
+    pode_ver_metas = user_has_permission(request, "productivity.view_productivitygoal")
+    pode_ver_prospects = user_has_permission(request, "prospeccao.view_prospect")
+    pode_ver_lancamentos = acessos["financeiro.view_lancamento"]
+    eh_admin = _is_admin(request, usuario_atual)
+
+    tarefas = {
+        "clientes": lambda: [
+            serialize_cliente(cliente)
+            for cliente in Cliente.objects.all()[:LIMITE_BOOTSTRAP_COLECAO]
+        ],
+        "processos": lambda: [
+            serialize_processo(processo)
+            for processo in Processo.objects.select_related("cliente").all()[
+                :LIMITE_BOOTSTRAP_COLECAO
+            ]
+        ],
+        "eventos": lambda: [
+            serialize_evento(evento)
+            for evento in Evento.objects.exclude(tipo_evento__icontains="prazo")
+            .select_related("cliente", "processo", "responsavel")
+            .all()
+        ],
+        "peticoes": lambda: [
+            serialize_peticao(peticao)
+            for peticao in Peticao.objects.select_related("cliente", "processo").all()
+        ],
+        "prazos": lambda: [
+            serialize_prazo(prazo)
+            for prazo in Prazo.objects.select_related("processo__cliente").all()
+        ],
+        "usuarios_atribuiveis": lambda: [
+            {"id": str(pk), "nome": nome}
+            for pk, nome in Usuario.objects.order_by("nome").values_list(
+                "pk", "nome"
+            )
+        ],
     }
 
-    # Lista enxuta (id + nome) para popular selects de responsável mesmo para
-    # quem não tem permissão de gerenciar usuários (view_usuario).
-    data["usuarios_atribuiveis"] = [
-        {"id": str(pk), "nome": nome}
-        for pk, nome in Usuario.objects.order_by("nome").values_list("pk", "nome")
-    ]
-
-    if user_has_permission(request, "usuarios.view_usuario"):
-        serialized_usuarios = serialize_usuarios(
+    if pode_ver_usuarios:
+        tarefas["usuarios"] = lambda: serialize_usuarios(
             Usuario.objects.order_by("nome")[:LIMITE_BOOTSTRAP_COLECAO]
         )
-        data["usuarios"] = serialized_usuarios
 
-    if usuario_atual and user_has_permission(request, "productivity.view_timeentry"):
-        time_entries = TimeEntry.objects.select_related("user")
-        if not _is_admin(request, usuario_atual):
-            time_entries = time_entries.filter(user=usuario_atual)
-        data["time_entries"] = _time_entries_response(time_entries)
+    if usuario_atual and pode_ver_timeentry:
 
-    if usuario_atual and user_has_permission(
-        request, "productivity.view_productivitygoal"
-    ):
-        data["productivity_goals"] = _goals_response(request, usuario_atual)
+        def _time_entries():
+            time_entries = TimeEntry.objects.select_related("user")
+            if not eh_admin:
+                time_entries = time_entries.filter(user=usuario_atual)
+            return _time_entries_response(time_entries)
 
-    if user_has_permission(request, "prospeccao.view_prospect"):
-        prospects = Prospect.objects.select_related(
-            "responsavel_interno", "cliente_convertido"
-        ).all()
-        data["prospects"] = [serialize_prospect(prospect) for prospect in prospects]
+        tarefas["time_entries"] = _time_entries
 
-    if user_has_permission(request, "financeiro.view_lancamento"):
-        lancamentos = Lancamento.objects.select_related(
-            "cliente_relacionado", "caso_relacionado"
-        ).all()
-        data["lancamentos"] = [
-            serialize_lancamento(lancamento) for lancamento in lancamentos
+    if usuario_atual and pode_ver_metas:
+        tarefas["productivity_goals"] = lambda: _goals_response(
+            request, usuario_atual
+        )
+
+    if pode_ver_prospects:
+        tarefas["prospects"] = lambda: [
+            serialize_prospect(prospect)
+            for prospect in Prospect.objects.select_related(
+                "responsavel_interno", "cliente_convertido"
+            ).all()
         ]
 
-    if _is_admin(request, usuario_atual):
-        registros = RegistroAuditoria.objects.all()[:50]
-        data["auditoria"] = [serialize_registro(registro) for registro in registros]
+    if pode_ver_lancamentos:
+        tarefas["lancamentos"] = lambda: [
+            serialize_lancamento(lancamento)
+            for lancamento in Lancamento.objects.select_related(
+                "cliente_relacionado", "caso_relacionado"
+            ).all()
+        ]
 
+    if eh_admin:
+        tarefas["auditoria"] = lambda: [
+            serialize_registro(registro)
+            for registro in RegistroAuditoria.objects.all()[:50]
+        ]
+
+    data = _executar_em_paralelo(tarefas)
+    data["acessos"] = acessos
+
+    cache.set(cache_key, data, CACHE_TTL_INICIALIZACAO_SEGUNDOS)
     return resposta_sucesso(data)
 
 
