@@ -78,7 +78,7 @@ def frontend_redirect(path: str = "/", params: dict[str, str] | None = None) -> 
         frontend_url = settings.DEFAULT_REACT_ORIGINS[0]
     query = f"?{urlencode(params)}" if params else ""
     normalized_path = path if path.startswith("/") else f"/{path}"
-    return f"{frontend_url}/#{normalized_path}{query}"
+    return f"{frontend_url}{normalized_path}{query}"
 
 
 def current_usuario(request: HttpRequest) -> Usuario | None:

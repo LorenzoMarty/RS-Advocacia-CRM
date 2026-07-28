@@ -8,7 +8,7 @@ const WAIT_TIMEOUT_MS = 2500;
 const WAIT_INTERVAL_MS = 50;
 
 function currentPath() {
-  return window.location.hash.replace(/^#/, '') || '/';
+  return window.location.pathname || '/';
 }
 
 function waitForElement(selector) {
