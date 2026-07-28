@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import {
-  HashRouter,
+  BrowserRouter,
   Navigate,
   Route,
   Routes,
@@ -194,7 +194,7 @@ export default function App() {
   return (
     <AppErrorBoundary>
       <AppStateProvider>
-      <HashRouter>
+      <BrowserRouter>
         <Suspense fallback={null}>
         <Routes>
           <Route element={<GuestLayout />}>
@@ -327,7 +327,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>
-      </HashRouter>
+      </BrowserRouter>
       </AppStateProvider>
     </AppErrorBoundary>
   );

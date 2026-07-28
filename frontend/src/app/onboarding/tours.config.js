@@ -2,7 +2,7 @@
 // `currentRole.name` no store é um dos três cargos cadastráveis: Advogado, Estagiário, Administrador.
 //
 // Cada passo pode ter `route`: quando presente e diferente da rota atual, o hook
-// `useOnboardingTour` navega até lá (HashRouter) e espera o elemento aparecer no DOM
+// `useOnboardingTour` navega até lá e espera o elemento aparecer no DOM
 // antes de destacar o passo. Passos sem `route` usam um elemento já visível na tela atual
 // (ex.: os links do menu lateral, presentes em todas as páginas).
 export const ROLE_TOUR_KEY = {
