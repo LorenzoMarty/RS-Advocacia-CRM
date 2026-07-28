@@ -13,7 +13,7 @@ export function PrivacyPolicyPage() {
             </div>
           </div>
           <h1>Política de Privacidade</h1>
-          <p className="policy-meta">Última atualização: junho de 2025</p>
+          <p className="policy-meta">Última atualização: julho de 2026</p>
         </header>
 
         <main className="policy-body">
@@ -47,8 +47,8 @@ export function PrivacyPolicyPage() {
                   <td>Leitura e escrita de eventos no Google Calendar do usuário. Permite sincronizar compromissos criados na plataforma com o calendário Google e receber atualizações em tempo real via webhook.</td>
                 </tr>
                 <tr>
-                  <td><code>drive.file</code></td>
-                  <td>Acesso restrito apenas aos arquivos criados pelo aplicativo no Google Drive do usuário. Utilizado para armazenar gravações de reuniões e documentos de clientes. O aplicativo não acessa outros arquivos do Drive.</td>
+                  <td><code>drive</code></td>
+                  <td>Acesso ao Google Drive do usuário, incluindo pastas e arquivos não criados pelo aplicativo. Necessário porque a estrutura de pastas "Clientes" do escritório já existe no Drive antes da integração — o app precisa localizar, organizar e gravar documentos e gravações de reuniões dentro dela. Utilizado apenas para essa finalidade; o app não acessa nem lista arquivos fora do escopo de trabalho do escritório.</td>
                 </tr>
               </tbody>
             </table>
