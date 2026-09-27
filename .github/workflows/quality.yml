@@ -40,6 +40,15 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: backend
@@ -53,6 +62,7 @@ jobs:
       # unless DEBUG is on, and setdefault() never overrides a URL-supplied
       # sslmode anyway).
       DATABASE_URL: postgresql://ci:ci@localhost:5432/agenda_juri?sslmode=disable
+      REDIS_URL: redis://localhost:6379/0
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
