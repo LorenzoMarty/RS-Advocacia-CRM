@@ -2,6 +2,8 @@
 
 Case, deadline and client management for a law firm, with Google Calendar/Drive sync and AI-generated meeting transcripts and summaries.
 
+[![Quality gate](https://github.com/LorenzoMarty/RS-Advocacia-CRM/actions/workflows/quality.yml/badge.svg)](https://github.com/LorenzoMarty/RS-Advocacia-CRM/actions/workflows/quality.yml)
+
 > **Status:** portfolio reference. Client data and production configuration are not part of this repository.
 
 ![Django](https://img.shields.io/badge/Django-6-092E20?logo=django&logoColor=white)
@@ -65,3 +67,7 @@ The production layout (web, worker, beat, Redis and Caddy on one VM) is describe
 ## Author
 
 **Lorenzo Marty** — [GitHub](https://github.com/LorenzoMarty)
+
+## License
+
+[MIT](LICENSE)
