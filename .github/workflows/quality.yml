@@ -48,7 +48,11 @@ jobs:
       # GOOGLE_TOKEN_ENCRYPTION_KEY requirement (settings.py only enforces
       # both when DEBUG is off). DATABASE_URL is always required.
       DEBUG: "true"
-      DATABASE_URL: postgresql://ci:ci@localhost:5432/agenda_juri
+      # The postgres:16-alpine service has no SSL cert configured, so
+      # disable it explicitly (settings.py defaults to sslmode=require
+      # unless DEBUG is on, and setdefault() never overrides a URL-supplied
+      # sslmode anyway).
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/agenda_juri?sslmode=disable
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
