@@ -67,6 +67,25 @@ npm run dev
 
 Without Redis, set `MEETINGS_PROCESSING_MODE=inline` to process short recordings inside the upload request.
 
+### Try it with demo data (no Google login)
+
+`seed_demo` fills an **empty** local database with fictional data (clients, cases, deadlines, hearings, petitions, finance entries and prospects) and prints a development session cookie, so you can explore the app without Google OAuth, Redis or any API key:
+
+```bash
+cd backend
+export DEBUG=true DATABASE_URL=sqlite:///demo.db     # PowerShell: $env:DEBUG="true"; $env:DATABASE_URL="sqlite:///demo.db"
+python manage.py migrate
+python manage.py seed_demo      # prints: sessionid = <value>
+python manage.py runserver
+
+# in another terminal
+cd frontend
+cp .env.example .env            # VITE_API_URL=http://localhost:8000/api
+npm install && npm run dev
+```
+
+Open http://localhost:5173, add the printed `sessionid` as a cookie for `localhost` (browser DevTools → Application → Cookies) and reload. A guided tour opens on the first visit. The command refuses to run unless `DEBUG=true` and the database is empty. Google integrations and meeting transcription stay disabled in this mode.
+
 ## Quality checks
 
 ```bash
