@@ -11,6 +11,10 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
+![Walkthrough of the app: dashboard, clients, cases, calendar, deadlines and petitions boards, finance, prospecting funnel and office audit](docs/screenshots/demo.webp)
+
+<sub>Walkthrough of the app running locally with fictional demo data (sped up 2x). [Full-quality video](docs/demo.mp4).</sub>
+
 ## What it does
 
 - **Clients, cases and deadlines** in one place, with a calendar view and a customizable dashboard.
