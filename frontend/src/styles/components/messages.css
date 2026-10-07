@@ -42,8 +42,11 @@
 }
 
 .flash-success{background:var(--success-soft);color:var(--success-ink)}
+
 .flash-error{background:var(--danger-soft);color:var(--danger-ink)}
+
 .flash-warning{background:var(--warn-soft);color:var(--warn-ink)}
+
 .flash-info{background:var(--accent-soft-2);color:var(--ink)}
 
 @keyframes toast-in{
@@ -57,10 +60,10 @@
         transform:translateY(0);
     }
 }
-
 @media (max-width:640px){
-    .flash-stack{
+.flash-stack{
         right:14px;
         bottom:84px;
     }
+
 }

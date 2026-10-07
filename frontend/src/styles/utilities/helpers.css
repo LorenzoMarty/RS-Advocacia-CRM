@@ -1,13 +1,6 @@
 .nav-link:focus-visible,
-.bottom-nav-link:focus-visible,
-.theme-toggle:focus-visible,
 .btn:focus-visible{
     box-shadow:0 0 0 3px var(--focus-ring);
-}
-
-.sidebar-toggle-clean:focus-visible{
-    outline:none;
-    box-shadow:var(--sidebar-toggle-shadow), 0 0 0 3px var(--focus-ring);
 }
 
 .skip-link{
@@ -47,4 +40,3 @@
     white-space:nowrap;
     border:0;
 }
-

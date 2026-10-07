@@ -1,11 +1,11 @@
-.prospeccao-board {
+.prospeccao-board{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
   align-items: start;
 }
 
-.prospect-column {
+.prospect-column{
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -16,11 +16,11 @@
   transition: box-shadow .2s ease;
 }
 
-.prospect-column.is-drop-target {
+.prospect-column.is-drop-target{
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 
-.prospect-column-head {
+.prospect-column-head{
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -28,14 +28,14 @@
   padding: 8px 10px 4px;
 }
 
-.prospect-column-head h2 {
+.prospect-column-head h2{
   margin: 0;
   font-size: 1.07rem;
   font-weight: 700;
   color: var(--ink);
 }
 
-.prospect-column-count {
+.prospect-column-count{
   min-width: 24px;
   text-align: center;
   padding: 2px 9px;
@@ -47,13 +47,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-.prospect-column-list {
+.prospect-column-list{
   display: grid;
   gap: 10px;
   align-content: start;
 }
 
-.prospect-column-empty {
+.prospect-column-empty{
   padding: 14px;
   text-align: center;
   color: var(--muted);
@@ -62,7 +62,7 @@
   border-radius: var(--radius-md);
 }
 
-.prospect-card {
+.prospect-card{
   display: grid;
   gap: 8px;
   padding: 14px;
@@ -72,26 +72,26 @@
   transition: box-shadow .2s ease;
 }
 
-.prospect-card:hover {
+.prospect-card:hover{
   box-shadow: var(--shadow-hover);
 }
 
-.prospect-card.is-dragging {
+.prospect-card.is-dragging{
   opacity: .5;
 }
 
-.prospect-card.is-critical {
+.prospect-card.is-critical{
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--danger) 55%, transparent);
 }
 
-.prospect-card-head {
+.prospect-card-head{
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
-.prospect-card-name {
+.prospect-card-name{
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -100,7 +100,7 @@
   font-size: .92rem;
 }
 
-.prospect-card-head .status-badge {
+.prospect-card-head .status-badge{
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
@@ -116,75 +116,75 @@
   text-transform: uppercase;
 }
 
-.prospect-card-head .status-badge.success {
+.prospect-card-head .status-badge.success{
   color: var(--success);
 }
 
-.prospect-card-head .status-badge.warn {
+.prospect-card-head .status-badge.warn{
   color: var(--warn);
 }
 
-.prospect-card-head .status-badge.danger {
+.prospect-card-head .status-badge.danger{
   color: var(--danger);
 }
 
-.prospect-card-demand {
+.prospect-card-demand{
   color: var(--soft);
   font-size: .8rem;
 }
 
-.prospect-card-meta {
+.prospect-card-meta{
   display: grid;
   gap: 4px;
   margin: 0;
 }
 
-.prospect-card-meta div {
+.prospect-card-meta div{
   display: flex;
   justify-content: space-between;
   gap: 8px;
   font-size: .74rem;
 }
 
-.prospect-card-meta dt {
+.prospect-card-meta dt{
   color: var(--soft);
 }
 
-.prospect-card-meta dd {
+.prospect-card-meta dd{
   margin: 0;
   text-align: right;
 }
 
-.prospect-card-alert {
+.prospect-card-alert{
   font-size: .72rem;
   font-weight: 700;
   color: var(--danger);
 }
 
-.prospect-card.is-stale {
+.prospect-card.is-stale{
   border-color: var(--line-strong);
 }
 
-.prospect-card-stale {
+.prospect-card-stale{
   margin: 0;
   font-size: .72rem;
   font-weight: 700;
   color: var(--warn);
 }
 
-.prospect-card-quick {
+.prospect-card-quick{
   margin-top: 2px;
   border-top: 1px solid var(--line);
   padding-top: 8px;
 }
 
-.prospect-card-actions {
+.prospect-card-actions{
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
 }
 
-.prospect-card-actions .btn {
+.prospect-card-actions .btn{
   flex: 1 1 auto;
   min-width: 0;
   white-space: normal;
@@ -192,49 +192,49 @@
   line-height: 1.25;
 }
 
-.prospect-card-status-select {
+.prospect-card-status-select{
   margin-top: 8px;
 }
 
-.prospect-card-status-select .rs-select-trigger {
+.prospect-card-status-select .rs-select-trigger{
   min-height: 34px;
   padding: 0 34px 0 11px;
   border-radius:var(--radius-sm);
   font-size: .78rem;
 }
 
-.prospect-card-status-select .rs-select-value {
+.prospect-card-status-select .rs-select-value{
   font-size: .78rem;
   font-weight: 600;
 }
 
-.prospect-card-status-select .rs-select-icon {
+.prospect-card-status-select .rs-select-icon{
   width: 15px;
   height: 15px;
   right: 10px;
 }
 
-.prospect-quick-form {
+.prospect-quick-form{
   display: grid;
   gap: 6px;
   cursor: default;
 }
 
 .prospect-quick-form select,
-.prospect-quick-form input {
+.prospect-quick-form input{
   width: 100%;
 }
 
-.prospect-quick-form-actions {
+.prospect-quick-form-actions{
   display: flex;
   gap: 6px;
 }
 
-.prospect-quick-form-actions .btn {
+.prospect-quick-form-actions .btn{
   flex: 1;
 }
 
-.prospect-audit {
+.prospect-audit{
   padding: 10px 12px;
   border-radius:var(--radius-sm);
   border: 1px solid var(--line);
@@ -242,12 +242,12 @@
   font-size: .82rem;
 }
 
-.prospect-audit.is-critical {
+.prospect-audit.is-critical{
   border-color:color-mix(in srgb, var(--danger) 45%, transparent);
   color: var(--danger);
 }
 
-.prospect-case-box {
+.prospect-case-box{
   margin-top: 14px;
   padding: 14px;
   border-radius:var(--radius-sm);
@@ -256,18 +256,18 @@
   font-size: .86rem;
 }
 
-.prospect-interaction-form {
+.prospect-interaction-form{
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 16px;
 }
 
-.prospect-interaction-form input {
+.prospect-interaction-form input{
   flex: 1 1 220px;
 }
 
-.prospect-timeline {
+.prospect-timeline{
   display: grid;
   gap: 12px;
   list-style: none;
@@ -275,7 +275,7 @@
   padding: 0;
 }
 
-.prospect-timeline li {
+.prospect-timeline li{
   padding: 12px;
   border-radius:var(--radius-sm);
   border: 1px solid var(--line);
@@ -284,7 +284,7 @@
   gap: 6px;
 }
 
-.prospect-timeline-head {
+.prospect-timeline-head{
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -293,11 +293,11 @@
   color: var(--soft);
 }
 
-.prospect-converted {
+.prospect-converted{
   font-size: .88rem;
 }
 
-.prospect-convert-form {
+.prospect-convert-form{
   display: grid;
   gap: 12px;
 }

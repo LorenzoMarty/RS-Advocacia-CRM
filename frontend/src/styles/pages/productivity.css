@@ -104,6 +104,7 @@
 }
 
 .kpi-delta-up{color:var(--success);}
+
 .kpi-delta-down{color:var(--danger);}
 
 .productivity-bar{
@@ -294,36 +295,38 @@
 }
 
 @media (max-width:980px){
-    .productivity-kpis{
+.productivity-kpis{
         grid-template-columns:repeat(3,minmax(0,1fr));
     }
 
-    .productivity-active-item,
-    .productivity-history-row,
-    .productivity-bar-row{
+.productivity-active-item,
+.productivity-history-row,
+.productivity-bar-row{
         grid-template-columns:1fr;
     }
 
-    .productivity-task-item{
+.productivity-task-item{
         grid-template-columns:auto minmax(0,1fr) auto;
     }
 
-    .productivity-task-time{
+.productivity-task-time{
         grid-column:2 / -1;
     }
 
-    .productivity-filters{
+.productivity-filters{
         justify-content:flex-start;
     }
+
 }
 
 @media (max-width:620px){
-    .task-timer{
+.task-timer{
         align-items:flex-start;
         flex-direction:column;
     }
 
-    .productivity-kpis{
+.productivity-kpis{
         grid-template-columns:repeat(2,minmax(0,1fr));
     }
+
 }

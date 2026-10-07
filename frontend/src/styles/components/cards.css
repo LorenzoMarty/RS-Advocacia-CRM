@@ -14,13 +14,17 @@
 }
 
 .profile .avatar{width:34px;height:34px;border-radius:var(--radius-sm)}
+
 .main{display:grid;grid-template-columns:minmax(0,1fr);gap:0;min-width:0;background:transparent}
+
 .main > *{min-width:0}
 
 /* Envólucro de transição de página (MotionPage). Repassa o contexto de grid
    da .main para o conteúdo da rota — herda o mesmo layout/gap. */
 .page-motion{display:grid;grid-template-columns:minmax(0,1fr);gap:0;min-width:0}
+
 .page-motion > *{min-width:0}
+
 .surface{
     position:relative;
     min-width:0;
@@ -65,9 +69,11 @@
 }
 
 @media (prefers-reduced-motion:reduce){
-    .is-clickable:hover,
-    .is-clickable:active{transform:none}
+.is-clickable:hover,
+.is-clickable:active{transform:none}
+
 }
+
 /* Chip neutro (legado). Para status/prioridade use StatusBadge (.status-dot / .pill-badge). */
 .badge{
     display:inline-flex;
@@ -87,9 +93,13 @@
 }
 
 .badge::before{content:"";width:6px;height:6px;border-radius:999px;background:currentColor}
+
 .badge.gold{color:var(--ink-2);background:var(--surface-2)}
+
 .badge.success{color:var(--success-ink);background:var(--success-soft)}
+
 .badge.warn{color:var(--warn-ink);background:var(--warn-soft)}
+
 .badge.danger{color:var(--danger-ink);background:var(--danger-soft)}
 
 /* Status: ponto 7px colorido + texto, sem pílula. */
@@ -104,6 +114,7 @@
     font-weight:600;
     line-height:1.2;
 }
+
 .status-dot::before{
     content:"";
     flex:0 0 auto;
@@ -112,9 +123,13 @@
     border-radius:var(--radius-pill);
     background:var(--subtle);
 }
+
 .status-dot.danger::before{background:var(--danger)}
+
 .status-dot.warn::before{background:var(--warn)}
+
 .status-dot.success::before{background:var(--success)}
+
 .status-dot.info::before{background:var(--info)}
 
 /* Prioridade: pílula. Alta = danger, Média = warn, Baixa/neutra = surface-2. */
@@ -131,12 +146,17 @@
     font-weight:700;
     line-height:1.2;
 }
+
 .pill-badge.danger{background:var(--danger-soft);color:var(--danger-ink)}
+
 .pill-badge.warn{background:var(--warn-soft);color:var(--warn-ink)}
+
 .pill-badge.success{background:var(--success-soft);color:var(--success-ink)}
+
 .pill-badge.info{background:var(--surface-2);color:var(--ink-2)}
 
 .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:var(--gap-page, 18px)}
+
 .section-title{
     margin:0;
     font-size:1.43rem;
@@ -146,6 +166,7 @@
 }
 
 .section-note{margin:0;color:var(--muted);font-size:.9rem}
+
 .empty{
     padding:18px;
     border-radius:var(--radius-md);
@@ -158,17 +179,11 @@
     .badge,
     .status-badge,
     .meta-chip,
-    .meta-pill,
     .legend-chip,
-    .client-tier,
     .action-link,
-    .contact-link,
     .link-card,
     .note-box,
-    .detail-item,
-    .summary-card,
     .empty,
-    .empty-state .empty,
     .calendar-event,
     .calendar-more,
     .side-item,
@@ -180,24 +195,18 @@
     .petition-card,
     .petition-column-empty,
     .recording-result,
-    .meeting-option,
     .audio-recorder
 ){
     border-radius:18px;
 }
 
-.main :where(.badge,.status-badge,.meta-chip,.meta-pill,.legend-chip,.client-tier,.focus-label){
+.main :where(.badge,.status-badge,.meta-chip,.legend-chip){
     border-radius:999px;
 }
 
 .empty strong{display:block;font-size:.96rem}
+
 .empty p{margin:6px 0 0;color:var(--muted);font-size:.9rem;line-height:1.55}
-
-.theme-icon{position:relative;width:18px;height:18px}
-.theme-icon svg{position:absolute;inset:0;transition:opacity .18s ease,transform .18s ease}
-.theme-icon .sun{opacity:0;transform:scale(.8) rotate(-8deg)}
-.theme-icon .moon{opacity:1;transform:scale(1)}
-
 
 /* Grids de coluna única: sem isso a trilha implícita (auto) cresce até o max-content do
    filho e estoura a largura em telas estreitas. Grids com grid-cols-* mantêm a própria definição. */

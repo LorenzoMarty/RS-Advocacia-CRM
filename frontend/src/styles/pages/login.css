@@ -166,29 +166,30 @@
 }
 
 @media (max-width:640px){
-    .login-shell{
+.login-shell{
         padding:18px 12px;
     }
 
-    .login-card{
+.login-card{
         gap:20px;
         padding:var(--pad-card) 18px;
     }
 
-    .login-brand{
+.login-brand{
         gap:12px;
     }
 
-    .login-brand-mark{
+.login-brand-mark{
         width:40px;
         height:40px;
     }
 
-    .login-subtitle{
+.login-subtitle{
         font-size:.88rem;
     }
 
-    .login-submit{
+.login-submit{
         min-height:46px;
     }
+
 }

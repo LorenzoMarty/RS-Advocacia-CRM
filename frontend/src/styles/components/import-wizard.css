@@ -111,8 +111,9 @@
 }
 
 @media (max-width: 640px){
-    .import-wizard-row{
+.import-wizard-row{
         grid-template-columns:auto minmax(0, 1fr);
         grid-template-rows:auto auto auto;
     }
+
 }

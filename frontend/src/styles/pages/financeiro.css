@@ -1,10 +1,10 @@
-.financeiro-metrics {
+.financeiro-metrics{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
 }
 
-.metric {
+.metric{
   padding: calc(16px * var(--space-scale));
   border-radius:var(--radius-md);
   border: 0;
@@ -12,7 +12,7 @@
   transition: border-color var(--motion) var(--ease-out), background var(--motion) var(--ease-out);
 }
 
-.metric span {
+.metric span{
   display: block;
   color: var(--muted);
   font-size: .72rem;
@@ -21,7 +21,7 @@
   text-transform: uppercase;
 }
 
-.metric strong {
+.metric strong{
   display: block;
   margin-top: 10px;
   font-size: 1.9rem;
@@ -30,26 +30,26 @@
   font-variant-numeric: tabular-nums;
 }
 
-.metric:hover {
+.metric:hover{
   border-color: var(--line-strong);
   background: var(--ghost-strong);
 }
 
-.metric-danger {
+.metric-danger{
   border-color:color-mix(in srgb, var(--danger) 40%, transparent);
 }
 
-.metric-danger strong {
+.metric-danger strong{
   color: var(--danger);
 }
 
-.financeiro-charts {
+.financeiro-charts{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 14px;
 }
 
-.finance-chart {
+.finance-chart{
   padding: 14px;
   border-radius:var(--radius-sm);
   border: 1px solid var(--line);
@@ -58,27 +58,27 @@
   gap: 10px;
 }
 
-.finance-chart h3 {
+.finance-chart h3{
   font-size: .82rem;
   font-weight: 700;
   letter-spacing: .04em;
 }
 
-.finance-donut {
+.finance-donut{
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
 }
 
-.finance-donut-chart {
+.finance-donut-chart{
   position: relative;
   width: 168px;
   height: 168px;
   flex: none;
 }
 
-.finance-donut-center {
+.finance-donut-center{
   position: absolute;
   inset: 0;
   display: grid;
@@ -88,14 +88,14 @@
   pointer-events: none;
 }
 
-.finance-donut-center strong {
+.finance-donut-center strong{
   font-size: .92rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: -.01em;
   line-height: 1.1;
 }
 
-.finance-donut-pct {
+.finance-donut-pct{
   font-size: 1.05rem;
   font-weight: 800;
   color: var(--accent);
@@ -103,7 +103,7 @@
   line-height: 1;
 }
 
-.finance-donut-label {
+.finance-donut-label{
   font-size: .62rem;
   text-transform: uppercase;
   letter-spacing: .08em;
@@ -115,7 +115,7 @@
   margin: 0 auto;
 }
 
-.finance-legend {
+.finance-legend{
   list-style: none;
   margin: 0;
   padding: 0;
@@ -124,16 +124,16 @@
   flex: 1 1 160px;
 }
 
-.finance-legend-item {
+.finance-legend-item{
   border-radius: 8px;
   transition: background var(--motion-fast) var(--ease-out);
 }
 
-.finance-legend-item.is-active {
+.finance-legend-item.is-active{
   background: var(--ghost-strong);
 }
 
-.finance-legend-btn {
+.finance-legend-btn{
   display: flex;
   align-items: center;
   gap: 8px;
@@ -149,7 +149,7 @@
   border-radius: 8px;
 }
 
-.finance-dot {
+.finance-dot{
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -157,11 +157,11 @@
   transition: transform var(--motion-fast) var(--ease-out);
 }
 
-.finance-legend-item.is-active .finance-dot {
+.finance-legend-item.is-active .finance-dot{
   transform: scale(1.35);
 }
 
-.finance-legend-label {
+.finance-legend-label{
   flex: 1;
   color: var(--soft);
   overflow: hidden;
@@ -169,12 +169,12 @@
   white-space: nowrap;
 }
 
-.finance-legend-value {
+.finance-legend-value{
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-.financeiro-tabs {
+.financeiro-tabs{
   display: inline-flex;
   gap: 4px;
   flex-wrap: wrap;
@@ -184,7 +184,7 @@
   background: var(--surface-2);
 }
 
-.financeiro-tab {
+.financeiro-tab{
   padding: 8px 14px;
   border: 0;
   border-radius: var(--radius-pill);
@@ -197,31 +197,31 @@
   transition: color .18s ease, background .18s ease;
 }
 
-.financeiro-tab:hover {
+.financeiro-tab:hover{
   color: var(--ink);
 }
 
-.financeiro-tab.is-active {
+.financeiro-tab.is-active{
   background: var(--surface);
   color: var(--ink);
   box-shadow: 0 1px 3px rgba(23, 24, 28, .1);
 }
 
-.financeiro-tab-indicator {
+.financeiro-tab-indicator{
   display: none;
 }
 
-.financeiro-table {
+.financeiro-table{
   display: grid;
   gap: 4px;
 }
 
-.financeiro-rows {
+.financeiro-rows{
   display: grid;
   gap: 4px;
 }
 
-.financeiro-th.is-sortable {
+.financeiro-th.is-sortable{
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -230,27 +230,27 @@
 }
 
 .financeiro-th.is-sortable:hover,
-.financeiro-th.is-sorted {
+.financeiro-th.is-sorted{
   color: var(--accent);
 }
 
-.financeiro-sort-arrow {
+.financeiro-sort-arrow{
   flex: none;
 }
 
-.financeiro-row {
+.financeiro-row{
   transition: border-color var(--motion) var(--ease-out),
     background var(--motion) var(--ease-out),
     transform var(--motion) var(--ease-out);
 }
 
-.financeiro-row:not(.financeiro-row-head):hover {
+.financeiro-row:not(.financeiro-row-head):hover{
   border-color: var(--line-strong);
   background: var(--ghost-strong);
   transform: translateY(-1px);
 }
 
-.financeiro-row {
+.financeiro-row{
   display: grid;
   grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 1.6fr;
   gap: 10px;
@@ -262,7 +262,7 @@
   font-size: .82rem;
 }
 
-.financeiro-row-head {
+.financeiro-row-head{
   background: transparent;
   border-color: transparent;
   color: var(--soft);
@@ -271,7 +271,7 @@
   letter-spacing: .08em;
 }
 
-.financeiro-th {
+.financeiro-th{
   background: none;
   border: none;
   color: inherit;
@@ -281,31 +281,31 @@
   padding: 0;
 }
 
-.financeiro-cell {
+.financeiro-cell{
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
 }
 
-.financeiro-cell small {
+.financeiro-cell small{
   color: var(--soft);
   font-size: .7rem;
 }
 
-.financeiro-actions {
+.financeiro-actions{
   flex-direction: row;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.btn-mini {
+.btn-mini{
   padding: 5px 10px;
   font-size: .72rem;
   border-radius: 8px;
 }
 
-.financeiro-pagination {
+.financeiro-pagination{
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -314,16 +314,16 @@
   color: var(--soft);
 }
 
-@media (max-width: 880px) {
-  .financeiro-row {
+@media (max-width: 880px){
+.financeiro-row{
     grid-template-columns: 1fr 1fr;
   }
 
-  .financeiro-row-head {
+.financeiro-row-head{
     display: none;
   }
 
-  .financeiro-cell[data-label]::before {
+.financeiro-cell[data-label]::before{
     content: attr(data-label);
     display: block;
     color: var(--soft);
@@ -331,4 +331,5 @@
     text-transform: uppercase;
     letter-spacing: .08em;
   }
+
 }

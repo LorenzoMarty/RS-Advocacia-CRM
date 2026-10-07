@@ -19,9 +19,10 @@
     --line-strong:#DDE0E6;
     --ink:#17181C;
     --ink-2:#3A3D45;
-    /* Desvio do spec (#7B808C = 3.96:1 no branco): #656A76 cumpre 4.5:1 em --surface e --bg. */
-    --muted:#656A76;
-    --subtle:#9A9EA8; /* só labels >= 11px bold */
+    /* Desvio do spec (#7B808C/#9A9EA8 ficam < 4.5:1): --muted cumpre 4.5:1 em surface, bg e surface-3;
+       --subtle (4.68:1 no branco) só para labels >= 11px bold. */
+    --muted:#5E636F;
+    --subtle:#6F7480;
 
     /* Acento da interface: azul médio. Único ponto de troca. --ink fica só como cor de texto. */
     --accent:oklch(0.52 0.13 255);
@@ -72,7 +73,6 @@
     --gap-list:calc(10px * var(--space-scale));
     --bottom-nav-height:88px;
     --bottom-nav-offset:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 18px);
-    --serif:var(--sans); /* sem serifa: títulos usam --sans */
     --sans:"Urbanist",system-ui,sans-serif;
     --body-bg:var(--bg);
     --sidebar-bg:var(--surface);
