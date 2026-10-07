@@ -74,8 +74,6 @@ export default {
       },
       fontFamily: {
         sans: ['Urbanist', 'system-ui', 'sans-serif'],
-        // Alias temporário: font-serif ainda existe em páginas não migradas; renderiza em Urbanist. Remover na fase 7.
-        serif: ['Urbanist', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         'accordion-down': {

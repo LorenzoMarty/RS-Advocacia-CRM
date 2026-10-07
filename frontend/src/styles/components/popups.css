@@ -80,19 +80,14 @@
     padding-top:2px;
 }
 
-
-
-
-
-
-
 @media (max-width:640px){
-    .popup-layer{
+.popup-layer{
         align-items:end;
         padding:14px;
     }
 
-    .popup-actions .btn{
+.popup-actions .btn{
         flex:1;
     }
+
 }

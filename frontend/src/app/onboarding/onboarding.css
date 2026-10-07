@@ -1,5 +1,5 @@
 /* Popover do tour guiado (driver.js) */
-.onboarding-popover.driver-popover {
+.onboarding-popover.driver-popover{
   background: var(--surface);
   color: var(--text);
   border: 0;
@@ -7,17 +7,17 @@
   box-shadow: var(--shadow-pop);
 }
 
-.onboarding-popover .driver-popover-title {
+.onboarding-popover .driver-popover-title{
   color: var(--text);
   font-weight: 700;
   font-size: 1.14rem;
 }
 
-.onboarding-popover .driver-popover-description {
+.onboarding-popover .driver-popover-description{
   color: var(--soft);
 }
 
-.onboarding-popover .driver-popover-footer button {
+.onboarding-popover .driver-popover-footer button{
   text-shadow: none;
   background: var(--surface-2);
   color: var(--ink);
@@ -27,15 +27,15 @@
   font-weight: 700;
 }
 
-.onboarding-popover .driver-popover-footer button:hover {
+.onboarding-popover .driver-popover-footer button:hover{
   background: var(--surface-3);
 }
 
-.onboarding-popover .driver-popover-footer .driver-popover-next-btn:hover {
+.onboarding-popover .driver-popover-footer .driver-popover-next-btn:hover{
   background: var(--accent-hover);
 }
 
-.onboarding-popover .driver-popover-footer .driver-popover-next-btn {
+.onboarding-popover .driver-popover-footer .driver-popover-next-btn{
   background: var(--accent);
   border-color: transparent;
   color: var(--accent-fg);
@@ -43,7 +43,7 @@
 
 .onboarding-popover .driver-popover-close-btn:focus-visible,
 .onboarding-popover .driver-popover-footer button:focus-visible,
-.driver-active-element:focus-visible {
+.driver-active-element:focus-visible{
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

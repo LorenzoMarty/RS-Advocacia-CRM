@@ -3,22 +3,22 @@
         gap:var(--gap-page);
     }
 
-    .form-grid{
+.form-grid{
         display:grid;
         grid-template-columns:repeat(2, minmax(0, 1fr));
         gap:14px;
     }
 
-    .field{
+.field{
         display:grid;
         gap:8px;
     }
 
-    .field.span-2{
+.field.span-2{
         grid-column:1 / -1;
     }
 
-    .field label{
+.field label{
         color:var(--muted);
         font-size:.74rem;
         font-weight:700;
@@ -26,8 +26,8 @@
         text-transform:uppercase;
     }
 
-    .field input,
-    .field select{
+.field input,
+.field select{
         width:100%;
         min-height:48px;
         padding:0 14px;
@@ -39,7 +39,7 @@
         transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;
     }
 
-    .field select{
+.field select{
         appearance:none;
         -webkit-appearance:none;
         -moz-appearance:none;
@@ -55,73 +55,74 @@
         background-repeat:no-repeat;
     }
 
-    .field select:hover{
+.field select:hover{
         border-color:var(--line-strong);
         background-color:var(--ghost-strong);
     }
 
-    .field input:focus,
-    .field select:focus{
+.field input:focus,
+.field select:focus{
         border-color:var(--line-strong);
         background:var(--ghost-strong);
         box-shadow:0 0 0 3px var(--focus-ring);
     }
 
-    .field.has-error input,
-    .field.has-error select{
+.field.has-error input,
+.field.has-error select{
         border-color:color-mix(in srgb, var(--danger) 40%, transparent);
         box-shadow:0 0 0 4px color-mix(in srgb, var(--danger) 8%, transparent);
     }
 
-    .field select option,
-    .field select optgroup{
+.field select option,
+.field select optgroup{
         background:var(--surface);
         color:var(--ink);
     }
 
-    .field-error{
+.field-error{
         color:var(--danger);
         font-size:.82rem;
         line-height:1.45;
     }
 
-    .form-actions{
+.form-actions{
         display:flex;
         gap:10px;
         flex-wrap:wrap;
     }
 
 @media (max-width:720px){
-    .form-grid{
+.form-grid{
         grid-template-columns:1fr;
         gap:12px;
     }
 
-    .field.span-2{
+.field.span-2{
         grid-column:auto;
     }
 
-    .user-form{
+.user-form{
         gap:16px;
     }
 
-    .field{
+.field{
         gap:7px;
     }
 
-    .field label{
+.field label{
         font-size:.68rem;
         letter-spacing:.07em;
     }
 
-    .field input,
-    .field select{
+.field input,
+.field select{
         min-height:44px;
         border-radius:var(--radius-sm);
     }
 
-    .form-actions .btn,
-    .form-actions .btn-secondary{
+.form-actions .btn,
+.form-actions .btn-secondary{
         width:100%;
     }
+
     }

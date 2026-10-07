@@ -18,23 +18,30 @@
 }
 
 .btn:hover{background:var(--accent-hover)}
+
 .btn:active{background:var(--accent)}
+
 .btn:focus-visible{
     outline:none;
     box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent);
 }
 
 .btn-secondary{background:var(--surface-2);color:var(--ink)}
+
 .btn-secondary:hover{background:var(--surface-3)}
+
 .btn-secondary:active{background:var(--surface-2)}
+
 .btn-danger{
     background:var(--danger-soft);
     color:var(--danger-ink);
 }
+
 .btn-danger:hover{
     background:var(--danger-soft);
     filter:brightness(.96);
 }
+
 .btn-danger:focus-visible{
     outline:none;
     box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--danger);

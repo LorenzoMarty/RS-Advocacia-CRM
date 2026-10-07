@@ -1,10 +1,3 @@
-/* Appearance preferences: triggers (sidebar + mobile FAB) and the panel. */
-
-/* Sidebar trigger reuses the nav-link icon-button look (sits by the logout). */
-.sidebar-appearance{
-    flex:0 0 auto;
-}
-
 /* Mobile floating trigger — shown only where the sidebar is hidden (<=1200px). */
 .appearance-fab{
     display:none;
@@ -14,7 +7,7 @@
     /* bottom-right, floating above the bottom nav bar — top-right collided
        with every list page's header action button ("Novo X"), since both
        sat in the same corner regardless of viewport width. */
-    .appearance-fab{
+.appearance-fab{
         position:fixed;
         bottom:calc(env(safe-area-inset-bottom, 0px) + 104px);
         right:calc(env(safe-area-inset-right, 0px) + 14px);
@@ -30,19 +23,21 @@
         box-shadow:var(--shadow-hover);
     }
 
-    .appearance-fab:hover{
+.appearance-fab:hover{
         background:var(--surface-2);
         color:var(--ink);
     }
+
 }
 
 @media (max-width:640px){
-    .appearance-fab{
+.appearance-fab{
         bottom:calc(env(safe-area-inset-bottom, 0px) + 92px);
         right:calc(env(safe-area-inset-right, 0px) + 10px);
         width:40px;
         height:40px;
     }
+
 }
 
 /* Panel */
@@ -136,12 +131,13 @@
 }
 
 @media (max-width:640px){
-    .appearance-actions{
+.appearance-actions{
         justify-content:stretch;
     }
 
-    .appearance-actions .btn,
-    .appearance-actions .btn-secondary{
+.appearance-actions .btn,
+.appearance-actions .btn-secondary{
         flex:1;
     }
+
 }

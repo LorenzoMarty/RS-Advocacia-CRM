@@ -16,6 +16,7 @@
     padding:0 0 var(--bottom-nav-offset);
     background:transparent;
 }
+
 .page-wrap{
     position:relative;
     max-width:none;
@@ -26,5 +27,6 @@
 }
 
 @media (min-width:1201px){
-    .page{padding-bottom:0}
+.page{padding-bottom:0}
+
 }
