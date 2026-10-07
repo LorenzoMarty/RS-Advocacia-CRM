@@ -80,7 +80,7 @@
     }
 
     .field select:hover{
-        border-color:rgba(212,175,55,.18);
+        border-color:var(--line-strong);
         background-color:var(--ghost-strong);
     }
 
@@ -93,9 +93,9 @@
     .field input:focus,
     .field select:focus,
     .field textarea:focus{
-        border-color:rgba(212,175,55,.24);
+        border-color:var(--line-strong);
         background:var(--ghost-strong);
-        box-shadow:0 0 0 4px rgba(212,175,55,.08);
+        box-shadow:0 0 0 3px var(--focus-ring);
     }
 
     .field.has-error input,

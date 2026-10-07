@@ -18,7 +18,7 @@
 
 .prospect-column.is-drop-target {
   border-color: var(--gold-soft);
-  background: rgba(212, 175, 55, .08);
+  background: var(--line-strong);
 }
 
 .prospect-column-head {
@@ -156,7 +156,7 @@
 }
 
 .prospect-card.is-stale {
-  border-color: rgba(212, 175, 55, .45);
+  border-color: var(--line-strong);
 }
 
 .prospect-card-stale {

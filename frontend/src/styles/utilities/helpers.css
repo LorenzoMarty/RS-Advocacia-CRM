@@ -2,12 +2,12 @@
 .bottom-nav-link:focus-visible,
 .theme-toggle:focus-visible,
 .btn:focus-visible{
-    box-shadow:0 0 0 4px rgba(212,175,55,.14);
+    box-shadow:0 0 0 3px var(--focus-ring);
 }
 
 .sidebar-toggle-clean:focus-visible{
     outline:none;
-    box-shadow:var(--sidebar-toggle-shadow), 0 0 0 4px rgba(212,175,55,.1);
+    box-shadow:var(--sidebar-toggle-shadow), 0 0 0 3px var(--focus-ring);
 }
 
 .skip-link{
@@ -30,7 +30,7 @@
     padding:0.5rem 1rem;
     background:var(--surface, #fff);
     color:var(--text, #111);
-    border:2px solid var(--accent, #d4af37);
+    border:2px solid var(--accent, var(--accent));
     border-radius:0 0 0.25rem 0;
     text-decoration:none;
     font-weight:600;

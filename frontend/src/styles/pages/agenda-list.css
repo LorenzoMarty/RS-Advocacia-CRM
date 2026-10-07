@@ -9,7 +9,7 @@
     .toolbar-search svg{position:absolute;top:50%;left:14px;transform:translateY(-50%);color:var(--muted)}
     .toolbar-search input,.filter-select{width:100%;min-height:46px;padding:0 14px;border-radius:15px;border:1px solid var(--line);background:var(--ghost);color:var(--text);outline:0;transition:border-color .2s ease,background .2s ease,box-shadow .2s ease,transform .2s ease}
     .toolbar-search input{padding-left:42px}
-    .toolbar-search input:focus,.filter-select:focus{border-color:rgba(212,175,55,.24);background:var(--ghost-strong);box-shadow:0 0 0 4px rgba(212,175,55,.08)}
+    .toolbar-search input:focus,.filter-select:focus{border-color:var(--line-strong);background:var(--ghost-strong);box-shadow:0 0 0 3px var(--focus-ring)}
     .toolbar-search input::placeholder{color:var(--muted)}
     .toolbar-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
     .filter-select{
@@ -28,7 +28,7 @@
         background-repeat:no-repeat;
     }
     .filter-select:hover{
-        border-color:rgba(212,175,55,.18);
+        border-color:var(--line-strong);
         background-color:var(--ghost-strong);
     }
     .filter-select option,
@@ -42,11 +42,11 @@
     .calendar-controls{display:flex;align-items:center;gap:10px}
     .calendar-month{min-width:170px;text-align:center;font-size:.88rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
     .icon-control{width:38px;height:38px;flex:0 0 auto;display:grid;place-items:center;border-radius:12px;border:1px solid var(--line);background:var(--ghost);transition:border-color .2s ease,background .2s ease,transform .2s ease}
-    .icon-control:hover{transform:translateY(-1px);border-color:rgba(212,175,55,.2);background:rgba(212,175,55,.08)}
+    .icon-control:hover{transform:translateY(-1px);border-color:var(--line-strong);background:var(--line-strong)}
     .calendar-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
     .legend-chip{display:inline-flex;align-items:center;gap:8px;min-height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:var(--ghost);color:var(--soft);font-size:.75rem}
     .legend-chip::before{content:"";width:8px;height:8px;border-radius:999px;background:var(--chip-color,var(--gold))}
-    .legend-chip-audiencia{--chip-color:#D4AF37}
+    .legend-chip-audiencia{--chip-color:var(--accent)}
     .legend-chip-reuniao{--chip-color:#7893d1}
     .legend-chip-tarefa{--chip-color:#b6bcc8}
     .calendar-frame{overflow:auto;padding:4px 2px 2px}
@@ -67,12 +67,12 @@
     }
     .day-card:hover{
         transform:translateY(-2px);
-        border-color:rgba(212,175,55,.16);
+        border-color:var(--line-strong);
     }
     .day-card.is-muted{opacity:.62}
     .day-card.is-today{
-        border-color:rgba(212,175,55,.3);
-        background:rgba(212,175,55,.05);
+        border-color:var(--line-strong);
+        background:var(--line-strong);
     }
     .day-card.is-overdue{border-color:rgba(239,122,122,.2)}
     .day-head{display:flex;align-items:center;justify-content:flex-start;gap:8px}
@@ -84,9 +84,9 @@
     .day-card.is-overdue .day-dot{background:var(--danger)}
     .day-events{display:grid;gap:8px;align-content:start}
     .day-card.is-drop-target{
-        border-color:rgba(212,175,55,.55);
-        background:rgba(212,175,55,.1);
-        box-shadow:0 0 0 1px rgba(212,175,55,.4) inset;
+        border-color:var(--line-strong);
+        background:var(--line-strong);
+        box-shadow:0 0 0 3px var(--focus-ring) inset;
     }
     .calendar-event{
         --event-accent: var(--gold);
@@ -117,7 +117,7 @@
         transform:translateY(-1px);
         border-color:rgba(255,255,255,.12);
     }
-    .calendar-event.type-audiencia{--event-accent:#D4AF37}
+    .calendar-event.type-audiencia{--event-accent:var(--accent)}
     .calendar-event.type-reuniao{--event-accent:#7893d1}
     .calendar-event.type-tarefa{--event-accent:#b6bcc8}
     .calendar-event.is-overdue{
@@ -200,7 +200,7 @@
     .rail-block + .rail-block{padding-top:18px;border-top:1px solid var(--line)}
     .side-list{display:grid;gap:10px}
     .side-item{position:relative;display:grid;gap:10px;padding:14px;border-radius:18px;border:1px solid var(--line);background:var(--ghost);cursor:pointer;transition:border-color .2s ease,background .2s ease,transform .2s ease}
-    .side-item:hover{transform:translateY(-1px);border-color:rgba(212,175,55,.18);background:rgba(212,175,55,.06)}
+    .side-item:hover{transform:translateY(-1px);border-color:var(--line-strong);background:var(--line-strong)}
     .side-item-delete{
         position:absolute;
         top:10px;
@@ -240,7 +240,7 @@
     .status-badge.success{color:var(--success)}
     .status-badge.warn{color:var(--warn)}
     .status-badge.danger{color:var(--danger)}
-    .status-badge.gold{color:var(--gold-soft);background:rgba(212,175,55,.08);border-color:rgba(212,175,55,.2)}
+    .status-badge.gold{color:var(--gold-soft);background:var(--line-strong);border-color:var(--line-strong)}
 
     @media (max-width:1180px){.agenda-layout{grid-template-columns:1fr}}
     @media (max-width:900px){.agenda-toolbar{grid-template-columns:1fr}.toolbar-side{justify-items:start}.toolbar-actions{justify-content:flex-start}.toolbar-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}

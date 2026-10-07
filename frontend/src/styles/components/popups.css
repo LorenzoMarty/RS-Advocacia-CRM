@@ -27,8 +27,8 @@
     display:grid;
     place-items:center;
     border-radius:15px;
-    border:1px solid rgba(212,175,55,.24);
-    background:rgba(212,175,55,.1);
+    border:1px solid var(--line-strong);
+    background:var(--line-strong);
     color:var(--gold-soft);
 }
 

@@ -4,12 +4,12 @@
     align-items:center;
     justify-content:center;
     gap:8px;
-    min-height:42px;
-    padding:0 15px;
-    border-radius:13px;
+    min-height:44px;
+    padding:0 20px;
+    border-radius:var(--radius-pill);
     border:1px solid transparent;
-    background:var(--gold);
-    color:#020617;
+    background:var(--accent);
+    color:var(--accent-fg);
     font-size:.88rem;
     font-weight:700;
     white-space:nowrap;
@@ -17,35 +17,25 @@
                border-color var(--motion) var(--ease-out);
 }
 
-.btn:hover{
-    background:var(--gold-soft);
-}
-
-.btn:active{
-    background:var(--gold);
-}
-
+.btn:hover{background:var(--accent-hover)}
+.btn:active{background:var(--accent)}
 .btn:focus-visible{
     outline:none;
-    box-shadow:0 0 0 3px rgba(212,175,55,.35);
+    box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink);
 }
 
-.btn-secondary{background:var(--ghost);color:var(--text);border-color:var(--line)}
-.btn-secondary:hover{border-color:rgba(212,175,55,.2);background:var(--hover)}
-.btn-secondary:focus-visible{
-    outline:none;
-    border-color:rgba(212,175,55,.32);
-    box-shadow:0 0 0 3px rgba(212,175,55,.18);
-}
+.btn-secondary{background:var(--surface-2);color:var(--ink)}
+.btn-secondary:hover{background:var(--surface-3)}
+.btn-secondary:active{background:var(--surface-2)}
 .btn-danger{
-    background:rgba(239,122,122,.14);
-    color:#ffe3e3;
-    border-color:rgba(239,122,122,.28);
+    background:var(--danger-soft);
+    color:var(--danger-ink);
 }
 .btn-danger:hover{
-    background:rgba(239,122,122,.18);
+    background:var(--danger-soft);
+    filter:brightness(.96);
 }
 .btn-danger:focus-visible{
     outline:none;
-    box-shadow:0 0 0 3px rgba(239,122,122,.3);
+    box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--danger);
 }

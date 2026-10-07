@@ -123,13 +123,16 @@ export function getClientTypeLabel(type) {
 export function getStatusTone(value, completed = false) {
   const normalized = normalizeText(value);
 
-  if (completed || normalized.includes('conclu')) return 'success';
-  if (normalized.includes('confirma')) return 'success';
+  // Single source of truth for status/priority colour: danger | warn | success | info | subtle | neutral.
+  if (completed || normalized.includes('conclu') || normalized.includes('cancel')) return 'subtle';
   // "nao compareceu" must be checked before "compareceu" (substring match order)
-  if (normalized.includes('nao compareceu') || normalized.includes('cancel') || normalized.includes('atras') || normalized.includes('urg')) return 'danger';
-  if (normalized.includes('compareceu')) return 'success';
-  if (normalized.includes('aguard') || normalized.includes('penden') || normalized.includes('media')) return 'warn';
-  return 'gold';
+  const words = normalized.split(/\s+/);
+  if (normalized.includes('nao compareceu') || normalized.includes('atras') || normalized.includes('urg') || words.includes('alta')) return 'danger';
+  if (normalized.includes('confirma') || normalized.includes('compareceu') || normalized.includes('protocolado') || words.includes('ativo')) return 'success';
+  if (normalized.includes('andamento')) return 'info';
+  if (normalized.includes('aguard') || normalized.includes('protocolar') || words.includes('media')) return 'warn';
+  if (words.includes('baixa')) return 'neutral';
+  return 'subtle';
 }
 
 export function getEventTypeKey(value) {

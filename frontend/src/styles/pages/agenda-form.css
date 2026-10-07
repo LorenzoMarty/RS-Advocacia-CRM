@@ -110,7 +110,7 @@
     }
 
     .field input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover{
-        background:rgba(212,175,55,.12);
+        background:var(--line-strong);
     }
 
     .field select{
@@ -130,7 +130,7 @@
     }
 
     .field select:hover{
-        border-color:rgba(212,175,55,.18);
+        border-color:var(--line-strong);
         background-color:var(--ghost-strong);
     }
 
@@ -143,9 +143,9 @@
     .field input:focus,
     .field select:focus,
     .field textarea:focus{
-        border-color:rgba(212,175,55,.24);
+        border-color:var(--line-strong);
         background:var(--ghost-strong);
-        box-shadow:0 0 0 4px rgba(212,175,55,.08);
+        box-shadow:0 0 0 3px var(--focus-ring);
     }
 
     .field.has-error input,
@@ -177,7 +177,7 @@
     .type-combo input{flex:1;min-width:0}
     .type-combo .rs-select{flex:1;min-width:0}
     .type-combo-back{flex:0 0 auto;min-height:50px;padding:0 14px;border-radius:16px;border:1px solid var(--line);background:var(--ghost);color:var(--muted);cursor:pointer;font-size:.8rem;font-weight:600;white-space:nowrap;transition:border-color .2s ease,background .2s ease}
-    .type-combo-back:hover{border-color:rgba(212,175,55,.18);background:var(--ghost-strong);color:var(--text)}
+    .type-combo-back:hover{border-color:var(--line-strong);background:var(--ghost-strong);color:var(--text)}
     .type-combo-delete{flex:0 0 auto;display:grid;place-items:center;width:50px;min-height:50px;border-radius:16px;border:1px solid var(--line);background:var(--ghost);color:var(--muted);cursor:pointer;transition:border-color .2s ease,background .2s ease,color .2s ease}
     .type-combo-delete:hover{border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.08);color:var(--danger)}
 

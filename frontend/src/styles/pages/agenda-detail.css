@@ -132,8 +132,8 @@
 
     .status-badge.gold{
         color:var(--gold-soft);
-        background:rgba(212,175,55,.08);
-        border-color:rgba(212,175,55,.2);
+        background:var(--line-strong);
+        border-color:var(--line-strong);
     }
 
     .status-badge.success{
@@ -164,8 +164,8 @@
 
     .link-card:hover{
         transform:translateY(-1px);
-        border-color:rgba(212,175,55,.18);
-        background:rgba(212,175,55,.06);
+        border-color:var(--line-strong);
+        background:var(--line-strong);
     }
 
     .link-head{
@@ -184,8 +184,8 @@
         color:var(--gold-soft);
         font-size:.92rem;
         font-weight:700;
-        background:rgba(212,175,55,.08);
-        border:1px solid rgba(212,175,55,.18);
+        background:var(--line-strong);
+        border:1px solid var(--line-strong);
     }
 
     .link-title{

@@ -126,8 +126,8 @@
 
 .appearance-segment-item.is-active{
     color:var(--gold-soft);
-    background:rgba(212,175,55,.12);
-    border-color:rgba(212,175,55,.32);
+    background:var(--line-strong);
+    border-color:var(--line-strong);
 }
 
 .appearance-actions{

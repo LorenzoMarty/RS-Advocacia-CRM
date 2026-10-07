@@ -93,8 +93,8 @@
 
 .import-wizard-name-input:focus{
     outline:0;
-    border-color:rgba(212,175,55,.4);
-    box-shadow:0 0 0 3px rgba(212,175,55,.12);
+    border-color:var(--line-strong);
+    box-shadow:0 0 0 3px var(--focus-ring);
 }
 
 .import-wizard-warning{

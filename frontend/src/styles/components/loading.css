@@ -27,8 +27,8 @@
     display:grid;
     place-items:center;
     border-radius:24px;
-    border:1px solid rgba(212,175,55,.2);
-    background:rgba(212,175,55,.1);
+    border:1px solid var(--line-strong);
+    background:var(--line-strong);
     color:var(--gold-soft);
     animation:loading-mark-pulse 1.8s ease-in-out infinite;
 }
