@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Avatar } from '@/components/ui/avatar';
+import { PageHeader } from '@/components/ui/page-header';
+import { Segmented } from '@/components/ui/segmented';
 
 import { DEADLINE_STATUS_COLUMNS } from '../data';
 import { TaskTimer } from '../components/productivity';
 import { taskLoggedSeconds } from './productivity/productivity-data';
-import { PageChrome, StatusBadge } from '../layout';
+import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import {
   motion,
   AnimatePresence,
@@ -24,9 +24,9 @@ import {
   buildSearchText,
   formatCount,
   formatDate,
+  formatRelativeDue,
   getStatusTone,
   normalizeText,
-  startOfDay,
 } from '../utils';
 import { Select } from '../components/select';
 import { EmptyState } from './common';
@@ -35,7 +35,6 @@ import {
   deadlineColumnKey,
   deadlineCreatePath,
   deadlineMoment,
-  deadlineStatusLabel,
 } from './deadlines-utils';
 
 // Aliases de componentes motion (member access registra uso de `motion` no lint).
@@ -56,8 +55,22 @@ const kanbanCardMotion = prefersReducedMotion()
       exit: { opacity: 0, scale: 0.96, transition: { duration: DURATION.fast, ease: EASE_OUT } },
     };
 
+const COLUMN_DOT = {
+  a_fazer: 'var(--subtle)',
+  em_andamento: 'var(--info)',
+  protocolar: 'var(--warn)',
+  protocolado: 'var(--success)',
+};
+
+const PRIORITY_TABS = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'alta', label: 'Alta' },
+  { value: 'semana', label: 'Esta semana' },
+];
+
 function DeadlineCard({
   deadline,
+  clientName,
   isDragging,
   isMoving,
   onDragStart,
@@ -69,9 +82,12 @@ function DeadlineCard({
   const process = processes.find((item) => item.id === deadline.processId) || null;
   const cardTitle = buildDeadlineTitle(process, deadline.responsibleName) || deadline.title;
   const interactions = isDragging ? {} : cardHover;
-  const statusLabel = deadlineStatusLabel(deadline);
   const currentColumnKey = deadlineColumnKey(deadline);
-  const isOverdue = currentColumnKey !== 'protocolado' && startOfDay(deadlineMoment(deadline)) < startOfDay(new Date());
+  const isClosed = currentColumnKey === 'protocolado';
+  const due = formatRelativeDue(deadlineMoment(deadline));
+  const isOverdue = !isClosed && due.days < 0;
+  const isUrgent = !isClosed && due.days <= 1;
+  const firstName = (deadline.responsibleName || '').split(' ')[0];
 
   return (
     <MotionArticle
@@ -82,16 +98,18 @@ function DeadlineCard({
       onDragStart={(event) => onDragStart(event, deadline.id)}
       onDragEnd={onDragEnd}
     >
+      <div className="deadline-card-top">
+        <StatusBadge pill tone={getStatusTone(deadline.priority)}>{deadline.priority || '—'}</StatusBadge>
+        {isClosed ? null : <span className={`deadline-card-due${isUrgent ? ' is-urgent' : ''}`}>{due.label}</span>}
+      </div>
       <h3 className="deadline-card-title">
         <Link to={`/prazos/${deadline.id}`}>
           {cardTitle}
         </Link>
       </h3>
-      <div className="deadline-card-meta">
-        <span>{formatDate(deadlineMoment(deadline))}</span>
-        <StatusBadge tone={getStatusTone(statusLabel, deadline.completed)}>
-          {statusLabel}
-        </StatusBadge>
+      <div className="deadline-card-client">
+        <span>{clientName || '—'}</span>
+        <span className="deadline-card-number">{process?.number || deadline.processNumber || ''}</span>
       </div>
       <Select
         className="deadline-card-status-select"
@@ -112,6 +130,16 @@ function DeadlineCard({
         taskStatus={deadline.status}
         onStart={() => onTimerStart?.(deadline)}
       />
+      <div className="deadline-card-foot">
+        <span className="deadline-card-owner">
+          <Avatar name={deadline.responsibleName} seed={deadline.responsible || deadline.responsibleName} size={26} />
+          {firstName}
+        </span>
+        <span className="deadline-card-date">
+          <CalendarDays className="size-[13px]" aria-hidden="true" />
+          {formatDate(deadlineMoment(deadline))}
+        </span>
+      </div>
     </MotionArticle>
   );
 }
@@ -121,6 +149,7 @@ export function DeadlinesPage() {
   const [search, setSearch] = useState('');
   const [responsible, setResponsible] = useState('');
   const [processId, setProcessId] = useState('');
+  const [priorityTab, setPriorityTab] = useState('todos');
   const [draggingDeadlineId, setDraggingDeadlineId] = useState('');
   const [dragOverColumnKey, setDragOverColumnKey] = useState('');
   const [movingDeadlineId, setMovingDeadlineId] = useState('');
@@ -175,9 +204,17 @@ export function DeadlinesPage() {
           return false;
         }
 
+        if (priorityTab === 'alta' && !normalizeText(deadline.priority).includes('alta')) {
+          return false;
+        }
+
+        if (priorityTab === 'semana' && formatRelativeDue(deadlineMoment(deadline)).days > 7) {
+          return false;
+        }
+
         return true;
       }),
-    [allDeadlines, clients, processId, processes, responsible, search],
+    [allDeadlines, clients, priorityTab, processId, processes, responsible, search],
   );
 
   const deadlinesByColumn = useMemo(() => {
@@ -292,73 +329,54 @@ export function DeadlinesPage() {
     <>
       <PageChrome label="Prazos" primaryAction={{ label: 'Novo prazo', to: deadlineCreatePath(), tour: 'page-primary-action' }} />
 
-      <div className="grid gap-4">
-        <section className="mb-2">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="font-serif text-3xl text-foreground">Prazos</p>
-              <p className="mt-1 text-sm text-muted-foreground">Organização dos prazos fatais</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge>{formatCount(filteredDeadlines.length, 'prazo', 'prazos')}</Badge>
-            </div>
+      <div className="flex flex-col gap-4">
+        <PageHeader title="Prazos" subtitle="Arraste entre colunas para atualizar o status">
+          <PageSearch
+            className="on-bg"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por prazo, processo ou cliente"
+            label="Buscar prazos"
+          />
+          <div className="on-bg w-44">
+            <Select
+              aria-label="Filtrar por responsavel"
+              value={responsible}
+              onChange={(event) => setResponsible(event.target.value)}
+            >
+              <option value="">Responsável</option>
+              {responsibleOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </Select>
           </div>
-        </section>
-
-        <Card>
-          <CardContent className="flex flex-wrap items-center gap-3 py-4">
-            <label className="toolbar-search flex-1 basis-full sm:basis-auto" aria-label="Buscar prazos">
-              <Search className="size-[17px]" strokeWidth={1.8} />
-              <input
-                type="search"
-                placeholder="Buscar por prazo, processo ou cliente"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
-            </label>
-
-            <div className="w-full sm:w-[200px]">
-              <Select
-                aria-label="Filtrar por responsavel"
-                value={responsible}
-                onChange={(event) => setResponsible(event.target.value)}
-              >
-                <option value="">Responsável</option>
-                {responsibleOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div className="w-full sm:w-[200px]">
-              <Select
-                aria-label="Filtrar por processo"
-                value={processId}
-                onChange={(event) => setProcessId(event.target.value)}
-              >
-                <option value="">Processo</option>
-                {processOptions.map((process) => (
-                  <option key={process.id} value={process.id}>
-                    {process.number}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="on-bg w-44">
+            <Select
+              aria-label="Filtrar por processo"
+              value={processId}
+              onChange={(event) => setProcessId(event.target.value)}
+            >
+              <option value="">Processo</option>
+              {processOptions.map((process) => (
+                <option key={process.id} value={process.id}>
+                  {process.number}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <Segmented tone="bg" label="Filtro de prioridade" options={PRIORITY_TABS} value={priorityTab} onChange={setPriorityTab} />
+        </PageHeader>
 
         {isDeadlinesLoading ? (
-          <Card>
-            <CardContent className="py-5">
-              <div className="skeleton-stack">
-                <span className="skeleton" style={{ height: 22, width: '40%' }} />
-                <span className="skeleton" style={{ height: 120 }} />
-                <span className="skeleton" style={{ height: 120 }} />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-lg bg-card p-[var(--pad-card)]">
+            <div className="skeleton-stack">
+              <span className="skeleton" style={{ height: 22, width: '40%' }} />
+              <span className="skeleton" style={{ height: 120 }} />
+              <span className="skeleton" style={{ height: 120 }} />
+            </div>
+          </div>
         ) : allDeadlines.length ? (
           <section className={`deadlines-board${draggingDeadlineId ? ' is-dragging' : ''}`} aria-label="Kanban de prazos fatais">
             {DEADLINE_STATUS_COLUMNS.map((column) => (
@@ -371,16 +389,15 @@ export function DeadlinesPage() {
                 onDrop={(event) => handleDrop(event, column.key)}
               >
                 <div className="deadline-column-head">
-                  <div>
-                    <h2>{column.label}</h2>
-                    <p>{formatCount(deadlinesByColumn[column.key].length, 'prazo', 'prazos')}</p>
-                  </div>
+                  <span className="deadline-column-dot" style={{ background: COLUMN_DOT[column.key] }} aria-hidden="true" />
+                  <h2>{column.label}</h2>
                   <MotionSpan
                     key={deadlinesByColumn[column.key].length}
                     className="deadline-column-count"
                     variants={pop}
                     initial="hidden"
                     animate="visible"
+                    aria-label={formatCount(deadlinesByColumn[column.key].length, 'prazo', 'prazos')}
                   >
                     {deadlinesByColumn[column.key].length}
                   </MotionSpan>
@@ -407,6 +424,7 @@ export function DeadlinesPage() {
                         <DeadlineCard
                           key={deadline.id}
                           deadline={deadline}
+                          clientName={deadline.clientName || clients.find((client) => client.id === deadline.clientId)?.name}
                           isDragging={draggingDeadlineId === deadline.id}
                           isMoving={movingDeadlineId === deadline.id}
                           onDragEnd={handleDragEnd}

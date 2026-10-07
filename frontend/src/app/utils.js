@@ -65,6 +65,24 @@ export function startOfDay(value) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+// "Hoje" / "Amanhã" / "Em N dias" / "Atrasado N dias" + dias de diferença (negativo = vencido).
+export function formatRelativeDue(value, today = new Date()) {
+  const days = Math.round((startOfDay(value) - startOfDay(today)) / 86400000);
+  let label;
+  if (days === 0) label = 'Hoje';
+  else if (days === 1) label = 'Amanhã';
+  else if (days > 1) label = `Em ${days} dias`;
+  else label = days === -1 ? 'Atrasado 1 dia' : `Atrasado ${-days} dias`;
+  return { days, label };
+}
+
+const AREA_KEYS = { civel: 'civel', trabalhista: 'trabalhista', empresarial: 'empresarial', tributario: 'tributario' };
+
+// Área do direito -> sufixo dos tokens --cat-* (null se não for uma das 4 conhecidas).
+export function getAreaKey(area) {
+  return AREA_KEYS[normalizeText(area)] || null;
+}
+
 export function isSameDay(left, right) {
   const leftDate = new Date(left);
   const rightDate = new Date(right);

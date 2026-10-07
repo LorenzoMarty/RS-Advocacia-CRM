@@ -273,3 +273,9 @@
     background:var(--ghost);
     border:1px dashed var(--line);
 }
+
+/* Busca sobre o fundo da página (--bg): campo branco em vez de --surface-2. */
+.page-search-inline.on-bg .page-search input{background:var(--surface)}
+.page-search-inline.on-bg{width:min(100%, 240px)}
+.on-bg .rs-select-trigger{background:var(--surface)}
+.on-bg .rs-select-trigger:hover{background:var(--surface-2)}
