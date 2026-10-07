@@ -2,7 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="theme-color" content="#0b0d12" />
+    <meta name="theme-color" content="#EDEFF3" />
     <meta name="google-site-verification" content="cT2DE2WVWReYufCtdZ0w9-RiG464vY70xuvkXMf6X2o" />
     <meta name="description" content="RS Advocacia — plataforma de gestão jurídica interna: clientes, processos, agenda, prazos e petições." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -10,10 +10,11 @@
     <title>RS Advocacia</title>
     <script>
       // Apply saved appearance preferences before first paint (anti-flash).
-      // Mirrors the value tables in src/app/preferences.js — keep in sync.
+      // Includes the theme (data-theme). Mirrors the value tables in src/app/preferences.js — keep in sync.
       (function () {
         try {
           var GROUPS = {
+            theme: { key: 'rs-advocacia-theme', attr: 'data-theme', def: 'light', vals: { light: '#EDEFF3', dark: '#0F1014' } },
             scale: { key: 'rs-advocacia-ui-scale', cssVar: '--ui-scale', attr: 'data-scale', def: 'default', vals: { compact: 0.9, default: 1, wide: 1.08 } },
             font: { key: 'rs-advocacia-font-scale', cssVar: '--font-scale', attr: 'data-font', def: 'md', vals: { sm: 0.92, md: 1, lg: 1.12 } },
             space: { key: 'rs-advocacia-space-scale', cssVar: '--space-scale', attr: 'data-space', def: 'default', vals: { tight: 0.85, default: 1, comfy: 1.2 } },
@@ -23,8 +24,9 @@
             var cfg = GROUPS[group];
             var id = localStorage.getItem(cfg.key);
             if (!id || !(id in cfg.vals)) id = cfg.def;
-            root.style.setProperty(cfg.cssVar, String(cfg.vals[id]));
+            if (cfg.cssVar) root.style.setProperty(cfg.cssVar, String(cfg.vals[id]));
             root.setAttribute(cfg.attr, id);
+            if (group === 'theme') document.querySelector('meta[name="theme-color"]').setAttribute('content', cfg.vals[id]);
           });
         } catch (e) {
           /* ignore — CSS :root defaults apply */

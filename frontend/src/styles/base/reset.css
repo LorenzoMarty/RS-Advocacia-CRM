@@ -1,7 +1,7 @@
 *{box-sizing:border-box}
 html{
     scroll-behavior:smooth;
-    color-scheme:dark;
+    color-scheme:light;
     /* Escala mestra: toda tipografia em rem cascateia daqui.
        --font-base (15px) entrega o baseline reduzido; --ui-scale e --font-scale
        são as preferências do usuário. */
@@ -24,10 +24,11 @@ button,input,select,textarea{font:inherit}
 button{border:0;padding:0;background:transparent;color:inherit;cursor:pointer}
 svg,img{display:block}
 [hidden]{display:none!important}
+html[data-theme="dark"]{color-scheme:dark}
 ::selection{background:var(--selection)}
 ::-webkit-scrollbar{width:8px}
 ::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:999px}
 /* Anel de foco visível por padrão em todo elemento focável — componentes que
    já definem seu próprio :focus-visible (botões, select) sobrescrevem isto
    com outline:none + box-shadow próprio, então não há conflito visual. */
-:focus-visible{outline:2px solid var(--gold-soft);outline-offset:2px}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}

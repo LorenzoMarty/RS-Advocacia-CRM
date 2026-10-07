@@ -2,7 +2,7 @@ import tailwindcssAnimate from 'tailwindcss-animate'
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ['class'],
+  darkMode: ['selector', '[data-theme="dark"]'],
   content: ['./index.html', './src/**/*.{js,jsx}'],
   // O CSS legado (styles/**) já define reset/base próprios para todas as telas
   // fora do piloto Shadcn — o preflight do Tailwind zeraria .btn/.surface/.field etc.
@@ -47,15 +47,22 @@ export default {
         },
         success: 'hsl(var(--tw-success))',
         warn: 'hsl(var(--tw-warn))',
+        // Tokens do design system (CSS vars diretas, sem alpha).
+        ink: { DEFAULT: 'var(--ink)', 2: 'var(--ink-2)' },
+        surface: { DEFAULT: 'var(--surface)', 2: 'var(--surface-2)', 3: 'var(--surface-3)' },
+        line: { DEFAULT: 'var(--line)', strong: 'var(--line-strong)' },
+        subtle: 'var(--subtle)',
       },
       borderRadius: {
-        lg: 'var(--tw-radius)',
-        md: 'calc(var(--tw-radius) - 2px)',
-        sm: 'calc(var(--tw-radius) - 4px)',
+        lg: 'var(--radius-lg)',
+        md: 'var(--radius-md)',
+        sm: 'var(--radius-sm)',
+        pill: 'var(--radius-pill)',
       },
       fontFamily: {
-        serif: ['"Instrument Serif"', 'serif'],
-        sans: ['"Inter Variable"', '"Inter"', 'sans-serif'],
+        sans: ['Urbanist', 'system-ui', 'sans-serif'],
+        // Alias temporário: font-serif ainda existe em páginas não migradas; renderiza em Urbanist. Remover na fase 7.
+        serif: ['Urbanist', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         'accordion-down': {
