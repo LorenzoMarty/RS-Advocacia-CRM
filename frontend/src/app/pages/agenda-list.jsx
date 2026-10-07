@@ -254,7 +254,7 @@ export function AgendaListPage() {
   return (
     <>
       {confirmPopup}
-      <PageChrome label="Agenda" />
+      <PageChrome label="Agenda" primaryAction={{ label: 'Novo compromisso', to: '/agenda/novo', tour: 'page-primary-action' }} />
 
       <div className="agenda-page">
         <section className="mb-2">
@@ -265,12 +265,6 @@ export function AgendaListPage() {
                 {formatCount(filteredEvents.length)}
               </p>
             </div>
-            <Button asChild>
-              <Link to="/agenda/novo" data-tour="page-primary-action">
-                <Plus className="size-4" />
-                Novo compromisso
-              </Link>
-            </Button>
           </div>
         </section>
 

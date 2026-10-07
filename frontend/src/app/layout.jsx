@@ -7,6 +7,7 @@ import {
   Briefcase,
   Calendar,
   CalendarCheck,
+  ChevronRight,
   ChevronUp,
   CircleHelp,
   Clock,
@@ -16,6 +17,8 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  Plus,
+  Scale,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -27,6 +30,7 @@ import {
   X,
 } from 'lucide-react';
 
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -59,7 +63,7 @@ const NAV_ICONS = {
 };
 
 const PageChromeContext = createContext(() => {});
-const PAGE_CHROME_DEFAULT = { label: 'Painel', actions: null };
+const PAGE_CHROME_DEFAULT = { label: 'Painel', actions: null, primaryAction: null };
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 // Fallback do Suspense ao trocar de rota (download do chunk lazy da página).
@@ -81,18 +85,21 @@ function NavigationIcon({ icon, className }) {
   return <Icon className={className} strokeWidth={1.7} />;
 }
 
-export function PageChrome({ label, actions = null }) {
+// primaryAction: { label, to | onClick, tour } — pílula preta da topbar.
+// `actions` renderiza à esquerda do sino. Ambos são lidos só no mount/troca de label
+// (onClick de primaryAction deve ser estável).
+export function PageChrome({ label, actions = null, primaryAction = null }) {
   const setChrome = useContext(PageChromeContext);
 
   useEffect(() => {
-    setChrome({ label, actions });
+    setChrome({ label, actions, primaryAction });
 
     return () => {
       setChrome(PAGE_CHROME_DEFAULT);
     };
     // Actions are intentionally treated as route-level chrome and refreshed on mount/unmount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [label, setChrome]);
+  }, [label, primaryAction?.label, primaryAction?.to, setChrome]);
 
   return null;
 }
@@ -160,7 +167,18 @@ function useVisibleNavItems() {
   return NAV_ITEMS.filter((item) => !item.permission || hasPermission(item.permission));
 }
 
-function SidebarNavLink({ item, collapsed }) {
+const NAV_GROUPS = ['Principal', 'Escritório', 'Administração'];
+
+// Prazos abertos que vencem (ou já venceram) até 7 dias à frente — contador do item "Prazos".
+function useWeekDeadlineCount() {
+  const { deadlines } = useAppState();
+  return deadlines.filter((deadline) => {
+    const days = daysUntil(deadline.date);
+    return days !== null && days <= 7 && !isFinishedTask(deadline);
+  }).length;
+}
+
+function SidebarNavLink({ item, collapsed, count = 0 }) {
   // isActive é calculado aqui fora (useMatch) em vez de usar a forma função
   // de className/children do NavLink: quando collapsed envolve este link num
   // <TooltipTrigger asChild>, o Slot do Radix clona o elemento e serializa
@@ -173,36 +191,34 @@ function SidebarNavLink({ item, collapsed }) {
     <NavLink
       to={item.to}
       end={item.to === '/'}
-      aria-label={item.label}
+      aria-label={count ? `${item.label} — ${count} nesta semana` : item.label}
       data-tour={`nav-${item.key}`}
       className={cn(
-        'group relative flex items-center gap-3 rounded-2xl px-3 py-2 mr-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground',
-        collapsed && 'mx-auto mr-auto size-10 justify-center gap-0 px-0 py-0',
-        isActive && 'bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary',
+        'group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink',
+        collapsed && 'mx-auto size-10 justify-center gap-0 rounded-md px-0 py-0',
+        isActive && 'bg-[var(--accent)] text-[var(--accent-fg)] hover:bg-[var(--accent)] hover:text-[var(--accent-fg)]',
       )}
     >
+      <NavigationIcon icon={item.key} className="size-[18px] shrink-0" />
       <span
         className={cn(
-          'absolute left-1 top-1/2 h-0 w-[3px] -translate-y-1/2 rounded-full bg-primary opacity-0 transition-[height,opacity] duration-200',
-          isActive && 'h-[56%] opacity-100',
-        )}
-        aria-hidden="true"
-      />
-      <NavigationIcon
-        icon={item.key}
-        className={cn(
-          'size-5 shrink-0 transition-colors',
-          isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
-        )}
-      />
-      <span
-        className={cn(
-          'truncate transition-[max-width,opacity] duration-200',
-          collapsed && 'pointer-events-none max-w-0 opacity-0',
+          'min-w-0 flex-1 truncate transition-[max-width,opacity] duration-200',
+          collapsed && 'pointer-events-none max-w-0 flex-none opacity-0',
         )}
       >
         {item.label}
       </span>
+      {count > 0 && (
+        <span
+          className={cn(
+            'shrink-0 rounded-pill bg-[var(--danger-soft)] px-1.5 py-0.5 text-[11px] font-bold leading-none text-[var(--danger-ink)] tabular-nums',
+            collapsed && 'absolute -right-1 -top-1',
+          )}
+          aria-hidden="true"
+        >
+          {count > 99 ? '99+' : count}
+        </span>
+      )}
     </NavLink>
   );
 
@@ -220,11 +236,33 @@ function SidebarNavLink({ item, collapsed }) {
 
 function SidebarNavigation({ collapsed }) {
   const navItems = useVisibleNavItems();
+  const weekDeadlines = useWeekDeadlineCount();
   return (
-    <nav className="grid gap-1.5" aria-label="Áreas do sistema">
-      {navItems.map((item) => (
-        <SidebarNavLink key={item.key} item={item} collapsed={collapsed} />
-      ))}
+    <nav className="grid gap-4" aria-label="Áreas do sistema">
+      {NAV_GROUPS.map((group) => {
+        const items = navItems.filter((item) => item.group === group);
+        if (!items.length) return null;
+        return (
+          <div key={group} className="grid gap-1" role="group" aria-label={group}>
+            <span
+              className={cn(
+                'px-3 pb-1 text-[11px] font-bold uppercase tracking-[.07em] text-subtle',
+                collapsed && 'sr-only',
+              )}
+            >
+              {group}
+            </span>
+            {items.map((item) => (
+              <SidebarNavLink
+                key={item.key}
+                item={item}
+                collapsed={collapsed}
+                count={item.key === 'prazos' ? weekDeadlines : 0}
+              />
+            ))}
+          </div>
+        );
+      })}
     </nav>
   );
 }
@@ -237,7 +275,7 @@ function BottomNavigation() {
       aria-hidden="false"
     >
       <nav
-        className="mx-auto w-full max-w-[840px] rounded-[28px] border border-border bg-card/95 p-2.5 shadow-lg backdrop-blur-xl"
+        className="mx-auto w-full max-w-[840px] rounded-[32px] bg-surface p-2.5 shadow-[var(--shadow-pop)]"
         aria-label="Navegação principal"
       >
         <div className="grid grid-cols-[repeat(auto-fit,minmax(58px,1fr))] gap-2">
@@ -249,12 +287,12 @@ function BottomNavigation() {
               aria-label={item.label}
               className={({ isActive }) =>
                 cn(
-                  'grid min-h-16 place-items-center gap-1.5 rounded-2xl border border-transparent px-2 py-2.5 text-muted-foreground transition-colors',
-                  isActive && 'border-primary/30 bg-primary text-primary-foreground',
+                  'grid min-h-16 place-items-center gap-1.5 rounded-md px-2 py-2.5 text-ink-2 transition-colors hover:bg-surface-2',
+                  isActive && 'bg-[var(--accent)] text-[var(--accent-fg)] hover:bg-[var(--accent)]',
                 )
               }
             >
-              <NavigationIcon icon={item.key} className="size-[22px]" />
+              <NavigationIcon icon={item.key} className="size-[20px]" />
               <span className="max-w-full truncate text-[.68rem] font-bold tracking-wide">
                 {item.mobileLabel}
               </span>
@@ -416,16 +454,11 @@ function NotifTypeIcon({ tipo }) {
   return <Icon className="size-3.5" strokeWidth={1.8} aria-hidden="true" />;
 }
 
-function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
-  const { currentUser, currentRole, sair } = useAppState();
-  const { notificacoes, totalNaoLidas, marcarLida, marcarTodasLidas } = useNotifications();
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef(null);
-
+function useDismiss(open, setOpen, ref) {
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
     function onOutside(e) {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     }
     function onKeyDown(e) {
       if (e.key === 'Escape') setOpen(false);
@@ -436,7 +469,152 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
       document.removeEventListener('mousedown', onOutside);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [open]);
+  }, [open, ref, setOpen]);
+}
+
+function NotificationList({ notifications }) {
+  const { notificacoes, totalNaoLidas, marcarLida, marcarTodasLidas } = notifications;
+  return (
+    <>
+      <div className="flex items-center justify-between border-b border-line px-3.5 py-3 text-sm">
+        <strong className="text-ink">Notificações</strong>
+        {totalNaoLidas > 0 && (
+          <button
+            type="button"
+            className="text-xs font-semibold text-ink underline-offset-2 hover:underline"
+            onClick={marcarTodasLidas}
+          >
+            Marcar todas lidas
+          </button>
+        )}
+      </div>
+
+      {notificacoes.length === 0 ? (
+        <div className="px-3.5 py-5 text-center text-sm text-muted-foreground">
+          Sem notificações pendentes.
+        </div>
+      ) : (
+        <ul className="max-h-[280px] overflow-y-auto py-1" role="list">
+          {notificacoes.map((n) => (
+            <li
+              key={n.id}
+              className="flex items-start gap-2.5 border-b border-line px-3.5 py-2.5 last:border-0 hover:bg-surface-2"
+            >
+              <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-sm bg-surface-2 text-muted-foreground">
+                <NotifTypeIcon tipo={n.tipo} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <strong className="block text-sm font-semibold text-ink">{n.titulo}</strong>
+                {n.mensagem && <p className="mt-0.5 text-xs text-muted-foreground">{n.mensagem}</p>}
+                {n.criada_em && (
+                  <time className="mt-1 block text-[.7rem] text-muted-foreground" dateTime={n.criada_em}>
+                    {formatRelTime(n.criada_em)}
+                  </time>
+                )}
+              </div>
+              <button
+                type="button"
+                className="shrink-0 text-muted-foreground hover:text-ink"
+                aria-label="Marcar como lida"
+                onClick={() => marcarLida(n.id)}
+              >
+                <X className="size-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
+
+function NotificationBell({ notifications }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const { totalNaoLidas } = notifications;
+  useDismiss(open, setOpen, ref);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        className="relative grid size-11 place-items-center rounded-full bg-surface-2 text-ink transition-colors hover:bg-surface-3"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-label={totalNaoLidas ? `Notificações — ${totalNaoLidas} não lidas` : 'Notificações'}
+        onClick={() => setOpen((p) => !p)}
+      >
+        <Bell className="size-[18px]" strokeWidth={1.8} aria-hidden="true" />
+        {totalNaoLidas > 0 && (
+          <span
+            className="absolute right-3 top-3 size-2 rounded-full bg-[var(--danger)] ring-2 ring-[var(--surface-2)]"
+            aria-hidden="true"
+          />
+        )}
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 top-full z-50 mt-2 w-[320px] max-w-[calc(100vw-32px)] rounded-lg bg-card shadow-[var(--shadow-pop)]"
+          role="dialog"
+          aria-label="Notificações"
+        >
+          <NotificationList notifications={notifications} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Topbar({ chrome, notifications }) {
+  const { label, actions, primaryAction } = chrome;
+  const primaryContent = primaryAction && (
+    <>
+      <Plus className="size-4" aria-hidden="true" />
+      <span className="max-sm:sr-only">{primaryAction.label}</span>
+    </>
+  );
+
+  return (
+    <header className="app-topbar sticky top-4 z-30 flex items-center justify-between gap-3 rounded-lg bg-surface py-3 pl-6 pr-3 max-sm:pl-4">
+      <nav aria-label="Trilha de navegação" className="min-w-0">
+        <ol className="m-0 flex min-w-0 list-none items-center gap-2 p-0 text-sm font-semibold text-muted-foreground">
+          <li className="max-sm:hidden">RS Advocacia</li>
+          <li aria-hidden="true" className="max-sm:hidden">
+            <ChevronRight className="size-3.5" />
+          </li>
+          <li className="min-w-0 truncate text-ink" aria-current="page">{label}</li>
+        </ol>
+      </nav>
+
+      <div className="flex shrink-0 items-center gap-2">
+        {actions}
+        <NotificationBell notifications={notifications} />
+        {primaryAction && (
+          primaryAction.to ? (
+            <Button asChild className="max-sm:px-3.5">
+              <Link to={primaryAction.to} data-tour={primaryAction.tour}>{primaryContent}</Link>
+            </Button>
+          ) : (
+            <Button type="button" className="max-sm:px-3.5" data-tour={primaryAction.tour} onClick={primaryAction.onClick}>
+              {primaryContent}
+            </Button>
+          )
+        )}
+      </div>
+    </header>
+  );
+}
+
+const PROFILE_ITEM_CLASS =
+  'flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink';
+
+function ProfileMenu({ onOpenAppearance, onStartTour, collapsed, notifications }) {
+  const { currentUser, currentRole, sair } = useAppState();
+  const { totalNaoLidas } = notifications;
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+  useDismiss(open, setOpen, menuRef);
 
   function handleAction(fn) {
     setOpen(false);
@@ -448,20 +626,15 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
       <button
         type="button"
         className={cn(
-          'relative flex w-full min-w-0 items-center gap-2.5 rounded-2xl border border-border bg-card/60 px-2.5 py-2 text-left transition-colors hover:bg-accent/10',
-          collapsed && 'mx-auto size-10 justify-center gap-0 px-0 py-0',
+          'relative flex w-full min-w-0 items-center gap-2.5 rounded-md bg-surface-2 p-2 text-left transition-colors hover:bg-surface-3',
+          collapsed && 'mx-auto size-10 justify-center gap-0 p-0',
         )}
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label={`Menu do usuário${totalNaoLidas ? ` — ${totalNaoLidas} notificações` : ''}`}
         onClick={() => setOpen((p) => !p)}
       >
-        <div
-          className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary font-bold text-primary-foreground"
-          aria-hidden="true"
-        >
-          {currentUser.name.slice(0, 1).toUpperCase()}
-        </div>
+        <Avatar name={currentUser.name} seed={currentUser.id} size={collapsed ? 40 : 38} />
         {totalNaoLidas > 0 && (
           <Badge
             variant="destructive"
@@ -477,8 +650,8 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
             collapsed && 'max-w-0 flex-none opacity-0',
           )}
         >
-          <strong className="block truncate text-sm font-semibold text-foreground">{currentUser.name}</strong>
-          <span className="block truncate text-xs text-muted-foreground">{currentRole?.name || 'Usuário'}</span>
+          <strong className="block truncate text-sm font-bold text-ink">{currentUser.name}</strong>
+          <span className="block truncate text-xs font-medium text-muted-foreground">{currentRole?.name || 'Usuário'}</span>
         </div>
         <ChevronUp
           className={cn(
@@ -492,84 +665,29 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
 
       {open && (
         <div
-          className="absolute bottom-full left-0 z-50 mb-2 w-[300px] rounded-2xl border border-border bg-card shadow-xl"
+          className="absolute bottom-full left-0 z-50 mb-2 w-[300px] rounded-lg bg-card shadow-[var(--shadow-pop)]"
           role="dialog"
           aria-label="Menu do usuário"
         >
-          <div className="flex items-center justify-between border-b border-border px-3.5 py-3 text-sm">
-            <strong className="text-foreground">Notificações</strong>
-            {totalNaoLidas > 0 && (
-              <button
-                type="button"
-                className="text-xs text-primary hover:underline"
-                onClick={marcarTodasLidas}
-              >
-                Marcar todas lidas
-              </button>
-            )}
-          </div>
-
-          {notificacoes.length === 0 ? (
-            <div className="px-3.5 py-5 text-center text-sm text-muted-foreground">
-              Sem notificações pendentes.
-            </div>
-          ) : (
-            <ul className="max-h-[280px] overflow-y-auto py-1" role="list">
-              {notificacoes.map((n) => (
-                <li
-                  key={n.id}
-                  className="flex items-start gap-2.5 border-b border-border/60 px-3.5 py-2.5 last:border-0 hover:bg-accent/5"
-                >
-                  <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-muted/40 text-muted-foreground">
-                    <NotifTypeIcon tipo={n.tipo} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <strong className="block text-sm font-semibold text-foreground">{n.titulo}</strong>
-                    {n.mensagem && <p className="mt-0.5 text-xs text-muted-foreground">{n.mensagem}</p>}
-                    {n.criada_em && (
-                      <time className="mt-1 block text-[.7rem] text-muted-foreground" dateTime={n.criada_em}>
-                        {formatRelTime(n.criada_em)}
-                      </time>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    className="shrink-0 text-muted-foreground hover:text-foreground"
-                    aria-label="Marcar como lida"
-                    onClick={() => marcarLida(n.id)}
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <NotificationList notifications={notifications} />
 
           <Separator />
 
           <nav className="flex flex-col gap-0.5 p-1.5" aria-label="Ações do usuário">
             {onOpenAppearance && (
-              <button
-                type="button"
-                className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground"
-                onClick={() => handleAction(onOpenAppearance)}
-              >
+              <button type="button" className={PROFILE_ITEM_CLASS} onClick={() => handleAction(onOpenAppearance)}>
                 <Sparkles className="size-4" strokeWidth={1.8} />
                 Aparência
               </button>
             )}
-            <Link
-              to="/manual"
-              className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground"
-              onClick={() => setOpen(false)}
-            >
+            <Link to="/manual" className={PROFILE_ITEM_CLASS} onClick={() => setOpen(false)}>
               <BookOpen className="size-4" strokeWidth={1.8} />
               Manual do sistema
             </Link>
             {onStartTour && (
               <button
                 type="button"
-                className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground"
+                className={PROFILE_ITEM_CLASS}
                 data-tour="rever-tour"
                 onClick={() => handleAction(onStartTour)}
               >
@@ -579,7 +697,7 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
             )}
             <button
               type="button"
-              className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+              className="flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-sm font-semibold text-[var(--danger-ink)] transition-colors hover:bg-[var(--danger-soft)]"
               onClick={() => handleAction(sair)}
             >
               <LogOut className="size-4" strokeWidth={1.8} />
@@ -592,45 +710,26 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed }) {
   );
 }
 
-export function ProtectedLayout() {
-  const { addFlash, currentUser, deadlines, events, isLoading } = useAppState();
-  const location = useLocation();
-  const [, setChrome] = useState(PAGE_CHROME_DEFAULT);
-  const { sidebarCollapsed, toggleSidebar } = useShellPreferences();
-  const appearance = useAppearanceState();
-  const { startTour, hasTour } = useOnboardingLauncher();
-
-  useReminderToasts({ addFlash, currentUser, deadlines, events, isLoading });
-
-  useEffect(() => {
-    document.body.classList.remove('login-body');
-  }, []);
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
+// Só monta depois da checagem de auth: useNotifications faz polling na API.
+function ShellFrame({ chrome, appearance, sidebarCollapsed, toggleSidebar, startTour, hasTour, location }) {
+  const notifications = useNotifications();
 
   return (
-    <PageChromeContext.Provider value={setChrome}>
-      <TooltipProvider delayDuration={200}>
+    <>
       <a href="#main-content" className="skip-link">Ir para o conteúdo</a>
-      <div className="shell">
+      <div
+        className="shell min-[1201px]:grid min-[1201px]:items-start"
+        style={{ gridTemplateColumns: `${sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar)'} minmax(0, 1fr)` }}
+      >
         <aside
           id="app-sidebar"
           aria-label="Navegação principal"
-          className={cn(
-            'group fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-border bg-transparent transition-[width] duration-300 ease-out min-[1201px]:flex',
-          )}
-          style={{ width: sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar)' }}
+          className="group sticky top-4 z-40 hidden h-[calc(100vh-32px)] flex-col rounded-lg bg-surface min-[1201px]:flex"
         >
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            className="absolute right-[-21px] top-1/2 z-10 size-10 -translate-y-1/2 rounded-full bg-background opacity-0 shadow-lg backdrop-blur transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+            className="absolute right-[-22px] top-1/2 z-10 size-10 -translate-y-1/2 rounded-full bg-surface opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
             aria-controls="app-sidebar"
             aria-expanded={sidebarCollapsed ? 'false' : 'true'}
             aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
@@ -642,30 +741,21 @@ export function ProtectedLayout() {
 
           <div
             className={cn(
-              'flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden pt-8',
-              sidebarCollapsed ? 'px-2.5' : 'px-4.5',
+              'flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden pt-5',
+              sidebarCollapsed ? 'px-3' : 'px-4',
             )}
           >
             <Link
-              className={cn(
-                'flex items-center gap-3 rounded-[20px] p-2',
-                sidebarCollapsed && 'justify-center gap-0 p-0',
-              )}
+              className={cn('flex items-center gap-3 p-1', sidebarCollapsed && 'justify-center gap-0 p-0')}
               to="/"
               aria-label="Ir para a área inicial"
               title="Início"
             >
               <div
-                className="grid size-11 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-primary"
+                className="grid size-10 shrink-0 place-items-center rounded-sm bg-[var(--accent)] text-[var(--accent-fg)]"
                 aria-hidden="true"
               >
-                <svg className="translate-y-0.5" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 3v18" />
-                  <path d="m19 8 3 8a5 5 0 0 1-6 0z" />
-                  <path d="m5 8 3 8a5 5 0 0 1-6 0z" />
-                  <path d="M3 7h18" />
-                  <path d="M7 21h10" />
-                </svg>
+                <Scale className="size-5" strokeWidth={1.8} />
               </div>
               <div
                 className={cn(
@@ -673,30 +763,28 @@ export function ProtectedLayout() {
                   sidebarCollapsed && 'pointer-events-none max-w-0 opacity-0',
                 )}
               >
-                <strong className="block truncate font-serif text-2xl font-normal text-foreground">
+                <strong className="block truncate text-[17px] font-extrabold leading-tight text-ink">
                   RS Advocacia
                 </strong>
+                <span className="block truncate text-xs font-medium text-muted-foreground">Gestão jurídica</span>
               </div>
             </Link>
 
             <SidebarNavigation collapsed={sidebarCollapsed} />
           </div>
 
-          <div className="shrink-0 border-t border-border p-3">
+          <div className="shrink-0 p-3">
             <ProfileMenu
               onOpenAppearance={() => appearance.setOpen(true)}
               onStartTour={hasTour ? startTour : undefined}
               collapsed={sidebarCollapsed}
+              notifications={notifications}
             />
           </div>
         </aside>
 
-        <div
-          className={cn(
-            'page transition-[margin-left] duration-300 ease-out',
-            sidebarCollapsed ? 'min-[1201px]:ml-[var(--sidebar-collapsed)]' : 'min-[1201px]:ml-[var(--sidebar)]',
-          )}
-        >
+        <div className="page">
+          <Topbar chrome={chrome} notifications={notifications} />
           <div className="page-wrap">
             <main className="main" id="main-content">
               <Suspense fallback={<RouteFallback />}>
@@ -742,6 +830,44 @@ export function ProtectedLayout() {
           },
         }}
       />
+    </>
+  );
+}
+
+export function ProtectedLayout() {
+  const { addFlash, currentUser, deadlines, events, isLoading } = useAppState();
+  const location = useLocation();
+  const [chrome, setChrome] = useState(PAGE_CHROME_DEFAULT);
+  const { sidebarCollapsed, toggleSidebar } = useShellPreferences();
+  const appearance = useAppearanceState();
+  const { startTour, hasTour } = useOnboardingLauncher();
+
+  useReminderToasts({ addFlash, currentUser, deadlines, events, isLoading });
+
+  useEffect(() => {
+    document.body.classList.remove('login-body');
+  }, []);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <PageChromeContext.Provider value={setChrome}>
+      <TooltipProvider delayDuration={200}>
+        <ShellFrame
+          chrome={chrome}
+          appearance={appearance}
+          sidebarCollapsed={sidebarCollapsed}
+          toggleSidebar={toggleSidebar}
+          startTour={startTour}
+          hasTour={hasTour}
+          location={location}
+        />
       </TooltipProvider>
     </PageChromeContext.Provider>
   );

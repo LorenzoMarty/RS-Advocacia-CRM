@@ -361,7 +361,7 @@ export function PetitionsPage() {
   return (
     <>
       {confirmPopup}
-      <PageChrome label="Petições ou contestações" />
+      <PageChrome label="Petições ou contestações" primaryAction={{ label: 'Nova peça', to: '/peticoes-contestacoes/novo', tour: 'page-primary-action' }} />
       <div className="grid gap-4">
         <section className="mb-2">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -373,12 +373,6 @@ export function PetitionsPage() {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Badge>{formatCount(filteredPetitions.length, 'peça', 'peças')}</Badge>
-              <Button asChild>
-                <Link to="/peticoes-contestacoes/novo" data-tour="page-primary-action">
-                  <Plus className="size-4" />
-                  Nova peça
-                </Link>
-              </Button>
             </div>
           </div>
         </section>

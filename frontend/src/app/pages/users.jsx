@@ -168,7 +168,7 @@ export function UsersListPage() {
   return (
     <>
       {confirmPopup}
-      <PageChrome label="Usuários" />
+      <PageChrome label="Usuários" primaryAction={{ label: 'Novo usuário', to: '/usuarios/novo', tour: 'page-primary-action' }} />
 
       <div className="grid gap-4">
         <section className="mb-2">
@@ -177,12 +177,6 @@ export function UsersListPage() {
               <p className="font-serif text-3xl text-foreground">Usuários</p>
               <p className="mt-1 text-sm text-muted-foreground">{formatCount(filteredUsers.length)}</p>
             </div>
-            <Button asChild>
-              <Link to="/usuarios/novo" data-tour="page-primary-action">
-                <Plus className="size-4" />
-                Novo
-              </Link>
-            </Button>
           </div>
         </section>
 

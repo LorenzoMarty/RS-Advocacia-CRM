@@ -218,7 +218,7 @@ export function ClientsListPage() {
   return (
     <>
       {confirmPopup}
-      <PageChrome label="Clientes" />
+      <PageChrome label="Clientes" primaryAction={{ label: 'Novo cliente', to: '/clientes/novo', tour: 'page-primary-action' }} />
 
       <div className="grid gap-4">
         <section className="mb-2">
@@ -231,12 +231,6 @@ export function ClientsListPage() {
               <Button variant="outline" onClick={() => setDiscovering(true)}>
                 <FolderInput className="size-4" />
                 Importar do Drive
-              </Button>
-              <Button asChild>
-                <Link to="/clientes/novo" data-tour="page-primary-action">
-                  <Plus className="size-4" />
-                  Novo
-                </Link>
               </Button>
             </div>
           </div>
