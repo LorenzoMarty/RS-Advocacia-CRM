@@ -198,10 +198,10 @@ function SidebarNavLink({ item, collapsed, count = 0 }) {
       className={cn(
         'group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink',
         collapsed && 'mx-auto size-10 justify-center gap-0 rounded-md px-0 py-0',
-        isActive && 'bg-[var(--accent)] text-[var(--accent-fg)] hover:bg-[var(--accent)] hover:text-[var(--accent-fg)]',
+        isActive && 'bg-accent-soft font-bold text-ink hover:bg-accent-soft hover:text-ink',
       )}
     >
-      <NavigationIcon icon={item.key} className="size-[18px] shrink-0" />
+      <NavigationIcon icon={item.key} className={cn('size-[18px] shrink-0', isActive && 'text-[var(--accent)]')} />
       <span
         className={cn(
           'min-w-0 flex-1 truncate transition-[max-width,opacity] duration-200',
@@ -289,12 +289,12 @@ function BottomNavigation() {
               aria-label={item.label}
               className={({ isActive }) =>
                 cn(
-                  'grid min-h-16 place-items-center gap-1.5 rounded-md px-2 py-2.5 text-ink-2 transition-colors hover:bg-surface-2',
-                  isActive && 'bg-[var(--accent)] text-[var(--accent-fg)] hover:bg-[var(--accent)]',
+                  'group grid min-h-16 place-items-center gap-1.5 rounded-md px-2 py-2.5 text-ink-2 transition-colors hover:bg-surface-2',
+                  isActive && 'bg-accent-soft font-bold text-ink hover:bg-accent-soft',
                 )
               }
             >
-              <NavigationIcon icon={item.key} className="size-[20px]" />
+              <NavigationIcon icon={item.key} className="size-[20px] group-[.active]:text-[var(--accent)]" />
               <span className="max-w-full truncate text-[.68rem] font-bold tracking-wide">
                 {item.mobileLabel}
               </span>
@@ -797,7 +797,7 @@ function ShellFrame({ chrome, appearance, sidebarCollapsed, toggleSidebar, start
               title="Início"
             >
               <div
-                className="grid size-10 shrink-0 place-items-center rounded-sm bg-[var(--accent)] text-[var(--accent-fg)]"
+                className="grid size-10 shrink-0 place-items-center rounded-sm bg-accent-soft-2 text-[var(--accent)]"
                 aria-hidden="true"
               >
                 <Scale className="size-5" strokeWidth={1.8} />

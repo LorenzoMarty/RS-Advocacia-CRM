@@ -23,11 +23,13 @@
     --muted:#656A76;
     --subtle:#9A9EA8; /* só labels >= 11px bold */
 
-    /* Acento da interface: neutro (a marca não tem cor). Único ponto de troca. */
-    --accent:var(--ink);
+    /* Acento da interface: azul médio. Único ponto de troca. --ink fica só como cor de texto. */
+    --accent:oklch(0.52 0.13 255);
+    --accent-hover:oklch(0.46 0.13 255);
     --accent-fg:#FFFFFF;
-    --accent-hover:#2C2E35;
-    --focus-ring:rgba(23,24,28,.15);
+    --accent-soft:oklch(0.95 0.012 255);   /* item ativo, hover forte */
+    --accent-soft-2:oklch(0.91 0.02 255);  /* card de destaque, chip selecionado, anel de seleção */
+    --focus-ring:oklch(0.52 0.13 255 / .25);
 
     /* Semânticos — mesma luminosidade/croma, varia só o matiz */
     --danger:oklch(0.58 0.15 35);   --danger-soft:oklch(0.93 0.04 35);   --danger-ink:oklch(0.45 0.12 35);
@@ -87,11 +89,11 @@
     --select-field-solid:var(--surface-2);
     --select-field-hover:var(--surface-2);
     --select-field-border:transparent;
-    --select-field-border-strong:var(--ink);
+    --select-field-border-strong:var(--accent);
     --select-dropdown-bg:var(--surface);
     --select-option-hover:var(--surface-2);
-    --select-option-selected:var(--surface-2);
-    --select-option-selected-border:var(--ink);
+    --select-option-selected:var(--accent-soft);
+    --select-option-selected-border:var(--accent-soft-2);
     --select-option-disabled:var(--subtle);
     --select-shadow:var(--shadow-pop);
     --sidebar-toggle-bg:var(--surface);
@@ -122,7 +124,7 @@
     --ease-spring:cubic-bezier(.34,1.56,.64,1);
 
     /* Paleta de gráficos: série principal em --ink, secundárias nos matizes --cat-* (mais saturados) */
-    --chart-1:var(--ink);
+    --chart-1:var(--accent);
     --chart-2:oklch(0.72 0.11 295);
     --chart-3:oklch(0.72 0.11 40);
     --chart-4:oklch(0.72 0.11 220);
@@ -143,9 +145,12 @@
     --ink-2:#C3C6CE;
     --muted:#9A9EA8;
     --subtle:#868B97;
-    --accent-fg:#17181C;
-    --accent-hover:#D9DBE0;
-    --focus-ring:rgba(241,242,245,.22);
+    --accent:oklch(0.74 0.11 255);
+    --accent-hover:oklch(0.80 0.11 255);
+    --accent-fg:var(--bg);
+    --accent-soft:oklch(0.26 0.015 255);
+    --accent-soft-2:oklch(0.30 0.02 255);
+    --focus-ring:oklch(0.74 0.11 255 / .35);
 
     --danger:oklch(0.70 0.14 35);   --danger-soft:oklch(0.30 0.06 35);   --danger-ink:oklch(0.82 0.09 35);
     --warn:oklch(0.78 0.12 75);     --warn-soft:oklch(0.32 0.06 75);     --warn-ink:oklch(0.85 0.09 75);

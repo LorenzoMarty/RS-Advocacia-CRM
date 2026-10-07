@@ -86,7 +86,7 @@ function KpiCard({ title, icon, dark = false, children }) {
     <div
       className={cn(
         "flex min-h-[164px] flex-col gap-3.5 rounded-lg px-[22px] py-5",
-        dark ? "bg-[var(--accent)] text-[var(--accent-fg)]" : "bg-card text-ink",
+        dark ? "bg-accent-soft-2 text-ink" : "bg-card text-ink",
       )}
     >
       <div className="flex items-start justify-between">
@@ -94,7 +94,7 @@ function KpiCard({ title, icon, dark = false, children }) {
         <span
           className={cn(
             "grid size-9 place-items-center rounded-full",
-            dark ? "bg-[var(--accent-fg)] text-[var(--accent)]" : "bg-surface-2 text-ink",
+            dark ? "bg-surface text-[var(--accent)]" : "bg-surface-2 text-ink",
           )}
         >
           <Icon className="size-4" strokeWidth={1.9} aria-hidden="true" />
@@ -105,8 +105,8 @@ function KpiCard({ title, icon, dark = false, children }) {
   );
 }
 
-function KpiNote({ dark = false, children }) {
-  return <span className={cn("text-meta font-semibold", dark ? "opacity-70" : "text-muted-foreground")}>{children}</span>;
+function KpiNote({ children }) {
+  return <span className="text-meta font-semibold text-muted-foreground">{children}</span>;
 }
 
 function WeekLoad({ days, counts, today }) {
@@ -235,7 +235,7 @@ export function DashboardPage() {
         <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2", canSeeFinance ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
           <KpiCard dark title={`Prazos em ${range} dias`} icon={ArrowUpRight}>
             <strong className="text-kpi tabular-nums">{rangeDeadlines.length}</strong>
-            <KpiNote dark>{rangeHigh} com prioridade alta</KpiNote>
+            <KpiNote>{rangeHigh} com prioridade alta</KpiNote>
           </KpiCard>
 
           <KpiCard title="Processos ativos" icon={Briefcase}>
