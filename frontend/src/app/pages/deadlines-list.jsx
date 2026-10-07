@@ -290,7 +290,7 @@ export function DeadlinesPage() {
 
   return (
     <>
-      <PageChrome label="Prazos" />
+      <PageChrome label="Prazos" primaryAction={{ label: 'Novo prazo', to: deadlineCreatePath(), tour: 'page-primary-action' }} />
 
       <div className="grid gap-4">
         <section className="mb-2">
@@ -301,12 +301,6 @@ export function DeadlinesPage() {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Badge>{formatCount(filteredDeadlines.length, 'prazo', 'prazos')}</Badge>
-              <Button asChild>
-                <Link to={deadlineCreatePath()} data-tour="page-primary-action">
-                  <Plus className="size-4" />
-                  Novo prazo
-                </Link>
-              </Button>
             </div>
           </div>
         </section>

@@ -194,7 +194,7 @@ export function FinanceiroPage() {
   return (
     <>
       {confirmPopup}
-      <PageChrome label="Financeiro" />
+      <PageChrome label="Financeiro" primaryAction={{ label: 'Novo lançamento', to: '/financeiro/novo', tour: 'page-primary-action' }} />
       <div className="grid gap-4">
         <section className="mb-2">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -202,12 +202,6 @@ export function FinanceiroPage() {
               <p className="font-serif text-3xl text-foreground">Financeiro</p>
               <p className="mt-1 text-sm text-muted-foreground">Receitas, despesas e fluxo do escritório</p>
             </div>
-            <Button asChild>
-              <Link to="/financeiro/novo" data-tour="page-primary-action">
-                <Plus className="size-4" />
-                Novo lançamento
-              </Link>
-            </Button>
           </div>
         </section>
 
