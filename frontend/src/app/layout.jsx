@@ -7,6 +7,7 @@ import {
   Briefcase,
   Calendar,
   CalendarCheck,
+  ChevronDown,
   ChevronRight,
   ChevronUp,
   CircleHelp,
@@ -110,9 +111,10 @@ export function PageSearch({
   placeholder = 'Buscar',
   label = 'Busca da página',
   inputProps = {},
+  className = '',
 }) {
   return (
-    <div className="page-search-inline">
+    <div className={`page-search-inline${className ? ` ${className}` : ''}`}>
       <label className="page-search" aria-label={label}>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="7" />
@@ -275,7 +277,7 @@ function BottomNavigation() {
       aria-hidden="false"
     >
       <nav
-        className="mx-auto w-full max-w-[840px] rounded-[32px] bg-surface p-2.5 shadow-[var(--shadow-pop)]"
+        className="mx-auto w-full max-w-[840px] rounded-[32px] bg-surface p-2.5 shadow-pop"
         aria-label="Navegação principal"
       >
         <div className="grid grid-cols-[repeat(auto-fit,minmax(58px,1fr))] gap-2">
@@ -555,11 +557,53 @@ function NotificationBell({ notifications }) {
 
       {open && (
         <div
-          className="absolute right-0 top-full z-50 mt-2 w-[320px] max-w-[calc(100vw-32px)] rounded-lg bg-card shadow-[var(--shadow-pop)]"
+          className="absolute right-0 top-full z-50 mt-2 w-[320px] max-w-[calc(100vw-32px)] rounded-lg bg-card shadow-pop"
           role="dialog"
           aria-label="Notificações"
         >
           <NotificationList notifications={notifications} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Menu de atalhos ao lado da ação primária: primaryAction.menu = [{ to, label, tour, Icon }].
+function PrimaryMenu({ items }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useDismiss(open, setOpen, ref);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        className="grid size-11 place-items-center rounded-full bg-surface-2 text-ink transition-colors hover:bg-surface-3"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label="Mais atalhos"
+        onClick={() => setOpen((p) => !p)}
+      >
+        <ChevronDown className="size-[18px]" strokeWidth={1.8} aria-hidden="true" />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-50 mt-2 flex w-[260px] flex-col gap-0.5 rounded-lg bg-card p-1.5 shadow-pop"
+        >
+          {items.map(({ to, label, tour, Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              role="menuitem"
+              data-tour={tour}
+              className={PROFILE_ITEM_CLASS}
+              onClick={() => setOpen(false)}
+            >
+              {Icon ? <Icon className="size-4 shrink-0" strokeWidth={1.8} /> : null}
+              {label}
+            </Link>
+          ))}
         </div>
       )}
     </div>
@@ -601,6 +645,7 @@ function Topbar({ chrome, notifications }) {
             </Button>
           )
         )}
+        {primaryAction?.menu?.length ? <PrimaryMenu items={primaryAction.menu} /> : null}
       </div>
     </header>
   );
@@ -665,7 +710,7 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed, notifications }
 
       {open && (
         <div
-          className="absolute bottom-full left-0 z-50 mb-2 w-[300px] rounded-lg bg-card shadow-[var(--shadow-pop)]"
+          className="absolute bottom-full left-0 z-50 mb-2 w-[300px] rounded-lg bg-card shadow-pop"
           role="dialog"
           aria-label="Menu do usuário"
         >

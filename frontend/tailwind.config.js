@@ -53,6 +53,17 @@ export default {
         line: { DEFAULT: 'var(--line)', strong: 'var(--line-strong)' },
         subtle: 'var(--subtle)',
       },
+      // Escala de tipo do redesign em rem (1rem = --font-base * escalas do usuário).
+      fontSize: {
+        'page-title': ['2.43rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'card-title': ['1.43rem', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'card-title-sm': ['1.29rem', { lineHeight: '1.2', fontWeight: '700' }],
+        kpi: ['3.43rem', { lineHeight: '1', letterSpacing: '-0.03em', fontWeight: '800' }],
+        label: ['.79rem', { lineHeight: '1.2', letterSpacing: '.07em', fontWeight: '700' }],
+        meta: ['.93rem', { lineHeight: '1.3', fontWeight: '500' }],
+        'meta-sm': ['.86rem', { lineHeight: '1.3', fontWeight: '500' }],
+      },
+      boxShadow: { pop: 'var(--shadow-pop)', hover: 'var(--shadow-hover)' },
       borderRadius: {
         lg: 'var(--radius-lg)',
         md: 'var(--radius-md)',
