@@ -22,7 +22,7 @@
         color:var(--muted);
         font-size:.74rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
@@ -31,7 +31,7 @@
         width:100%;
         min-height:48px;
         padding:0 14px;
-        border-radius:16px;
+        border-radius:var(--radius-md);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--text);
@@ -45,10 +45,10 @@
         -moz-appearance:none;
         cursor:pointer;
         padding-right:40px;
-        border-color:rgba(255,255,255,.1);
+        border-color:var(--line-strong);
         background:
-            linear-gradient(45deg, transparent 50%, var(--gold-soft) 50%),
-            linear-gradient(135deg, var(--gold-soft) 50%, transparent 50%),
+            linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+            linear-gradient(135deg, var(--accent) 50%, transparent 50%),
             var(--ghost);
         background-position:calc(100% - 20px) calc(50% - 3px),calc(100% - 14px) calc(50% - 3px),0 0;
         background-size:6px 6px,6px 6px,auto;
@@ -69,14 +69,14 @@
 
     .field.has-error input,
     .field.has-error select{
-        border-color:rgba(239,122,122,.4);
-        box-shadow:0 0 0 4px rgba(239,122,122,.08);
+        border-color:color-mix(in srgb, var(--danger) 40%, transparent);
+        box-shadow:0 0 0 4px color-mix(in srgb, var(--danger) 8%, transparent);
     }
 
     .field select option,
     .field select optgroup{
-        background:#161a22;
-        color:#f6f1e8;
+        background:var(--surface);
+        color:var(--ink);
     }
 
     .field-error{
@@ -111,13 +111,13 @@
 
     .field label{
         font-size:.68rem;
-        letter-spacing:.12em;
+        letter-spacing:.07em;
     }
 
     .field input,
     .field select{
         min-height:44px;
-        border-radius:14px;
+        border-radius:var(--radius-sm);
     }
 
     .form-actions .btn,

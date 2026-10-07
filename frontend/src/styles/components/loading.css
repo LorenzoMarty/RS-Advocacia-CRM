@@ -29,13 +29,13 @@
     border-radius:24px;
     border:1px solid var(--line-strong);
     background:var(--line-strong);
-    color:var(--gold-soft);
+    color:var(--accent);
     animation:loading-mark-pulse 1.8s ease-in-out infinite;
 }
 
 .loading-copy{display:grid;gap:8px}
 .loading-kicker{
-    color:var(--gold-soft);
+    color:var(--accent);
     font-size:.72rem;
     font-weight:800;
     letter-spacing:.18em;
@@ -73,7 +73,7 @@
     width:44%;
     height:100%;
     border-radius:999px;
-    background:var(--gold);
+    background:var(--accent);
     animation:loading-progress 1.15s ease-in-out infinite;
 }
 

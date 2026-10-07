@@ -11,7 +11,7 @@ const PERIOD_OPTIONS = [
 export function PeriodFilter({ value, onChange }) {
   return (
     <Tabs value={String(value)} onValueChange={(next) => onChange(Number(next))}>
-      <TabsList aria-label="Período">
+      <TabsList tone="bg" aria-label="Período">
         {PERIOD_OPTIONS.map((opt) => (
           <TabsTrigger key={opt.value} value={String(opt.value)}>
             {opt.label}

@@ -125,7 +125,7 @@
 }
 
 .appearance-segment-item.is-active{
-    color:var(--gold-soft);
+    color:var(--accent);
     background:var(--line-strong);
     border-color:var(--line-strong);
 }

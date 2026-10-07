@@ -6,9 +6,9 @@
     justify-content:space-between;
     gap:8px;
     padding:8px 9px;
-    border-radius:12px;
+    border-radius:var(--radius-sm);
     border:1px solid var(--line);
-    background:rgba(255,255,255,.035);
+    background:var(--surface-2);
     cursor:default;
 }
 
@@ -21,7 +21,7 @@
     color:var(--muted);
     font-size:.62rem;
     font-weight:800;
-    letter-spacing:.14em;
+    letter-spacing:.07em;
     text-transform:uppercase;
 }
 
@@ -41,18 +41,18 @@
 .timer-btn{
     min-height:28px;
     padding:0 8px;
-    border-radius:9px;
+    border-radius:var(--radius-sm);
     border:1px solid var(--line-strong);
     background:var(--line-strong);
-    color:var(--gold-soft);
+    color:var(--accent);
     font-size:.68rem;
     font-weight:800;
 }
 
 .timer-btn-stop{
-    border-color:rgba(239,122,122,.22);
-    background:rgba(239,122,122,.1);
-    color:#ffd5d5;
+    border-color:color-mix(in srgb, var(--danger) 22%, transparent);
+    background:color-mix(in srgb, var(--danger) 10%, transparent);
+    color:var(--danger-ink);
 }
 
 .productivity-section{
@@ -65,7 +65,7 @@
     grid-template-columns:repeat(5,minmax(0,1fr));
     gap:1px;
     padding:1px;
-    border-radius:14px;
+    border-radius:var(--radius-sm);
     border:1px solid var(--line);
     background:var(--line);
     overflow:hidden;
@@ -109,15 +109,15 @@
 .productivity-bar{
     height:7px;
     overflow:hidden;
-    border-radius:999px;
-    background:rgba(255,255,255,.07);
+    border-radius:var(--radius-lg);
+    background:var(--surface-2);
 }
 
 .productivity-bar span{
     display:block;
     height:100%;
-    border-radius:999px;
-    background:var(--gold);
+    border-radius:var(--radius-lg);
+    background:var(--accent);
 }
 
 .productivity-block{
@@ -129,7 +129,7 @@
     display:inline-flex;
     gap:4px;
     padding:4px;
-    border-radius:11px;
+    border-radius:var(--radius-sm);
     border:1px solid var(--line);
     background:var(--ghost);
     width:fit-content;
@@ -149,7 +149,7 @@
 .productivity-segmented button[aria-pressed="true"]{
     background:var(--line-strong);
     border-color:var(--line-strong);
-    color:var(--gold-soft);
+    color:var(--accent);
 }
 
 .productivity-filters{
@@ -163,7 +163,7 @@
 .productivity-filters input{
     min-height:36px;
     padding:0 10px;
-    border-radius:11px;
+    border-radius:var(--radius-sm);
     border:1px solid var(--line);
     background:var(--ghost);
     color:var(--text);
@@ -185,7 +185,7 @@
     gap:10px;
     align-items:center;
     padding:10px 12px;
-    border-radius:14px;
+    border-radius:var(--radius-sm);
     border:1px solid var(--line);
     background:var(--ghost);
 }
@@ -223,9 +223,9 @@
 .productivity-pagination button{
     min-height:30px;
     padding:0 9px;
-    border-radius:9px;
+    border-radius:var(--radius-sm);
     border:1px solid var(--line);
-    background:rgba(255,255,255,.035);
+    background:var(--surface-2);
     color:var(--soft);
     font-size:.72rem;
     font-weight:800;
@@ -240,10 +240,10 @@
     height:30px;
     display:grid;
     place-items:center;
-    border-radius:9px;
+    border-radius:var(--radius-sm);
     border:1px solid var(--line-strong);
     background:var(--line-strong);
-    color:var(--gold-soft);
+    color:var(--accent);
     font-size:.7rem;
     font-weight:900;
     flex:0 0 auto;
@@ -266,7 +266,7 @@
     gap:10px;
     align-items:center;
     padding:10px 12px;
-    border-radius:14px;
+    border-radius:var(--radius-sm);
     border:1px solid var(--line);
     background:var(--ghost);
 }

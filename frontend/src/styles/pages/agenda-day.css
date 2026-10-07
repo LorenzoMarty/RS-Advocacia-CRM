@@ -1,8 +1,8 @@
 /* Day number link in calendar */
 .day-number-link{color:inherit;transition:color .15s ease}
-.day-number-link:hover{color:var(--gold-soft)}
-.day-card.is-today .day-number-link{color:var(--gold-soft)}
-.day-card.is-overdue .day-number-link{color:#f0b0b0}
+.day-number-link:hover{color:var(--accent)}
+.day-card.is-today .day-number-link{color:var(--accent)}
+.day-card.is-overdue .day-number-link{color:var(--danger-ink)}
 
 /* Timeline */
 .timeline-grid{display:grid}
@@ -36,7 +36,7 @@
     text-transform:uppercase;
     line-height:1;
 }
-.timeline-row.is-now .timeline-hour span{color:var(--gold-soft)}
+.timeline-row.is-now .timeline-hour span{color:var(--accent)}
 .timeline-slot{
     padding:8px 22px 8px 0;
     display:flex;
@@ -46,12 +46,12 @@
 
 /* Event card inside timeline */
 .timeline-event{
-    --event-accent:var(--gold);
+    --event-accent:var(--accent);
     position:relative;
     display:grid;
     gap:7px;
     padding:12px 14px 12px 20px;
-    border-radius:16px;
+    border-radius:var(--radius-md);
     border:1px solid var(--line);
     background:var(--ghost);
     color:var(--text);
@@ -67,17 +67,17 @@
     top:10px;
     bottom:10px;
     width:4px;
-    border-radius:999px;
+    border-radius:var(--radius-lg);
     background:var(--event-accent);
 }
 .timeline-event:hover{
     transform:translateY(-2px);
-    border-color:rgba(255,255,255,.12);
+    border-color:var(--line-strong);
 }
 .timeline-event.type-audiencia{--event-accent:var(--accent)}
-.timeline-event.type-reuniao{--event-accent:#7893d1}
-.timeline-event.type-tarefa{--event-accent:#b6bcc8}
-.timeline-event.is-overdue{--event-accent:#ef7a7a;border-color:rgba(239,122,122,.18)}
+.timeline-event.type-reuniao{--event-accent:var(--info)}
+.timeline-event.type-tarefa{--event-accent:var(--subtle)}
+.timeline-event.is-overdue{--event-accent:var(--danger);border-color:color-mix(in srgb, var(--danger) 18%, transparent)}
 .timeline-event{cursor:pointer}
 .timeline-event-delete{
     position:absolute;
@@ -87,7 +87,7 @@
     height:24px;
     border-radius:8px;
     border:none;
-    background:rgba(239,122,122,.15);
+    background:color-mix(in srgb, var(--danger) 15%, transparent);
     color:var(--danger);
     display:grid;
     place-items:center;
@@ -100,7 +100,7 @@
     z-index:2;
 }
 .timeline-event:hover .timeline-event-delete{opacity:1}
-.timeline-event-delete:hover{background:rgba(239,122,122,.36)}
+.timeline-event-delete:hover{background:color-mix(in srgb, var(--danger) 36%, transparent)}
 
 .timeline-event-attend{
     display:flex;
@@ -125,15 +125,15 @@
     transition:background .15s ease,color .15s ease;
 }
 .timeline-event-attend-yes{
-    background:rgba(74,222,128,.15);
-    color:var(--success,#4ade80);
+    background:color-mix(in srgb, var(--success) 15%, transparent);
+    color:var(--success,var(--success));
 }
-.timeline-event-attend-yes:hover{background:rgba(74,222,128,.3)}
+.timeline-event-attend-yes:hover{background:color-mix(in srgb, var(--success) 30%, transparent)}
 .timeline-event-attend-no{
-    background:rgba(239,122,122,.15);
+    background:color-mix(in srgb, var(--danger) 15%, transparent);
     color:var(--danger);
 }
-.timeline-event-attend-no:hover{background:rgba(239,122,122,.3)}
+.timeline-event-attend-no:hover{background:color-mix(in srgb, var(--danger) 30%, transparent)}
 
 .timeline-event-time{
     display:inline-flex;
@@ -141,12 +141,12 @@
     width:fit-content;
     min-height:22px;
     padding:0 9px;
-    border-radius:999px;
-    background:rgba(255,255,255,.06);
+    border-radius:var(--radius-lg);
+    background:var(--surface-2);
     color:var(--text);
     font-size:.68rem;
     font-weight:800;
-    letter-spacing:.12em;
+    letter-spacing:.07em;
     text-transform:uppercase;
 }
 .timeline-event-title{
@@ -163,7 +163,7 @@
     align-items:center;
     gap:7px;
     padding:6px 10px;
-    border-radius:10px;
+    border-radius:var(--radius-sm);
     border:1px dashed transparent;
     color:var(--muted);
     font-size:.76rem;
@@ -173,10 +173,10 @@
 }
 .timeline-row:hover .timeline-slot-add{
     opacity:1;
-    border-color:rgba(148,163,184,.2);
+    border-color:color-mix(in srgb, var(--ink) 20%, transparent);
 }
 .timeline-slot-add:hover{
-    color:var(--gold-soft);
+    color:var(--accent);
     border-color:var(--line-strong);
 }
 
@@ -188,12 +188,12 @@
 }
 .timeline-day-empty strong{display:block;margin-bottom:8px;font-size:.96rem}
 .timeline-day-empty p{color:var(--soft);font-size:.88rem;margin:0}
-.timeline-day-empty a{color:var(--gold-soft)}
+.timeline-day-empty a{color:var(--accent)}
 
 @media(max-width:640px){
     .timeline-row{grid-template-columns:56px 1fr}
     .timeline-hour{padding:14px 0 0 14px}
     .timeline-slot{padding:8px 14px 8px 0}
-    .timeline-event{padding:10px 12px 10px 16px;border-radius:14px}
+    .timeline-event{padding:10px 12px 10px 16px;border-radius:var(--radius-sm)}
     .timeline-event-title{font-size:.86rem}
 }

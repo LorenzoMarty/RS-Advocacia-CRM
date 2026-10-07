@@ -279,3 +279,32 @@
 .page-search-inline.on-bg{width:min(100%, 240px)}
 .on-bg .rs-select-trigger{background:var(--surface)}
 .on-bg .rs-select-trigger:hover{background:var(--surface-2)}
+
+/* Campos de formulário (Field): superfície --surface-2, sem borda, 44px, raio sm.
+   Sobrepõe as regras duplicadas de clientes/processos/agenda/usuarios-form.css. */
+.main .field :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea){
+    border:0;
+    border-radius:var(--radius-sm);
+    background-color:var(--surface-2);
+    color:var(--ink);
+    font-weight:500;
+}
+.main .field :where(input:not([type="checkbox"]):not([type="radio"]), select){min-height:44px}
+.main .field :where(input, select, textarea):hover{background-color:var(--surface-2)}
+.main .field :where(input, select, textarea):focus{
+    outline:0;
+    border:0;
+    background-color:var(--surface-2);
+    box-shadow:0 0 0 2px var(--focus-ring);
+}
+.main .field.has-error :where(input, select, textarea){box-shadow:inset 0 0 0 1.5px var(--danger)}
+.main .field :where(input[type="checkbox"], input[type="radio"]){
+    width:18px;
+    height:18px;
+    min-height:0;
+    padding:0;
+    flex:0 0 auto;
+    accent-color:var(--accent);
+}
+.main .field-head label, .main .field > label{font-weight:700}
+.main .rs-select-value{text-align:left}

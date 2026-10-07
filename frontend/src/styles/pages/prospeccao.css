@@ -6,19 +6,18 @@
 }
 
 .prospect-column {
-  display: grid;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 18px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, .03);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-3);
   min-width: 0;
-  transition: border-color .2s ease, background .2s ease;
+  transition: box-shadow .2s ease;
 }
 
 .prospect-column.is-drop-target {
-  border-color: var(--gold-soft);
-  background: var(--line-strong);
+  box-shadow: inset 0 0 0 2px var(--accent);
 }
 
 .prospect-column-head {
@@ -26,47 +25,55 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  padding: 8px 10px 4px;
 }
 
 .prospect-column-head h2 {
-  font-size: .82rem;
+  margin: 0;
+  font-size: 1.07rem;
   font-weight: 700;
-  letter-spacing: .04em;
+  color: var(--ink);
 }
 
 .prospect-column-count {
   min-width: 24px;
   text-align: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--ghost);
-  border: 1px solid var(--line);
-  font-size: .72rem;
-  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: .86rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .prospect-column-list {
   display: grid;
   gap: 10px;
+  align-content: start;
 }
 
 .prospect-column-empty {
   padding: 14px;
   text-align: center;
-  color: var(--soft);
-  font-size: .78rem;
-  border: 1px dashed var(--line);
-  border-radius: 12px;
+  color: var(--muted);
+  font-size: .86rem;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius-md);
 }
 
 .prospect-card {
   display: grid;
   gap: 8px;
-  padding: 12px 13px;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: var(--ghost);
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
   cursor: grab;
+  transition: box-shadow .2s ease;
+}
+
+.prospect-card:hover {
+  box-shadow: var(--shadow-hover);
 }
 
 .prospect-card.is-dragging {
@@ -74,8 +81,7 @@
 }
 
 .prospect-card.is-critical {
-  border-color: rgba(239, 122, 122, .5);
-  box-shadow: 0 0 0 1px rgba(239, 122, 122, .25);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--danger) 55%, transparent);
 }
 
 .prospect-card-head {
@@ -193,7 +199,7 @@
 .prospect-card-status-select .rs-select-trigger {
   min-height: 34px;
   padding: 0 34px 0 11px;
-  border-radius: 10px;
+  border-radius:var(--radius-sm);
   font-size: .78rem;
 }
 
@@ -230,21 +236,21 @@
 
 .prospect-audit {
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius:var(--radius-sm);
   border: 1px solid var(--line);
   background: var(--ghost);
   font-size: .82rem;
 }
 
 .prospect-audit.is-critical {
-  border-color: rgba(239, 122, 122, .45);
+  border-color:color-mix(in srgb, var(--danger) 45%, transparent);
   color: var(--danger);
 }
 
 .prospect-case-box {
   margin-top: 14px;
   padding: 14px;
-  border-radius: 12px;
+  border-radius:var(--radius-sm);
   border: 1px solid var(--line);
   background: var(--ghost);
   font-size: .86rem;
@@ -271,7 +277,7 @@
 
 .prospect-timeline li {
   padding: 12px;
-  border-radius: 12px;
+  border-radius:var(--radius-sm);
   border: 1px solid var(--line);
   background: var(--ghost);
   display: grid;

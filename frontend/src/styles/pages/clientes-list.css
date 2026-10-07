@@ -1,6 +1,6 @@
 .intro-title{
         margin:0;
-        font-family:var(--serif);
+        
         font-size:clamp(2.35rem, 4vw, 3.2rem);
         line-height:.96;
         font-weight:400;
@@ -18,7 +18,7 @@
         justify-content:center;
         min-height:38px;
         padding:0 14px;
-        border-radius:12px;
+        border-radius:var(--radius-sm);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--text);
@@ -35,13 +35,13 @@
 
     .action-link-danger{
         color:var(--danger);
-        border-color:rgba(229,111,111,.18);
-        background:rgba(229,111,111,.08);
+        border-color:color-mix(in srgb, var(--danger) 18%, transparent);
+        background:color-mix(in srgb, var(--danger) 8%, transparent);
     }
 
     .action-link-danger:hover{
-        border-color:rgba(229,111,111,.26);
-        background:rgba(229,111,111,.14);
+        border-color:color-mix(in srgb, var(--danger) 26%, transparent);
+        background:color-mix(in srgb, var(--danger) 14%, transparent);
     }
 
     .empty-state{

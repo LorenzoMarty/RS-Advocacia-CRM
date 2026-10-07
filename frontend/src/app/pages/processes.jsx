@@ -2,7 +2,9 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Plus } from 'lucide-react';
 
+import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 
 import { motion as Motion, staggerContainer, staggerItem } from '../motion';
@@ -10,7 +12,7 @@ import { PROCESS_AREA_OPTIONS, PROCESS_STATUS_OPTIONS } from '../data';
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
-import { formatCount, formatPhone, getStatusTone } from '../utils';
+import { formatCount, formatPhone, getAreaKey, getStatusTone } from '../utils';
 import { Select } from '../components/select';
 import {
   ClientHoverCard,
@@ -40,57 +42,56 @@ function validateProcessForm(form) {
   return nextErrors;
 }
 
+const LIST_GRID = 'grid-cols-[minmax(170px,1.6fr)_minmax(150px,1fr)_minmax(140px,1fr)_minmax(120px,.8fr)_minmax(150px,auto)]';
+
 const ProcessRow = memo(function ProcessRow({ process, clientName, onDelete }) {
+  const areaKey = getAreaKey(process.area);
   return (
     <Motion.article
-      className="grid grid-cols-1 items-start gap-3 rounded-2xl border border-border bg-accent/5 p-4 transition-colors hover:border-primary/20 hover:bg-primary/5 sm:grid-cols-[auto_1fr_auto] sm:items-center lg:grid-cols-[minmax(0,1.4fr)_minmax(180px,.9fr)_160px_minmax(0,160px)_252px]"
+      className={`grid items-center gap-3 rounded-md px-3.5 py-3 transition-colors hover:bg-surface-2 ${LIST_GRID}`}
       variants={staggerItem}
     >
       <div className="min-w-0">
-        <h2 className="text-base font-semibold leading-snug text-foreground">{process.number}</h2>
+        <h2 className="m-0 truncate text-[1rem] font-bold tabular-nums text-ink">{process.number}</h2>
         <ClientHoverCard clientId={process.clientId}>
-          <span className="mt-1.5 block w-fit cursor-default text-sm text-muted-foreground underline decoration-dotted underline-offset-2">
+          <span className="block w-fit max-w-full cursor-default truncate text-meta-sm text-muted-foreground underline decoration-dotted underline-offset-2">
             {clientName}
           </span>
         </ClientHoverCard>
       </div>
 
-      <div className="min-w-0">
-        <div className="grid gap-2">
-          {process.area ? (
-            <span className="inline-flex h-8 w-fit max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft">
-              {process.area}
-            </span>
-          ) : null}
-          {process.court ? (
-            <span className="inline-flex h-8 w-fit max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft">
-              {process.court}
-            </span>
-          ) : null}
-        </div>
+      <div className="flex min-w-0 flex-col items-start gap-1">
+        {process.area ? (
+          <span
+            className="rounded-pill px-2.5 py-1 text-[.79rem] font-bold"
+            style={areaKey ? { background: `var(--cat-${areaKey})`, color: `var(--cat-${areaKey}-ink)` } : undefined}
+          >
+            {process.area}
+          </span>
+        ) : null}
+        {process.court ? <span className="max-w-full truncate text-meta-sm text-muted-foreground">{process.court}</span> : null}
       </div>
 
-      <div className="min-w-0">
-        <span className="inline-flex h-8 w-fit max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft">
-          {process.ownerName}
-        </span>
+      <div className="flex min-w-0 items-center gap-2.5">
+        {process.ownerName ? <Avatar name={process.ownerName} seed={process.owner || process.ownerName} size={30} /> : null}
+        <span className="truncate text-meta font-semibold text-ink-2">{process.ownerName || '—'}</span>
       </div>
 
       <div className="flex min-w-0 flex-col items-start gap-1.5">
         <StatusBadge tone={getStatusTone(process.status)}>{process.status}</StatusBadge>
         {!process.lawyerEnabled && (
-          <StatusBadge tone="warn">Advogado não habilitado</StatusBadge>
+          <StatusBadge pill tone="warn">Advogado não habilitado</StatusBadge>
         )}
       </div>
 
-      <div className="flex min-w-0 flex-wrap items-start justify-end gap-2 lg:justify-center">
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
         <Button asChild variant="outline" size="sm">
           <Link to={`/processos/${process.id}`}>Ver</Link>
         </Button>
         <Button asChild variant="outline" size="sm">
           <Link to={`/processos/${process.id}/editar`}>Editar</Link>
         </Button>
-        <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => onDelete(process)}>
+        <Button variant="destructive" size="sm" onClick={() => onDelete(process)}>
           Excluir
         </Button>
       </div>
@@ -144,65 +145,57 @@ export function ProcessesListPage() {
       {confirmPopup}
       <PageChrome label="Processos" primaryAction={{ label: 'Novo processo', to: '/processos/novo', tour: 'page-primary-action' }} />
 
-      <div className="grid gap-4">
-        <section className="mb-2">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="font-serif text-3xl text-foreground">Processos</p>
-              <p className="mt-1 text-sm text-muted-foreground">{formatCount(processesPagination.total)}</p>
-            </div>
-          </div>
-        </section>
+      <div className="flex flex-col gap-4">
+        <PageHeader title="Processos" subtitle={formatCount(processesPagination.total)}>
+          <PageSearch
+            className="on-bg"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por número, cliente ou vara"
+            label="Buscar processos"
+          />
+        </PageHeader>
 
-        <Card>
-          <CardContent className="py-4">
-            <PageSearch
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              label="Buscar processos"
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="py-5">
+        <section className="rounded-lg bg-card px-3 pb-2 pt-3" aria-label="Lista de processos">
           {processes.length ? (
-            <>
-              <div
-                className="mb-3 hidden grid-cols-[minmax(0,1.4fr)_minmax(180px,.9fr)_160px_minmax(0,160px)_252px] gap-3.5 px-3.5 text-xs font-bold uppercase tracking-wide text-muted-foreground lg:grid"
-                aria-hidden="true"
-              >
-                <span>Processo</span>
-                <span>Área</span>
-                <span>Responsável</span>
-                <span>Status</span>
-                <span className="text-center">Ações</span>
+            <div className="overflow-x-auto">
+              <div className="min-w-[860px]">
+                <div
+                  className={`grid gap-3 px-3.5 py-3 text-label uppercase text-subtle ${LIST_GRID}`}
+                  aria-hidden="true"
+                >
+                  <span>Processo</span>
+                  <span>Área</span>
+                  <span>Responsável</span>
+                  <span>Status</span>
+                  <span className="text-right">Ações</span>
+                </div>
+
+                <Motion.div
+                  className="grid gap-0.5"
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {processes.map((process) => (
+                    <ProcessRow
+                      key={process.id}
+                      process={process}
+                      clientName={clients.find((client) => client.id === process.clientId)?.name}
+                      onDelete={handleDeleteProcess}
+                    />
+                  ))}
+                </Motion.div>
               </div>
 
-              <Motion.div
-                className="grid gap-2.5"
-                variants={staggerContainer}
-                initial="hidden"
-                animate="visible"
-              >
-                {processes.map((process) => (
-                  <ProcessRow
-                    key={process.id}
-                    process={process}
-                    clientName={clients.find((client) => client.id === process.clientId)?.name}
-                    onDelete={handleDeleteProcess}
-                  />
-                ))}
-              </Motion.div>
-
               {processesPagination.temMais ? (
-                <div className="mt-4 flex justify-center">
+                <div className="flex justify-center p-3">
                   <Button variant="outline" onClick={handleLoadMore} disabled={loadingMore}>
                     {loadingMore ? 'Carregando…' : 'Carregar mais'}
                   </Button>
                 </div>
               ) : null}
-            </>
+            </div>
           ) : (
             <EmptyState
               title="Nenhum processo encontrado."
@@ -210,8 +203,7 @@ export function ProcessesListPage() {
               actions={<Button asChild size="sm"><Link to="/processos/novo">Novo</Link></Button>}
             />
           )}
-          </CardContent>
-        </Card>
+        </section>
       </div>
     </>
   );
@@ -341,7 +333,7 @@ export function ProcessFormPage() {
 
       <div className="grid gap-4">
         <section className="mb-2">
-          <p className="font-serif text-3xl text-foreground">
+          <p className="text-page-title text-ink">
             {isEditing ? 'Editar processo' : 'Novo processo'}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -639,7 +631,7 @@ export function ProcessDetailPage() {
           <DetailStack>
             <DetailSection title="Cliente" note="Vinculado">
               {client ? (
-                <article className="rounded-xl border border-border bg-accent/5 p-3.5">
+                <article className="rounded-xl border border-border bg-surface-2 p-3.5">
                   <div className="flex items-center gap-3">
                     <div
                       className="grid size-10 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-sm font-bold text-primary"
@@ -655,13 +647,13 @@ export function ProcessDetailPage() {
 
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     <a
-                      className="inline-flex h-6 items-center truncate rounded-full border border-border bg-accent/10 px-2 text-xs text-muted-foreground hover:text-foreground"
+                      className="inline-flex h-6 items-center truncate rounded-full border border-border bg-surface-2 px-2 text-xs text-muted-foreground hover:text-foreground"
                       href={`mailto:${client.email}`}
                     >
                       {client.email}
                     </a>
                     <a
-                      className="inline-flex h-6 items-center truncate rounded-full border border-border bg-accent/10 px-2 text-xs text-muted-foreground hover:text-foreground"
+                      className="inline-flex h-6 items-center truncate rounded-full border border-border bg-surface-2 px-2 text-xs text-muted-foreground hover:text-foreground"
                       href={`tel:${client.phone}`}
                     >
                       {formatPhone(client.phone)}

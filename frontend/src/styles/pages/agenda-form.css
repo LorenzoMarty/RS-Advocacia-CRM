@@ -6,13 +6,13 @@
         color:var(--muted);
         font-size:.76rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
     .intro-title{
         margin:0;
-        font-family:var(--serif);
+        
         font-size:clamp(2.4rem, 4vw, 3.3rem);
         line-height:.96;
         font-weight:400;
@@ -31,17 +31,17 @@
     .error-panel{
         margin-bottom:18px;
         padding:16px 18px;
-        border-radius:18px;
+        border-radius:var(--radius-md);
     }
 
     .status-card{
-        border:1px solid rgba(115,211,177,.22);
-        background:rgba(115,211,177,.08);
+        border:1px solid color-mix(in srgb, var(--success) 22%, transparent);
+        background:color-mix(in srgb, var(--success) 8%, transparent);
     }
 
     .error-panel{
-        border:1px solid rgba(239,122,122,.22);
-        background:rgba(239,122,122,.08);
+        border:1px solid color-mix(in srgb, var(--danger) 22%, transparent);
+        background:color-mix(in srgb, var(--danger) 8%, transparent);
     }
 
     .status-card strong,
@@ -83,7 +83,7 @@
         color:var(--muted);
         font-size:.74rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
@@ -93,7 +93,7 @@
         width:100%;
         min-height:50px;
         padding:0 14px;
-        border-radius:16px;
+        border-radius:var(--radius-md);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--text);
@@ -119,10 +119,10 @@
         -moz-appearance:none;
         cursor:pointer;
         padding-right:40px;
-        border-color:rgba(255,255,255,.1);
+        border-color:var(--line-strong);
         background:
-            linear-gradient(45deg, transparent 50%, var(--gold-soft) 50%),
-            linear-gradient(135deg, var(--gold-soft) 50%, transparent 50%),
+            linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+            linear-gradient(135deg, var(--accent) 50%, transparent 50%),
             var(--ghost);
         background-position:calc(100% - 20px) calc(50% - 3px),calc(100% - 14px) calc(50% - 3px),0 0;
         background-size:6px 6px,6px 6px,auto;
@@ -151,14 +151,14 @@
     .field.has-error input,
     .field.has-error select,
     .field.has-error textarea{
-        border-color:rgba(239,122,122,.4);
-        box-shadow:0 0 0 4px rgba(239,122,122,.08);
+        border-color:color-mix(in srgb, var(--danger) 40%, transparent);
+        box-shadow:0 0 0 4px color-mix(in srgb, var(--danger) 8%, transparent);
     }
 
     .field select option,
     .field select optgroup{
-        background:#161a22;
-        color:#f6f1e8;
+        background:var(--surface);
+        color:var(--ink);
     }
 
     .field-note{
@@ -176,10 +176,10 @@
     .type-combo{display:flex;gap:8px;align-items:stretch}
     .type-combo input{flex:1;min-width:0}
     .type-combo .rs-select{flex:1;min-width:0}
-    .type-combo-back{flex:0 0 auto;min-height:50px;padding:0 14px;border-radius:16px;border:1px solid var(--line);background:var(--ghost);color:var(--muted);cursor:pointer;font-size:.8rem;font-weight:600;white-space:nowrap;transition:border-color .2s ease,background .2s ease}
+    .type-combo-back{flex:0 0 auto;min-height:50px;padding:0 14px;border-radius:var(--radius-md);border:1px solid var(--line);background:var(--ghost);color:var(--muted);cursor:pointer;font-size:.8rem;font-weight:600;white-space:nowrap;transition:border-color .2s ease,background .2s ease}
     .type-combo-back:hover{border-color:var(--line-strong);background:var(--ghost-strong);color:var(--text)}
-    .type-combo-delete{flex:0 0 auto;display:grid;place-items:center;width:50px;min-height:50px;border-radius:16px;border:1px solid var(--line);background:var(--ghost);color:var(--muted);cursor:pointer;transition:border-color .2s ease,background .2s ease,color .2s ease}
-    .type-combo-delete:hover{border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.08);color:var(--danger)}
+    .type-combo-delete{flex:0 0 auto;display:grid;place-items:center;width:50px;min-height:50px;border-radius:var(--radius-md);border:1px solid var(--line);background:var(--ghost);color:var(--muted);cursor:pointer;transition:border-color .2s ease,background .2s ease,color .2s ease}
+    .type-combo-delete:hover{border-color:color-mix(in srgb, var(--danger) 35%, transparent);background:color-mix(in srgb, var(--danger) 8%, transparent);color:var(--danger)}
 
     .form-actions{
         display:flex;
@@ -192,7 +192,7 @@
     .intro-link{
         gap:6px;
         font-size:.68rem;
-        letter-spacing:.12em;
+        letter-spacing:.07em;
     }
 
     .intro-title{
@@ -220,18 +220,18 @@
 
     .field label{
         font-size:.68rem;
-        letter-spacing:.12em;
+        letter-spacing:.07em;
     }
 
     .field input,
     .field select,
     .field textarea{
         min-height:44px;
-        border-radius:14px;
+        border-radius:var(--radius-sm);
     }
 
     .type-combo-back,
-    .type-combo-delete{min-height:44px;border-radius:14px}
+    .type-combo-delete{min-height:44px;border-radius:var(--radius-sm)}
 
     .field textarea{
         min-height:118px;

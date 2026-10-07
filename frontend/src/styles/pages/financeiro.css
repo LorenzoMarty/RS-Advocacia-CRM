@@ -6,9 +6,9 @@
 
 .metric {
   padding: calc(16px * var(--space-scale));
-  border-radius: 18px;
-  border: 1px solid var(--line);
-  background: rgba(15, 23, 42, .58);
+  border-radius:var(--radius-md);
+  border: 0;
+  background: var(--surface-2);
   transition: border-color var(--motion) var(--ease-out), background var(--motion) var(--ease-out);
 }
 
@@ -17,7 +17,7 @@
   color: var(--muted);
   font-size: .72rem;
   font-weight: 700;
-  letter-spacing: .14em;
+  letter-spacing:.07em;
   text-transform: uppercase;
 }
 
@@ -36,7 +36,7 @@
 }
 
 .metric-danger {
-  border-color: rgba(239, 122, 122, .4);
+  border-color:color-mix(in srgb, var(--danger) 40%, transparent);
 }
 
 .metric-danger strong {
@@ -51,7 +51,7 @@
 
 .finance-chart {
   padding: 14px;
-  border-radius: 14px;
+  border-radius:var(--radius-sm);
   border: 1px solid var(--line);
   background: var(--ghost);
   display: grid;
@@ -98,7 +98,7 @@
 .finance-donut-pct {
   font-size: 1.05rem;
   font-weight: 800;
-  color: var(--gold-soft);
+  color: var(--accent);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -175,40 +175,40 @@
 }
 
 .financeiro-tabs {
-  display: flex;
-  gap: 20px;
+  display: inline-flex;
+  gap: 4px;
   flex-wrap: wrap;
-  border-bottom: 1px solid var(--line);
+  width: fit-content;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
 }
 
 .financeiro-tab {
-  position: relative;
-  padding: 0 0 10px;
+  padding: 8px 14px;
   border: 0;
+  border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--soft);
+  color: var(--ink-2);
   font-weight: 700;
-  font-size: .82rem;
+  font-size: .93rem;
+  line-height: 1;
   cursor: pointer;
-  transition: color .18s ease;
+  transition: color .18s ease, background .18s ease;
 }
 
 .financeiro-tab:hover {
-  color: var(--text);
+  color: var(--ink);
 }
 
 .financeiro-tab.is-active {
-  color: var(--gold-soft);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(23, 24, 28, .1);
 }
 
 .financeiro-tab-indicator {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2px;
-  border-radius: 999px;
-  background: var(--gold);
+  display: none;
 }
 
 .financeiro-table {
@@ -231,7 +231,7 @@
 
 .financeiro-th.is-sortable:hover,
 .financeiro-th.is-sorted {
-  color: var(--gold-soft);
+  color: var(--accent);
 }
 
 .financeiro-sort-arrow {
@@ -256,7 +256,7 @@
   gap: 10px;
   align-items: center;
   padding: 12px;
-  border-radius: 10px;
+  border-radius:var(--radius-sm);
   border: 1px solid var(--line);
   background: var(--ghost);
   font-size: .82rem;

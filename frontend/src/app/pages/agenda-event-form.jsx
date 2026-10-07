@@ -167,7 +167,7 @@ export function EventFormPage() {
 
       <div className="grid gap-4">
         <section className="mb-2">
-          <p className="font-serif text-3xl text-foreground">{formTitle}</p>
+          <p className="text-page-title text-ink">{formTitle}</p>
           <p className="mt-1 text-sm text-muted-foreground">
             {isEditing
               ? "Ajuste o agendamento e mantenha os vínculos essenciais atualizados."

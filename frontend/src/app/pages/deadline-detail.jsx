@@ -237,7 +237,7 @@ export function DeadlineDetailPage() {
 
         <DetailSection title="Tempo gasto" note={isTimerRunning ? 'Timer em andamento.' : 'Timer pausado.'}>
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <strong className="font-serif text-3xl text-foreground">{formatDuration(elapsedSeconds)}</strong>
+            <strong className="text-page-title text-ink">{formatDuration(elapsedSeconds)}</strong>
             <div className="flex gap-2">
               <Button onClick={handleTimerStart} disabled={isTimerRunning || isTimerSaving}>
                 Iniciar

@@ -30,7 +30,7 @@ export function RecordingResult({ onDelete, onSaveTranscript, recording }) {
   }
 
   return (
-    <article className="grid gap-3 rounded-xl border border-border bg-muted/40 p-4">
+    <article className="grid gap-3 rounded-xl border border-border bg-surface-2 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <strong>{recording.filename}</strong>
@@ -61,7 +61,7 @@ export function RecordingResult({ onDelete, onSaveTranscript, recording }) {
         </div>
       ) : null}
 
-      <div className="grid gap-2.5 rounded-lg border border-border bg-white/[.028] p-3.5">
+      <div className="grid gap-2.5 rounded-lg border border-border bg-surface-2 p-3.5">
         <div className="flex items-center justify-between gap-2.5">
           <h3 className="m-0 text-xs font-bold uppercase tracking-wide text-primary">Transcrição</h3>
           {!isEditingTranscript ? (

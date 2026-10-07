@@ -265,7 +265,7 @@ export function PetitionFormPage() {
 
       <div className="grid gap-4">
         <section className="mb-2">
-          <p className="font-serif text-3xl text-foreground">
+          <p className="text-page-title text-ink">
             {isEditing ? 'Editar peça' : 'Nova peça'}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">Cadastro de petição ou contestação.</p>

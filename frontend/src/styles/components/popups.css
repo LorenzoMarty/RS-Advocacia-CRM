@@ -29,7 +29,7 @@
     border-radius:15px;
     border:1px solid var(--line-strong);
     background:var(--line-strong);
-    color:var(--gold-soft);
+    color:var(--accent);
 }
 
 .popup-panel-danger .popup-mark{
@@ -51,7 +51,7 @@
 
 .popup-kicker{
     margin:0;
-    color:var(--gold-soft);
+    color:var(--accent);
     font-size:.7rem;
     font-weight:800;
     letter-spacing:.16em;
