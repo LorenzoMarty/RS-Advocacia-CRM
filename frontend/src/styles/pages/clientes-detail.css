@@ -37,8 +37,8 @@
         font-size:1.05rem;
         font-weight:700;
         letter-spacing:.02em;
-        background:rgba(212,175,55,.08);
-        border:1px solid rgba(212,175,55,.18);
+        background:var(--line-strong);
+        border:1px solid var(--line-strong);
     }
 
     .stack{
@@ -98,8 +98,8 @@
     .process-item:hover,
     .event-item:hover{
         transform:translateY(-1px);
-        border-color:rgba(212,175,55,.18);
-        background:rgba(212,175,55,.06);
+        border-color:var(--line-strong);
+        background:var(--line-strong);
     }
 
     .process-link{
@@ -173,8 +173,8 @@
 
     .status-badge.gold{
         color:var(--gold-soft);
-        background:rgba(212,175,55,.08);
-        border-color:rgba(212,175,55,.2);
+        background:var(--line-strong);
+        border-color:var(--line-strong);
     }
 
     .status-badge.success{

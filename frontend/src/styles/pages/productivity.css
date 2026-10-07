@@ -42,8 +42,8 @@
     min-height:28px;
     padding:0 8px;
     border-radius:9px;
-    border:1px solid rgba(212,175,55,.18);
-    background:rgba(212,175,55,.08);
+    border:1px solid var(--line-strong);
+    background:var(--line-strong);
     color:var(--gold-soft);
     font-size:.68rem;
     font-weight:800;
@@ -147,8 +147,8 @@
 }
 
 .productivity-segmented button[aria-pressed="true"]{
-    background:rgba(212,175,55,.1);
-    border-color:rgba(212,175,55,.22);
+    background:var(--line-strong);
+    border-color:var(--line-strong);
     color:var(--gold-soft);
 }
 
@@ -241,8 +241,8 @@
     display:grid;
     place-items:center;
     border-radius:9px;
-    border:1px solid rgba(212,175,55,.18);
-    background:rgba(212,175,55,.08);
+    border:1px solid var(--line-strong);
+    background:var(--line-strong);
     color:var(--gold-soft);
     font-size:.7rem;
     font-weight:900;

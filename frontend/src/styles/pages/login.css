@@ -50,8 +50,8 @@
     font-size:.94rem;
     font-weight:800;
     letter-spacing:.12em;
-    background:rgba(212,175,55,.1);
-    border:1px solid rgba(212,175,55,.18);
+    background:var(--line-strong);
+    border:1px solid var(--line-strong);
 }
 
 .login-brand-copy{

@@ -1,8 +1,8 @@
 .deadlines-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start;padding:18px}
 .deadline-column{
-    --deadline-accent:#D4AF37;
-    --deadline-accent-soft:rgba(212,175,55,.12);
-    --deadline-accent-border:rgba(212,175,55,.26);
+    --deadline-accent:var(--accent);
+    --deadline-accent-soft:var(--line-strong);
+    --deadline-accent-border:var(--line-strong);
     position:relative;
     min-width:0;
     display:grid;
@@ -41,8 +41,8 @@
     display:grid;
     place-items:center;
     border-radius:16px;
-    border:1px dashed rgba(212,175,55,.42);
-    background:rgba(212,175,55,.1);
+    border:1px dashed var(--line-strong);
+    background:var(--line-strong);
     color:var(--gold-soft);
     font-size:.72rem;
     font-weight:800;
@@ -96,9 +96,9 @@
 .deadline-card.is-dragging{
     opacity:.38;
     transform:scale(.96) rotate(-1deg);
-    border-color:rgba(212,175,55,.32);
+    border-color:var(--line-strong);
     border-style:dashed;
-    background:rgba(212,175,55,.07);
+    background:var(--line-strong);
     box-shadow:none;
     cursor:grabbing;
 }
@@ -136,16 +136,16 @@
     font-size:.72rem;
     font-weight:800;
 }
-.deadline-move:hover,.deadline-edit:hover{border-color:rgba(212,175,55,.2);color:var(--text);background:rgba(212,175,55,.08)}
-.deadline-move-primary{color:var(--gold-soft);border-color:rgba(212,175,55,.16);background:rgba(212,175,55,.08)}
+.deadline-move:hover,.deadline-edit:hover{border-color:var(--line-strong);color:var(--text);background:var(--line-strong)}
+.deadline-move-primary{color:var(--gold-soft);border-color:var(--line-strong);background:var(--line-strong)}
 .deadline-task-form{display:grid;gap:var(--gap-page)}
 .deadline-generated-name{
     display:grid;
     gap:8px;
     padding:16px;
     border-radius:18px;
-    border:1px solid rgba(212,175,55,.16);
-    background:rgba(212,175,55,.08);
+    border:1px solid var(--line-strong);
+    background:var(--line-strong);
 }
 .deadline-generated-name span{
     color:var(--gold-soft);

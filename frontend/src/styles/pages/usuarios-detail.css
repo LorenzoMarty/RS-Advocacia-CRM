@@ -59,8 +59,8 @@
 
     .role-pill{
         color:var(--gold-soft);
-        background:rgba(212,175,55,.08);
-        border-color:rgba(212,175,55,.2);
+        background:var(--line-strong);
+        border-color:var(--line-strong);
     }
 
     .stack{

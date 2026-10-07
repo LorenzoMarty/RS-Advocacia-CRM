@@ -117,8 +117,13 @@ export function PageSearch({
   );
 }
 
-export function StatusBadge({ tone = 'gold', children, className = '' }) {
-  const nextClassName = `${tone === 'gold' ? 'badge gold' : `status-badge ${tone}`}${className ? ` ${className}` : ''}`;
+// Legacy tones (gold/muted) fold into the neutral dot. `pill` renders a filled
+// pill (priority); default is dot + text (status).
+const LEGACY_TONES = { gold: 'subtle', muted: 'subtle' };
+
+export function StatusBadge({ tone = 'subtle', pill = false, children, className = '' }) {
+  const resolved = LEGACY_TONES[tone] || tone;
+  const nextClassName = `${pill ? 'pill-badge' : 'status-dot'} ${resolved}${className ? ` ${className}` : ''}`;
   return <span className={nextClassName}>{children}</span>;
 }
 

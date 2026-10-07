@@ -14,12 +14,12 @@
     transition:background .12s ease;
 }
 .timeline-row.is-now{
-    background:rgba(212,175,55,.04);
-    border-top-color:rgba(212,175,55,.28);
+    background:var(--line-strong);
+    border-top-color:var(--line-strong);
 }
 .timeline-row.is-drop-target{
-    background:rgba(212,175,55,.12);
-    box-shadow:0 0 0 1px rgba(212,175,55,.4) inset;
+    background:var(--line-strong);
+    box-shadow:0 0 0 3px var(--focus-ring) inset;
 }
 .timeline-row:first-child{border-top:none}
 .timeline-hour{
@@ -74,7 +74,7 @@
     transform:translateY(-2px);
     border-color:rgba(255,255,255,.12);
 }
-.timeline-event.type-audiencia{--event-accent:#D4AF37}
+.timeline-event.type-audiencia{--event-accent:var(--accent)}
 .timeline-event.type-reuniao{--event-accent:#7893d1}
 .timeline-event.type-tarefa{--event-accent:#b6bcc8}
 .timeline-event.is-overdue{--event-accent:#ef7a7a;border-color:rgba(239,122,122,.18)}
@@ -177,7 +177,7 @@
 }
 .timeline-slot-add:hover{
     color:var(--gold-soft);
-    border-color:rgba(212,175,55,.22);
+    border-color:var(--line-strong);
 }
 
 /* Empty day state */

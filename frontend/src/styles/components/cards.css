@@ -8,12 +8,12 @@
 .profile{
     padding:5px;
     padding-right:9px;
-    border-radius:14px;
-    border:1px solid var(--line);
-    background:var(--ghost);
+    border-radius:var(--radius-md);
+    border:0;
+    background:var(--surface-2);
 }
 
-.profile .avatar{width:34px;height:34px;border-radius:11px}
+.profile .avatar{width:34px;height:34px;border-radius:var(--radius-sm)}
 .main{display:grid;gap:0;min-width:0;background:transparent}
 .main > *{min-width:0}
 
@@ -50,9 +50,9 @@
 }
 
 .is-clickable:hover{
-    transform:translateY(-3px);
+    transform:translateY(-2px);
     border-color:var(--line-strong);
-    box-shadow:0 20px 44px rgba(0,0,0,.26);
+    box-shadow:var(--shadow-hover);
 }
 
 .is-clickable:active{
@@ -61,52 +61,96 @@
 
 .is-clickable:focus-visible{
     outline:none;
-    box-shadow:0 0 0 3px rgba(212,175,55,.32),0 18px 40px rgba(0,0,0,.24);
+    box-shadow:0 0 0 2px var(--ink);
 }
 
 @media (prefers-reduced-motion:reduce){
     .is-clickable:hover,
     .is-clickable:active{transform:none}
 }
+/* Chip neutro (legado). Para status/prioridade use StatusBadge (.status-dot / .pill-badge). */
 .badge{
     display:inline-flex;
     align-items:center;
     gap:8px;
     width:fit-content;
-    min-height:32px;
-    padding:0 11px;
-    border-radius:999px;
-    border:1px solid var(--line);
-    background:var(--ghost);
-    color:var(--soft);
-    font-size:.7rem;
+    min-height:26px;
+    padding:3px 10px;
+    border-radius:var(--radius-pill);
+    border:0;
+    background:var(--surface-2);
+    color:var(--ink-2);
+    font-size:.72rem;
     font-weight:700;
-    letter-spacing:.14em;
+    letter-spacing:.06em;
     text-transform:uppercase;
 }
 
 .badge::before{content:"";width:6px;height:6px;border-radius:999px;background:currentColor}
-.badge.gold{color:var(--gold-soft);background:rgba(212,175,55,.08);border-color:rgba(212,175,55,.2)}
-.badge.success{color:var(--success)}
-.badge.warn{color:var(--warn)}
-.badge.danger{color:var(--danger)}
+.badge.gold{color:var(--ink-2);background:var(--surface-2)}
+.badge.success{color:var(--success-ink);background:var(--success-soft)}
+.badge.warn{color:var(--warn-ink);background:var(--warn-soft)}
+.badge.danger{color:var(--danger-ink);background:var(--danger-soft)}
+
+/* Status: ponto 7px colorido + texto, sem pílula. */
+.status-dot{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    max-width:100%;
+    min-width:0;
+    color:var(--ink-2);
+    font-size:.8rem;
+    font-weight:600;
+    line-height:1.2;
+}
+.status-dot::before{
+    content:"";
+    flex:0 0 auto;
+    width:7px;
+    height:7px;
+    border-radius:var(--radius-pill);
+    background:var(--subtle);
+}
+.status-dot.danger::before{background:var(--danger)}
+.status-dot.warn::before{background:var(--warn)}
+.status-dot.success::before{background:var(--success)}
+.status-dot.info::before{background:var(--info)}
+
+/* Prioridade: pílula. Alta = danger, Média = warn, Baixa/neutra = surface-2. */
+.pill-badge{
+    display:inline-flex;
+    align-items:center;
+    width:fit-content;
+    max-width:100%;
+    padding:4px 10px;
+    border-radius:var(--radius-pill);
+    background:var(--surface-2);
+    color:var(--ink-2);
+    font-size:.72rem;
+    font-weight:700;
+    line-height:1.2;
+}
+.pill-badge.danger{background:var(--danger-soft);color:var(--danger-ink)}
+.pill-badge.warn{background:var(--warn-soft);color:var(--warn-ink)}
+.pill-badge.success{background:var(--success-soft);color:var(--success-ink)}
+.pill-badge.info{background:var(--surface-2);color:var(--ink-2)}
 
 .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:var(--gap-page, 18px)}
 .section-title{
     margin:0;
-    font-family:var(--serif);
-    font-size:2rem;
-    line-height:1;
-    font-weight:400;
-    letter-spacing:-.04em;
+    font-size:1.43rem;
+    line-height:1.15;
+    font-weight:700;
+    letter-spacing:-.02em;
 }
 
 .section-note{margin:0;color:var(--muted);font-size:.9rem}
 .empty{
     padding:18px;
-    border-radius:18px;
+    border-radius:var(--radius-md);
     border:1px dashed var(--line-strong);
-    background:var(--ghost);
+    background:var(--surface-2);
     color:var(--soft);
 }
 
