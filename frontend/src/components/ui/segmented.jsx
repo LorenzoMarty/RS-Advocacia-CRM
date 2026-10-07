@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 
-// Filtro em pílula. tone="bg": container --surface sobre o fundo da página, ativa preta.
-// tone="surface-2" (padrão): dentro de cards, ativa branca com sombra mínima.
+// Filtro em pílula; a opção ativa é sempre branca (--surface) com sombra mínima.
+// tone="bg": container --surface-3 sobre o fundo da página; "surface-2" (padrão): dentro de cards.
 function Segmented({ options, value, onChange, tone = "surface-2", label, className }) {
   return (
     <div
@@ -9,7 +9,7 @@ function Segmented({ options, value, onChange, tone = "surface-2", label, classN
       aria-label={label}
       className={cn(
         "inline-flex gap-1 rounded-pill p-1",
-        tone === "bg" ? "bg-surface" : "bg-surface-2",
+        tone === "bg" ? "bg-surface-3" : "bg-surface-2",
         className,
       )}
     >
@@ -23,8 +23,7 @@ function Segmented({ options, value, onChange, tone = "surface-2", label, classN
             onClick={() => onChange(option.value)}
             className={cn(
               "rounded-pill px-3.5 py-2 text-[.93rem] font-bold leading-none text-ink-2 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink",
-              active && tone === "bg" && "bg-[var(--accent)] text-[var(--accent-fg)] hover:text-[var(--accent-fg)]",
-              active && tone !== "bg" && "bg-surface text-ink shadow-[0_1px_2px_rgba(23,24,28,.1)]",
+              active && "bg-surface text-ink shadow-[0_1px_3px_rgba(23,24,28,.1)]",
             )}
           >
             {option.label}

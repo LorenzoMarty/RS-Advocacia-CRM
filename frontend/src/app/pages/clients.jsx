@@ -78,7 +78,7 @@ const SORT_ICONS = {
 
 const CLIENT_TIER_CLASSES = {
   esporadico: 'border border-line-strong bg-transparent text-ink-2',
-  mensalista: 'border border-transparent bg-surface-2 text-ink',
+  mensalista: 'border border-transparent bg-accent-soft-2 text-[var(--accent-hover)]',
 };
 
 const LIST_GRID = 'grid-cols-[minmax(170px,2fr)_96px_minmax(120px,1.5fr)_72px]';
@@ -105,7 +105,7 @@ const ClientRow = memo(function ClientRow({ client, processCount, selected, onSe
       className={cn(
         'grid w-full items-center gap-3 rounded-md px-3.5 py-3 text-left transition-colors hover:bg-surface-2',
         LIST_GRID,
-        selected && 'bg-surface-2 shadow-[inset_0_0_0_1.5px_var(--ink)]',
+        selected && 'bg-surface-2 shadow-[inset_0_0_0_1.5px_var(--accent-soft-2)]',
       )}
       variants={staggerItem}
     >

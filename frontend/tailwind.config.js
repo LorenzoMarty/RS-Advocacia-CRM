@@ -40,6 +40,8 @@ export default {
         accent: {
           DEFAULT: 'hsl(var(--tw-accent))',
           foreground: 'hsl(var(--tw-accent-foreground))',
+          soft: 'var(--accent-soft)',
+          'soft-2': 'var(--accent-soft-2)',
         },
         card: {
           DEFAULT: 'hsl(var(--tw-card))',
