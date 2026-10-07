@@ -9,7 +9,7 @@ const VISIBLE_LIMIT = 5;
 
 function EventItem({ evento }) {
   return (
-    <li className="grid gap-0.5 rounded-md bg-muted/40 p-2">
+    <li className="grid gap-0.5 rounded-md bg-surface-2 p-2">
       <div className="flex flex-wrap items-baseline gap-1.5">
         <strong className="min-w-0 truncate text-sm">{evento.titulo}</strong>
         <span className="min-w-0 truncate text-xs text-muted-foreground">

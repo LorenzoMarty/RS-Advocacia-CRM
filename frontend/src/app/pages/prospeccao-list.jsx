@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 
 import { INTERACTION_TYPE_OPTIONS, PROSPECT_STATUS_COLUMNS } from '../data';
@@ -260,14 +261,7 @@ export function ProspectKanbanPage() {
     <>
       <PageChrome label="Prospecção" primaryAction={{ label: 'Novo prospect', to: '/prospeccao/novo', tour: 'page-primary-action' }} />
       <div className="grid gap-4">
-        <section className="mb-2">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="font-serif text-3xl text-foreground">Prospecção</p>
-              <p className="mt-1 text-sm text-muted-foreground">Funil de captação de clientes</p>
-            </div>
-          </div>
-        </section>
+        <PageHeader title="Prospecção" subtitle="Funil de captação de clientes" />
 
         <Motion.div
           className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"

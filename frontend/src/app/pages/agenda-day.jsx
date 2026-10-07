@@ -148,7 +148,7 @@ export function AgendaDayPage() {
               <Button variant="ghost" size="icon" aria-label="Dia anterior" onClick={() => goDay(-1)}>
                 <ChevronLeft className="size-4" />
               </Button>
-              <p className="min-w-[16ch] text-center font-serif text-2xl text-foreground">
+              <p className="min-w-[16ch] text-center text-card-title-sm text-ink">
                 {dayLabel(date)}
               </p>
               <Button variant="ghost" size="icon" aria-label="Próximo dia" onClick={() => goDay(1)}>

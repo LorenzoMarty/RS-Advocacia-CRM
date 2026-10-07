@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/ui/page-header';
 import {
   useEffect,
   useRef,
@@ -257,16 +258,7 @@ export function AgendaListPage() {
       <PageChrome label="Agenda" primaryAction={{ label: 'Novo compromisso', to: '/agenda/novo', tour: 'page-primary-action' }} />
 
       <div className="agenda-page">
-        <section className="mb-2">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="font-serif text-3xl text-foreground">Agenda</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {formatCount(filteredEvents.length)}
-              </p>
-            </div>
-          </div>
-        </section>
+        <PageHeader title="Agenda" subtitle={formatCount(filteredEvents.length)} />
 
         <Card className="mb-4">
           <CardContent className="flex flex-wrap items-center gap-3 py-4">
@@ -350,7 +342,7 @@ export function AgendaListPage() {
           <Card className="lg:col-span-2">
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <div>
-                <h2 className="font-serif text-lg text-foreground">Calendário</h2>
+                <h2 className="text-card-title-sm text-ink">Calendário</h2>
                 <p className="text-xs text-muted-foreground">Visão mensal</p>
               </div>
 
@@ -490,7 +482,7 @@ export function AgendaListPage() {
                                 <button
                                   key={event.id}
                                   type="button"
-                                  className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent/10"
+                                  className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-surface-2"
                                   onClick={() => navigate(`/agenda/${event.id}`)}
                                 >
                                   <span className="w-12 shrink-0 text-xs tabular-nums text-muted-foreground">
@@ -524,7 +516,7 @@ export function AgendaListPage() {
             <CardContent className="flex flex-col gap-4 py-5">
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <h2 className="font-serif text-base text-foreground">Hoje</h2>
+                  <h2 className="text-card-title-sm text-ink">Hoje</h2>
                   {todayEvents.length ? (
                     <Badge variant="default">{todayEvents.length}</Badge>
                   ) : null}
@@ -544,7 +536,7 @@ export function AgendaListPage() {
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <h2 className="font-serif text-base text-foreground">Próximos</h2>
+                  <h2 className="text-card-title-sm text-ink">Próximos</h2>
                   {upcomingEvents.length ? (
                     <Badge variant="outline">{upcomingEvents.length}</Badge>
                   ) : null}
@@ -564,7 +556,7 @@ export function AgendaListPage() {
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <h2 className="font-serif text-base text-foreground">Atrasados</h2>
+                  <h2 className="text-card-title-sm text-ink">Atrasados</h2>
                   {overdueEvents.length ? (
                     <Badge variant="destructive">{overdueEvents.length}</Badge>
                   ) : null}

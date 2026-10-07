@@ -188,7 +188,7 @@ export function ClientDocuments({ client }) {
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
-            <h2 className="font-serif text-lg text-foreground">Documentos</h2>
+            <h2 className="text-card-title-sm text-ink">Documentos</h2>
             <p className="text-xs text-muted-foreground">Google Drive</p>
           </div>
         </CardHeader>
@@ -206,7 +206,7 @@ export function ClientDocuments({ client }) {
     <Card>
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 space-y-0">
         <div>
-          <h2 className="font-serif text-lg text-foreground">Documentos</h2>
+          <h2 className="text-card-title-sm text-ink">Documentos</h2>
           <p className="text-xs text-muted-foreground">Pastas no Google Drive</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -311,7 +311,7 @@ export function ClientDocuments({ client }) {
                 {folders.map((folder) => (
                   <article
                     key={folder.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-border bg-accent/5 px-3.5 py-3"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-2 px-3.5 py-3"
                   >
                     <button
                       type="button"
@@ -357,7 +357,7 @@ export function ClientDocuments({ client }) {
                 {files.map((file) => (
                   <article
                     key={file.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-border bg-accent/5 px-3.5 py-3"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-2 px-3.5 py-3"
                   >
                     <div className="flex min-w-0 flex-1 items-center gap-2.5">
                       <File className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />

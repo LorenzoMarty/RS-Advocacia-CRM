@@ -75,7 +75,7 @@ export function AudioRecorder({ onUpload }) {
   }
 
   return (
-    <Card className="border-dashed bg-muted/40" aria-label="Captura de áudio">
+    <Card className="border-dashed bg-surface-2" aria-label="Captura de áudio">
       <CardContent className="grid gap-3 py-4">
         <div className="flex flex-wrap gap-2.5">
           {isRecording ? (

@@ -10,7 +10,7 @@
         color:var(--muted);
         font-size:.76rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
@@ -32,8 +32,8 @@
         flex:0 0 auto;
         display:grid;
         place-items:center;
-        border-radius:20px;
-        color:var(--gold-soft);
+        border-radius:var(--radius-lg);
+        color:var(--accent);
         font-size:1.05rem;
         font-weight:700;
         letter-spacing:.02em;
@@ -54,7 +54,7 @@
 
     .detail-item{
         padding:16px;
-        border-radius:18px;
+        border-radius:var(--radius-md);
         border:1px solid var(--line);
         background:var(--ghost);
     }
@@ -64,7 +64,7 @@
         color:var(--muted);
         font-size:.72rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
@@ -89,7 +89,7 @@
         display:grid;
         gap:12px;
         padding:16px;
-        border-radius:20px;
+        border-radius:var(--radius-lg);
         border:1px solid var(--line);
         background:var(--ghost);
         transition:border-color .2s ease,background .2s ease,transform .2s ease;
@@ -140,7 +140,7 @@
         align-items:center;
         min-height:30px;
         padding:0 10px;
-        border-radius:999px;
+        border-radius:var(--radius-lg);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--soft);
@@ -153,13 +153,13 @@
         gap:8px;
         min-height:32px;
         padding:0 11px;
-        border-radius:999px;
+        border-radius:var(--radius-lg);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--soft);
         font-size:.7rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
@@ -167,12 +167,12 @@
         content:"";
         width:6px;
         height:6px;
-        border-radius:999px;
+        border-radius:var(--radius-lg);
         background:currentColor;
     }
 
     .status-badge.gold{
-        color:var(--gold-soft);
+        color:var(--accent);
         background:var(--line-strong);
         border-color:var(--line-strong);
     }
@@ -191,7 +191,7 @@
 
     .note-box{
         padding:18px;
-        border-radius:20px;
+        border-radius:var(--radius-lg);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--soft);
@@ -213,7 +213,7 @@
     .crumbs{
         margin-bottom:10px;
         font-size:.68rem;
-        letter-spacing:.12em;
+        letter-spacing:.07em;
     }
 
     .identity-row{
@@ -224,7 +224,7 @@
     .client-mark{
         width:48px;
         height:48px;
-        border-radius:16px;
+        border-radius:var(--radius-md);
         font-size:.92rem;
     }
 
@@ -239,13 +239,13 @@
 
     .note-box{
         padding:16px;
-        border-radius:18px;
+        border-radius:var(--radius-md);
     }
 
     .detail-item,
     .process-item,
     .event-item{
         padding:14px;
-        border-radius:16px;
+        border-radius:var(--radius-md);
     }
 }

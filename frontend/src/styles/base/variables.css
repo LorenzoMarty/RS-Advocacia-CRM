@@ -57,8 +57,6 @@
     --panel:var(--surface);
     --text:var(--ink);
     --soft:var(--ink-2);
-    --gold:var(--accent);
-    --gold-soft:var(--accent);
     --shadow:var(--shadow-hover);
     --sidebar:calc(248px * var(--ui-scale));
     --sidebar-collapsed:calc(68px * var(--ui-scale));

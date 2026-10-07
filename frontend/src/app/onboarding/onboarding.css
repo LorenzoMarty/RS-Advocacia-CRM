@@ -29,7 +29,7 @@
 }
 
 .onboarding-popover .driver-popover-footer .driver-popover-next-btn {
-  background: var(--gold-soft);
+  background: var(--accent);
   border-color: transparent;
   color: #1a1400;
 }
@@ -37,6 +37,6 @@
 .onboarding-popover .driver-popover-close-btn:focus-visible,
 .onboarding-popover .driver-popover-footer button:focus-visible,
 .driver-active-element:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

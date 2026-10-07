@@ -10,7 +10,7 @@
         color:var(--muted);
         font-size:.76rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
@@ -32,7 +32,7 @@
         min-height:38px;
         max-width:100%;
         padding:0 14px;
-        border-radius:16px;
+        border-radius:var(--radius-md);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--soft);
@@ -55,7 +55,7 @@
 
     .detail-item{
         padding:16px;
-        border-radius:18px;
+        border-radius:var(--radius-md);
         border:1px solid var(--line);
         background:var(--ghost);
         display:grid;
@@ -71,7 +71,7 @@
         color:var(--muted);
         font-size:.72rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
@@ -111,13 +111,13 @@
         gap:8px;
         min-height:38px;
         padding:0 14px;
-        border-radius:16px;
+        border-radius:var(--radius-md);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--soft);
         font-size:.7rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
         white-space:nowrap;
     }
@@ -126,12 +126,12 @@
         content:"";
         width:6px;
         height:6px;
-        border-radius:999px;
+        border-radius:var(--radius-lg);
         background:currentColor;
     }
 
     .status-badge.gold{
-        color:var(--gold-soft);
+        color:var(--accent);
         background:var(--line-strong);
         border-color:var(--line-strong);
     }
@@ -151,7 +151,7 @@
     .link-card,
     .note-box{
         padding:16px;
-        border-radius:20px;
+        border-radius:var(--radius-lg);
         border:1px solid var(--line);
         background:var(--ghost);
         transition:border-color .2s ease,background .2s ease,transform .2s ease;
@@ -180,8 +180,8 @@
         flex:0 0 auto;
         display:grid;
         place-items:center;
-        border-radius:16px;
-        color:var(--gold-soft);
+        border-radius:var(--radius-md);
+        color:var(--accent);
         font-size:.92rem;
         font-weight:700;
         background:var(--line-strong);
@@ -227,7 +227,7 @@
         font-size:.78rem;
         color:var(--muted);
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
@@ -239,7 +239,7 @@
     .crumbs{
         margin-bottom:10px;
         font-size:.68rem;
-        letter-spacing:.12em;
+        letter-spacing:.07em;
     }
 
     .identity-row,
@@ -261,12 +261,12 @@
         min-height:30px;
         padding:0 10px;
         font-size:.64rem;
-        border-radius:12px;
+        border-radius:var(--radius-sm);
     }
 
     .link-card,
     .note-box{
         padding:14px;
-        border-radius:18px;
+        border-radius:var(--radius-md);
     }
 }

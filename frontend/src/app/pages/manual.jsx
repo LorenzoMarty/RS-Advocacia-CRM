@@ -189,7 +189,7 @@ export function ManualPage() {
                       onClick={() => scrollToSection(section.id)}
                       disabled={!isVisible}
                       className={cn(
-                        'rounded-lg px-2.5 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground',
+                        'rounded-lg px-2.5 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground',
                         !isVisible && 'pointer-events-none opacity-30',
                       )}
                     >

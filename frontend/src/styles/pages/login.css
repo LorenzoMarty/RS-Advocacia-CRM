@@ -46,7 +46,7 @@
     display:grid;
     place-items:center;
     border-radius:16px;
-    color:var(--gold-soft);
+    color:var(--accent);
     font-size:.94rem;
     font-weight:800;
     letter-spacing:.12em;
@@ -163,7 +163,7 @@
 }
 
 .login-legal-links a:hover{
-    color:var(--gold-soft);
+    color:var(--accent);
 }
 
 .login-legal-links span{

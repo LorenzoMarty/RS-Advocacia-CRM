@@ -6,7 +6,7 @@
         color:var(--muted);
         font-size:.76rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
@@ -17,7 +17,7 @@
 
     .intro-title{
         margin:0;
-        font-family:var(--serif);
+        
         font-size:clamp(2.4rem, 4vw, 3.3rem);
         line-height:.96;
         font-weight:400;
@@ -35,9 +35,9 @@
     .status-card{
         margin-bottom:18px;
         padding:16px 18px;
-        border-radius:18px;
-        border:1px solid rgba(115,211,177,.22);
-        background:rgba(115,211,177,.08);
+        border-radius:var(--radius-md);
+        border:1px solid color-mix(in srgb, var(--success) 22%, transparent);
+        background:color-mix(in srgb, var(--success) 8%, transparent);
         color:var(--text);
     }
 
@@ -56,9 +56,9 @@
     .error-panel{
         margin-bottom:18px;
         padding:16px 18px;
-        border-radius:18px;
-        border:1px solid rgba(239,122,122,.22);
-        background:rgba(239,122,122,.08);
+        border-radius:var(--radius-md);
+        border:1px solid color-mix(in srgb, var(--danger) 22%, transparent);
+        background:color-mix(in srgb, var(--danger) 8%, transparent);
     }
 
     .error-panel strong{
@@ -92,7 +92,7 @@
         font-size:.82rem;
         color:var(--muted);
         font-weight:700;
-        letter-spacing:.16em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
@@ -115,12 +115,12 @@
         color:var(--muted);
         font-size:.74rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
     .field-required{
-        color:var(--gold-soft);
+        color:var(--accent);
     }
 
     .field input,
@@ -128,7 +128,7 @@
         width:100%;
         min-height:48px;
         padding:0 14px;
-        border-radius:16px;
+        border-radius:var(--radius-md);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--text);
@@ -151,8 +151,8 @@
 
     .field.has-error input,
     .field.has-error textarea{
-        border-color:rgba(239,122,122,.4);
-        box-shadow:0 0 0 4px rgba(239,122,122,.08);
+        border-color:color-mix(in srgb, var(--danger) 40%, transparent);
+        box-shadow:0 0 0 4px color-mix(in srgb, var(--danger) 8%, transparent);
     }
 
     .field-error{
@@ -176,7 +176,7 @@
     .intro-link{
         gap:6px;
         font-size:.68rem;
-        letter-spacing:.12em;
+        letter-spacing:.07em;
     }
 
     .intro-title{
@@ -209,13 +209,13 @@
 
     .field label{
         font-size:.68rem;
-        letter-spacing:.12em;
+        letter-spacing:.07em;
     }
 
     .field input,
     .field textarea{
         min-height:44px;
-        border-radius:14px;
+        border-radius:var(--radius-sm);
     }
 
     .field textarea{

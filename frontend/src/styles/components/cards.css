@@ -14,12 +14,12 @@
 }
 
 .profile .avatar{width:34px;height:34px;border-radius:var(--radius-sm)}
-.main{display:grid;gap:0;min-width:0;background:transparent}
+.main{display:grid;grid-template-columns:minmax(0,1fr);gap:0;min-width:0;background:transparent}
 .main > *{min-width:0}
 
 /* Envólucro de transição de página (MotionPage). Repassa o contexto de grid
    da .main para o conteúdo da rota — herda o mesmo layout/gap. */
-.page-motion{display:grid;gap:0;min-width:0}
+.page-motion{display:grid;grid-template-columns:minmax(0,1fr);gap:0;min-width:0}
 .page-motion > *{min-width:0}
 .surface{
     position:relative;
@@ -198,3 +198,7 @@
 .theme-icon .sun{opacity:0;transform:scale(.8) rotate(-8deg)}
 .theme-icon .moon{opacity:1;transform:scale(1)}
 
+
+/* Grids de coluna única: sem isso a trilha implícita (auto) cresce até o max-content do
+   filho e estoura a largura em telas estreitas. Grids com grid-cols-* mantêm a própria definição. */
+.main .grid:not([class*="grid-cols"]):not([class*="grid-flow"]):not([class*="auto-cols"]){grid-template-columns:minmax(0,1fr)}

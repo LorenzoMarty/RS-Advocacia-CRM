@@ -12,7 +12,7 @@ const TONE_TEXT = {
 
 function KpiTile({ label, value, tone }) {
   return (
-    <div className="grid gap-1 rounded-lg bg-muted/40 p-2.5 text-center">
+    <div className="grid gap-1 rounded-lg bg-surface-2 p-2.5 text-center">
       <strong className={`text-2xl leading-none tracking-tight tabular-nums ${TONE_TEXT[tone] || TONE_TEXT.neutral}`}>
         {value}
       </strong>

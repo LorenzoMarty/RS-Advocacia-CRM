@@ -5,7 +5,9 @@ import { z } from 'zod';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus } from 'lucide-react';
 
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -51,47 +53,37 @@ function buildUserSchema(users, currentId) {
   });
 }
 
+const LIST_GRID = 'grid-cols-[minmax(180px,1.4fr)_minmax(180px,1.2fr)_minmax(120px,.8fr)_minmax(150px,auto)]';
+
 const UserRow = memo(function UserRow({ user, onDelete }) {
   return (
     <Motion.article
-      className="grid grid-cols-1 items-start gap-3 rounded-2xl border border-border bg-accent/5 p-4 transition-colors hover:border-primary/20 hover:bg-primary/5 sm:grid-cols-[auto_1fr_auto] sm:items-center lg:grid-cols-[auto_minmax(0,1.1fr)_minmax(220px,.95fr)_132px_252px]"
+      className={`grid items-center gap-3 rounded-md px-3.5 py-3 transition-colors hover:bg-surface-2 ${LIST_GRID}`}
       variants={staggerItem}
     >
-      <div
-        className="hidden size-11 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-sm font-bold text-primary sm:grid"
-        aria-hidden="true"
-      >
-        {user.name.slice(0, 1).toUpperCase()}
+      <div className="flex min-w-0 items-center gap-3">
+        <Avatar name={user.name} seed={user.id} size={40} />
+        <h2 className="m-0 min-w-0 truncate text-[1rem] font-bold text-ink">{user.name}</h2>
       </div>
 
-      <div className="min-w-0">
-        <h2 className="text-base font-semibold leading-snug text-foreground">{user.name}</h2>
-        <span className="mt-1.5 block text-sm text-muted-foreground">{user.email}</span>
-      </div>
+      <a className="min-w-0 truncate text-meta font-semibold text-ink-2 hover:text-ink" href={`mailto:${user.email}`}>
+        {user.email}
+      </a>
 
       <div className="min-w-0">
-        <a
-          className="inline-flex h-8 max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft"
-          href={`mailto:${user.email}`}
-        >
-          {user.email}
-        </a>
-      </div>
-
-      <div className="min-w-0">
-        <Badge variant="outline" className="border-primary/20 bg-primary/10 text-primary">
+        <Badge variant="outline" className="border-transparent bg-accent-soft-2 px-2.5 py-1 text-[.86rem] text-[var(--accent-hover)]">
           {profileLabel(user)}
         </Badge>
       </div>
 
-      <div className="flex min-w-0 flex-wrap items-start justify-end gap-2 lg:justify-center">
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
         <Button asChild variant="outline" size="sm">
           <Link to={`/usuarios/${user.id}`}>Ver</Link>
         </Button>
         <Button asChild variant="outline" size="sm">
           <Link to={`/usuarios/${user.id}/editar`}>Editar</Link>
         </Button>
-        <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => onDelete(user)}>
+        <Button variant="destructive" size="sm" onClick={() => onDelete(user)}>
           Excluir
         </Button>
       </div>
@@ -170,62 +162,48 @@ export function UsersListPage() {
       {confirmPopup}
       <PageChrome label="Usuários" primaryAction={{ label: 'Novo usuário', to: '/usuarios/novo', tour: 'page-primary-action' }} />
 
-      <div className="grid gap-4">
-        <section className="mb-2">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="font-serif text-3xl text-foreground">Usuários</p>
-              <p className="mt-1 text-sm text-muted-foreground">{formatCount(filteredUsers.length)}</p>
-            </div>
-          </div>
-        </section>
+      <div className="flex flex-col gap-4">
+        <PageHeader title="Usuários" subtitle={formatCount(filteredUsers.length)}>
+          <PageSearch className="on-bg" value={search} onChange={(event) => setSearch(event.target.value)} label="Buscar usuários" />
+        </PageHeader>
 
-        <Card>
-          <CardContent className="py-4">
-            <PageSearch value={search} onChange={(event) => setSearch(event.target.value)} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="py-5">
+        <section className="rounded-lg bg-card px-3 pb-2 pt-3" aria-label="Lista de usuários">
           {isLoadingUsers ? (
-            <div className="grid gap-2.5">
+            <div className="grid gap-2.5 p-2">
               <Skeleton className="h-14" />
               <Skeleton className="h-14" />
               <Skeleton className="h-14" />
             </div>
           ) : filteredUsers.length ? (
-            <>
-              <div
-                className="mb-3 hidden grid-cols-[auto_minmax(0,1.1fr)_minmax(220px,.95fr)_132px_252px] gap-3.5 px-3.5 text-xs font-bold uppercase tracking-wide text-muted-foreground lg:grid"
-                aria-hidden="true"
-              >
-                <span />
-                <span>Usuário</span>
-                <span>Contato</span>
-                <span>Perfil</span>
-                <span className="text-center">Ações</span>
+            <div className="overflow-x-auto">
+              <div className="min-w-[720px]">
+                <div className={`grid gap-3 px-3.5 py-3 text-label uppercase text-subtle ${LIST_GRID}`} aria-hidden="true">
+                  <span>Usuário</span>
+                  <span>Contato</span>
+                  <span>Perfil</span>
+                  <span className="text-right">Ações</span>
+                </div>
+
+                <Motion.div
+                  className="grid gap-0.5"
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {filteredUsers.map((user) => (
+                    <UserRow key={user.id} user={user} onDelete={handleDeleteUser} />
+                  ))}
+                </Motion.div>
               </div>
 
-              <Motion.div
-                className="grid gap-2.5"
-                variants={staggerContainer}
-                initial="hidden"
-                animate="visible"
-              >
-                {filteredUsers.map((user) => (
-                  <UserRow key={user.id} user={user} onDelete={handleDeleteUser} />
-                ))}
-              </Motion.div>
-
               {usersPagination.temMais && !search ? (
-                <div className="mt-4 flex justify-center">
+                <div className="flex justify-center p-3">
                   <Button variant="outline" onClick={handleLoadMore} disabled={loadingMore}>
                     {loadingMore ? 'Carregando…' : 'Carregar mais'}
                   </Button>
                 </div>
               ) : null}
-            </>
+            </div>
           ) : (
             <EmptyState
               title="Nenhum usuário encontrado."
@@ -233,8 +211,7 @@ export function UsersListPage() {
               actions={<Button asChild size="sm"><Link to="/usuarios/novo">Novo usuário</Link></Button>}
             />
           )}
-          </CardContent>
-        </Card>
+        </section>
       </div>
     </>
   );
@@ -292,7 +269,7 @@ export function UserFormPage() {
 
       <div className="grid gap-4">
         <section className="mb-2">
-          <p className="font-serif text-3xl text-foreground">
+          <p className="text-page-title text-ink">
             {isEditing ? 'Editar usuário' : 'Novo usuário'}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">

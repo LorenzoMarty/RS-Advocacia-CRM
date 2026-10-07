@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/ui/page-header';
 import { PeriodFilter } from './PeriodFilter';
 import { RiskScoreCard } from './RiskScoreCard';
 import { AlertCard } from './AlertCard';
@@ -6,13 +7,9 @@ import { AlertCard } from './AlertCard';
 export function RiskSummary({ summary, risk, period, onPeriodChange }) {
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="font-serif text-3xl text-foreground">Auditoria do escritório</p>
-          <p className="mt-1 text-sm text-muted-foreground">Painel de controle — risco, urgência e ação</p>
-        </div>
+      <PageHeader title="Auditoria do escritório" subtitle="Painel de controle — risco, urgência e ação">
         <PeriodFilter value={period} onChange={onPeriodChange} />
-      </div>
+      </PageHeader>
 
       <div className="mt-4 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[minmax(260px,330px)_minmax(0,1fr)]">
         <RiskScoreCard {...risk} />

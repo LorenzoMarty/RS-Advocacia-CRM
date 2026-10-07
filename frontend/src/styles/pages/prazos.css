@@ -119,13 +119,13 @@
     padding:0 10px;
     border-radius:11px;
     border:1px solid var(--line);
-    background:rgba(255,255,255,.035);
+    background:var(--surface-2);
     color:var(--soft);
     font-size:.72rem;
     font-weight:800;
 }
 .deadline-move:hover,.deadline-edit:hover{border-color:var(--line-strong);color:var(--text);background:var(--line-strong)}
-.deadline-move-primary{color:var(--gold-soft);border-color:var(--line-strong);background:var(--line-strong)}
+.deadline-move-primary{color:var(--accent);border-color:var(--line-strong);background:var(--line-strong)}
 .deadline-task-form{display:grid;gap:var(--gap-page)}
 .deadline-generated-name{
     display:grid;
@@ -136,7 +136,7 @@
     background:var(--line-strong);
 }
 .deadline-generated-name span{
-    color:var(--gold-soft);
+    color:var(--accent);
     font-size:.72rem;
     font-weight:800;
     letter-spacing:.14em;

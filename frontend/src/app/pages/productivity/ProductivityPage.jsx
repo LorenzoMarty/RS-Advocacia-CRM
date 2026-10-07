@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
 
 import { PageChrome } from '../../layout';
 import { useAppState } from '../../store';
@@ -47,13 +48,8 @@ export function ProductivityPage() {
     <>
       <PageChrome label="Produtividade" />
       <div className="grid gap-4">
-        <section className="mb-2">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="font-serif text-3xl text-foreground">Minha produtividade</p>
-              <p className="mt-1 text-sm text-muted-foreground">Seu tempo e suas entregas no período</p>
-            </div>
-            <PeriodFilter
+        <PageHeader title="Minha produtividade" subtitle="Seu tempo e suas entregas no período">
+          <PeriodFilter
               period={period}
               setPeriod={setPeriod}
               customStart={customStart}
@@ -61,8 +57,7 @@ export function ProductivityPage() {
               customEnd={customEnd}
               setCustomEnd={setCustomEnd}
             />
-          </div>
-        </section>
+        </PageHeader>
 
         <Card>
           <CardContent className="py-5">

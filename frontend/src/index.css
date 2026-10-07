@@ -130,7 +130,7 @@ html[data-theme="light"] #root .main :where(
   .create-intro,
   .event-intro
 ) {
-  background: #ffffff;
+  background:var(--surface);
 }
 
 #root :where(
@@ -180,8 +180,8 @@ html:not([data-theme="light"]) #root .main :where(
   -moz-appearance: none;
   padding-right: 40px;
   background:
-    linear-gradient(45deg, transparent 50%, var(--gold-soft) 50%),
-    linear-gradient(135deg, var(--gold-soft) 50%, transparent 50%),
+    linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%),
     var(--select-field-solid);
   background-position:
     calc(100% - 20px) calc(50% - 3px),
@@ -196,7 +196,7 @@ html:not([data-theme="light"]) #root .main :where(
   .filter-select:hover,
   .rs-select-trigger:hover
 ) {
-  border-color: rgba(212,175,55,.22);
+  border-color: var(--line-strong);
 }
 
 html:not([data-theme="light"]) #root .main :where(
@@ -210,7 +210,7 @@ html:not([data-theme="light"]) #root .main :where(
 }
 
 html:not([data-theme="light"]) #root .main select:not(.rs-native-select) :where(option, optgroup) {
-  background: #0f172a;
+  background:var(--surface);
   color: var(--text);
 }
 

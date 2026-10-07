@@ -137,7 +137,7 @@ export function DeadlineFormPage() {
 
       <div className="grid gap-4">
         <section className="mb-2">
-          <p className="font-serif text-3xl text-foreground">
+          <p className="text-page-title text-ink">
             {isEditing ? 'Editar prazo' : 'Novo prazo'}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">Preencha os campos do prazo.</p>

@@ -63,16 +63,16 @@ export function DetailHero({ breadcrumbLabel, breadcrumbTo, mark, title, subtitl
   return (
     <section className="mb-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 max-w-full flex-1 items-center gap-4">
           <div
-            className="grid size-14 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 font-serif text-xl text-primary"
+            className="grid size-14 shrink-0 place-items-center rounded-sm bg-accent-soft-2 text-card-title-sm text-[var(--accent-hover)]"
             aria-hidden="true"
           >
             {mark}
           </div>
           <div className="min-w-0">
-            <h1 className="truncate font-serif text-3xl leading-none text-foreground">{title}</h1>
-            {subtitle ? <p className="mt-1.5 truncate text-sm text-muted-foreground">{subtitle}</p> : null}
+            <h1 className="truncate text-page-title text-ink">{title}</h1>
+            {subtitle ? <p className="mt-1.5 truncate text-[1.07rem] font-medium text-muted-foreground">{subtitle}</p> : null}
             {meta ? <div className="mt-2 flex flex-wrap gap-1.5">{meta}</div> : null}
           </div>
         </div>
@@ -90,9 +90,9 @@ export function DetailHero({ breadcrumbLabel, breadcrumbTo, mark, title, subtitl
       {summary?.length ? (
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {summary.map((item) => (
-            <div key={item.label} className="rounded-xl border border-border bg-accent/5 px-3 py-2.5">
-              <span className="block text-xs uppercase tracking-wide text-muted-foreground">{item.label}</span>
-              <div className="mt-1 text-sm font-semibold text-foreground">{item.value}</div>
+            <div key={item.label} className="rounded-md bg-card px-4 py-3">
+              <span className="block text-label uppercase text-subtle">{item.label}</span>
+              <div className="mt-1 text-meta font-semibold text-ink">{item.value}</div>
             </div>
           ))}
         </div>
@@ -114,8 +114,8 @@ export function DetailSection({ title, note, badge, children }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <div>
-          <h2 className="font-serif text-lg text-foreground">{title}</h2>
-          {note ? <p className="text-xs text-muted-foreground">{note}</p> : null}
+          <h2 className="text-card-title-sm text-ink">{title}</h2>
+          {note ? <p className="text-meta-sm text-muted-foreground">{note}</p> : null}
         </div>
         {badge}
       </CardHeader>
@@ -131,8 +131,8 @@ export function DetailGrid({ children }) {
 export function DetailItem({ label, children, span }) {
   return (
     <div className={cn('min-w-0', span && 'sm:col-span-2')}>
-      <span className="block text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
-      <div className="mt-1 truncate text-sm font-medium text-foreground">{children}</div>
+      <span className="block text-label uppercase text-subtle">{label}</span>
+      <div className="mt-1 truncate text-meta font-semibold text-ink">{children}</div>
     </div>
   );
 }
@@ -141,7 +141,7 @@ export function DetailItem({ label, children, span }) {
 // título + subtítulo + badge de status + chips de metadados.
 export function RelatedItem({ title, subtitle, badge, chips }) {
   return (
-    <article className="rounded-xl border border-border bg-accent/5 px-3.5 py-3">
+    <article className="rounded-xl border border-border bg-surface-2 px-3.5 py-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-medium text-foreground">{title}</h3>
@@ -154,7 +154,7 @@ export function RelatedItem({ title, subtitle, badge, chips }) {
           {chips.map((chip, index) => (
             <span
               key={index}
-              className="inline-flex h-6 items-center truncate rounded-full border border-border bg-accent/10 px-2 text-xs text-muted-foreground"
+              className="inline-flex h-6 items-center truncate rounded-full border border-border bg-surface-2 px-2 text-xs text-muted-foreground"
             >
               {chip}
             </span>
