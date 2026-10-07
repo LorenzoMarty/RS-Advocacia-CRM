@@ -100,7 +100,7 @@ export function AppearancePanel({ appearance, setOption, reset, open, onClose })
         </div>
 
         <div className="appearance-actions">
-          <button type="button" className="btn-secondary" onClick={reset}>
+          <button type="button" className="btn btn-secondary" onClick={reset}>
             Restaurar padrão
           </button>
           <button type="button" className="btn" onClick={onClose}>
