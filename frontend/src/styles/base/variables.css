@@ -10,19 +10,54 @@
     --font-scale:1;
     --space-scale:1;
 
-    --bg:#020617;
-    --panel:rgba(15,23,42,.86);
-    --line:rgba(148,163,184,.13);
-    --line-strong:rgba(148,163,184,.22);
-    --text:#e5e7eb;
-    --soft:rgba(203,213,225,.82);
-    --muted:rgba(148,163,184,.78);
-    --gold:#D4AF37;
-    --gold-soft:#D4AF37;
-    --success:#73d3b1;
-    --warn:#e8b25c;
-    --danger:#ef7a7a;
-    --shadow:0 24px 60px rgba(0,0,0,.28);
+    /* Neutros (frios, saturação mínima) */
+    --bg:#EDEFF3;
+    --surface:#FFFFFF;
+    --surface-2:#F4F5F8;
+    --surface-3:#E3E6EB;
+    --line:#EEF0F3;
+    --line-strong:#DDE0E6;
+    --ink:#17181C;
+    --ink-2:#3A3D45;
+    /* Desvio do spec (#7B808C = 3.96:1 no branco): #656A76 cumpre 4.5:1 em --surface e --bg. */
+    --muted:#656A76;
+    --subtle:#9A9EA8; /* só labels >= 11px bold */
+
+    /* Acento da interface: neutro (a marca não tem cor). Único ponto de troca. */
+    --accent:var(--ink);
+    --accent-fg:#FFFFFF;
+    --accent-hover:#2C2E35;
+    --focus-ring:rgba(23,24,28,.15);
+
+    /* Semânticos — mesma luminosidade/croma, varia só o matiz */
+    --danger:oklch(0.58 0.15 35);   --danger-soft:oklch(0.93 0.04 35);   --danger-ink:oklch(0.45 0.12 35);
+    --warn:oklch(0.72 0.13 75);     --warn-soft:oklch(0.94 0.05 75);     --warn-ink:oklch(0.48 0.10 75);
+    --success:oklch(0.62 0.11 160); --success-soft:oklch(0.93 0.04 160); --success-ink:oklch(0.43 0.08 160);
+    --info:oklch(0.60 0.11 260);
+
+    /* Pastéis de categoria — mesmo L/C, varia só o matiz */
+    --cat-civel:oklch(0.92 0.05 295);       --cat-civel-ink:oklch(0.42 0.09 295);
+    --cat-trabalhista:oklch(0.92 0.05 40);  --cat-trabalhista-ink:oklch(0.42 0.09 40);
+    --cat-empresarial:oklch(0.92 0.05 220); --cat-empresarial-ink:oklch(0.42 0.09 220);
+    --cat-tributario:oklch(0.92 0.05 165);  --cat-tributario-ink:oklch(0.42 0.09 165);
+
+    /* Raio */
+    --radius-lg:24px;
+    --radius-md:16px;
+    --radius-sm:12px;
+    --radius-pill:999px;
+
+    /* Sombra: quase nenhuma, a separação vem da cor */
+    --shadow-hover:0 8px 24px rgba(23,24,28,.08);
+    --shadow-pop:0 16px 40px rgba(23,24,28,.12);
+
+    /* ---- Aliases legados (nomes antigos -> tokens novos). Remover na fase 7. ---- */
+    --panel:var(--surface);
+    --text:var(--ink);
+    --soft:var(--ink-2);
+    --gold:var(--accent);
+    --gold-soft:var(--accent);
+    --shadow:var(--shadow-hover);
     --sidebar:calc(228px * var(--ui-scale));
     --sidebar-collapsed:calc(68px * var(--ui-scale));
     --page-max-width:1480px;
@@ -37,34 +72,34 @@
     --gap-list:calc(10px * var(--space-scale));
     --bottom-nav-height:88px;
     --bottom-nav-offset:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 18px);
-    --serif:"Instrument Serif",serif;
-    --sans:"Inter Variable","Inter",sans-serif;
-    --body-bg:#020617;
-    --sidebar-bg:transparent;
-    --topbar-bg:transparent;
-    --surface-bg:transparent;
-    --ghost:rgba(148,163,184,.06);
-    --ghost-strong:rgba(148,163,184,.1);
-    --hover:rgba(212,175,55,.09);
-    --selection:rgba(212,175,55,.3);
-    --scroll-thumb:rgba(71,85,105,.72);
-    --backdrop:rgba(2,6,23,.72);
-    --select-field-solid:rgba(15,23,42,.98);
-    --select-field-hover:rgba(30,41,59,.99);
-    --select-field-border:rgba(148,163,184,.16);
-    --select-field-border-strong:rgba(212,175,55,.32);
-    --select-dropdown-bg:rgba(15,23,42,.985);
-    --select-option-hover:rgba(148,163,184,.08);
-    --select-option-selected:rgba(212,175,55,.14);
-    --select-option-selected-border:rgba(212,175,55,.28);
-    --select-option-disabled:rgba(203,213,225,.3);
-    --select-shadow:0 24px 52px rgba(0,0,0,.34);
-    --sidebar-toggle-bg:rgba(15,23,42,.86);
-    --sidebar-toggle-bg-hover:rgba(30,41,59,.92);
-    --sidebar-toggle-border:rgba(148,163,184,.14);
-    --sidebar-toggle-border-hover:rgba(212,175,55,.22);
-    --sidebar-toggle-shadow:0 12px 24px rgba(0,0,0,.2);
-    --sidebar-toggle-icon-color:rgba(203,213,225,.76);
+    --serif:var(--sans); /* sem serifa: títulos usam --sans */
+    --sans:"Urbanist",system-ui,sans-serif;
+    --body-bg:var(--bg);
+    --sidebar-bg:var(--surface);
+    --topbar-bg:var(--surface);
+    --surface-bg:var(--surface);
+    --ghost:var(--surface-2);
+    --ghost-strong:var(--surface-3);
+    --hover:var(--surface-2);
+    --selection:rgba(23,24,28,.15);
+    --scroll-thumb:rgba(23,24,28,.22);
+    --backdrop:rgba(23,24,28,.42);
+    --select-field-solid:var(--surface-2);
+    --select-field-hover:var(--surface-2);
+    --select-field-border:transparent;
+    --select-field-border-strong:var(--ink);
+    --select-dropdown-bg:var(--surface);
+    --select-option-hover:var(--surface-2);
+    --select-option-selected:var(--surface-2);
+    --select-option-selected-border:var(--ink);
+    --select-option-disabled:var(--subtle);
+    --select-shadow:var(--shadow-pop);
+    --sidebar-toggle-bg:var(--surface);
+    --sidebar-toggle-bg-hover:var(--surface-2);
+    --sidebar-toggle-border:var(--line-strong);
+    --sidebar-toggle-border-hover:var(--ink);
+    --sidebar-toggle-shadow:none;
+    --sidebar-toggle-icon-color:var(--ink-2);
     /* Escala de espaçamento (base 4px) */
     --space-1:4px;
     --space-2:8px;
@@ -73,6 +108,7 @@
     --space-5:20px;
     --space-6:24px;
     --space-8:32px;
+    --space-10:40px;
 
     /* Tokens de movimento (framer-motion + CSS).
        Durações e easings compartilhados por todo o app para um feel coeso.
@@ -85,17 +121,52 @@
     --ease-in-out:cubic-bezier(.65,0,.35,1);
     --ease-spring:cubic-bezier(.34,1.56,.64,1);
 
-    /* Paleta de gráficos (donut/barras) — adapta aos dois temas */
-    --chart-1:#D4AF37;
-    --chart-2:#73d3b1;
-    --chart-3:#7aa2ef;
-    --chart-4:#e8b25c;
-    --chart-5:#c58fef;
-    --chart-grid:rgba(148,163,184,.14);
-    --chart-track:rgba(148,163,184,.12);
+    /* Paleta de gráficos: série principal em --ink, secundárias nos matizes --cat-* (mais saturados) */
+    --chart-1:var(--ink);
+    --chart-2:oklch(0.72 0.11 295);
+    --chart-3:oklch(0.72 0.11 40);
+    --chart-4:oklch(0.72 0.11 220);
+    --chart-5:oklch(0.72 0.11 165);
+    --chart-grid:var(--line);
+    --chart-track:var(--surface-3);
 }
 
+/* Tema escuro: mesmos nomes de token. Semânticos/pastéis por decisão própria (spec só fixa neutros e L 0.35 dos pastéis). */
+:root[data-theme="dark"]{
+    --bg:#0F1014;
+    --surface:#17181C;
+    --surface-2:#1F2026;
+    --surface-3:#2A2C34;
+    --line:#24262C;
+    --line-strong:#2F323A;
+    --ink:#F1F2F5;
+    --ink-2:#C3C6CE;
+    --muted:#9A9EA8;
+    --subtle:#868B97;
+    --accent-fg:#17181C;
+    --accent-hover:#D9DBE0;
+    --focus-ring:rgba(241,242,245,.22);
 
+    --danger:oklch(0.70 0.14 35);   --danger-soft:oklch(0.30 0.06 35);   --danger-ink:oklch(0.82 0.09 35);
+    --warn:oklch(0.78 0.12 75);     --warn-soft:oklch(0.32 0.06 75);     --warn-ink:oklch(0.85 0.09 75);
+    --success:oklch(0.72 0.11 160); --success-soft:oklch(0.32 0.05 160); --success-ink:oklch(0.84 0.08 160);
+    --info:oklch(0.72 0.11 260);
+
+    --cat-civel:oklch(0.35 0.05 295);       --cat-civel-ink:oklch(0.85 0.07 295);
+    --cat-trabalhista:oklch(0.35 0.05 40);  --cat-trabalhista-ink:oklch(0.85 0.07 40);
+    --cat-empresarial:oklch(0.35 0.05 220); --cat-empresarial-ink:oklch(0.85 0.07 220);
+    --cat-tributario:oklch(0.35 0.05 165);  --cat-tributario-ink:oklch(0.85 0.07 165);
+
+    --shadow-hover:0 8px 24px rgba(0,0,0,.4);
+    --shadow-pop:0 16px 40px rgba(0,0,0,.55);
+    --selection:rgba(241,242,245,.25);
+    --scroll-thumb:rgba(241,242,245,.22);
+    --backdrop:rgba(0,0,0,.6);
+    --chart-2:oklch(0.78 0.11 295);
+    --chart-3:oklch(0.78 0.11 40);
+    --chart-4:oklch(0.78 0.11 220);
+    --chart-5:oklch(0.78 0.11 165);
+}
 
 /* Estratégia global de movimento reduzido.
    Colapsa durações de transições/animações CSS a ~zero para quem pede

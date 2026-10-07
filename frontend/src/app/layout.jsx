@@ -355,7 +355,6 @@ function useShellPreferences() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('rs-advocacia-sidebar-collapsed') !== 'false');
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', 'dark');
     localStorage.setItem('rs-advocacia-sidebar-collapsed', sidebarCollapsed ? 'true' : 'false');
   }, [sidebarCollapsed]);
 
@@ -376,12 +375,6 @@ export function GuestLayout() {
 
   useEffect(() => {
     document.body.classList.add('login-body');
-    document.documentElement.setAttribute('data-theme', 'dark');
-
-    const themeMeta = document.querySelector('meta[name="theme-color"]');
-    if (themeMeta) {
-      themeMeta.setAttribute('content', '#0b0d12');
-    }
 
     return () => {
       document.body.classList.remove('login-body');
@@ -729,15 +722,17 @@ export function ProtectedLayout() {
 
       <BottomNavigation />
       <Toaster
-        theme="dark"
+        theme={appearance.appearance.theme}
         position="bottom-right"
         richColors
         closeButton
         toastOptions={{
           style: {
-            background: 'rgba(15,23,42,.98)',
-            border: '1px solid rgba(148,163,184,.16)',
-            color: '#e5e7eb',
+            background: 'var(--surface)',
+            border: '1px solid var(--line-strong)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-pop)',
+            color: 'var(--ink)',
             fontFamily: 'var(--sans)',
           },
         }}

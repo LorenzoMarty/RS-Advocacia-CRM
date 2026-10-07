@@ -64,7 +64,7 @@ export function AppearancePanel({ appearance, setOption, reset, open, onClose })
           <div className="popup-copy">
             <p className="popup-kicker">Aparência</p>
             <h2>Ajuste a interface</h2>
-            <p>Escala, fonte e espaçamento. As escolhas ficam salvas neste navegador.</p>
+            <p>Tema, escala, fonte e espaçamento. As escolhas ficam salvas neste navegador.</p>
           </div>
           <button type="button" className="appearance-close" onClick={onClose} aria-label="Fechar">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
