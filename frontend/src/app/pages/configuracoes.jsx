@@ -105,9 +105,9 @@ export function ConfiguracoesPage() {
     <>
       <PageChrome label="Configurações" />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <section className="mb-2">
-          <p className="font-serif text-3xl text-foreground">Configurações</p>
+          <p className="text-page-title text-ink">Configurações</p>
           <p className="mt-1 text-sm text-muted-foreground">
             API key da OpenAI e custo estimado de uso de IA do escritório.
           </p>
@@ -116,9 +116,9 @@ export function ConfiguracoesPage() {
         <Card>
           <CardHeader className="flex-row items-center gap-2 space-y-0">
             <KeyRound className="size-5 text-primary" aria-hidden="true" />
-            <h2 className="font-serif text-lg text-foreground">API key da OpenAI</h2>
+            <h2 className="text-card-title-sm text-ink">API key da OpenAI</h2>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+          <CardContent className="flex flex-col gap-[var(--gap-grid)]">
             {loading ? (
               <Skeleton className="h-10 w-full max-w-sm" />
             ) : (
@@ -158,9 +158,9 @@ export function ConfiguracoesPage() {
         <Card>
           <CardHeader className="flex-row items-center gap-2 space-y-0">
             <Sparkles className="size-5 text-primary" aria-hidden="true" />
-            <h2 className="font-serif text-lg text-foreground">Custo estimado de IA</h2>
+            <h2 className="text-card-title-sm text-ink">Custo estimado de IA</h2>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+          <CardContent className="flex flex-col gap-[var(--gap-grid)]">
             {custoLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
@@ -179,7 +179,7 @@ export function ConfiguracoesPage() {
                     {custo.por_operacao.map((item) => (
                       <div
                         key={item.operacao}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-border bg-accent/5 px-3.5 py-2.5 text-sm"
+                        className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-2 px-3.5 py-2.5 text-sm"
                       >
                         <span className="text-foreground">
                           {OPERACAO_LABELS[item.operacao] || item.operacao}

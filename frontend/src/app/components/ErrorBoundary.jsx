@@ -33,7 +33,7 @@ export class AppErrorBoundary extends Component {
             color: 'var(--text)',
           }}
         >
-          <h1 style={{ fontFamily: 'var(--serif)', fontSize: '1.75rem', fontWeight: 400 }}>Algo deu errado</h1>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Algo deu errado</h1>
           <p style={{ color: 'var(--soft)' }}>
             Ocorreu um erro inesperado. Por favor, recarregue a página.
           </p>

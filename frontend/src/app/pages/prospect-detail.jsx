@@ -90,7 +90,7 @@ export function ProspectDetailPage() {
       {confirmPopup}
       <PageChrome label="Prospect" />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <DetailHero
           breadcrumbLabel="Prospecção"
           breadcrumbTo="/prospeccao"

@@ -32,23 +32,25 @@
 }
 
 .page-search svg{position:absolute;top:50%;left:14px;transform:translateY(-50%);color:var(--muted)}
+
 .page-search input{
     width:100%;
-    min-height:46px;
-    padding:0 14px 0 42px;
-    border-radius:13px;
-    border:1px solid var(--line);
-    background:var(--ghost);
-    color:var(--text);
+    min-height:44px;
+    padding:0 16px 0 42px;
+    border-radius:var(--radius-pill);
+    border:0;
+    background:var(--surface-2);
+    color:var(--ink);
+    font-weight:500;
     outline:0;
     transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;
 }
 
 .page-search input::placeholder{color:var(--muted)}
+
 .page-search input:focus{
-    border-color:rgba(212,175,55,.24);
-    background:var(--ghost-strong);
-    box-shadow:0 0 0 4px rgba(212,175,55,.08);
+    outline:0;
+    box-shadow:0 0 0 2px var(--focus-ring);
 }
 
 .rs-select{
@@ -72,31 +74,27 @@
     align-items:center;
     justify-content:flex-start;
     width:100%;
-    min-height:48px;
+    min-height:44px;
     padding:0 46px 0 15px;
-    border-radius:16px;
-    border:1px solid var(--select-field-border);
+    border-radius:var(--radius-sm);
+    border:0;
     background:var(--select-field-solid);
     color:var(--text);
     transition:border-color .2s ease,background .2s ease,box-shadow .2s ease,color .2s ease;
 }
 
 .rs-select-trigger:hover{
-    border-color:rgba(212,175,55,.18);
-    background:var(--select-field-hover);
+    background:var(--surface-3);
 }
 
 .rs-select.is-open .rs-select-trigger,
 .rs-select-trigger:focus-visible{
     outline:0;
-    border-color:var(--select-field-border-strong);
-    background:var(--select-field-hover);
-    box-shadow:0 0 0 4px rgba(212,175,55,.08);
+    box-shadow:0 0 0 2px var(--focus-ring);
 }
 
 .rs-select.is-invalid .rs-select-trigger{
-    border-color:rgba(239,122,122,.42);
-    box-shadow:0 0 0 4px rgba(239,122,122,.08);
+    box-shadow:inset 0 0 0 1.5px var(--danger);
 }
 
 .rs-select.is-disabled .rs-select-trigger{
@@ -130,7 +128,7 @@
     right:14px;
     width:18px;
     height:18px;
-    color:var(--gold-soft);
+    color:var(--muted);
     transform:translateY(-50%);
     transition:transform .18s ease,color .18s ease;
     pointer-events:none;
@@ -147,11 +145,10 @@
     z-index:120;
     width:240px;
     padding:8px;
-    border-radius:20px;
-    border:1px solid var(--select-field-border);
+    border-radius:var(--radius-md);
+    border:1px solid var(--line-strong);
     background:var(--select-dropdown-bg);
     box-shadow:var(--select-shadow);
-    backdrop-filter:blur(16px);
     opacity:0;
     transform:translateY(8px) scale(.985);
     pointer-events:none;
@@ -184,7 +181,9 @@
 }
 
 .rs-select-list::-webkit-scrollbar{width:6px}
+
 .rs-select-list::-webkit-scrollbar-track{background:transparent}
+
 .rs-select-list::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:999px}
 
 .rs-select-group{
@@ -196,8 +195,8 @@
     padding:10px 12px 4px;
     color:var(--muted);
     font-size:.67rem;
-    font-weight:800;
-    letter-spacing:.18em;
+    font-weight:700;
+    letter-spacing:.07em;
     text-transform:uppercase;
 }
 
@@ -205,7 +204,7 @@
     width:100%;
     min-height:42px;
     padding:0 12px;
-    border-radius:14px;
+    border-radius:var(--radius-sm);
     border:1px solid transparent;
     display:flex;
     align-items:center;
@@ -221,12 +220,11 @@
 .rs-select-option.is-highlighted{
     outline:0;
     background:var(--select-option-hover);
-    border-color:rgba(255,255,255,.06);
     color:var(--text);
 }
 
 .rs-select-option:focus-visible{
-    box-shadow:0 0 0 3px rgba(212,175,55,.08);
+    box-shadow:0 0 0 3px var(--focus-ring);
 }
 
 .rs-select-option-copy{
@@ -248,7 +246,7 @@
     width:18px;
     height:18px;
     flex:0 0 auto;
-    color:var(--gold-soft);
+    color:var(--ink);
     opacity:0;
     transform:scale(.86);
     transition:opacity .16s ease,transform .16s ease;
@@ -256,7 +254,6 @@
 
 .rs-select-option.is-selected{
     color:var(--text);
-    border-color:var(--select-option-selected-border);
     background:var(--select-option-selected);
 }
 
@@ -280,3 +277,50 @@
     background:var(--ghost);
     border:1px dashed var(--line);
 }
+
+/* Busca sobre o fundo da página (--bg): campo branco em vez de --surface-2. */
+.page-search-inline.on-bg .page-search input{background:var(--surface)}
+
+.page-search-inline.on-bg{width:220px;max-width:100%;flex:0 0 auto}
+
+.on-bg .rs-select-trigger{background:var(--surface)}
+
+.on-bg .rs-select-trigger:hover{background:var(--surface-2)}
+
+/* Campos de formulário (Field): superfície --surface-2, sem borda, 44px, raio sm.
+   Sobrepõe as regras duplicadas de clientes/processos/agenda/usuarios-form.css. */
+.main .field :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea){
+    border:0;
+    border-radius:var(--radius-sm);
+    background-color:var(--surface-2);
+    color:var(--ink);
+    font-weight:500;
+}
+
+.main .field :where(input:not([type="checkbox"]):not([type="radio"]), select){min-height:44px}
+
+.main .field :where(input, select, textarea):hover{background-color:var(--surface-2)}
+
+.main .field :where(input, select, textarea):focus{
+    outline:0;
+    border:0;
+    background-color:var(--surface-2);
+    box-shadow:0 0 0 2px var(--focus-ring);
+}
+
+.main .field.has-error :where(input, select, textarea){box-shadow:inset 0 0 0 1.5px var(--danger)}
+
+.main .field :where(input[type="checkbox"], input[type="radio"]){
+    width:18px;
+    height:18px;
+    min-height:0;
+    padding:0;
+    flex:0 0 auto;
+    accent-color:var(--accent);
+}
+
+.main .field-head label,
+.main .field > label{font-weight:700}
+
+.main .rs-select-value{text-align:left}
+.main .form-grid{align-items:start}

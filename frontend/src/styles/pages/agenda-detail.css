@@ -1,38 +1,10 @@
-.section-card{
-        padding:var(--pad-card);
-    }
-
-    .crumbs{
-        display:inline-flex;
-        align-items:center;
-        gap:8px;
-        margin-bottom:18px;
-        color:var(--muted);
-        font-size:.76rem;
-        font-weight:700;
-        letter-spacing:.14em;
-        text-transform:uppercase;
-    }
-
-    .crumbs::after{
-        content:"/";
-        opacity:.5;
-    }
-
-    .identity-row{
-        display:flex;
-        align-items:flex-start;
-        gap:16px;
-        min-width:0;
-    }
-
-    .meta-chip{
+.meta-chip{
         display:inline-flex;
         align-items:center;
         min-height:38px;
         max-width:100%;
         padding:0 14px;
-        border-radius:16px;
+        border-radius:var(--radius-md);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--soft);
@@ -42,231 +14,155 @@
         text-overflow:ellipsis;
     }
 
-    .stack{
+.stack{
         display:grid;
         gap:var(--gap-page);
     }
 
-    .detail-grid{
-        display:grid;
-        grid-template-columns:repeat(2, minmax(0, 1fr));
-        gap:10px;
-    }
-
-    .detail-item{
-        padding:16px;
-        border-radius:18px;
-        border:1px solid var(--line);
-        background:var(--ghost);
-        display:grid;
-        align-content:start;
-        gap:8px;
-    }
-
-    .detail-item.span-2{
-        grid-column:1 / -1;
-    }
-
-    .detail-item span{
-        color:var(--muted);
-        font-size:.72rem;
-        font-weight:700;
-        letter-spacing:.14em;
-        text-transform:uppercase;
-    }
-
-    .detail-item strong,
-    .detail-item a{
-        display:block;
-        margin:0;
-        color:var(--text);
-        font-size:1.02rem;
-        font-weight:600;
-        line-height:1.35;
-        word-break:break-word;
-    }
-
-    .detail-item .detail-badge-wrap{
-        display:flex;
-        align-items:center;
-        margin:0;
-    }
-
-    .detail-item .detail-badge-wrap .status-badge{
-        justify-content:center;
-        width:100%;
-    }
-
-    .detail-item .detail-badge-wrap .priority-badge{
-        width:auto;
-        min-width:0;
-        min-height:32px;
-        padding:0 12px;
-        line-height:1;
-    }
-
-    .status-badge{
+.status-badge{
         display:inline-flex;
         align-items:center;
         gap:8px;
         min-height:38px;
         padding:0 14px;
-        border-radius:16px;
+        border-radius:var(--radius-md);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--soft);
         font-size:.7rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
         white-space:nowrap;
     }
 
-    .status-badge::before{
+.status-badge::before{
         content:"";
         width:6px;
         height:6px;
-        border-radius:999px;
+        border-radius:var(--radius-lg);
         background:currentColor;
     }
 
-    .status-badge.gold{
-        color:var(--gold-soft);
-        background:rgba(212,175,55,.08);
-        border-color:rgba(212,175,55,.2);
+.status-badge.gold{
+        color:var(--accent);
+        background:var(--line-strong);
+        border-color:var(--line-strong);
     }
 
-    .status-badge.success{
+.status-badge.success{
         color:var(--success);
     }
 
-    .status-badge.warn{
+.status-badge.warn{
         color:var(--warn);
     }
 
-    .status-badge.danger{
+.status-badge.danger{
         color:var(--danger);
     }
 
-    .link-card,
-    .note-box{
+.link-card,
+.note-box{
         padding:16px;
-        border-radius:20px;
+        border-radius:var(--radius-lg);
         border:1px solid var(--line);
         background:var(--ghost);
         transition:border-color .2s ease,background .2s ease,transform .2s ease;
     }
 
-    .link-card{
+.link-card{
         display:grid;
         gap:14px;
     }
 
-    .link-card:hover{
+.link-card:hover{
         transform:translateY(-1px);
-        border-color:rgba(212,175,55,.18);
-        background:rgba(212,175,55,.06);
+        border-color:var(--line-strong);
+        background:var(--line-strong);
     }
 
-    .link-head{
+.link-head{
         display:flex;
         align-items:flex-start;
         gap:14px;
     }
 
-    .link-mark{
+.link-mark{
         width:46px;
         height:46px;
         flex:0 0 auto;
         display:grid;
         place-items:center;
-        border-radius:16px;
-        color:var(--gold-soft);
+        border-radius:var(--radius-md);
+        color:var(--accent);
         font-size:.92rem;
         font-weight:700;
-        background:rgba(212,175,55,.08);
-        border:1px solid rgba(212,175,55,.18);
+        background:var(--line-strong);
+        border:1px solid var(--line-strong);
     }
 
-    .link-title{
+.link-title{
         margin:0;
         font-size:1rem;
         line-height:1.4;
         font-weight:600;
     }
 
-    .link-copy{
+.link-copy{
         margin-top:6px;
         color:var(--soft);
         font-size:.84rem;
         line-height:1.5;
     }
 
-    .link-meta{
+.link-meta{
         display:flex;
         flex-wrap:wrap;
         gap:8px;
     }
 
-    .note-box{
+.note-box{
         color:var(--soft);
         line-height:1.7;
     }
 
-    .note-stack{
+.note-stack{
         display:grid;
         gap:12px;
     }
 
-    .note-block{
+.note-block{
         display:grid;
         gap:8px;
     }
 
-    .note-block strong{
+.note-block strong{
         font-size:.78rem;
         color:var(--muted);
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
 @media (max-width:720px){
-    .section-card{
-        padding:16px;
-    }
-
-    .crumbs{
-        margin-bottom:10px;
-        font-size:.68rem;
-        letter-spacing:.12em;
-    }
-
-    .identity-row,
-    .link-head{
+.link-head{
         flex-direction:column;
         gap:8px;
     }
 
-    .detail-grid{
-        grid-template-columns:1fr;
-    }
-
-    .detail-item.span-2{
-        grid-column:auto;
-    }
-
-    .meta-chip,
-    .status-badge{
+.meta-chip,
+.status-badge{
         min-height:30px;
         padding:0 10px;
         font-size:.64rem;
-        border-radius:12px;
+        border-radius:var(--radius-sm);
     }
 
-    .link-card,
-    .note-box{
+.link-card,
+.note-box{
         padding:14px;
-        border-radius:18px;
+        border-radius:var(--radius-md);
     }
+
 }

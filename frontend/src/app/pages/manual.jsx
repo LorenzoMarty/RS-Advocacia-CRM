@@ -161,10 +161,10 @@ export function ManualPage() {
   }
 
   return (
-    <div className="grid gap-4 pt-5">
+    <div className="grid gap-[var(--gap-grid)] pt-5">
       <PageChrome label="Manual do sistema" />
 
-      <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
+      <div className="grid gap-[var(--gap-grid)] lg:grid-cols-[240px_1fr]">
         <aside className="lg:sticky lg:top-20 lg:self-start">
           <Card>
             <CardContent className="grid gap-3 p-3">
@@ -189,7 +189,7 @@ export function ManualPage() {
                       onClick={() => scrollToSection(section.id)}
                       disabled={!isVisible}
                       className={cn(
-                        'rounded-lg px-2.5 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground',
+                        'rounded-lg px-2.5 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground',
                         !isVisible && 'pointer-events-none opacity-30',
                       )}
                     >
@@ -202,7 +202,7 @@ export function ManualPage() {
           </Card>
         </aside>
 
-        <main className="grid gap-4">
+        <main className="grid gap-[var(--gap-grid)]">
           {visibleSections.length === 0 ? (
             <Card>
               <CardContent className="p-6 text-center text-sm text-muted-foreground">

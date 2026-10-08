@@ -1,7 +1,8 @@
 /* Ponte Tailwind/Shadcn <-> design system existente.
    Preflight desligado (ver tailwind.config.js) — este arquivo só adiciona
    utilities e as CSS vars que os componentes shadcn/ui esperam, derivadas
-   1:1 da paleta em styles/base/variables.css (mesmo tema escuro/dourado).
+   dos tokens em styles/base/variables.css (triplets HSL equivalentes, para o
+   Tailwind aplicar alpha). Tema claro em :root, escuro em [data-theme="dark"].
    Nomes prefixados com --tw- para não colidir com os tokens legados. */
 @tailwind base;
 @tailwind components;
@@ -9,25 +10,46 @@
 
 @layer base {
   :root {
-    --tw-background: 229 84% 5%;      /* #020617 (--bg) */
-    --tw-foreground: 220 13% 91%;     /* #e5e7eb (--text) */
-    --tw-card: 222 47% 11%;           /* aprox. --panel sobre --bg */
-    --tw-card-foreground: 220 13% 91%;
-    --tw-primary: 46 65% 52%;         /* #D4AF37 (--gold) */
-    --tw-primary-foreground: 229 84% 5%;
-    --tw-secondary: 215 25% 27%;
-    --tw-secondary-foreground: 220 13% 91%;
-    --tw-muted: 215 19% 35%;
-    --tw-muted-foreground: 215 20% 65%; /* aprox. --muted */
-    --tw-accent: 46 65% 52%;
-    --tw-accent-foreground: 229 84% 5%;
-    --tw-destructive: 0 79% 71%;      /* #ef7a7a (--danger) */
-    --tw-destructive-foreground: 229 84% 5%;
-    --tw-success: 159 52% 64%;        /* #73d3b1 (--success) */
-    --tw-warn: 37 75% 64%;            /* #e8b25c (--warn) */
-    --tw-border: 215 20% 65%;   /* alpha aplicado via hsl(var(...) / <alpha-value>) */
-    --tw-input: 215 20% 65%;
-    --tw-ring: 46 65% 52%;
-    --tw-radius: 0.875rem; /* 14px, alinhado ao raio de card do legado */
+    --tw-background: 220 20% 94%;       /* --bg */
+    --tw-foreground: 228 10% 10%;       /* --ink */
+    --tw-card: 0 0% 100%;               /* --surface */
+    --tw-card-foreground: 228 10% 10%;
+    --tw-primary: 213 59% 44%;          /* --accent */
+    --tw-primary-foreground: 0 0% 100%; /* --accent-fg */
+    --tw-secondary: 225 22% 96%;        /* --surface-2 */
+    --tw-secondary-foreground: 228 10% 10%;
+    --tw-muted: 225 22% 96%;
+    --tw-muted-foreground: 222 8% 40%;  /* --muted */
+    --tw-accent: 213 59% 44%;           /* --accent */
+    --tw-accent-foreground: 0 0% 100%;
+    --tw-destructive: 12 56% 49%;       /* --danger */
+    --tw-destructive-foreground: 0 0% 100%;
+    --tw-success: 152 42% 43%;          /* --success */
+    --tw-warn: 37 64% 53%;              /* --warn */
+    --tw-border: 220 15% 88%;           /* --line-strong */
+    --tw-input: 225 22% 96%;            /* --surface-2 */
+    --tw-ring: 213 59% 44%;
+  }
+
+  [data-theme="dark"] {
+    --tw-background: 228 14% 7%;
+    --tw-foreground: 225 17% 95%;
+    --tw-card: 228 10% 10%;
+    --tw-card-foreground: 225 17% 95%;
+    --tw-primary: 214 79% 71%;
+    --tw-primary-foreground: 228 14% 7%;
+    --tw-secondary: 231 10% 14%;
+    --tw-secondary-foreground: 225 17% 95%;
+    --tw-muted: 231 10% 14%;
+    --tw-muted-foreground: 223 7% 63%;
+    --tw-accent: 214 79% 71%;
+    --tw-accent-foreground: 228 14% 7%;
+    --tw-destructive: 12 74% 64%;
+    --tw-destructive-foreground: 228 10% 10%;
+    --tw-success: 150 39% 55%;
+    --tw-warn: 36 72% 62%;
+    --tw-border: 224 10% 21%;
+    --tw-input: 231 10% 14%;
+    --tw-ring: 214 79% 71%;
   }
 }

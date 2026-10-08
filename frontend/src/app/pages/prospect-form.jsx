@@ -12,7 +12,7 @@ import { PageChrome } from '../layout';
 import { useAppState } from '../store';
 import { formatPhone, stripPhone } from '../utils';
 import { Select } from '../components/select';
-import { ComboField, Field, NotFoundState } from './common';
+import { ComboField, Field, NotFoundState, FormAside, FormHeader, FormLayout } from './common';
 import { STATUS_LABELS, deadlineAuditFor, priorityLabel } from './prospeccao-utils';
 
 const prospectSchema = z.object({
@@ -77,23 +77,10 @@ export function ProspectFormPage() {
   return (
     <>
       <PageChrome label={isEditing ? 'Editar prospect' : 'Novo prospect'} />
-      <div className="grid gap-4">
-        <section className="mb-2">
-          <p className="font-serif text-3xl text-foreground">
-            {isEditing ? 'Editar prospect' : 'Novo prospect'}
-          </p>
+      <div className="grid gap-[var(--gap-grid)]">
+        <FormHeader title={isEditing ? 'Editar prospect' : 'Novo prospect'} backTo="/prospeccao" backLabel="Voltar para prospecção" />
 
-          <Link
-            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to="/prospeccao"
-          >
-            <ArrowLeft className="size-3.5" />
-            Voltar para prospecção
-          </Link>
-        </section>
-
-        <Card>
-          <CardContent className="py-5">
+        <FormLayout aside={<FormAside items={["Nome e demanda do contato", "Responsável e prioridade", "Próximo passo combinado"]} note={"O prospect avança pelo funil direto no card da Prospecção."} />}>
           <form className="prospect-form" onSubmit={handleSubmit(onSubmit)}>
             <div className="form-grid">
               <Field id="prospect-name" label="Nome" className="span-2" error={errors.name?.message} required>
@@ -170,13 +157,12 @@ export function ProspectFormPage() {
 
             <div className="form-actions">
               <Button type="submit" disabled={isSubmitting}>{isEditing ? 'Atualizar' : 'Salvar'}</Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="secondary">
                 <Link to="/prospeccao">Cancelar</Link>
               </Button>
             </div>
           </form>
-          </CardContent>
-        </Card>
+          </FormLayout>
       </div>
     </>
   );

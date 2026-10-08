@@ -278,13 +278,13 @@ export function MeetingsPage() {
     <>
       <PageChrome label="Reuniões" />
       {confirmPopup}
-      <div className="grid gap-4 pt-5">
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(260px,.55fr)_minmax(0,1.6fr)]">
-          <Card className="lg:sticky lg:top-[18px]">
-            <CardContent className="grid gap-4 py-5">
+      <div className="grid gap-[var(--gap-grid)]">
+        <div className="grid items-start gap-[var(--gap-grid)] lg:grid-cols-[minmax(260px,.55fr)_minmax(0,1.6fr)]">
+          <Card className="lg:sticky lg:top-[var(--sticky-top)]">
+            <CardContent className="grid gap-[var(--gap-grid)] py-[var(--pad-card)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-serif text-xl text-foreground">Reuniões</p>
+                  <p className="text-card-title-sm text-ink">Reuniões</p>
                   <p className="mt-1 text-sm text-muted-foreground">Gravação, transcrição e resumo por IA</p>
                 </div>
                 <Button size="sm" onClick={openCreateForm}>
@@ -312,7 +312,7 @@ export function MeetingsPage() {
                         className={`grid w-full min-w-0 gap-1.5 rounded-2xl border px-4 py-3.5 text-left transition-colors ${
                           isActive
                             ? 'border-primary/35 bg-primary/10'
-                            : 'border-border bg-muted/40 hover:border-border/80 hover:bg-muted/60'
+                            : 'border-border bg-surface-2 hover:border-border/80 hover:bg-muted/60'
                         }`}
                         type="button"
                         key={meeting.id}
@@ -340,12 +340,12 @@ export function MeetingsPage() {
             </CardContent>
           </Card>
 
-          <section className="grid min-w-0 gap-4">
+          <section className="grid min-w-0 gap-[var(--gap-grid)]">
             {isMeetingFormOpen ? (
               <Card>
-                <CardContent className="py-5">
+                <CardContent className="py-[var(--pad-card)]">
                 <div className="mb-4">
-                  <p className="font-serif text-xl text-foreground">
+                  <p className="text-card-title-sm text-ink">
                     {isEditingMeeting ? 'Editar reunião' : 'Nova reunião'}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">Contexto antes da gravação</p>
@@ -410,11 +410,11 @@ export function MeetingsPage() {
 
             {selectedMeeting ? (
               <Card className="mx-auto w-full max-w-[860px]">
-                <CardContent className="grid gap-4 py-5">
-                <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
+                <CardContent className="grid gap-[var(--gap-grid)] py-[var(--pad-card)]">
+                <header className="flex flex-wrap items-start justify-between gap-[var(--gap-grid)] border-b border-border pb-5">
                   <div className="grid min-w-0 gap-1.5">
                     <p className="m-0 text-xs font-bold uppercase tracking-[.18em] text-primary">Ata de reunião</p>
-                    <h1 className="m-0 font-serif text-[clamp(2rem,4vw,3rem)] font-normal leading-none tracking-tight text-foreground">
+                    <h1 className="m-0 text-page-title text-ink">
                       {selectedMeeting.title}
                     </h1>
                     <p className="m-0 text-sm text-muted-foreground">
@@ -488,7 +488,7 @@ export function MeetingsPage() {
                 {selectedMeeting.transcript || recordings.length ? (
                   <Accordion type="multiple" className="grid gap-1">
                     {selectedMeeting.transcript ? (
-                      <AccordionItem value="transcript" className="rounded-lg border-b-0 bg-muted/30 px-3">
+                      <AccordionItem value="transcript" className="rounded-lg border-b-0 bg-surface-2 px-3">
                         <AccordionTrigger className="py-2.5 text-xs font-bold uppercase tracking-wide text-primary hover:no-underline">
                           Transcrição completa
                         </AccordionTrigger>
@@ -501,7 +501,7 @@ export function MeetingsPage() {
                     ) : null}
 
                     {recordings.length ? (
-                      <AccordionItem value="recordings" className="rounded-lg border-b-0 bg-muted/30 px-3">
+                      <AccordionItem value="recordings" className="rounded-lg border-b-0 bg-surface-2 px-3">
                         <AccordionTrigger className="py-2.5 text-xs font-bold uppercase tracking-wide text-primary hover:no-underline">
                           Trechos gravados ({recordings.length})
                         </AccordionTrigger>

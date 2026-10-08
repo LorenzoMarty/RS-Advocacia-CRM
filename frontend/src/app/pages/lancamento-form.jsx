@@ -11,7 +11,7 @@ import { FINANCE_CATEGORIES, FINANCE_TYPE_OPTIONS } from '../data';
 import { PageChrome } from '../layout';
 import { useAppState } from '../store';
 import { Select } from '../components/select';
-import { ComboField, Field, NotFoundState } from './common';
+import { ComboField, Field, NotFoundState, FormAside, FormHeader, FormLayout } from './common';
 import { todayIso } from './financeiro-utils';
 
 const lancamentoSchema = z.object({
@@ -90,23 +90,10 @@ export function LancamentoFormPage() {
   return (
     <>
       <PageChrome label={isEditing ? 'Editar lançamento' : 'Novo lançamento'} />
-      <div className="grid gap-4">
-        <section className="mb-2">
-          <p className="font-serif text-3xl text-foreground">
-            {isEditing ? 'Editar lançamento' : 'Novo lançamento'}
-          </p>
+      <div className="grid gap-[var(--gap-grid)]">
+        <FormHeader title={isEditing ? 'Editar lançamento' : 'Novo lançamento'} backTo="/financeiro" backLabel="Voltar para financeiro" />
 
-          <Link
-            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to="/financeiro"
-          >
-            <ArrowLeft className="size-3.5" />
-            Voltar para financeiro
-          </Link>
-        </section>
-
-        <Card>
-          <CardContent className="py-5">
+        <FormLayout aside={<FormAside items={["Descrição, tipo e categoria", "Valor e data de vencimento", "Cliente ou processo relacionado"]} note={"Receitas pendentes entram em \"A receber\" no Painel e no Financeiro."} />}>
           <form className="lancamento-form" onSubmit={handleSubmit(onSubmit)}>
             <div className="form-grid">
               <Field id="lanc-description" label="Descrição" className="span-2" error={errors.description?.message} required>
@@ -208,13 +195,12 @@ export function LancamentoFormPage() {
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Salvando…' : isEditing ? 'Atualizar' : 'Salvar'}
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="secondary">
                 <Link to="/financeiro">Cancelar</Link>
               </Button>
             </div>
           </form>
-          </CardContent>
-        </Card>
+          </FormLayout>
       </div>
     </>
   );

@@ -16,12 +16,11 @@
     width:min(100%, 460px);
     display:grid;
     gap:24px;
-    padding:30px;
-    border-radius:30px;
-    border:1px solid var(--line);
-    background:var(--panel);
-    box-shadow:0 28px 70px rgba(0,0,0,.28);
-    backdrop-filter:blur(18px);
+    padding:32px;
+    border-radius:var(--radius-lg);
+    border:0;
+    background:var(--surface);
+    box-shadow:none;
     overflow:hidden;
 }
 
@@ -40,18 +39,15 @@
 }
 
 .login-brand-mark{
-    width:48px;
-    height:48px;
+    width:44px;
+    height:44px;
     flex:0 0 auto;
     display:grid;
     place-items:center;
-    border-radius:16px;
-    color:var(--gold-soft);
-    font-size:.94rem;
-    font-weight:800;
-    letter-spacing:.12em;
-    background:rgba(212,175,55,.1);
-    border:1px solid rgba(212,175,55,.18);
+    border-radius:var(--radius-sm);
+    color:var(--accent);
+    background:var(--accent-soft-2);
+    border:0;
 }
 
 .login-brand-copy{
@@ -62,15 +58,15 @@
 
 .login-kicker{
     color:var(--muted);
-    font-size:.72rem;
+    font-size:.79rem;
     font-weight:700;
-    letter-spacing:.14em;
+    letter-spacing:.07em;
     text-transform:uppercase;
 }
 
 .login-brand-copy strong{
-    font-size:1rem;
-    font-weight:700;
+    font-size:1.21rem;
+    font-weight:800;
 }
 
 .login-header{
@@ -80,11 +76,10 @@
 
 .login-title{
     margin:0;
-    font-family:var(--serif);
-    font-size:clamp(2.3rem, 7vw, 3.2rem);
-    line-height:.92;
-    font-weight:400;
-    letter-spacing:-.06em;
+    font-size:clamp(1.9rem, 6vw, 2.43rem);
+    line-height:1.1;
+    font-weight:700;
+    letter-spacing:-.02em;
 }
 
 .login-subtitle{
@@ -107,10 +102,10 @@
     display:grid;
     gap:6px;
     padding:13px 15px;
-    border-radius:18px;
-    border:1px solid rgba(239,122,122,.24);
-    background:rgba(239,122,122,.09);
-    color:#ffe1e1;
+    border-radius:var(--radius-md);
+    border:0;
+    background:var(--danger-soft);
+    color:var(--danger-ink);
     font-size:.86rem;
     line-height:1.5;
 }
@@ -123,10 +118,10 @@
 
 .login-submit{
     width:100%;
-    min-height:50px;
+    min-height:48px;
     margin-top:4px;
-    border-radius:16px;
-    font-size:.94rem;
+    border-radius:var(--radius-pill);
+    font-size:1rem;
 }
 
 .login-google{
@@ -163,7 +158,7 @@
 }
 
 .login-legal-links a:hover{
-    color:var(--gold-soft);
+    color:var(--accent);
 }
 
 .login-legal-links span{
@@ -171,33 +166,30 @@
 }
 
 @media (max-width:640px){
-    .login-shell{
+.login-shell{
         padding:18px 12px;
     }
 
-    .login-card{
+.login-card{
         gap:20px;
         padding:var(--pad-card) 18px;
-        border-radius:24px;
     }
 
-    .login-brand{
+.login-brand{
         gap:12px;
     }
 
-    .login-brand-mark{
-        width:42px;
-        height:42px;
-        border-radius:14px;
-        font-size:.86rem;
+.login-brand-mark{
+        width:40px;
+        height:40px;
     }
 
-    .login-subtitle{
+.login-subtitle{
         font-size:.88rem;
     }
 
-    .login-submit{
+.login-submit{
         min-height:46px;
-        border-radius:14px;
     }
+
 }

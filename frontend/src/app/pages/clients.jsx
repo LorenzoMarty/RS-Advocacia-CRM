@@ -12,9 +12,12 @@ import {
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, ChevronUp, FolderInput, Plus } from 'lucide-react';
 
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
+import { Segmented } from '@/components/ui/segmented';
 import { cn } from '@/lib/utils';
 
 import { useConfirmPopup } from '../hooks/use-confirm-popup';
@@ -29,6 +32,7 @@ import {
   formatDocument,
   formatPhone,
   stripPhone,
+  getAreaKey,
   getClientTypeLabel,
   getStatusTone,
   stripDocument,
@@ -44,8 +48,7 @@ import {
   DetailStack,
   EmptyState,
   Field,
-  NotFoundState,
-} from './common';
+  NotFoundState, FormAside, FormHeader, FormLayout } from './common';
 import { ClientDocuments } from '../components/client-documents';
 import { ClientDriveDiscoveryWizard } from '../components/client-drive-discovery-wizard';
 
@@ -73,95 +76,162 @@ const SORT_ICONS = {
 };
 
 const CLIENT_TIER_CLASSES = {
-  esporadico: 'border-border bg-white/[.03] text-soft',
-  mensalista: 'border-primary/20 bg-primary/10 text-primary',
+  esporadico: 'border border-line-strong bg-transparent text-ink-2',
+  mensalista: 'border border-transparent bg-accent-soft-2 text-[var(--accent-hover)]',
 };
 
-const ClientRow = memo(function ClientRow({ client, processCount, onDelete }) {
+const LIST_GRID = 'grid-cols-[minmax(170px,2fr)_96px_minmax(120px,1.5fr)_72px]';
+const CLIENT_TYPE_TABS = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'mensalista', label: 'Mensalistas' },
+  { value: 'esporadico', label: 'Esporádicos' },
+];
+
+function ClientTierChip({ type, className }) {
   return (
-    <Motion.article
-      className="grid grid-cols-1 items-start gap-3 rounded-2xl border border-border bg-accent/5 p-4 transition-colors hover:border-primary/20 hover:bg-primary/5 sm:grid-cols-[auto_1fr_auto] sm:items-center lg:grid-cols-[auto_minmax(0,1.3fr)_minmax(260px,.95fr)_120px_272px]"
+    <Badge variant="outline" className={cn('px-2.5 py-1 text-[.86rem]', CLIENT_TIER_CLASSES[type], className)}>
+      {getClientTypeLabel(type)}
+    </Badge>
+  );
+}
+
+const ClientRow = memo(function ClientRow({ client, processCount, selected, onSelect }) {
+  return (
+    <Motion.button
+      type="button"
+      aria-pressed={selected}
+      onClick={() => onSelect(client)}
+      className={cn(
+        'grid w-full items-center gap-3 rounded-md px-3.5 py-3 text-left transition-colors hover:bg-surface-2',
+        LIST_GRID,
+        selected && 'bg-surface-2 shadow-[inset_0_0_0_1.5px_var(--accent-soft-2)]',
+      )}
       variants={staggerItem}
     >
-      <div
-        className="hidden size-11 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-sm font-bold text-primary sm:grid"
-        aria-hidden="true"
-      >
-        {client.name.slice(0, 1).toUpperCase()}
-      </div>
-
-      <div className="min-w-0">
-        <h2 className="line-clamp-2 break-words font-serif text-2xl leading-[.95] text-foreground sm:text-3xl">
-          {client.name}
-        </h2>
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <Badge variant="outline" className={cn('uppercase tracking-wide', CLIENT_TIER_CLASSES[client.clientType])}>
-            {getClientTypeLabel(client.clientType)}
-          </Badge>
-          {client.ativo === false ? (
-            <Badge variant="destructive" className="uppercase tracking-wide">Inativo (Drive)</Badge>
-          ) : null}
-        </div>
-        <span className="mt-1.5 block text-sm text-muted-foreground">
-          {documentLabel(client.document)} {formatDocument(client.document)}
-        </span>
-      </div>
-
-      <div className="min-w-0">
-        <div className="flex flex-wrap gap-2 sm:grid">
-          {client.email ? (
-            <a
-              className="inline-flex h-8 max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft"
-              href={`mailto:${client.email}`}
-            >
-              {client.email}
-            </a>
-          ) : (
-            <span className="inline-flex h-8 items-center px-2.5 text-sm text-muted-foreground">-</span>
-          )}
-          {client.phone ? (
-            <a
-              className="inline-flex h-8 max-w-full items-center truncate rounded-full border border-border bg-accent/10 px-2.5 text-sm text-soft"
-              href={`tel:${client.phone}`}
-            >
-              {formatPhone(client.phone)}
-            </a>
-          ) : (
-            <span className="inline-flex h-8 items-center px-2.5 text-sm text-muted-foreground">-</span>
-          )}
+      <div className="flex min-w-0 items-center gap-3">
+        <Avatar name={client.name} seed={client.id} size={40} />
+        <div className="min-w-0">
+          <strong className="block truncate text-[1rem] font-bold text-ink">{client.name}</strong>
+          <span className="block truncate text-meta-sm text-subtle tabular-nums">
+            {documentLabel(client.document)} {formatDocument(client.document)}
+            {client.ativo === false ? ' · Inativo (Drive)' : ''}
+          </span>
         </div>
       </div>
 
-      <div className="min-w-0">
-        <strong className="block text-xl font-bold leading-none text-foreground">{processCount}</strong>
-        <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          processo{processCount === 1 ? '' : 's'}
-        </span>
+      <ClientTierChip type={client.clientType} className="justify-self-start" />
+
+      <div className="flex min-w-0 flex-col leading-tight">
+        <span className="truncate text-meta font-semibold text-ink-2">{client.email || '—'}</span>
+        <span className="truncate text-meta-sm text-subtle tabular-nums">{client.phone ? formatPhone(client.phone) : '—'}</span>
       </div>
 
-      <div className="flex min-w-0 flex-wrap items-start justify-end gap-2 lg:justify-center">
-        <Button asChild variant="outline" size="sm">
-          <Link to={`/clientes/${client.id}`}>Ver</Link>
+      <span className="text-[1.07rem] font-extrabold tabular-nums text-ink">{processCount}</span>
+    </Motion.button>
+  );
+});
+
+function ClientDetailPanel({ client, clientProcesses, onDelete }) {
+  return (
+    <aside className="sticky top-[var(--sticky-top)] hidden flex-col gap-[18px] rounded-lg bg-card p-[var(--pad-card)] xl:flex" aria-label="Detalhes do cliente">
+      <div className="flex items-center gap-3.5">
+        <Avatar name={client.name} seed={client.id} size={60} className="rounded-[20px]" />
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <strong className="break-words text-card-title text-ink">{client.name}</strong>
+          <ClientTierChip type={client.clientType} className="self-start" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="min-w-0 rounded-md bg-surface-2 px-3.5 py-3">
+          <span className="block text-meta-sm font-semibold text-muted-foreground">E-mail</span>
+          <strong className="block truncate text-meta font-bold text-ink">{client.email || '—'}</strong>
+        </div>
+        <div className="min-w-0 rounded-md bg-surface-2 px-3.5 py-3">
+          <span className="block text-meta-sm font-semibold text-muted-foreground">Telefone</span>
+          <strong className="block truncate text-meta font-bold tabular-nums text-ink">{client.phone ? formatPhone(client.phone) : '—'}</strong>
+        </div>
+        <div className="col-span-2 min-w-0 rounded-md bg-surface-2 px-3.5 py-3">
+          <span className="block text-meta-sm font-semibold text-muted-foreground">Parceiro</span>
+          <strong className="block truncate text-meta font-bold text-ink">{client.partner || '—'}</strong>
+        </div>
+      </div>
+
+      {client.notes ? <p className="m-0 text-[1rem] font-medium leading-normal text-ink-2">{client.notes}</p> : null}
+
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h3 className="m-0 text-[1.07rem] font-bold text-ink">Processos</h3>
+          <span className="text-meta font-bold text-muted-foreground tabular-nums">{clientProcesses.length}</span>
+        </div>
+        {clientProcesses.length ? (
+          clientProcesses.slice(0, 4).map((process) => {
+            const areaKey = getAreaKey(process.area);
+            return (
+              <Link
+                key={process.id}
+                to={`/processos/${process.id}`}
+                className="flex flex-col gap-1.5 rounded-md border border-line px-3.5 py-3 transition-colors hover:bg-surface-2"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <strong className="min-w-0 truncate text-[1rem] font-bold text-ink">{process.description || process.number}</strong>
+                  {areaKey ? (
+                    <span
+                      className="shrink-0 rounded-pill px-2.5 py-1 text-[.79rem] font-bold"
+                      style={{ background: `var(--cat-${areaKey})`, color: `var(--cat-${areaKey}-ink)` }}
+                    >
+                      {process.area}
+                    </span>
+                  ) : null}
+                </div>
+                {process.court ? <span className="truncate text-meta-sm text-muted-foreground">{process.court}</span> : null}
+                <span className="flex items-center gap-2 text-meta-sm font-semibold tabular-nums text-ink-2">
+                  <StatusBadge tone={getStatusTone(process.status)}>{process.status}</StatusBadge>
+                  <span className="truncate">· {process.number}</span>
+                </span>
+              </Link>
+            );
+          })
+        ) : (
+          <p className="m-0 text-meta text-muted-foreground">Nenhum processo vinculado.</p>
+        )}
+        {clientProcesses.length > 4 ? (
+          <Link to={`/clientes/${client.id}`} className="text-meta font-bold text-ink-2 hover:text-ink">
+            Ver todos os {clientProcesses.length} processos
+          </Link>
+        ) : null}
+      </div>
+
+      <div className="flex gap-2">
+        <Button asChild className="flex-1">
+          <Link to={`/processos/novo?cliente=${client.id}`}>Novo processo</Link>
         </Button>
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="secondary" className="flex-1">
+          <Link to={`/clientes/${client.id}`}>Abrir cliente</Link>
+        </Button>
+      </div>
+      <div className="flex gap-2">
+        <Button asChild variant="outline" size="sm" className="flex-1">
           <Link to={`/clientes/${client.id}/editar`}>Editar</Link>
         </Button>
-        <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => onDelete(client)}>
+        <Button variant="destructive" size="sm" className="flex-1" onClick={() => onDelete(client)}>
           Excluir
         </Button>
       </div>
-    </Motion.article>
+    </aside>
   );
-});
+}
 
 export function ClientsListPage() {
   const { clients, clientsPagination, deleteClient, loadClients, loadMoreClients, processes } = useAppState();
   const { confirm, confirmPopup } = useConfirmPopup();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [clientType, setClientType] = useState('todos');
   const [sorting, setSorting] = useState([]);
   const [discovering, setDiscovering] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
 
   // Busca/filtro por tipo agora são server-side (clientes/views.py já suporta
   // ?q=&tipo=); debounce evita uma request por tecla. Sort continua client-side
@@ -176,6 +246,7 @@ export function ClientsListPage() {
 
   const columns = useMemo(() => [
     columnHelper.accessor('name', { header: 'Cliente' }),
+    columnHelper.accessor('clientType', { header: 'Contrato', enableSorting: false }),
     columnHelper.accessor('email', { header: 'Contato', enableSorting: false }),
     columnHelper.accessor(
       (row) => processes.filter((p) => p.clientId === row.id).length,
@@ -193,6 +264,16 @@ export function ClientsListPage() {
   });
 
   const rows = table.getRowModel().rows;
+  // Painel lateral só existe em telas largas (xl); abaixo disso a linha abre a página do cliente.
+  const selectedClient = rows.find((row) => row.original.id === selectedId)?.original || rows[0]?.original || null;
+
+  function handleSelect(client) {
+    if (window.matchMedia('(min-width: 1280px)').matches) {
+      setSelectedId(client.id);
+    } else {
+      navigate(`/clientes/${client.id}`);
+    }
+  }
 
   async function handleLoadMore() {
     setLoadingMore(true);
@@ -218,133 +299,117 @@ export function ClientsListPage() {
   return (
     <>
       {confirmPopup}
-      <PageChrome label="Clientes" />
+      <PageChrome label="Clientes" primaryAction={{ label: 'Novo cliente', to: '/clientes/novo', tour: 'page-primary-action' }} />
 
-      <div className="grid gap-4">
-        <section className="mb-2">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="font-serif text-3xl text-foreground">Clientes</p>
-              <p className="mt-1 text-sm text-muted-foreground">{formatCount(clientsPagination.total)}</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" onClick={() => setDiscovering(true)}>
-                <FolderInput className="size-4" />
-                Importar do Drive
-              </Button>
-              <Button asChild>
-                <Link to="/clientes/novo" data-tour="page-primary-action">
-                  <Plus className="size-4" />
-                  Novo
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        <Card>
-          <CardContent className="flex flex-wrap items-center gap-3 py-4">
-            <div className="min-w-[180px] flex-1">
-              <PageSearch
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                label="Buscar clientes"
-              />
-            </div>
-
-            <div className="w-full sm:w-[220px]">
-              <label className="sr-only" htmlFor="clients-type-filter">Tipo do cliente</label>
-              <Select
-                id="clients-type-filter"
-                value={clientType}
-                onChange={(event) => setClientType(event.target.value)}
-                aria-label="Filtrar por tipo do cliente"
-              >
-                <option value="todos">Todos os tipos</option>
-                <option value="esporadico">Esporádicos</option>
-                <option value="mensalista">Mensalistas</option>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col gap-[var(--gap-grid)]">
+        <PageHeader title="Clientes" subtitle={formatCount(clientsPagination.total)}>
+          <PageSearch
+            className="on-bg"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por nome"
+            label="Buscar clientes"
+          />
+          <Segmented tone="bg" label="Tipo do cliente" options={CLIENT_TYPE_TABS} value={clientType} onChange={setClientType} />
+          <Button variant="secondary" onClick={() => setDiscovering(true)}>
+            <FolderInput className="size-4" />
+            Importar do Drive
+          </Button>
+        </PageHeader>
 
         {discovering ? (
           <ClientDriveDiscoveryWizard onClose={() => setDiscovering(false)} />
         ) : null}
 
-        <Card>
-          <CardContent className="py-5">
-          {rows.length ? (
-            <>
-              <div
-                className="mb-3 hidden grid-cols-[minmax(0,1.3fr)_minmax(260px,.95fr)_120px_272px] gap-3.5 px-3.5 pl-[86px] text-xs font-bold uppercase tracking-wide text-muted-foreground lg:grid"
-                aria-hidden="true"
-              >
-                {table.getHeaderGroups()[0].headers.map((header) => {
-                  const sortState = header.column.getIsSorted();
-                  return (
-                    <span
-                      key={header.id}
-                      className={cn(
-                        'inline-flex items-center gap-1.5',
-                        header.column.getCanSort() && 'cursor-pointer select-none hover:text-primary',
-                        sortState && 'text-primary',
-                      )}
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      <AnimatePresence mode="wait" initial={false}>
-                        {sortState ? (
-                          <Motion.span
-                            key={sortState}
-                            className="inline-flex items-center"
-                            initial={{ opacity: 0, y: sortState === 'asc' ? 3 : -3 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: sortState === 'asc' ? -3 : 3 }}
-                            transition={{ duration: 0.14 }}
-                          >
-                            {SORT_ICONS[sortState]}
-                          </Motion.span>
-                        ) : null}
-                      </AnimatePresence>
-                    </span>
-                  );
-                })}
-                <span className="text-center">Ações</span>
-              </div>
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-[var(--gap-grid)] xl:grid-cols-[minmax(0,1fr)_340px]">
+          <section className="rounded-lg bg-card px-3 pb-2 pt-3" aria-label="Lista de clientes">
+            {rows.length ? (
+              <div className="overflow-x-auto">
+                <div className="min-w-[620px]">
+                  <div className={cn('grid gap-3 px-3.5 py-3 text-label uppercase text-subtle', LIST_GRID)}>
+                    {table.getHeaderGroups()[0].headers.map((header) => {
+                      const sortState = header.column.getIsSorted();
+                      const canSort = header.column.getCanSort();
+                      return (
+                        <button
+                          key={header.id}
+                          type="button"
+                          disabled={!canSort}
+                          aria-label={canSort ? `Ordenar por ${header.column.columnDef.header}` : undefined}
+                          className={cn(
+                            'inline-flex items-center gap-1.5 text-left uppercase max-[1024px]:min-h-[40px]',
+                            canSort ? 'cursor-pointer select-none hover:text-ink' : 'cursor-default',
+                            sortState && 'text-ink',
+                          )}
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          <AnimatePresence mode="wait" initial={false}>
+                            {sortState ? (
+                              <Motion.span
+                                key={sortState}
+                                className="inline-flex items-center"
+                                initial={{ opacity: 0, y: sortState === 'asc' ? 3 : -3 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: sortState === 'asc' ? -3 : 3 }}
+                                transition={{ duration: 0.14 }}
+                              >
+                                {SORT_ICONS[sortState]}
+                              </Motion.span>
+                            ) : null}
+                          </AnimatePresence>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-              <Motion.div
-                className="grid gap-2.5"
-                variants={staggerContainer}
-                initial="hidden"
-                animate="visible"
-              >
-                {rows.map((row) => {
-                  const client = row.original;
-                  const processCount = processes.filter((process) => process.clientId === client.id).length;
-                  return (
-                    <ClientRow key={client.id} client={client} processCount={processCount} onDelete={handleDeleteClient} />
-                  );
-                })}
-              </Motion.div>
-
-              {clientsPagination.temMais ? (
-                <div className="mt-4 flex justify-center">
-                  <Button variant="outline" onClick={handleLoadMore} disabled={loadingMore}>
-                    {loadingMore ? 'Carregando…' : 'Carregar mais'}
-                  </Button>
+                  <Motion.div
+                    className="grid gap-0.5"
+                    variants={staggerContainer}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    {rows.map((row) => {
+                      const client = row.original;
+                      const processCount = processes.filter((process) => process.clientId === client.id).length;
+                      return (
+                        <ClientRow
+                          key={client.id}
+                          client={client}
+                          processCount={processCount}
+                          selected={selectedClient?.id === client.id}
+                          onSelect={handleSelect}
+                        />
+                      );
+                    })}
+                  </Motion.div>
                 </div>
-              ) : null}
-            </>
-          ) : (
-            <EmptyState
-              title="Nenhum cliente encontrado."
-              copy="Ajuste a busca ou troque o tipo selecionado."
-              actions={<Button asChild><Link to="/clientes/novo">Novo</Link></Button>}
+
+                {clientsPagination.temMais ? (
+                  <div className="flex justify-center p-3">
+                    <Button variant="outline" onClick={handleLoadMore} disabled={loadingMore}>
+                      {loadingMore ? 'Carregando…' : 'Carregar mais'}
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <EmptyState
+                title="Nenhum cliente encontrado."
+                copy="Ajuste a busca ou troque o tipo selecionado."
+                actions={<Button asChild><Link to="/clientes/novo">Novo</Link></Button>}
+              />
+            )}
+          </section>
+
+          {selectedClient ? (
+            <ClientDetailPanel
+              client={selectedClient}
+              clientProcesses={processes.filter((process) => process.clientId === selectedClient.id)}
+              onDelete={handleDeleteClient}
             />
-          )}
-          </CardContent>
-        </Card>
+          ) : null}
+        </div>
       </div>
     </>
   );
@@ -437,26 +502,10 @@ export function ClientFormPage() {
     <>
       <PageChrome label={isEditing ? 'Editar cliente' : 'Novo cliente'} />
 
-      <div className="grid gap-4">
-        <section className="mb-2">
-          <p className="font-serif text-3xl text-foreground">
-            {isEditing ? 'Editar cliente' : 'Novo cliente'}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isEditing ? 'Atualize os dados do cadastro com o mesmo fluxo da criação.' : 'Cadastro direto e objetivo.'}
-          </p>
+      <div className="grid gap-[var(--gap-grid)]">
+        <FormHeader title={isEditing ? 'Editar cliente' : 'Novo cliente'} subtitle={isEditing ? 'Atualize os dados do cadastro com o mesmo fluxo da criação.' : 'Cadastro direto e objetivo.'} backTo={isEditing ? `/clientes/${client.id}` : '/clientes'} backLabel={isEditing ? 'Voltar para o cliente' : 'Voltar para clientes'} />
 
-          <Link
-            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to={isEditing ? `/clientes/${client.id}` : '/clientes'}
-          >
-            <ArrowLeft className="size-3.5" />
-            {isEditing ? 'Voltar para o cliente' : 'Voltar para clientes'}
-          </Link>
-        </section>
-
-        <Card>
-          <CardContent className="py-5">
+        <FormLayout aside={<FormAside items={["Nome ou razão social", "CPF ou CNPJ válido (11 ou 14 dígitos)", "Telefone com DDD e e-mail", "Tipo de cliente e parceria de origem"]} note={"Clientes mensalistas aparecem destacados na lista."} />}>
           <form className="client-form" onSubmit={handleSubmit(onSubmit)}>
             <section className="form-group">
               <div className="group-head">
@@ -554,13 +603,12 @@ export function ClientFormPage() {
               <Button type="submit" disabled={isSubmitting}>
                 {isEditing ? 'Atualizar' : 'Salvar'}
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="secondary">
                 <Link to={isEditing ? `/clientes/${client.id}` : '/clientes'}>Cancelar</Link>
               </Button>
             </div>
           </form>
-          </CardContent>
-        </Card>
+          </FormLayout>
       </div>
     </>
   );
@@ -611,7 +659,7 @@ export function ClientDetailPage() {
     <>
       <PageChrome label="Cliente" />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <DetailHero
           breadcrumbLabel="Clientes"
           breadcrumbTo="/clientes"

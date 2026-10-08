@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -361,30 +362,15 @@ export function PetitionsPage() {
   return (
     <>
       {confirmPopup}
-      <PageChrome label="Petições ou contestações" />
-      <div className="grid gap-4">
-        <section className="mb-2">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="font-serif text-3xl text-foreground">Petições ou contestações</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Kanban separado para peças, protocolo e acompanhamento.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge>{formatCount(filteredPetitions.length, 'peça', 'peças')}</Badge>
-              <Button asChild>
-                <Link to="/peticoes-contestacoes/novo" data-tour="page-primary-action">
-                  <Plus className="size-4" />
-                  Nova peça
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
+      <PageChrome label="Petições ou contestações" primaryAction={{ label: 'Nova peça', to: '/peticoes-contestacoes/novo', tour: 'page-primary-action' }} />
+      <div className="grid gap-[var(--gap-grid)]">
+        <PageHeader title="Petições ou contestações" subtitle="Kanban separado para peças, protocolo e acompanhamento.">
+          <Badge>{formatCount(filteredPetitions.length, 'peça', 'peças')}</Badge>
+            
+        </PageHeader>
 
         <Card>
-          <CardContent className="flex flex-wrap items-center gap-3 py-4">
+          <CardContent className="flex flex-wrap items-center gap-3 py-[calc(var(--pad-card)*.75)]">
             <label
               className="toolbar-search flex-1"
               aria-label="Buscar petições ou contestações"
