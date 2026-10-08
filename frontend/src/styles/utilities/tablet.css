@@ -75,6 +75,12 @@
     row-gap: 8px;
   }
 
+.calendar-frame{
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+
 }
 
 @media (min-width: 881px) and (max-width: 1024px){

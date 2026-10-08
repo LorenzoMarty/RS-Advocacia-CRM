@@ -67,7 +67,7 @@
     .deadlines-board,
     .petitions-board,
     .prospeccao-board{
-        grid-auto-columns:minmax(260px,85%);
+        grid-auto-columns:max(240px,85%);
         scroll-snap-type:x mandatory;
     }
 }
