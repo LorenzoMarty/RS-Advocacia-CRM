@@ -28,8 +28,7 @@ import {
   EmptyState,
   Field,
   NotFoundState,
-  RelatedItem,
-} from './common';
+  RelatedItem, FormAside, FormHeader, FormLayout } from './common';
 
 const USER_PROFILE_OPTIONS = ['Administrador', 'Advogado', 'Estagiário'];
 
@@ -268,25 +267,9 @@ export function UserFormPage() {
       <PageChrome label={isEditing ? 'Editar usuário' : 'Novo usuário'} />
 
       <div className="grid gap-4">
-        <section className="mb-2">
-          <p className="text-page-title text-ink">
-            {isEditing ? 'Editar usuário' : 'Novo usuário'}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isEditing ? 'Atualize os dados do perfil sem perder o contexto atual.' : 'Cadastre um membro da equipe e defina o perfil de acesso.'}
-          </p>
+        <FormHeader title={isEditing ? 'Editar usuário' : 'Novo usuário'} subtitle={isEditing ? 'Atualize os dados do perfil sem perder o contexto atual.' : 'Cadastre um membro da equipe e defina o perfil de acesso.'} backTo={isEditing ? `/usuarios/${user.id}` : '/usuarios'} backLabel={isEditing ? 'Voltar para o usuário' : 'Voltar para usuários'} />
 
-          <Link
-            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to={isEditing ? `/usuarios/${user.id}` : '/usuarios'}
-          >
-            <ArrowLeft className="size-3.5" />
-            {isEditing ? 'Voltar para o usuário' : 'Voltar para usuários'}
-          </Link>
-        </section>
-
-        <Card>
-          <CardContent className="py-5">
+        <FormLayout aside={<FormAside items={["Nome e e-mail do usuário", "Perfil de acesso"]} note={"O perfil define o que o usuário pode ver e editar no sistema."} />}>
           <form className="user-form" onSubmit={handleSubmit(onSubmit)}>
             <div className="form-grid">
               <Field id="user-name" label="Nome" error={errors.name?.message} required>
@@ -313,13 +296,12 @@ export function UserFormPage() {
 
             <div className="form-actions">
               <Button type="submit" disabled={isSubmitting}>{isEditing ? 'Atualizar' : 'Salvar'}</Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="secondary">
                 <Link to={isEditing ? `/usuarios/${user.id}` : '/usuarios'}>Cancelar</Link>
               </Button>
             </div>
           </form>
-          </CardContent>
-        </Card>
+          </FormLayout>
       </div>
     </>
   );

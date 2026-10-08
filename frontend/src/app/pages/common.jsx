@@ -1,8 +1,9 @@
 import { Children, cloneElement, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, Trash2 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
@@ -401,5 +402,52 @@ export function NotFoundState({ title = 'Registro não encontrado.', copy = 'Vol
         <p className="mt-1.5 text-sm text-muted-foreground">{copy}</p>
       </CardContent>
     </Card>
+  );
+}
+
+// Layout padrão dos formulários: cabeçalho de página + 2 colunas (formulário à esquerda,
+// card de contexto à direita; abaixo de lg o card vai para baixo do formulário).
+export function FormHeader({ title, subtitle, backTo, backLabel }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <PageHeader title={title} subtitle={subtitle} />
+      <Link
+        className="inline-flex w-fit items-center gap-1.5 px-2 text-meta font-semibold text-muted-foreground transition-colors hover:text-ink"
+        to={backTo}
+      >
+        <ArrowLeft className="size-3.5" aria-hidden="true" />
+        {backLabel}
+      </Link>
+    </div>
+  );
+}
+
+export function FormLayout({ aside, children }) {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <Card>
+        <CardContent className="py-5">{children}</CardContent>
+      </Card>
+      {aside}
+    </div>
+  );
+}
+
+export function FormAside({ title = 'Antes de salvar', items = [], note }) {
+  return (
+    <aside className="flex flex-col gap-3.5 rounded-lg bg-card p-[22px] lg:sticky lg:top-[88px]" aria-label="Resumo do formulário">
+      <h2 className="m-0 text-card-title-sm text-ink">{title}</h2>
+      <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+        {items.map((item) => (
+          <li key={item} className="flex items-start gap-2.5 text-meta font-semibold text-ink-2">
+            <span className="mt-px grid size-5 shrink-0 place-items-center rounded-full bg-accent-soft-2 text-[var(--accent)]" aria-hidden="true">
+              <Check className="size-3" strokeWidth={2.4} />
+            </span>
+            {item}
+          </li>
+        ))}
+      </ul>
+      {note ? <p className="m-0 rounded-md bg-surface-2 px-3.5 py-3 text-meta-sm text-muted-foreground">{note}</p> : null}
+    </aside>
   );
 }

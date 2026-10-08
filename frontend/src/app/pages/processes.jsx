@@ -26,8 +26,7 @@ import {
   EmptyState,
   Field,
   NotFoundState,
-  RelatedItem,
-} from './common';
+  RelatedItem, FormAside, FormHeader, FormLayout } from './common';
 
 function validateProcessForm(form) {
   const nextErrors = {};
@@ -332,25 +331,9 @@ export function ProcessFormPage() {
       <PageChrome label={isEditing ? 'Editar processo' : 'Novo processo'} />
 
       <div className="grid gap-4">
-        <section className="mb-2">
-          <p className="text-page-title text-ink">
-            {isEditing ? 'Editar processo' : 'Novo processo'}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isEditing ? 'Ajuste os dados principais do processo sem trocar de fluxo.' : 'Registro claro e direto.'}
-          </p>
+        <FormHeader title={isEditing ? 'Editar processo' : 'Novo processo'} subtitle={isEditing ? 'Ajuste os dados principais do processo sem trocar de fluxo.' : 'Registro claro e direto.'} backTo={isEditing ? `/processos/${process.id}` : '/processos'} backLabel={isEditing ? 'Voltar para o processo' : 'Voltar para processos'} />
 
-          <Link
-            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to={isEditing ? `/processos/${process.id}` : '/processos'}
-          >
-            <ArrowLeft className="size-3.5" />
-            {isEditing ? 'Voltar para o processo' : 'Voltar para processos'}
-          </Link>
-        </section>
-
-        <Card>
-          <CardContent className="py-5">
+        <FormLayout aside={<FormAside items={["Número do processo e cliente vinculado", "Responsável e status", "Área jurídica e vara", "Situação do advogado nos autos"]} note={"Se o advogado não estiver habilitado, a lista de processos mostra um alerta."} />}>
           <form className="process-form" onSubmit={handleSubmit}>
             <section className="form-group">
               <div className="group-head">
@@ -473,13 +456,12 @@ export function ProcessFormPage() {
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Salvando…' : isEditing ? 'Atualizar' : 'Salvar'}
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="secondary">
                 <Link to={isEditing ? `/processos/${process.id}` : '/processos'}>Cancelar</Link>
               </Button>
             </div>
           </form>
-          </CardContent>
-        </Card>
+          </FormLayout>
       </div>
     </>
   );
