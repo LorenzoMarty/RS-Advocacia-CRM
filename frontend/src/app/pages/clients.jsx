@@ -48,8 +48,7 @@ import {
   DetailStack,
   EmptyState,
   Field,
-  NotFoundState,
-} from './common';
+  NotFoundState, FormAside, FormHeader, FormLayout } from './common';
 import { ClientDocuments } from '../components/client-documents';
 import { ClientDriveDiscoveryWizard } from '../components/client-drive-discovery-wizard';
 
@@ -504,25 +503,9 @@ export function ClientFormPage() {
       <PageChrome label={isEditing ? 'Editar cliente' : 'Novo cliente'} />
 
       <div className="grid gap-4">
-        <section className="mb-2">
-          <p className="text-page-title text-ink">
-            {isEditing ? 'Editar cliente' : 'Novo cliente'}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isEditing ? 'Atualize os dados do cadastro com o mesmo fluxo da criação.' : 'Cadastro direto e objetivo.'}
-          </p>
+        <FormHeader title={isEditing ? 'Editar cliente' : 'Novo cliente'} subtitle={isEditing ? 'Atualize os dados do cadastro com o mesmo fluxo da criação.' : 'Cadastro direto e objetivo.'} backTo={isEditing ? `/clientes/${client.id}` : '/clientes'} backLabel={isEditing ? 'Voltar para o cliente' : 'Voltar para clientes'} />
 
-          <Link
-            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to={isEditing ? `/clientes/${client.id}` : '/clientes'}
-          >
-            <ArrowLeft className="size-3.5" />
-            {isEditing ? 'Voltar para o cliente' : 'Voltar para clientes'}
-          </Link>
-        </section>
-
-        <Card>
-          <CardContent className="py-5">
+        <FormLayout aside={<FormAside items={["Nome ou razão social", "CPF ou CNPJ válido (11 ou 14 dígitos)", "Telefone com DDD e e-mail", "Tipo de cliente e parceria de origem"]} note={"Clientes mensalistas aparecem destacados na lista."} />}>
           <form className="client-form" onSubmit={handleSubmit(onSubmit)}>
             <section className="form-group">
               <div className="group-head">
@@ -620,13 +603,12 @@ export function ClientFormPage() {
               <Button type="submit" disabled={isSubmitting}>
                 {isEditing ? 'Atualizar' : 'Salvar'}
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="secondary">
                 <Link to={isEditing ? `/clientes/${client.id}` : '/clientes'}>Cancelar</Link>
               </Button>
             </div>
           </form>
-          </CardContent>
-        </Card>
+          </FormLayout>
       </div>
     </>
   );

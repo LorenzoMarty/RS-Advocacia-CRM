@@ -166,25 +166,11 @@ export function EventFormPage() {
       <PageChrome label={formTitle} />
 
       <div className="grid gap-4">
-        <section className="mb-2">
-          <p className="text-page-title text-ink">{formTitle}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isEditing
+        <FormHeader title={formTitle} subtitle={isEditing
               ? "Ajuste o agendamento e mantenha os vínculos essenciais atualizados."
-              : "Cadastro direto, com foco em agendamento e vínculos essenciais."}
-          </p>
+              : "Cadastro direto, com foco em agendamento e vínculos essenciais."} backTo={backTarget} backLabel={backLabel} />
 
-          <Link
-            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to={backTarget}
-          >
-            <ArrowLeft className="size-3.5" />
-            {backLabel}
-          </Link>
-        </section>
-
-        <Card>
-          <CardContent className="py-5">
+        <FormLayout aside={<FormAside items={["Título, tipo e prioridade", "Início e fim do compromisso", "Cliente e processo vinculados", "Responsável pelo compromisso"]} note={"Compromissos aparecem na Agenda e no Painel."} />}>
           <form className="event-form" onSubmit={handleSubmit}>
             <section className="form-section">
               <div className="section-headline">
@@ -467,13 +453,12 @@ export function EventFormPage() {
               <Button type="submit">
                 {isEditing ? "Atualizar" : "Salvar"}
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="secondary">
                 <Link to={isEditing ? `/agenda/${eventItem.id}` : "/agenda"}>Cancelar</Link>
               </Button>
             </div>
           </form>
-          </CardContent>
-        </Card>
+          </FormLayout>
       </div>
     </>
   );

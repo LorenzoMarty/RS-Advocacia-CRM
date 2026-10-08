@@ -150,16 +150,16 @@
     display:grid;
     gap:8px;
     padding:16px;
-    border-radius:18px;
-    border:1px solid var(--line-strong);
-    background:var(--line-strong);
+    border-radius:var(--radius-md);
+    border:0;
+    background:var(--accent-soft);
 }
 
 .deadline-generated-name span{
-    color:var(--accent);
-    font-size:.72rem;
-    font-weight:800;
-    letter-spacing:.14em;
+    color:var(--accent-hover);
+    font-size:.79rem;
+    font-weight:700;
+    letter-spacing:.07em;
     text-transform:uppercase;
 }
 
