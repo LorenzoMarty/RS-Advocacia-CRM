@@ -386,15 +386,23 @@ function MoreSheet({ open, onClose, items, onOpenAppearance, onStartTour }) {
 function BottomNavigation({ onOpenAppearance, onStartTour }) {
   const navItems = useVisibleNavItems();
   const location = useLocation();
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreButtonRef = useRef(null);
+  // Guarda a rota em que a folha foi aberta: mudar de rota (inclusive voltar do navegador) fecha sozinha.
+  const [moreOpenPath, setMoreOpenPath] = useState(null);
+  const moreOpen = moreOpenPath === location.pathname;
   const fixedItems = BOTTOM_NAV_FIXED.map((key) => navItems.find((item) => item.key === key)).filter(Boolean);
   const moreItems = navItems.filter((item) => !BOTTOM_NAV_FIXED.includes(item.key));
   const moreActive = moreItems.some((item) => (item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to)));
-  const closeMore = useCallback(() => {
-    setMoreOpen(false);
-    moreButtonRef.current?.focus();
-  }, []);
+  const closeMore = useCallback(() => setMoreOpenPath(null), []);
+
+  // Enquanto aberta, o fundo não rola.
+  useEffect(() => {
+    if (!moreOpen) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [moreOpen]);
 
   const cellClass = 'group grid min-h-[52px] min-w-0 flex-1 place-items-center content-center gap-0.5 rounded-md px-1 py-1.5 text-ink-2 transition-colors hover:bg-surface-2';
   const activeClass = 'bg-accent-soft font-bold text-ink hover:bg-accent-soft';
@@ -418,13 +426,12 @@ function BottomNavigation({ onOpenAppearance, onStartTour }) {
             </NavLink>
           ))}
           <button
-            ref={moreButtonRef}
             type="button"
             aria-haspopup="dialog"
             aria-expanded={moreOpen}
             aria-label="Mais áreas do sistema"
             className={cn(cellClass, moreActive && activeClass)}
-            onClick={() => setMoreOpen(true)}
+            onClick={() => setMoreOpenPath(location.pathname)}
           >
             <Ellipsis className={cn('size-[20px]', moreActive && 'text-[var(--accent)]')} aria-hidden="true" />
             <span className="max-w-full truncate text-[.7rem] font-bold">Mais</span>

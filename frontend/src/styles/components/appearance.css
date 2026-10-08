@@ -1,42 +1,101 @@
-/* Mobile floating trigger — shown only where the sidebar is hidden (<=1200px). */
-.appearance-fab{
-    display:none;
+/* Panel */
+.appearance-panel{
+    width:min(420px, 100%);
+    gap:18px;
 }
 
-@media (max-width:1200px){
-    /* bottom-right, floating above the bottom nav bar — top-right collided
-       with every list page's header action button ("Novo X"), since both
-       sat in the same corner regardless of viewport width. */
-.appearance-fab{
-        position:fixed;
-        bottom:calc(env(safe-area-inset-bottom, 0px) + 104px);
-        right:calc(env(safe-area-inset-right, 0px) + 14px);
-        z-index:45;
-        width:44px;
-        height:44px;
-        display:grid;
-        place-items:center;
-        border-radius:var(--radius-pill);
-        border:0;
-        background:var(--surface);
-        color:var(--ink-2);
-        box-shadow:var(--shadow-hover);
-    }
+.appearance-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+}
 
-.appearance-fab:hover{
-        background:var(--surface-2);
-        color:var(--ink);
-    }
+.appearance-close{
+    flex:0 0 auto;
+    width:36px;
+    height:36px;
+    display:grid;
+    place-items:center;
+    border-radius:var(--radius-pill);
+    border:0;
+    background:var(--surface-2);
+    color:var(--ink-2);
+    transition:border-color .18s ease,background .18s ease,color .18s ease;
+}
 
+.appearance-close:hover{
+    background:var(--surface-3);
+    color:var(--ink);
+}
+
+.appearance-groups{
+    display:grid;
+    gap:14px;
+}
+
+.appearance-group{
+    display:grid;
+    gap:8px;
+}
+
+.appearance-group-label{
+    font-size:.79rem;
+    font-weight:700;
+    letter-spacing:.07em;
+    text-transform:uppercase;
+    color:var(--subtle);
+}
+
+.appearance-segment{
+    display:grid;
+    grid-auto-flow:column;
+    grid-auto-columns:minmax(0, 1fr);
+    gap:4px;
+    padding:4px;
+    border-radius:var(--radius-pill);
+    border:0;
+    background:var(--surface-2);
+}
+
+.appearance-segment-item{
+    min-height:36px;
+    padding:0 8px;
+    border-radius:var(--radius-pill);
+    border:0;
+    background:transparent;
+    color:var(--ink-2);
+    font-size:.93rem;
+    font-weight:700;
+    transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+
+.appearance-segment-item:hover{
+    color:var(--ink);
+}
+
+.appearance-segment-item.is-active{
+    color:var(--ink);
+    background:var(--surface);
+    box-shadow:0 1px 3px rgba(23,24,28,.1);
+}
+
+.appearance-actions{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    padding-top:2px;
 }
 
 @media (max-width:640px){
-.appearance-fab{
-        bottom:calc(env(safe-area-inset-bottom, 0px) + 92px);
-        right:calc(env(safe-area-inset-right, 0px) + 10px);
-        width:40px;
-        height:40px;
+.appearance-actions{
+        justify-content:stretch;
+    }
+
+.appearance-actions .btn,
+.appearance-actions .btn-secondary{
+        flex:1;
     }
 
 }
-
