@@ -47,7 +47,7 @@ export function ProductivityPage() {
   return (
     <>
       <PageChrome label="Produtividade" />
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <PageHeader title="Minha produtividade" subtitle="Seu tempo e suas entregas no período">
           <PeriodFilter
               period={period}
@@ -60,7 +60,7 @@ export function ProductivityPage() {
         </PageHeader>
 
         <Card>
-          <CardContent className="py-5">
+          <CardContent className="py-[var(--pad-card)]">
           <div className="productivity-kpis">
             {kpis.map((item) => (
               <div key={item.label} className="productivity-kpi">
@@ -79,7 +79,7 @@ export function ProductivityPage() {
 
         {isLoading ? (
           <Card>
-            <CardContent className="py-5">
+            <CardContent className="py-[var(--pad-card)]">
               <p className="text-sm text-muted-foreground">Carregando sua produtividade...</p>
             </CardContent>
           </Card>

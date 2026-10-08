@@ -261,7 +261,7 @@ export function AgendaListPage() {
         <PageHeader title="Agenda" subtitle={formatCount(filteredEvents.length)} />
 
         <Card className="mb-4">
-          <CardContent className="flex flex-wrap items-center gap-3 py-4">
+          <CardContent className="flex flex-wrap items-center gap-3 py-[calc(var(--pad-card)*.75)]">
             <label
               className="toolbar-search"
               aria-label="Buscar compromissos"
@@ -338,7 +338,7 @@ export function AgendaListPage() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-[var(--gap-grid)] lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <div>
@@ -513,7 +513,7 @@ export function AgendaListPage() {
           </Card>
 
           <Card>
-            <CardContent className="flex flex-col gap-4 py-5">
+            <CardContent className="flex flex-col gap-[var(--gap-grid)] py-[var(--pad-card)]">
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <h2 className="text-card-title-sm text-ink">Hoje</h2>

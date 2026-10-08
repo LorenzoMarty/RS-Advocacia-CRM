@@ -281,7 +281,7 @@
 /* Busca sobre o fundo da página (--bg): campo branco em vez de --surface-2. */
 .page-search-inline.on-bg .page-search input{background:var(--surface)}
 
-.page-search-inline.on-bg{width:min(100%, 240px)}
+.page-search-inline.on-bg{width:220px;max-width:100%;flex:0 0 auto}
 
 .on-bg .rs-select-trigger{background:var(--surface)}
 

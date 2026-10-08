@@ -196,11 +196,11 @@ export function FinanceiroPage() {
     <>
       {confirmPopup}
       <PageChrome label="Financeiro" primaryAction={{ label: 'Novo lançamento', to: '/financeiro/novo', tour: 'page-primary-action' }} />
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <PageHeader title="Financeiro" subtitle="Receitas, despesas e fluxo do escritório" />
 
         <Card>
-          <CardContent className="grid gap-4 py-5">
+          <CardContent className="grid gap-[var(--gap-grid)] py-[var(--pad-card)]">
             {dashboardError ? (
               <div className="empty" role="alert">
                 <strong>Não foi possível carregar as métricas.</strong>
@@ -234,7 +234,7 @@ export function FinanceiroPage() {
         </Card>
 
         <Card>
-          <CardContent className="grid gap-3.5 py-5">
+          <CardContent className="grid gap-3.5 py-[var(--pad-card)]">
             <div className="financeiro-tabs" role="tablist" aria-label="Filtrar lançamentos por status">
               {FINANCE_TABS.map((item) => (
                 <button

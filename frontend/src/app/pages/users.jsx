@@ -65,7 +65,7 @@ const UserRow = memo(function UserRow({ user, onDelete }) {
         <h2 className="m-0 min-w-0 truncate text-[1rem] font-bold text-ink">{user.name}</h2>
       </div>
 
-      <a className="min-w-0 truncate text-meta font-semibold text-ink-2 hover:text-ink" href={`mailto:${user.email}`}>
+      <a className="min-w-0 truncate max-[1024px]:flex max-[1024px]:min-h-[40px] max-[1024px]:items-center text-meta font-semibold text-ink-2 hover:text-ink" href={`mailto:${user.email}`}>
         {user.email}
       </a>
 
@@ -161,7 +161,7 @@ export function UsersListPage() {
       {confirmPopup}
       <PageChrome label="Usuários" primaryAction={{ label: 'Novo usuário', to: '/usuarios/novo', tour: 'page-primary-action' }} />
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-[var(--gap-grid)]">
         <PageHeader title="Usuários" subtitle={formatCount(filteredUsers.length)}>
           <PageSearch className="on-bg" value={search} onChange={(event) => setSearch(event.target.value)} label="Buscar usuários" />
         </PageHeader>
@@ -266,7 +266,7 @@ export function UserFormPage() {
     <>
       <PageChrome label={isEditing ? 'Editar usuário' : 'Novo usuário'} />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <FormHeader title={isEditing ? 'Editar usuário' : 'Novo usuário'} subtitle={isEditing ? 'Atualize os dados do perfil sem perder o contexto atual.' : 'Cadastre um membro da equipe e defina o perfil de acesso.'} backTo={isEditing ? `/usuarios/${user.id}` : '/usuarios'} backLabel={isEditing ? 'Voltar para o usuário' : 'Voltar para usuários'} />
 
         <FormLayout aside={<FormAside items={["Nome e e-mail do usuário", "Perfil de acesso"]} note={"O perfil define o que o usuário pode ver e editar no sistema."} />}>
@@ -324,7 +324,7 @@ export function UserDetailPage() {
     <>
       <PageChrome label="Usuário" />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <DetailHero
           breadcrumbLabel="Usuários"
           breadcrumbTo="/usuarios"

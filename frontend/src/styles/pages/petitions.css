@@ -6,13 +6,6 @@
 
 .petition-form .span-2{grid-column:1/-1}
 
-.petitions-board{
-    display:grid;
-    grid-template-columns:repeat(4,minmax(220px,1fr));
-    gap:16px;
-    min-width:0;
-    align-items:start;
-}
 
 .petition-column{
     --petition-dot:var(--subtle);
@@ -209,19 +202,12 @@
 
 }
 
-@media (max-width:1280px){
-.petitions-board{grid-template-columns:repeat(4,minmax(230px,1fr));overflow-x:auto;padding-bottom:4px}
-
-}
-
 @media (max-width:820px){
 .petition-form-panel{padding:16px}
 
 .petition-form .form-grid{grid-template-columns:1fr}
 
-.petitions-board{grid-template-columns:1fr;overflow:visible;padding:14px}
-
-.petition-column{padding:12px;border-radius:var(--radius-md)}
+.petition-column{min-height:0}
 
 .petition-card{padding:14px;border-radius:var(--radius-md)}
 

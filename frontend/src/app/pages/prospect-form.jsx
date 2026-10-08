@@ -77,7 +77,7 @@ export function ProspectFormPage() {
   return (
     <>
       <PageChrome label={isEditing ? 'Editar prospect' : 'Novo prospect'} />
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <FormHeader title={isEditing ? 'Editar prospect' : 'Novo prospect'} backTo="/prospeccao" backLabel="Voltar para prospecção" />
 
         <FormLayout aside={<FormAside items={["Nome e demanda do contato", "Responsável e prioridade", "Próximo passo combinado"]} note={"O prospect avança pelo funil direto no card da Prospecção."} />}>

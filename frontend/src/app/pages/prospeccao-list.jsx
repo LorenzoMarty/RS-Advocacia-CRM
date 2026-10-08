@@ -260,7 +260,7 @@ export function ProspectKanbanPage() {
   return (
     <>
       <PageChrome label="Prospecção" primaryAction={{ label: 'Novo prospect', to: '/prospeccao/novo', tour: 'page-primary-action' }} />
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <PageHeader title="Prospecção" subtitle="Funil de captação de clientes" />
 
         <Motion.div
@@ -270,24 +270,24 @@ export function ProspectKanbanPage() {
           animate="visible"
         >
           <Motion.div variants={pop}>
-            <Card><CardContent className="py-4"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Total</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.total}</strong></CardContent></Card>
+            <Card><CardContent className="py-[calc(var(--pad-card)*.75)]"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Total</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.total}</strong></CardContent></Card>
           </Motion.div>
           <Motion.div variants={pop}>
-            <Card><CardContent className="py-4"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Novos no mês</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.novosMes}</strong></CardContent></Card>
+            <Card><CardContent className="py-[calc(var(--pad-card)*.75)]"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Novos no mês</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.novosMes}</strong></CardContent></Card>
           </Motion.div>
           <Motion.div variants={pop}>
-            <Card><CardContent className="py-4"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Convertidos</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.convertidos}</strong></CardContent></Card>
+            <Card><CardContent className="py-[calc(var(--pad-card)*.75)]"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Convertidos</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.convertidos}</strong></CardContent></Card>
           </Motion.div>
           <Motion.div variants={pop}>
-            <Card><CardContent className="py-4"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Perdidos</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.perdidos}</strong></CardContent></Card>
+            <Card><CardContent className="py-[calc(var(--pad-card)*.75)]"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Perdidos</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.perdidos}</strong></CardContent></Card>
           </Motion.div>
           <Motion.div variants={pop}>
-            <Card><CardContent className="py-4"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Taxa conversão</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.taxa}%</strong></CardContent></Card>
+            <Card><CardContent className="py-[calc(var(--pad-card)*.75)]"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Taxa conversão</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.taxa}%</strong></CardContent></Card>
           </Motion.div>
         </Motion.div>
 
         <Card>
-          <CardContent className="flex flex-wrap items-center gap-3 py-4">
+          <CardContent className="flex flex-wrap items-center gap-3 py-[calc(var(--pad-card)*.75)]">
             <div className="min-w-[180px] flex-1">
               <PageSearch
                 value={search}

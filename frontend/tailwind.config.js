@@ -57,7 +57,7 @@ export default {
       },
       // Escala de tipo do redesign em rem (1rem = --font-base * escalas do usuário).
       fontSize: {
-        'page-title': ['2.43rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'page-title': ['1.85rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],
         'card-title': ['1.43rem', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '700' }],
         'card-title-sm': ['1.29rem', { lineHeight: '1.2', fontWeight: '700' }],
         kpi: ['3.43rem', { lineHeight: '1', letterSpacing: '-0.03em', fontWeight: '800' }],

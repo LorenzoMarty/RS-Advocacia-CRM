@@ -11,7 +11,7 @@ export function RiskSummary({ summary, risk, period, onPeriodChange }) {
         <PeriodFilter value={period} onChange={onPeriodChange} />
       </PageHeader>
 
-      <div className="mt-4 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[minmax(260px,330px)_minmax(0,1fr)]">
+      <div className="mt-4 grid grid-cols-1 items-stretch gap-[var(--gap-grid)] lg:grid-cols-[minmax(260px,330px)_minmax(0,1fr)]">
         <RiskScoreCard {...risk} />
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           <AlertCard

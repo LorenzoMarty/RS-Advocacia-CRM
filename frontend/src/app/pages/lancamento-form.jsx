@@ -90,7 +90,7 @@ export function LancamentoFormPage() {
   return (
     <>
       <PageChrome label={isEditing ? 'Editar lançamento' : 'Novo lançamento'} />
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <FormHeader title={isEditing ? 'Editar lançamento' : 'Novo lançamento'} backTo="/financeiro" backLabel="Voltar para financeiro" />
 
         <FormLayout aside={<FormAside items={["Descrição, tipo e categoria", "Valor e data de vencimento", "Cliente ou processo relacionado"]} note={"Receitas pendentes entram em \"A receber\" no Painel e no Financeiro."} />}>

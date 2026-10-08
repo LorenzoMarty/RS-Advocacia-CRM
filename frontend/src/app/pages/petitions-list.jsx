@@ -363,14 +363,14 @@ export function PetitionsPage() {
     <>
       {confirmPopup}
       <PageChrome label="Petições ou contestações" primaryAction={{ label: 'Nova peça', to: '/peticoes-contestacoes/novo', tour: 'page-primary-action' }} />
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <PageHeader title="Petições ou contestações" subtitle="Kanban separado para peças, protocolo e acompanhamento.">
           <Badge>{formatCount(filteredPetitions.length, 'peça', 'peças')}</Badge>
             
         </PageHeader>
 
         <Card>
-          <CardContent className="flex flex-wrap items-center gap-3 py-4">
+          <CardContent className="flex flex-wrap items-center gap-3 py-[calc(var(--pad-card)*.75)]">
             <label
               className="toolbar-search flex-1"
               aria-label="Buscar petições ou contestações"

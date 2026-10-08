@@ -85,7 +85,7 @@ function KpiCard({ title, icon, dark = false, children }) {
   return (
     <div
       className={cn(
-        "flex min-h-[164px] flex-col gap-3.5 rounded-lg px-[22px] py-5",
+        "flex min-h-[124px] flex-col gap-2.5 rounded-lg p-[var(--pad-card)] sm:min-h-[148px] sm:gap-3.5",
         dark ? "bg-accent-soft-2 text-ink" : "bg-card text-ink",
       )}
     >
@@ -224,22 +224,22 @@ export function DashboardPage() {
   const nextProcess = nextDeadline ? processOf(nextDeadline.processId) : null;
 
   return (
-    <div className="dashboard-page flex flex-col gap-4">
+    <div className="dashboard-page flex flex-col gap-[var(--gap-grid)]">
       <PageChrome label="Painel" primaryAction={PRIMARY_ACTION} />
 
       <PageHeader title={greeting(currentUser?.name)} subtitle={focusParts.length ? focusParts.join(" · ") : "Nada urgente agora."}>
         <Segmented tone="bg" label="Período" options={RANGE_OPTIONS} value={range} onChange={setRange} />
       </PageHeader>
 
-      <MotionDiv className="flex flex-col gap-4" variants={fadeUp} initial="hidden" animate="visible">
-        <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2", canSeeFinance ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
+      <MotionDiv className="flex flex-col gap-[var(--gap-grid)]" variants={fadeUp} initial="hidden" animate="visible">
+        <div className={cn("grid grid-cols-2 gap-[var(--gap-grid)]", canSeeFinance ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
           <KpiCard dark title={`Prazos em ${range} dias`} icon={ArrowUpRight}>
-            <strong className="text-kpi tabular-nums">{rangeDeadlines.length}</strong>
+            <strong className="text-[2.1rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums sm:text-kpi">{rangeDeadlines.length}</strong>
             <KpiNote>{rangeHigh} com prioridade alta</KpiNote>
           </KpiCard>
 
           <KpiCard title="Processos ativos" icon={Briefcase}>
-            <strong className="text-kpi tabular-nums">{activeProcesses.length}</strong>
+            <strong className="text-[2.1rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums sm:text-kpi">{activeProcesses.length}</strong>
             {areaBar.length ? (
               <>
                 <div className="flex h-2 gap-1 overflow-hidden rounded-pill" aria-hidden="true">
@@ -260,7 +260,7 @@ export function DashboardPage() {
           </KpiCard>
 
           <KpiCard title="Compromissos" icon={CalendarDays}>
-            <strong className="text-kpi tabular-nums">{rangeEvents.length}</strong>
+            <strong className="text-[2.1rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums sm:text-kpi">{rangeEvents.length}</strong>
             <KpiNote>
               {hearings} audiências · {meetings} reuniões
             </KpiNote>
@@ -268,7 +268,7 @@ export function DashboardPage() {
 
           {canSeeFinance ? (
             <KpiCard title="A receber" icon={Coins}>
-              <strong className="text-[2.86rem] font-extrabold leading-tight tracking-[-0.03em] tabular-nums">
+              <strong className="text-[1.7rem] font-extrabold leading-tight tracking-[-0.03em] tabular-nums sm:text-[2.86rem]">
                 <span className="mr-1 text-[1.43rem] font-bold text-muted-foreground">R$</span>
                 {formatBRL(receivableTotal)}
               </strong>
@@ -279,8 +279,8 @@ export function DashboardPage() {
           ) : null}
         </div>
 
-        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="rounded-lg bg-card px-[22px] pb-2.5 pt-[22px]" aria-labelledby="dash-deadlines">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-[var(--gap-grid)] lg:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_664px]">
+          <section className="rounded-lg bg-card px-[var(--pad-card)] pb-2.5 pt-[var(--pad-card)]" aria-labelledby="dash-deadlines">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 id="dash-deadlines" className="m-0 text-card-title text-ink">Prazos fatais</h2>
@@ -349,8 +349,8 @@ export function DashboardPage() {
             </Link>
           </section>
 
-          <div className="flex flex-col gap-4">
-            <section className="flex flex-col gap-3.5 rounded-lg bg-card p-[22px]" aria-label="Próximo prazo">
+          <div className="flex flex-col gap-[var(--gap-grid)] 2xl:grid 2xl:grid-cols-2 2xl:items-start">
+            <section className="flex flex-col gap-3.5 rounded-lg bg-card p-[var(--pad-card)] 2xl:col-span-2" aria-label="Próximo prazo">
               <div className="flex items-center justify-between">
                 <span className="text-label uppercase text-subtle">Próximo prazo</span>
                 {nextDue ? (
@@ -390,7 +390,7 @@ export function DashboardPage() {
               )}
             </section>
 
-            <section className="flex flex-col gap-3.5 rounded-lg bg-card p-[22px]" aria-labelledby="dash-today">
+            <section className="flex flex-col gap-3.5 rounded-lg bg-card p-[var(--pad-card)]" aria-labelledby="dash-today">
               <div className="flex items-center justify-between">
                 <h2 id="dash-today" className="m-0 text-card-title-sm text-ink">Hoje</h2>
                 <span className="text-meta font-semibold text-muted-foreground">
@@ -419,7 +419,7 @@ export function DashboardPage() {
               )}
             </section>
 
-            <section className="flex flex-col gap-4 rounded-lg bg-card p-[22px]" aria-labelledby="dash-week">
+            <section className="flex flex-col gap-[var(--gap-grid)] rounded-lg bg-card p-[var(--pad-card)]" aria-labelledby="dash-week">
               <div className="flex items-baseline justify-between">
                 <h2 id="dash-week" className="m-0 text-card-title-sm text-ink">Carga da semana</h2>
                 <span className="text-meta-sm font-semibold text-muted-foreground">prazos + compromissos</span>

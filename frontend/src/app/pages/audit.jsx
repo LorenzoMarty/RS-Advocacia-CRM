@@ -50,7 +50,7 @@ function AuditDashboard({
   const data = overview || EMPTY_OVERVIEW;
 
   return (
-    <div className="grid gap-4 pt-5">
+    <div className="grid gap-[var(--gap-grid)] pt-5">
       <RiskSummary
         summary={data.summary}
         risk={data.risk}
@@ -60,7 +60,7 @@ function AuditDashboard({
       <PriorityActions actions={data.priorityActions} />
 
       {/* Macro overview sections */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 gap-[var(--gap-grid)] lg:grid-cols-[1.15fr_1fr]">
         <ProcessStatusPanel
           processStatus={data.processStatus}
           staleProcesses={data.staleProcesses}
@@ -70,7 +70,7 @@ function AuditDashboard({
 
       <EventsPanel eventos={data.eventos} />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 gap-[var(--gap-grid)] lg:grid-cols-[1.15fr_1fr]">
         <PetitionFunnel petitionFunnel={data.petitionFunnel} />
         <ProductivityPanel productivity={data.productivity} />
       </div>

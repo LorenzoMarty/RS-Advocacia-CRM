@@ -64,7 +64,7 @@ export function DetailHero({ breadcrumbLabel, breadcrumbTo, mark, title, subtitl
   return (
     <section className="mb-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 max-w-full flex-1 items-center gap-4">
+        <div className="flex min-w-0 max-w-full flex-1 items-center gap-[var(--gap-grid)]">
           <div
             className="grid size-14 shrink-0 place-items-center rounded-sm bg-accent-soft-2 text-card-title-sm text-[var(--accent-hover)]"
             aria-hidden="true"
@@ -103,11 +103,11 @@ export function DetailHero({ breadcrumbLabel, breadcrumbTo, mark, title, subtitl
 }
 
 export function DetailLayout({ children }) {
-  return <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{children}</div>;
+  return <div className="grid grid-cols-1 gap-[var(--gap-grid)] lg:grid-cols-2">{children}</div>;
 }
 
 export function DetailStack({ children }) {
-  return <div className="flex flex-col gap-4">{children}</div>;
+  return <div className="flex flex-col gap-[var(--gap-grid)]">{children}</div>;
 }
 
 export function DetailSection({ title, note, badge, children }) {
@@ -424,9 +424,9 @@ export function FormHeader({ title, subtitle, backTo, backLabel }) {
 
 export function FormLayout({ aside, children }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-[var(--gap-grid)] lg:grid-cols-[minmax(0,1fr)_320px]">
       <Card>
-        <CardContent className="py-5">{children}</CardContent>
+        <CardContent className="py-[var(--pad-card)]">{children}</CardContent>
       </Card>
       {aside}
     </div>
@@ -435,7 +435,7 @@ export function FormLayout({ aside, children }) {
 
 export function FormAside({ title = 'Antes de salvar', items = [], note }) {
   return (
-    <aside className="flex flex-col gap-3.5 rounded-lg bg-card p-[22px] lg:sticky lg:top-[88px]" aria-label="Resumo do formulário">
+    <aside className="flex flex-col gap-3.5 rounded-lg bg-card p-[var(--pad-card)] lg:sticky lg:top-[var(--sticky-top)]" aria-label="Resumo do formulário">
       <h2 className="m-0 text-card-title-sm text-ink">{title}</h2>
       <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
         {items.map((item) => (

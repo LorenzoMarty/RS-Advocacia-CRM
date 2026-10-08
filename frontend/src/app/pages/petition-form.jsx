@@ -263,7 +263,7 @@ export function PetitionFormPage() {
       <PageChrome label={isEditing ? 'Editar peça' : 'Nova peça'} />
       {confirmPopup}
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <FormHeader title={isEditing ? 'Editar peça' : 'Nova peça'} subtitle="Cadastro de petição ou contestação." backTo="/peticoes-contestacoes" backLabel="Voltar para petições" />
 
         {clientOptions.length ? (
