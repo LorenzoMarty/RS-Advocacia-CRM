@@ -29,6 +29,7 @@ import {
   formatRelativeDue,
   formatTime,
   getStatusTone,
+  isFinishedTask,
   isSameDay,
   normalizeText,
   startOfDay,
@@ -143,7 +144,7 @@ export function DashboardPage() {
   const daysFromToday = (value) => Math.round((startOfDay(value) - todayStart) / 86400000);
 
   const pendingDeadlines = deadlines
-    .filter((deadline) => !deadline.completed)
+    .filter((deadline) => !isFinishedTask(deadline))
     .sort((a, b) => new Date(a.date) - new Date(b.date));
   const overdueDeadlines = pendingDeadlines.filter((deadline) => startOfDay(deadline.date) < todayStart);
   const dueTodayDeadlines = pendingDeadlines.filter((deadline) => isSameDay(deadline.date, today));
@@ -300,7 +301,6 @@ export function DashboardPage() {
                   </div>
                   {tableRows.map((deadline) => {
                     const due = formatRelativeDue(deadline.date, today);
-                    const process = processOf(deadline.processId);
                     return (
                       <Link
                         key={deadline.id}
@@ -319,7 +319,7 @@ export function DashboardPage() {
                             </StatusBadge>
                           </div>
                         </div>
-                        <span className="min-w-0 truncate text-meta font-semibold text-ink-2" title={process?.number}>
+                        <span className="min-w-0 truncate text-meta font-semibold text-ink-2" title={clientName(deadline.clientId) || deadline.clientName}>
                           {clientName(deadline.clientId) || deadline.clientName || "—"}
                         </span>
                         <div className="flex flex-col leading-tight">
