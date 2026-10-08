@@ -40,3 +40,34 @@
     white-space:nowrap;
     border:0;
 }
+
+/* Kanban (Prazos, Petições, Prospecção): colunas lado a lado; se não couberem, rolagem horizontal
+   com snap — em telas estreitas cada coluna ocupa ~85% da largura. */
+.deadlines-board,
+.petitions-board,
+.prospeccao-board{
+    display:grid;
+    grid-auto-flow:column;
+    grid-auto-columns:minmax(220px,1fr);
+    gap:var(--gap-grid);
+    align-items:start;
+    min-width:0;
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    scrollbar-color:var(--scroll-thumb) transparent;
+    padding-bottom:4px;
+}
+.deadlines-board > *,
+.petitions-board > *,
+.prospeccao-board > *{scroll-snap-align:start}
+@media (max-width:860px){
+    .deadlines-board,
+    .petitions-board,
+    .prospeccao-board{
+        grid-auto-columns:minmax(260px,85%);
+        scroll-snap-type:x mandatory;
+    }
+}

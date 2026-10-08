@@ -144,7 +144,7 @@ export function ProcessesListPage() {
       {confirmPopup}
       <PageChrome label="Processos" primaryAction={{ label: 'Novo processo', to: '/processos/novo', tour: 'page-primary-action' }} />
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-[var(--gap-grid)]">
         <PageHeader title="Processos" subtitle={formatCount(processesPagination.total)}>
           <PageSearch
             className="on-bg"
@@ -330,7 +330,7 @@ export function ProcessFormPage() {
     <>
       <PageChrome label={isEditing ? 'Editar processo' : 'Novo processo'} />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <FormHeader title={isEditing ? 'Editar processo' : 'Novo processo'} subtitle={isEditing ? 'Ajuste os dados principais do processo sem trocar de fluxo.' : 'Registro claro e direto.'} backTo={isEditing ? `/processos/${process.id}` : '/processos'} backLabel={isEditing ? 'Voltar para o processo' : 'Voltar para processos'} />
 
         <FormLayout aside={<FormAside items={["Número do processo e cliente vinculado", "Responsável e status", "Área jurídica e vara", "Situação do advogado nos autos"]} note={"Se o advogado não estiver habilitado, a lista de processos mostra um alerta."} />}>
@@ -501,7 +501,7 @@ export function ProcessDetailPage() {
     <>
       <PageChrome label="Processo" />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <DetailHero
           breadcrumbLabel="Processos"
           breadcrumbTo="/processos"

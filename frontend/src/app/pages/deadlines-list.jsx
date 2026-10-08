@@ -329,7 +329,7 @@ export function DeadlinesPage() {
     <>
       <PageChrome label="Prazos" primaryAction={{ label: 'Novo prazo', to: deadlineCreatePath(), tour: 'page-primary-action' }} />
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-[var(--gap-grid)]">
         <PageHeader title="Prazos" subtitle="Arraste entre colunas para atualizar o status">
           <PageSearch
             className="on-bg"

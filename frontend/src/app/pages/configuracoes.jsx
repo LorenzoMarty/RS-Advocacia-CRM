@@ -105,7 +105,7 @@ export function ConfiguracoesPage() {
     <>
       <PageChrome label="Configurações" />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <section className="mb-2">
           <p className="text-page-title text-ink">Configurações</p>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -118,7 +118,7 @@ export function ConfiguracoesPage() {
             <KeyRound className="size-5 text-primary" aria-hidden="true" />
             <h2 className="text-card-title-sm text-ink">API key da OpenAI</h2>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+          <CardContent className="flex flex-col gap-[var(--gap-grid)]">
             {loading ? (
               <Skeleton className="h-10 w-full max-w-sm" />
             ) : (
@@ -160,7 +160,7 @@ export function ConfiguracoesPage() {
             <Sparkles className="size-5 text-primary" aria-hidden="true" />
             <h2 className="text-card-title-sm text-ink">Custo estimado de IA</h2>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+          <CardContent className="flex flex-col gap-[var(--gap-grid)]">
             {custoLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (

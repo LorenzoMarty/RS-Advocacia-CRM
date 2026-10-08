@@ -341,7 +341,7 @@ export function ActivityTimeline({ entries, filters, pagination, autores = [], o
 
   return (
     <Card>
-    <CardContent className="py-5">
+    <CardContent className="py-[var(--pad-card)]">
       <div className="section-head">
         <div>
           <h2 className="section-title">Atividade recente</h2>

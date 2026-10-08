@@ -1,134 +1,24 @@
-@media (min-width:1201px){
-.page-wrap{
-        padding-top:0;
-    }
-
-}
-
-@media (max-width:1200px){
-.page-wrap{
-        padding-top:0;
-    }
-
-.topbar{
-        position:absolute;
-        top:0;
-        left:0;
-        right:0;
-        width:auto;
-        padding:10px 12px;
-        border-radius:0;
-        margin-bottom:0;
-        transform:none;
-    }
-
-.section-head{
-        flex-wrap:wrap;
-        align-items:flex-start;
-    }
-
-}
-
 @media (max-width:640px){
-.page{
-        padding:0 0 var(--bottom-nav-offset);
-    }
-
-.page-wrap{
-        padding:0 14px 14px;
-    }
-
-.main{gap:0}
-
-.surface{border-radius:0}
-
-.topbar{
-        padding:8px 9px;
-        gap:7px;
-        margin-bottom:0;
-        border-radius:0;
-    }
-
-.page-search input{
-        min-height:42px;
-    }
-
-.list-intro-toolbar{
-        grid-template-columns:1fr;
-        align-items:stretch;
-    }
-
-.list-intro-actions{
-        justify-content:flex-start;
-    }
-
-.list-intro-toolbar .page-search-inline{
-        width:100%;
-    }
-
-.list-intro-action{
-        justify-self:start;
-    }
-
 .btn{min-height:40px;padding:0 13px;font-size:.84rem}
 
-.section-head{
-        gap:10px;
-        margin-bottom:14px;
-    }
-
-.section-title{font-size:1.72rem}
-
-.section-note{font-size:.84rem}
+.section-title{font-size:1.43rem}
 
 .badge{
-        min-height:28px;
+        min-height:26px;
         padding:0 9px;
         font-size:.64rem;
-        letter-spacing:.12em;
     }
 
 .empty{
-        padding:14px;
-        border-radius:16px;
+        padding:12px;
     }
 
 .empty p{font-size:.84rem}
 
-.rs-select-trigger{min-height:44px;padding-left:13px;padding-right:40px;border-radius:14px}
+.rs-select-trigger{min-height:44px;padding-left:13px;padding-right:40px}
 
-.rs-select-dropdown{padding:7px;border-radius:18px}
+.rs-select-dropdown{padding:7px}
 
 .rs-select-option{min-height:42px}
-
-}
-
-@media (max-width:420px){
-.page{
-        padding:0 0 var(--bottom-nav-offset);
-    }
-
-.page-wrap{
-        padding-top:0;
-    }
-
-.main{gap:0}
-
-.surface{border-radius:0}
-
-.topbar{
-        padding:7px 8px;
-        margin-bottom:0;
-    }
-
-.btn{
-        min-height:38px;
-        padding:0 12px;
-        font-size:.82rem;
-    }
-
-.page-search input{
-        min-height:40px;
-    }
 
 }

@@ -207,7 +207,7 @@ export function DeadlineDetailPage() {
       {confirmPopup}
       <PageChrome label="Prazo" />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <DetailHero
           breadcrumbLabel="Prazos"
           breadcrumbTo={`/prazos?data=${encodeURIComponent(dateInputValue(deadlineMoment(deadline)))}`}
@@ -236,7 +236,7 @@ export function DeadlineDetailPage() {
         />
 
         <DetailSection title="Tempo gasto" note={isTimerRunning ? 'Timer em andamento.' : 'Timer pausado.'}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-[var(--gap-grid)]">
             <strong className="text-page-title text-ink">{formatDuration(elapsedSeconds)}</strong>
             <div className="flex gap-2">
               <Button onClick={handleTimerStart} disabled={isTimerRunning || isTimerSaving}>

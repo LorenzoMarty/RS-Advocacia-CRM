@@ -66,13 +66,16 @@
 
     /* Espaçamento "vivo" dos contêineres — escala com a preferência do usuário.
        Aplicado nas páginas principais (cards full-bleed + gaps de seção). */
-    --pad-card:calc(22px * var(--space-scale));
-    --pad-card-mobile:calc(16px * var(--space-scale));
-    --gap-page:calc(18px * var(--space-scale));
-    --gap-grid:calc(16px * var(--space-scale));
-    --gap-list:calc(10px * var(--space-scale));
-    --bottom-nav-height:88px;
-    --bottom-nav-offset:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 18px);
+    --pad-card:calc(16px * var(--space-scale));
+    --pad-card-mobile:calc(12px * var(--space-scale));
+    --gap-page:calc(12px * var(--space-scale));
+    --gap-grid:calc(12px * var(--space-scale));
+    --gap-list:calc(8px * var(--space-scale));
+    --shell-pad:12px;
+    --topbar-h:60px;
+    --sticky-top:calc(var(--shell-pad) * 2 + var(--topbar-h));
+    --bottom-nav-height:64px;
+    --bottom-nav-offset:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 20px);
     --sans:"Urbanist",system-ui,sans-serif;
     --body-bg:var(--bg);
     --sidebar-bg:var(--surface);

@@ -234,7 +234,7 @@ export function ClientDocuments({ client }) {
         </div>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex flex-col gap-[var(--gap-grid)]">
         <nav className="flex flex-wrap items-center gap-1 text-sm" aria-label="Navegação de pastas">
           {path.map((crumb, index) => (
             <span key={crumb.id} className="flex items-center gap-1">

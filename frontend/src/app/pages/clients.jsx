@@ -133,7 +133,7 @@ const ClientRow = memo(function ClientRow({ client, processCount, selected, onSe
 
 function ClientDetailPanel({ client, clientProcesses, onDelete }) {
   return (
-    <aside className="sticky top-[88px] hidden flex-col gap-[18px] rounded-lg bg-card p-[22px] xl:flex" aria-label="Detalhes do cliente">
+    <aside className="sticky top-[var(--sticky-top)] hidden flex-col gap-[18px] rounded-lg bg-card p-[var(--pad-card)] xl:flex" aria-label="Detalhes do cliente">
       <div className="flex items-center gap-3.5">
         <Avatar name={client.name} seed={client.id} size={60} className="rounded-[20px]" />
         <div className="flex min-w-0 flex-col gap-1.5">
@@ -301,10 +301,10 @@ export function ClientsListPage() {
       {confirmPopup}
       <PageChrome label="Clientes" primaryAction={{ label: 'Novo cliente', to: '/clientes/novo', tour: 'page-primary-action' }} />
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-[var(--gap-grid)]">
         <PageHeader title="Clientes" subtitle={formatCount(clientsPagination.total)}>
           <PageSearch
-            className="on-bg w-60"
+            className="on-bg"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Buscar por nome"
@@ -321,7 +321,7 @@ export function ClientsListPage() {
           <ClientDriveDiscoveryWizard onClose={() => setDiscovering(false)} />
         ) : null}
 
-        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-[var(--gap-grid)] xl:grid-cols-[minmax(0,1fr)_340px]">
           <section className="rounded-lg bg-card px-3 pb-2 pt-3" aria-label="Lista de clientes">
             {rows.length ? (
               <div className="overflow-x-auto">
@@ -337,7 +337,7 @@ export function ClientsListPage() {
                           disabled={!canSort}
                           aria-label={canSort ? `Ordenar por ${header.column.columnDef.header}` : undefined}
                           className={cn(
-                            'inline-flex items-center gap-1.5 text-left uppercase',
+                            'inline-flex items-center gap-1.5 text-left uppercase max-[1024px]:min-h-[40px]',
                             canSort ? 'cursor-pointer select-none hover:text-ink' : 'cursor-default',
                             sortState && 'text-ink',
                           )}
@@ -502,7 +502,7 @@ export function ClientFormPage() {
     <>
       <PageChrome label={isEditing ? 'Editar cliente' : 'Novo cliente'} />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <FormHeader title={isEditing ? 'Editar cliente' : 'Novo cliente'} subtitle={isEditing ? 'Atualize os dados do cadastro com o mesmo fluxo da criação.' : 'Cadastro direto e objetivo.'} backTo={isEditing ? `/clientes/${client.id}` : '/clientes'} backLabel={isEditing ? 'Voltar para o cliente' : 'Voltar para clientes'} />
 
         <FormLayout aside={<FormAside items={["Nome ou razão social", "CPF ou CNPJ válido (11 ou 14 dígitos)", "Telefone com DDD e e-mail", "Tipo de cliente e parceria de origem"]} note={"Clientes mensalistas aparecem destacados na lista."} />}>
@@ -659,7 +659,7 @@ export function ClientDetailPage() {
     <>
       <PageChrome label="Cliente" />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <DetailHero
           breadcrumbLabel="Clientes"
           breadcrumbTo="/clientes"

@@ -278,10 +278,10 @@ export function MeetingsPage() {
     <>
       <PageChrome label="Reuniões" />
       {confirmPopup}
-      <div className="grid gap-4">
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(260px,.55fr)_minmax(0,1.6fr)]">
-          <Card className="lg:sticky lg:top-[88px]">
-            <CardContent className="grid gap-4 py-5">
+      <div className="grid gap-[var(--gap-grid)]">
+        <div className="grid items-start gap-[var(--gap-grid)] lg:grid-cols-[minmax(260px,.55fr)_minmax(0,1.6fr)]">
+          <Card className="lg:sticky lg:top-[var(--sticky-top)]">
+            <CardContent className="grid gap-[var(--gap-grid)] py-[var(--pad-card)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-card-title-sm text-ink">Reuniões</p>
@@ -340,10 +340,10 @@ export function MeetingsPage() {
             </CardContent>
           </Card>
 
-          <section className="grid min-w-0 gap-4">
+          <section className="grid min-w-0 gap-[var(--gap-grid)]">
             {isMeetingFormOpen ? (
               <Card>
-                <CardContent className="py-5">
+                <CardContent className="py-[var(--pad-card)]">
                 <div className="mb-4">
                   <p className="text-card-title-sm text-ink">
                     {isEditingMeeting ? 'Editar reunião' : 'Nova reunião'}
@@ -410,8 +410,8 @@ export function MeetingsPage() {
 
             {selectedMeeting ? (
               <Card className="mx-auto w-full max-w-[860px]">
-                <CardContent className="grid gap-4 py-5">
-                <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
+                <CardContent className="grid gap-[var(--gap-grid)] py-[var(--pad-card)]">
+                <header className="flex flex-wrap items-start justify-between gap-[var(--gap-grid)] border-b border-border pb-5">
                   <div className="grid min-w-0 gap-1.5">
                     <p className="m-0 text-xs font-bold uppercase tracking-[.18em] text-primary">Ata de reunião</p>
                     <h1 className="m-0 text-page-title text-ink">

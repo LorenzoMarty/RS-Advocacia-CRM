@@ -29,7 +29,7 @@ export function ProductivityPanel({ productivity = {} }) {
 
   return (
     <Card>
-    <CardContent className="py-5">
+    <CardContent className="py-[var(--pad-card)]">
       <div className="section-head">
         <div>
           <h2 className="section-title">Produtividade</h2>
@@ -40,7 +40,7 @@ export function ProductivityPanel({ productivity = {} }) {
             )}
           </p>
         </div>
-        <Link to="/produtividade" className="text-sm text-primary no-underline hover:underline whitespace-nowrap">Ver detalhe →</Link>
+        <Link to="/produtividade" className="inline-flex items-center text-sm text-primary no-underline hover:underline whitespace-nowrap max-[1024px]:min-h-[40px]">Ver detalhe →</Link>
       </div>
       <ul className="grid list-none gap-2 p-0">
         {porUsuario.map((u) => {

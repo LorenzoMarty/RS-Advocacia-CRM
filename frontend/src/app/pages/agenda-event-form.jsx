@@ -165,7 +165,7 @@ export function EventFormPage() {
     <>
       <PageChrome label={formTitle} />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <FormHeader title={formTitle} subtitle={isEditing
               ? "Ajuste o agendamento e mantenha os vínculos essenciais atualizados."
               : "Cadastro direto, com foco em agendamento e vínculos essenciais."} backTo={backTarget} backLabel={backLabel} />

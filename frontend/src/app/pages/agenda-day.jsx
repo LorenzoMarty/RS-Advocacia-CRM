@@ -134,7 +134,7 @@ export function AgendaDayPage() {
       {confirmPopup}
       <PageChrome label={dayLabel(date)} />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <section className="mb-2">
           <Link
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -143,7 +143,7 @@ export function AgendaDayPage() {
             Agenda
           </Link>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-[var(--gap-grid)]">
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" aria-label="Dia anterior" onClick={() => goDay(-1)}>
                 <ChevronLeft className="size-4" />
@@ -171,7 +171,7 @@ export function AgendaDayPage() {
         </section>
 
         <Card>
-          <CardContent className="py-5">
+          <CardContent className="py-[var(--pad-card)]">
           {!dayEvents.length && (
             <div className="timeline-day-empty">
               <strong>Nenhum compromisso neste dia.</strong>

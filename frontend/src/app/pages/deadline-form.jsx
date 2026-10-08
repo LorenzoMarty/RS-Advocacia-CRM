@@ -135,7 +135,7 @@ export function DeadlineFormPage() {
       <PageChrome label={isEditing ? 'Editar prazo' : 'Novo prazo'} />
       {confirmPopup}
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <FormHeader title={isEditing ? 'Editar prazo' : 'Novo prazo'} subtitle="Preencha os campos do prazo." backTo={`/prazos?data=${encodeURIComponent(date)}`} backLabel="Voltar para prazos" />
 
         {processes.length ? (

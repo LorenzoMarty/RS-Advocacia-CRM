@@ -30,7 +30,7 @@ export function LoginPage() {
     <main className="login-shell">
       <section className="login-card" aria-labelledby="login-title">
         <div className="login-brand">
-          <div className="login-brand-mark" aria-hidden="true"><Scale className="size-[22px]" strokeWidth={1.8} /></div>
+          <div className="login-brand-mark" aria-hidden="true"><Scale className="size-[var(--pad-card)]" strokeWidth={1.8} /></div>
           <div className="login-brand-copy">
             <span className="login-kicker">Plataforma jurídica</span>
             <strong>RS Advocacia</strong>
