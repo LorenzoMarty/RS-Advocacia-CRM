@@ -46,7 +46,7 @@ import { AnimatePresence, MotionPage } from './motion';
 import { NAV_ITEMS } from './data';
 import { useAppState } from './store';
 import { useAppearanceState } from './use-appearance';
-import { formatTime, normalizeText } from './utils';
+import { formatTime, isFinishedTask } from './utils';
 import { useNotifications } from './hooks/use-notifications';
 
 const NAV_ICONS = {
@@ -195,7 +195,7 @@ function SidebarNavLink({ item, collapsed, count = 0 }) {
     <NavLink
       to={item.to}
       end={item.to === '/'}
-      aria-label={count ? `${item.label} — ${count} nesta semana` : item.label}
+      aria-label={count ? `${item.label} — ${count} em aberto (vencidos ou até 7 dias)` : item.label}
       data-tour={`nav-${item.key}`}
       className={cn(
         'group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink',
@@ -389,6 +389,20 @@ function BottomNavigation({ onOpenAppearance, onStartTour }) {
   // Guarda a rota em que a folha foi aberta: mudar de rota (inclusive voltar do navegador) fecha sozinha.
   const [moreOpenPath, setMoreOpenPath] = useState(null);
   const moreOpen = moreOpenPath === location.pathname;
+  // Trocou de rota (inclusive voltar/avançar do navegador): descarta o estado para não reabrir ao retornar.
+  if (moreOpenPath !== null && !moreOpen) {
+    setMoreOpenPath(null);
+  }
+
+  // Ao passar do breakpoint da barra inferior a folha fica oculta (CSS): encerra o estado e libera o scroll.
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 1201px)');
+    const onChange = (event) => {
+      if (event.matches) setMoreOpenPath(null);
+    };
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
   const fixedItems = BOTTOM_NAV_FIXED.map((key) => navItems.find((item) => item.key === key)).filter(Boolean);
   const moreItems = navItems.filter((item) => !BOTTOM_NAV_FIXED.includes(item.key));
   const moreActive = moreItems.some((item) => (item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to)));
@@ -474,11 +488,6 @@ function reminderLabelForDays(days) {
   }
 
   return `em ${days} dias`;
-}
-
-function isFinishedTask(item) {
-  const status = normalizeText(item.status);
-  return item.completed || status.includes('conclu') || status.includes('protocolado') || status.includes('cancel');
 }
 
 function reminderStorageKey(userId) {

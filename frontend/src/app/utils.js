@@ -7,6 +7,14 @@ export function normalizeText(value) {
     .trim();
 }
 
+// Datas "YYYY-MM-DD" (prazos, vencimentos) são datas de calendário, não instantes: `new Date('2026-10-08')`
+// é meia-noite UTC e no Brasil (UTC-3) cai no dia anterior. Meio-dia local evita a virada em qualquer fuso.
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+export function toDate(value) {
+  return typeof value === 'string' && DATE_ONLY.test(value) ? new Date(`${value}T12:00:00`) : new Date(value);
+}
+
 export function formatDate(value) {
   if (!value) {
     return '-';
@@ -16,7 +24,7 @@ export function formatDate(value) {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  }).format(new Date(value));
+  }).format(toDate(value));
 }
 
 export function formatTime(value) {
@@ -61,7 +69,7 @@ export function parseDateTimeInput(value) {
 }
 
 export function startOfDay(value) {
-  const date = new Date(value);
+  const date = toDate(value);
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
@@ -84,8 +92,8 @@ export function getAreaKey(area) {
 }
 
 export function isSameDay(left, right) {
-  const leftDate = new Date(left);
-  const rightDate = new Date(right);
+  const leftDate = toDate(left);
+  const rightDate = toDate(right);
 
   return leftDate.getFullYear() === rightDate.getFullYear()
     && leftDate.getMonth() === rightDate.getMonth()
@@ -142,11 +150,13 @@ export function getStatusTone(value, completed = false) {
   const normalized = normalizeText(value);
 
   // Single source of truth for status/priority colour: danger | warn | success | info | subtle | neutral.
-  if (completed || normalized.includes('conclu') || normalized.includes('cancel')) return 'subtle';
-  // "nao compareceu" must be checked before "compareceu" (substring match order)
   const words = normalized.split(/\s+/);
-  if (normalized.includes('nao compareceu') || normalized.includes('atras') || normalized.includes('urg') || words.includes('alta')) return 'danger';
-  if (normalized.includes('confirma') || normalized.includes('compareceu') || normalized.includes('protocolado') || words.includes('ativo')) return 'success';
+  // "nao compareceu" must be checked before "compareceu" (substring match order)
+  if (normalized.includes('nao compareceu')) return 'danger';
+  // Desfechos positivos mantêm o verde mesmo quando o item está "concluído" (ex.: Pago, Compareceu, Protocolado).
+  if (normalized.includes('confirma') || normalized.includes('compareceu') || normalized.includes('protocolado') || words.includes('pago') || words.includes('ativo')) return 'success';
+  if (completed || normalized.includes('conclu') || normalized.includes('cancel')) return 'subtle';
+  if (normalized.includes('atras') || normalized.includes('urg') || words.includes('alta')) return 'danger';
   if (normalized.includes('andamento')) return 'info';
   if (normalized.includes('aguard') || normalized.includes('protocolar') || words.includes('media')) return 'warn';
   if (words.includes('baixa')) return 'neutral';
@@ -172,3 +182,10 @@ export function isOverdueEvent(event) {
 export function buildSearchText(parts) {
   return normalizeText(parts.filter(Boolean).join(' '));
 }
+
+// Item encerrado: marcado como concluído ou em status final (concluído, protocolado, cancelado).
+export function isFinishedTask(item) {
+  const status = normalizeText(item.status);
+  return Boolean(item.completed) || status.includes('conclu') || status.includes('protocolado') || status.includes('cancel');
+}
+
