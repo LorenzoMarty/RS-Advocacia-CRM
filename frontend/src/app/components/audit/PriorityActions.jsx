@@ -16,7 +16,7 @@ const TONE_RAIL = {
 export function PriorityActions({ actions }) {
   return (
     <Card>
-    <CardContent className="py-5">
+    <CardContent className="py-[var(--pad-card)]">
       <div className="section-head">
         <div>
           <h2 className="section-title">Precisa de atenção agora</h2>
@@ -28,7 +28,7 @@ export function PriorityActions({ actions }) {
           {actions.map((item) => (
             <li key={item.id}>
               <Link
-                className={`relative flex items-center gap-2.5 overflow-hidden rounded-lg bg-muted/40 px-2.5 py-2 text-foreground no-underline transition-colors before:absolute before:inset-y-0 before:left-0 before:w-1 before:content-[''] hover:bg-muted/70 ${TONE_RAIL[item.tone] || 'before:bg-primary'}`}
+                className={`relative flex items-center gap-2.5 overflow-hidden rounded-lg bg-surface-2 px-2.5 py-2 text-foreground no-underline transition-colors before:absolute before:inset-y-0 before:left-0 before:w-1 before:content-[''] hover:bg-muted/70 ${TONE_RAIL[item.tone] || 'before:bg-primary'}`}
                 to={item.to}
               >
                 <div className="grid min-w-0 flex-1 gap-0.5 pl-2">

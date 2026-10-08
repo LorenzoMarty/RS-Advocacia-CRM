@@ -1,42 +1,49 @@
 /* Popover do tour guiado (driver.js) */
-.onboarding-popover.driver-popover {
-  background: var(--panel);
+.onboarding-popover.driver-popover{
+  background: var(--surface);
   color: var(--text);
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
+  border: 0;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
 }
 
-.onboarding-popover .driver-popover-title {
+.onboarding-popover .driver-popover-title{
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1.14rem;
 }
 
-.onboarding-popover .driver-popover-description {
+.onboarding-popover .driver-popover-description{
   color: var(--soft);
 }
 
-.onboarding-popover .driver-popover-footer button {
+.onboarding-popover .driver-popover-footer button{
   text-shadow: none;
-  background: var(--line);
-  color: var(--text);
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink);
+  border: 0;
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  font-weight: 700;
 }
 
-.onboarding-popover .driver-popover-footer button:hover {
-  background: var(--line-strong);
+.onboarding-popover .driver-popover-footer button:hover{
+  background: var(--surface-3);
 }
 
-.onboarding-popover .driver-popover-footer .driver-popover-next-btn {
-  background: var(--gold-soft);
+.onboarding-popover .driver-popover-footer .driver-popover-next-btn:hover{
+  background: var(--accent-hover);
+}
+
+.onboarding-popover .driver-popover-footer .driver-popover-next-btn{
+  background: var(--accent);
   border-color: transparent;
-  color: #1a1400;
+  color: var(--accent-fg);
 }
 
 .onboarding-popover .driver-popover-close-btn:focus-visible,
 .onboarding-popover .driver-popover-footer button:focus-visible,
-.driver-active-element:focus-visible {
-  outline: 2px solid var(--gold);
+.driver-active-element:focus-visible{
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

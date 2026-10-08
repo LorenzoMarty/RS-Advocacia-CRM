@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 
 import { FINANCE_CATEGORIES, FINANCE_TABS } from '../data';
@@ -194,25 +195,12 @@ export function FinanceiroPage() {
   return (
     <>
       {confirmPopup}
-      <PageChrome label="Financeiro" />
-      <div className="grid gap-4">
-        <section className="mb-2">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="font-serif text-3xl text-foreground">Financeiro</p>
-              <p className="mt-1 text-sm text-muted-foreground">Receitas, despesas e fluxo do escritório</p>
-            </div>
-            <Button asChild>
-              <Link to="/financeiro/novo" data-tour="page-primary-action">
-                <Plus className="size-4" />
-                Novo lançamento
-              </Link>
-            </Button>
-          </div>
-        </section>
+      <PageChrome label="Financeiro" primaryAction={{ label: 'Novo lançamento', to: '/financeiro/novo', tour: 'page-primary-action' }} />
+      <div className="grid gap-[var(--gap-grid)]">
+        <PageHeader title="Financeiro" subtitle="Receitas, despesas e fluxo do escritório" />
 
         <Card>
-          <CardContent className="grid gap-4 py-5">
+          <CardContent className="grid gap-[var(--gap-grid)] py-[var(--pad-card)]">
             {dashboardError ? (
               <div className="empty" role="alert">
                 <strong>Não foi possível carregar as métricas.</strong>
@@ -246,7 +234,7 @@ export function FinanceiroPage() {
         </Card>
 
         <Card>
-          <CardContent className="grid gap-3.5 py-5">
+          <CardContent className="grid gap-3.5 py-[var(--pad-card)]">
             <div className="financeiro-tabs" role="tablist" aria-label="Filtrar lançamentos por status">
               {FINANCE_TABS.map((item) => (
                 <button

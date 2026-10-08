@@ -9,7 +9,7 @@ const VISIBLE_LIMIT = 5;
 
 function EventItem({ evento }) {
   return (
-    <li className="grid gap-0.5 rounded-md bg-muted/40 p-2">
+    <li className="grid gap-0.5 rounded-md bg-surface-2 p-2">
       <div className="flex flex-wrap items-baseline gap-1.5">
         <strong className="min-w-0 truncate text-sm">{evento.titulo}</strong>
         <span className="min-w-0 truncate text-xs text-muted-foreground">
@@ -34,7 +34,7 @@ export function EventsPanel({ eventos = {} }) {
 
   return (
     <Card>
-    <CardContent className="py-5">
+    <CardContent className="py-[var(--pad-card)]">
       <div className="section-head">
         <div>
           <h2 className="section-title">Compromissos</h2>
@@ -42,7 +42,7 @@ export function EventsPanel({ eventos = {} }) {
             {totalPendentes} pendente{totalPendentes !== 1 ? 's' : ''}
           </p>
         </div>
-        <Link to="/agenda" className="text-sm text-primary no-underline hover:underline whitespace-nowrap">Ver agenda →</Link>
+        <Link to="/agenda" className="inline-flex items-center text-sm text-primary no-underline hover:underline whitespace-nowrap max-[1024px]:min-h-[40px]">Ver agenda →</Link>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {atrasados.length > 0 && (

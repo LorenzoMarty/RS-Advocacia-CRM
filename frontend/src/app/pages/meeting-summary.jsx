@@ -225,8 +225,8 @@ function renderSummaryNodes(nodes, level = 0, keyPrefix = 'summary') {
       <section
         className={
           level > 0
-            ? 'grid gap-2 rounded-xl bg-white/[.028] p-3'
-            : 'grid gap-2 rounded-xl border border-border bg-muted/40 p-4'
+            ? 'grid gap-2 rounded-xl bg-surface-2 p-3'
+            : 'grid gap-2 rounded-xl border border-border bg-surface-2 p-4'
         }
         key={key}
       >

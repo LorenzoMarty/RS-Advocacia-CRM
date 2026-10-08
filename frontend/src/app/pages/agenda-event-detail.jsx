@@ -109,7 +109,7 @@ export function EventDetailPage() {
       {confirmPopup}
       <PageChrome label="Compromisso" />
 
-      <div className="grid gap-4">
+      <div className="grid gap-[var(--gap-grid)]">
         <DetailHero
           breadcrumbLabel="Agenda"
           breadcrumbTo="/agenda"

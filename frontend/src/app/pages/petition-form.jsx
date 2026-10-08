@@ -16,7 +16,7 @@ import { useAppState } from '../store';
 import { listClientDrive } from '../services/documentos';
 import { normalizeText } from '../utils';
 import { Select } from '../components/select';
-import { EmptyState, Field } from './common';
+import { EmptyState, Field, FormAside, FormHeader, FormLayout } from './common';
 import {
   PETITION_DEFAULT_STATUS,
   PETITION_DEFAULT_TYPE,
@@ -263,25 +263,11 @@ export function PetitionFormPage() {
       <PageChrome label={isEditing ? 'Editar peça' : 'Nova peça'} />
       {confirmPopup}
 
-      <div className="grid gap-4">
-        <section className="mb-2">
-          <p className="font-serif text-3xl text-foreground">
-            {isEditing ? 'Editar peça' : 'Nova peça'}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">Cadastro de petição ou contestação.</p>
-
-          <Link
-            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to="/peticoes-contestacoes"
-          >
-            <ArrowLeft className="size-3.5" />
-            Voltar para petições
-          </Link>
-        </section>
+      <div className="grid gap-[var(--gap-grid)]">
+        <FormHeader title={isEditing ? 'Editar peça' : 'Nova peça'} subtitle="Cadastro de petição ou contestação." backTo="/peticoes-contestacoes" backLabel="Voltar para petições" />
 
         {clientOptions.length ? (
-          <Card>
-            <CardContent className="py-5">
+          <FormLayout aside={<FormAside items={["Cliente e tipo da peça", "Processo, responsável e área", "Status da peça"]} note={"Depois de salvar, o card permite criar o documento no Drive."} />}>
             <form className="petition-form" onSubmit={handleSubmit(onSubmit)}>
               <div className="form-grid">
                 <Field id="petition-client" label="Cliente" className="span-2" error={errors.clientId?.message} required>
@@ -385,21 +371,19 @@ export function PetitionFormPage() {
                 </Button>
                 {isEditing ? (
                   <Button
-                    variant="outline"
-                    className="text-destructive hover:bg-destructive/10"
+                    variant="destructive"
                     type="button"
                     onClick={handleDelete}
                   >
                     Excluir
                   </Button>
                 ) : null}
-                <Button asChild variant="outline">
+                <Button asChild variant="secondary">
                   <Link to="/peticoes-contestacoes">Cancelar</Link>
                 </Button>
               </div>
             </form>
-            </CardContent>
-          </Card>
+            </FormLayout>
         ) : (
           <EmptyState
             title="Nenhum cliente cadastrado."

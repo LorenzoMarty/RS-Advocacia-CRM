@@ -11,15 +11,15 @@ const TONE_TEXT = {
 export function AlertCard({ label, value, hint, tone = 'gold', to }) {
   const content = (
     <>
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <strong className={`text-lg font-medium tabular-nums leading-tight ${TONE_TEXT[tone] || TONE_TEXT.gold}`}>
+      <span className="text-meta-sm font-semibold text-muted-foreground">{label}</span>
+      <strong className={`text-card-title tabular-nums leading-tight ${TONE_TEXT[tone] || TONE_TEXT.gold}`}>
         {value}
       </strong>
       {hint ? <em className="text-[0.64rem] not-italic text-muted-foreground">{hint}</em> : null}
     </>
   );
 
-  const classes = 'flex flex-col gap-0.5 rounded-lg border border-transparent bg-muted/40 p-3 no-underline transition-colors hover:border-primary/30 hover:bg-primary/10 active:scale-[.99]';
+  const classes = 'flex flex-col gap-0.5 rounded-lg bg-card p-4 no-underline transition-colors hover:bg-surface-2 active:scale-[.99]';
 
   if (to) {
     return <Link className={classes} to={to}>{content}</Link>;

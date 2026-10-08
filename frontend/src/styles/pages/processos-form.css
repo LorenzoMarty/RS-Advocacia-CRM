@@ -3,59 +3,59 @@
         gap:22px;
     }
 
-    .form-group{
+.form-group{
         display:grid;
         gap:14px;
     }
 
-    .group-head{
+.group-head{
         display:grid;
         gap:4px;
     }
 
-    .group-title{
+.group-title{
         margin:0;
         font-size:.82rem;
         color:var(--muted);
         font-weight:700;
-        letter-spacing:.16em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
-    .form-grid{
+.form-grid{
         display:grid;
         grid-template-columns:repeat(2, minmax(0, 1fr));
         gap:14px;
     }
 
-    .field{
+.field{
         display:grid;
         gap:8px;
     }
 
-    .field.span-2{
+.field.span-2{
         grid-column:1 / -1;
     }
 
-    .field label{
+.field label{
         color:var(--muted);
         font-size:.74rem;
         font-weight:700;
-        letter-spacing:.14em;
+        letter-spacing:.07em;
         text-transform:uppercase;
     }
 
-    .field-required{
-        color:var(--gold-soft);
+.field-required{
+        color:var(--accent);
     }
 
-    .field input,
-    .field select,
-    .field textarea{
+.field input,
+.field select,
+.field textarea{
         width:100%;
         min-height:48px;
         padding:0 14px;
-        border-radius:16px;
+        border-radius:var(--radius-md);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--text);
@@ -63,103 +63,104 @@
         transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;
     }
 
-    .field select{
+.field select{
         appearance:none;
         -webkit-appearance:none;
         -moz-appearance:none;
         cursor:pointer;
         padding-right:40px;
-        border-color:rgba(255,255,255,.1);
+        border-color:var(--line-strong);
         background:
-            linear-gradient(45deg, transparent 50%, var(--gold-soft) 50%),
-            linear-gradient(135deg, var(--gold-soft) 50%, transparent 50%),
+            linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+            linear-gradient(135deg, var(--accent) 50%, transparent 50%),
             var(--ghost);
         background-position:calc(100% - 20px) calc(50% - 3px),calc(100% - 14px) calc(50% - 3px),0 0;
         background-size:6px 6px,6px 6px,auto;
         background-repeat:no-repeat;
     }
 
-    .field select:hover{
-        border-color:rgba(212,175,55,.18);
+.field select:hover{
+        border-color:var(--line-strong);
         background-color:var(--ghost-strong);
     }
 
-    .field textarea{
+.field textarea{
         min-height:132px;
         padding:14px;
         resize:vertical;
     }
 
-    .field input:focus,
-    .field select:focus,
-    .field textarea:focus{
-        border-color:rgba(212,175,55,.24);
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+        border-color:var(--line-strong);
         background:var(--ghost-strong);
-        box-shadow:0 0 0 4px rgba(212,175,55,.08);
+        box-shadow:0 0 0 3px var(--focus-ring);
     }
 
-    .field.has-error input,
-    .field.has-error select,
-    .field.has-error textarea{
-        border-color:rgba(239,122,122,.4);
-        box-shadow:0 0 0 4px rgba(239,122,122,.08);
+.field.has-error input,
+.field.has-error select,
+.field.has-error textarea{
+        border-color:color-mix(in srgb, var(--danger) 40%, transparent);
+        box-shadow:0 0 0 4px color-mix(in srgb, var(--danger) 8%, transparent);
     }
 
-    .field select option,
-    .field select optgroup{
-        background:#161a22;
-        color:#f6f1e8;
+.field select option,
+.field select optgroup{
+        background:var(--surface);
+        color:var(--ink);
     }
 
-    .field-error{
+.field-error{
         color:var(--danger);
         font-size:.82rem;
         line-height:1.45;
     }
 
-    .form-actions{
+.form-actions{
         display:flex;
         gap:10px;
         flex-wrap:wrap;
     }
 
 @media (max-width:720px){
-    .form-grid{
+.form-grid{
         grid-template-columns:1fr;
         gap:12px;
     }
 
-    .field.span-2{
+.field.span-2{
         grid-column:auto;
     }
 
-    .process-form,
-    .form-group{
+.process-form,
+.form-group{
         gap:var(--gap-page);
     }
 
-    .field{
+.field{
         gap:7px;
     }
 
-    .field label{
+.field label{
         font-size:.68rem;
-        letter-spacing:.12em;
+        letter-spacing:.07em;
     }
 
-    .field input,
-    .field select,
-    .field textarea{
+.field input,
+.field select,
+.field textarea{
         min-height:44px;
-        border-radius:14px;
+        border-radius:var(--radius-sm);
     }
 
-    .field textarea{
+.field textarea{
         min-height:116px;
     }
 
-    .form-actions .btn,
-    .form-actions .btn-secondary{
+.form-actions .btn,
+.form-actions .btn-secondary{
         width:100%;
     }
+
     }

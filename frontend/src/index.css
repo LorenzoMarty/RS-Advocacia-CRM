@@ -19,12 +19,12 @@
 @import "./styles/utilities/tablet.css";
 @import "./styles/tailwind.css";
 
-#root {
+#root{
   width: 100%;
   min-height: 100vh;
 }
 
-body {
+body{
   min-height: 100vh;
 }
 
@@ -32,39 +32,28 @@ a,
 button,
 input,
 select,
-textarea {
+textarea{
   font: inherit;
 }
 
-a {
+a{
   text-decoration: none;
 }
 
-button {
+button{
   cursor: pointer;
 }
 
-button:disabled {
+button:disabled{
   cursor: not-allowed;
 }
 
-button.action-link {
+button.action-link{
   appearance: none;
 }
 
-.topbar-actions > *,
-.form-actions > *,
-.empty-actions > * {
+.form-actions > *{
   text-decoration: none;
-}
-
-.empty-inline {
-  padding: 0;
-}
-
-.not-found-shell {
-  display: grid;
-  gap: 16px;
 }
 
 .main :where(
@@ -72,35 +61,10 @@ button.action-link {
   .hero,
   .panel,
   .rail,
-  .section-card,
-  .agenda-intro,
-  .agenda-day-intro,
-  .agenda-day-timeline,
-  .calendar-panel,
-  .rail-panel,
-  .deadlines-intro,
-  .deadline-form-intro,
-  .deadline-form-panel,
-  .deadline-detail-hero,
-  .deadline-timer-panel,
-  .deadline-detail-panel,
-  .petitions-intro,
-  .petition-form-intro,
   .petition-form-panel,
-  .petition-editing-summary,
-  .meetings-intro,
-  .meetings-form-panel,
-  .meetings-workspace,
-  .clients-intro,
-  .clients-panel,
   .client-hero,
   .process-hero,
-  .event-hero,
-  .user-hero,
-  .create-intro,
-  .event-intro,
-  .form-panel
-) {
+  .user-hero){
   border-radius: 0;
   border-color: transparent;
   background: transparent;
@@ -112,76 +76,38 @@ button.action-link {
 html[data-theme="light"] :where(.sidebar, .topbar),
 html[data-theme="light"] #root .main :where(
   .hero,
-  .agenda-intro,
-  .agenda-day-intro,
-  .deadlines-intro,
-  .deadline-form-intro,
-  .deadline-detail-hero,
-  .petitions-intro,
-  .petition-form-intro,
-  .meetings-intro,
-  .clients-intro,
-  .process-intro,
-  .users-intro,
   .client-hero,
   .process-hero,
-  .event-hero,
-  .user-hero,
-  .create-intro,
-  .event-intro
-) {
-  background: #ffffff;
+  .user-hero){
+  background:var(--surface);
 }
 
 #root :where(
   .main,
   .agenda-page,
-  .agenda-day-page,
-  .event-create-page,
-  .clients-page,
-  .deadlines-page,
-  .deadline-form-page,
-  .deadline-detail-page,
-  .petitions-page,
-  .petition-form-page,
-  .audit-page,
-  .meetings-page,
-  .user-page,
-  .users-page,
-  .dashboard-grid,
-  .agenda-layout,
-  .client-layout,
-  .event-layout,
-  .process-layout,
-  .user-layout,
-  .deadline-detail-layout,
-  .meetings-layout,
   .stack
-) {
+){
   gap: 0;
 }
 
 html:not([data-theme="light"]) #root .main :where(
   select:not(.rs-native-select),
-  .filter-select,
   .rs-select-trigger
-) {
+){
   border-color: var(--select-field-border);
   background: var(--select-field-solid);
   color: var(--text);
 }
 
 html:not([data-theme="light"]) #root .main :where(
-  select:not(.rs-native-select),
-  .filter-select
-) {
+  select:not(.rs-native-select)){
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   padding-right: 40px;
   background:
-    linear-gradient(45deg, transparent 50%, var(--gold-soft) 50%),
-    linear-gradient(135deg, var(--gold-soft) 50%, transparent 50%),
+    linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%),
     var(--select-field-solid);
   background-position:
     calc(100% - 20px) calc(50% - 3px),
@@ -193,66 +119,48 @@ html:not([data-theme="light"]) #root .main :where(
 
 html:not([data-theme="light"]) #root .main :where(
   select:not(.rs-native-select):hover,
-  .filter-select:hover,
   .rs-select-trigger:hover
-) {
-  border-color: rgba(212,175,55,.22);
+){
+  border-color: var(--line-strong);
 }
 
 html:not([data-theme="light"]) #root .main :where(
   select:not(.rs-native-select):focus,
-  .filter-select:focus,
   .rs-select.is-open .rs-select-trigger,
   .rs-select-trigger:focus-visible
-) {
+){
   border-color: var(--select-field-border-strong);
   background-color: var(--select-field-hover);
 }
 
-html:not([data-theme="light"]) #root .main select:not(.rs-native-select) :where(option, optgroup) {
-  background: #0f172a;
+html:not([data-theme="light"]) #root .main select:not(.rs-native-select) :where(option, optgroup){
+  background:var(--surface);
   color: var(--text);
 }
 
 .main :where(
   .metric,
-  .focus-card,
   .item,
-  .shortcut,
-  .rail-stat,
   .empty,
-  .detail-item,
-  .summary-card,
   .link-card,
   .note-box,
   .side-item,
   .day-card,
   .calendar-event,
   .timeline-event,
-  .client-row,
-  .process-row,
-  .user-row,
-  .cargo-row,
   .event-item,
-  .related-item,
-  .permission-item,
   .deadline-column,
   .deadline-card,
   .deadline-column-empty,
   .petition-column,
   .petition-card,
   .petition-column-empty,
-  .productivity-metric,
   .productivity-active-item,
   .productivity-history-row,
   .productivity-bar-row,
-  .productivity-ranking-row,
-  .productivity-goal-row,
-  .productivity-goal-input-row,
-  .meeting-option,
   .audio-recorder,
   .recording-result
-) {
+){
   border-radius: 18px;
 }
 
@@ -260,47 +168,22 @@ html:not([data-theme="light"]) #root .main select:not(.rs-native-select) :where(
   .badge,
   .status-badge,
   .meta-chip,
-  .meta-pill,
   .legend-chip,
-  .client-tier,
-  .focus-label,
-  .item-time,
   .calendar-event-time
-) {
+){
   border-radius: 999px;
-}
-
-.main :where(
-  .shortcut-icon,
-  .icon-control,
-  .event-mark,
-  .process-mark,
-  .client-avatar,
-  .user-avatar,
-  .deadline-mark
-) {
-  border-radius: 12px;
 }
 
 #root .main :where(
   .badge,
   .status-badge,
-  .priority-badge,
   .meta-chip,
-  .meta-pill,
   .legend-chip,
-  .client-tier-pill,
-  .owner-chip,
-  .role-badge,
-  .contact-chip,
-  .item-time,
   .calendar-event-time,
-  .deadline-move,
-  .deadline-edit,
   .petition-card-meta span,
   .petition-card-actions a,
   .petition-card-actions button
-) {
+){
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
@@ -308,28 +191,12 @@ html:not([data-theme="light"]) #root .main select:not(.rs-native-select) :where(
   line-height: 1.2;
 }
 
-#root .main :where(.badge, .status-badge, .legend-chip)::before {
+#root .main :where(.badge, .status-badge, .legend-chip)::before{
   flex: 0 0 auto;
 }
 
-#root .main :where(.badge, .status-badge, .priority-badge) {
+#root .main :where(.badge, .status-badge){
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
-}
-
-#root .main :where(.detail-badge-wrap, .summary-card-status) {
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-#root .main :where(.detail-badge-wrap, .summary-card-status) :where(
-  .badge,
-  .status-badge,
-  .priority-badge
-) {
-  justify-content: center;
-  text-align: center;
-  white-space: normal;
 }

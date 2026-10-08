@@ -18,9 +18,9 @@ export function TimeDistributionChart({ byType, byTask, deadlines, petitions }) 
 
   return (
     <Card>
-      <CardContent className="py-5">
+      <CardContent className="py-[var(--pad-card)]">
       <div className="mb-4">
-        <p className="font-serif text-lg text-foreground">Distribuição do tempo</p>
+        <p className="text-card-title-sm text-ink">Distribuição do tempo</p>
         <p className="text-xs text-muted-foreground">Onde o tempo foi investido no período</p>
       </div>
 

@@ -1,4 +1,4 @@
-// User-adjustable appearance preferences (scale, font size, spacing).
+// User-adjustable appearance preferences (theme, scale, font size, spacing).
 //
 // Persisted in localStorage only (per device). The actual CSS application also
 // happens in a tiny inline script in index.html so the saved values are applied
@@ -9,11 +9,24 @@ const STORAGE_KEYS = {
   scale: 'rs-advocacia-ui-scale',
   font: 'rs-advocacia-font-scale',
   space: 'rs-advocacia-space-scale',
+  theme: 'rs-advocacia-theme',
 };
 
 // Each group: which CSS variable it drives, the default preset id, and the
 // ordered presets (id -> { label, value }). `value` is the multiplier.
 export const APPEARANCE = {
+  // Tema não usa multiplicador: só liga data-theme em <html> e o meta theme-color.
+  theme: {
+    label: 'Tema',
+    cssVar: null,
+    dataAttr: 'data-theme',
+    storageKey: STORAGE_KEYS.theme,
+    default: 'light',
+    presets: [
+      { id: 'light', label: 'Claro', themeColor: '#EDEFF3' },
+      { id: 'dark', label: 'Escuro', themeColor: '#0F1014' },
+    ],
+  },
   scale: {
     label: 'Escala da interface',
     cssVar: '--ui-scale',
@@ -93,8 +106,13 @@ export function applyAppearance(appearance) {
     const cfg = APPEARANCE[group];
     const id = appearance[group] || cfg.default;
     const preset = presetById(group, id);
-    root.style.setProperty(cfg.cssVar, String(preset.value));
+    if (cfg.cssVar) {
+      root.style.setProperty(cfg.cssVar, String(preset.value));
+    }
     root.setAttribute(cfg.dataAttr, preset.id);
+    if (preset.themeColor) {
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', preset.themeColor);
+    }
     try {
       localStorage.setItem(cfg.storageKey, preset.id);
     } catch {

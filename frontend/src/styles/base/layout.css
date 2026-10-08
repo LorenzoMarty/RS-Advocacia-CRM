@@ -2,29 +2,32 @@
     position:relative;
     z-index:1;
     min-height:100vh;
+    max-width:1960px;
+    margin-inline:auto;
+    padding:var(--shell-pad);
+    gap:var(--shell-pad);
+    transition:grid-template-columns .3s var(--ease-out);
 }
 
+/* Coluna de conteúdo: topbar (card) + página. O shell inteiro (sidebar + conteúdo) limita a largura e centraliza em monitores muito largos. */
 .page{
-    margin-left:0;
+    display:flex;
+    flex-direction:column;
+    gap:var(--shell-pad);
+    min-width:0;
+    width:100%;
     padding:0 0 var(--bottom-nav-offset);
     background:transparent;
-    transition:margin-left .35s cubic-bezier(.22,1,.36,1),padding .22s ease;
 }
 .page-wrap{
     position:relative;
     max-width:none;
     min-width:0;
     margin:0;
-    /* Sem padding à esquerda no desktop: o conteúdo encosta na sidebar fixa
-       (o respiro dela vem do próprio --sidebar/--sidebar-collapsed via
-       margin-left do .page). Abaixo de 1201px a sidebar vira bottom-nav, então
-       o gutter esquerdo volta a existir simetricamente. */
-    padding:0 var(--layout-gutter) var(--layout-gutter) 0;
+    padding:0;
     background:transparent;
 }
 
-@media (max-width:1200px){
-    .page-wrap{
-        padding-left:var(--layout-gutter);
-    }
+@media (min-width:1201px){
+    .page{padding-bottom:0}
 }

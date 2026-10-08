@@ -13,7 +13,7 @@ import { useConfirmPopup } from '../hooks/use-confirm-popup';
 import { PageChrome } from '../layout';
 import { useAppState } from '../store';
 import { Select } from '../components/select';
-import { EmptyState, Field, NotFoundState } from './common';
+import { EmptyState, Field, NotFoundState, FormAside, FormHeader, FormLayout } from './common';
 import {
   DEADLINE_DEFAULT_STATUS,
   buildDeadlineTitle,
@@ -135,25 +135,11 @@ export function DeadlineFormPage() {
       <PageChrome label={isEditing ? 'Editar prazo' : 'Novo prazo'} />
       {confirmPopup}
 
-      <div className="grid gap-4">
-        <section className="mb-2">
-          <p className="font-serif text-3xl text-foreground">
-            {isEditing ? 'Editar prazo' : 'Novo prazo'}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">Preencha os campos do prazo.</p>
-
-          <Link
-            className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to={`/prazos?data=${encodeURIComponent(date)}`}
-          >
-            <ArrowLeft className="size-3.5" />
-            Voltar para prazos
-          </Link>
-        </section>
+      <div className="grid gap-[var(--gap-grid)]">
+        <FormHeader title={isEditing ? 'Editar prazo' : 'Novo prazo'} subtitle="Preencha os campos do prazo." backTo={`/prazos?data=${encodeURIComponent(date)}`} backLabel="Voltar para prazos" />
 
         {processes.length ? (
-          <Card>
-            <CardContent className="py-5">
+          <FormLayout aside={<FormAside items={["Processo e responsável (geram o nome do prazo)", "Data limite do prazo", "Prioridade e status"]} note={"No quadro de prazos, arrastar o card entre colunas atualiza o status."} />}>
             <form className="deadline-task-form" onSubmit={handleSubmit(onSubmit)}>
               <div className="deadline-generated-name">
                 <span>Nome do prazo</span>
@@ -192,21 +178,19 @@ export function DeadlineFormPage() {
                 </Button>
                 {isEditing ? (
                   <Button
-                    variant="outline"
-                    className="text-destructive hover:bg-destructive/10"
+                    variant="destructive"
                     type="button"
                     onClick={handleDelete}
                   >
                     Excluir
                   </Button>
                 ) : null}
-                <Button asChild variant="outline">
+                <Button asChild variant="secondary">
                   <Link to={`/prazos?data=${encodeURIComponent(date)}`}>Cancelar</Link>
                 </Button>
               </div>
             </form>
-            </CardContent>
-          </Card>
+            </FormLayout>
         ) : (
           <EmptyState
             title="Nenhum processo cadastrado."

@@ -1,8 +1,9 @@
 import { Children, cloneElement, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, Trash2 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
@@ -63,16 +64,16 @@ export function DetailHero({ breadcrumbLabel, breadcrumbTo, mark, title, subtitl
   return (
     <section className="mb-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 max-w-full flex-1 items-center gap-[var(--gap-grid)]">
           <div
-            className="grid size-14 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 font-serif text-xl text-primary"
+            className="grid size-14 shrink-0 place-items-center rounded-sm bg-accent-soft-2 text-card-title-sm text-[var(--accent-hover)]"
             aria-hidden="true"
           >
             {mark}
           </div>
           <div className="min-w-0">
-            <h1 className="truncate font-serif text-3xl leading-none text-foreground">{title}</h1>
-            {subtitle ? <p className="mt-1.5 truncate text-sm text-muted-foreground">{subtitle}</p> : null}
+            <h1 className="truncate text-page-title text-ink">{title}</h1>
+            {subtitle ? <p className="mt-1.5 truncate text-[1.07rem] font-medium text-muted-foreground">{subtitle}</p> : null}
             {meta ? <div className="mt-2 flex flex-wrap gap-1.5">{meta}</div> : null}
           </div>
         </div>
@@ -90,9 +91,9 @@ export function DetailHero({ breadcrumbLabel, breadcrumbTo, mark, title, subtitl
       {summary?.length ? (
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {summary.map((item) => (
-            <div key={item.label} className="rounded-xl border border-border bg-accent/5 px-3 py-2.5">
-              <span className="block text-xs uppercase tracking-wide text-muted-foreground">{item.label}</span>
-              <div className="mt-1 text-sm font-semibold text-foreground">{item.value}</div>
+            <div key={item.label} className="rounded-md bg-card px-4 py-3">
+              <span className="block text-label uppercase text-subtle">{item.label}</span>
+              <div className="mt-1 text-meta font-semibold text-ink">{item.value}</div>
             </div>
           ))}
         </div>
@@ -102,11 +103,11 @@ export function DetailHero({ breadcrumbLabel, breadcrumbTo, mark, title, subtitl
 }
 
 export function DetailLayout({ children }) {
-  return <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{children}</div>;
+  return <div className="grid grid-cols-1 gap-[var(--gap-grid)] lg:grid-cols-2">{children}</div>;
 }
 
 export function DetailStack({ children }) {
-  return <div className="flex flex-col gap-4">{children}</div>;
+  return <div className="flex flex-col gap-[var(--gap-grid)]">{children}</div>;
 }
 
 export function DetailSection({ title, note, badge, children }) {
@@ -114,8 +115,8 @@ export function DetailSection({ title, note, badge, children }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <div>
-          <h2 className="font-serif text-lg text-foreground">{title}</h2>
-          {note ? <p className="text-xs text-muted-foreground">{note}</p> : null}
+          <h2 className="text-card-title-sm text-ink">{title}</h2>
+          {note ? <p className="text-meta-sm text-muted-foreground">{note}</p> : null}
         </div>
         {badge}
       </CardHeader>
@@ -131,8 +132,8 @@ export function DetailGrid({ children }) {
 export function DetailItem({ label, children, span }) {
   return (
     <div className={cn('min-w-0', span && 'sm:col-span-2')}>
-      <span className="block text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
-      <div className="mt-1 truncate text-sm font-medium text-foreground">{children}</div>
+      <span className="block text-label uppercase text-subtle">{label}</span>
+      <div className="mt-1 truncate text-meta font-semibold text-ink">{children}</div>
     </div>
   );
 }
@@ -141,7 +142,7 @@ export function DetailItem({ label, children, span }) {
 // título + subtítulo + badge de status + chips de metadados.
 export function RelatedItem({ title, subtitle, badge, chips }) {
   return (
-    <article className="rounded-xl border border-border bg-accent/5 px-3.5 py-3">
+    <article className="rounded-xl border border-border bg-surface-2 px-3.5 py-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-medium text-foreground">{title}</h3>
@@ -154,7 +155,7 @@ export function RelatedItem({ title, subtitle, badge, chips }) {
           {chips.map((chip, index) => (
             <span
               key={index}
-              className="inline-flex h-6 items-center truncate rounded-full border border-border bg-accent/10 px-2 text-xs text-muted-foreground"
+              className="inline-flex h-6 items-center truncate rounded-full border border-border bg-surface-2 px-2 text-xs text-muted-foreground"
             >
               {chip}
             </span>
@@ -401,5 +402,52 @@ export function NotFoundState({ title = 'Registro não encontrado.', copy = 'Vol
         <p className="mt-1.5 text-sm text-muted-foreground">{copy}</p>
       </CardContent>
     </Card>
+  );
+}
+
+// Layout padrão dos formulários: cabeçalho de página + 2 colunas (formulário à esquerda,
+// card de contexto à direita; abaixo de lg o card vai para baixo do formulário).
+export function FormHeader({ title, subtitle, backTo, backLabel }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <PageHeader title={title} subtitle={subtitle} />
+      <Link
+        className="inline-flex w-fit items-center gap-1.5 px-2 text-meta font-semibold text-muted-foreground transition-colors hover:text-ink"
+        to={backTo}
+      >
+        <ArrowLeft className="size-3.5" aria-hidden="true" />
+        {backLabel}
+      </Link>
+    </div>
+  );
+}
+
+export function FormLayout({ aside, children }) {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-[var(--gap-grid)] lg:grid-cols-[minmax(0,1fr)_320px]">
+      <Card>
+        <CardContent className="py-[var(--pad-card)]">{children}</CardContent>
+      </Card>
+      {aside}
+    </div>
+  );
+}
+
+export function FormAside({ title = 'Antes de salvar', items = [], note }) {
+  return (
+    <aside className="flex flex-col gap-3.5 rounded-lg bg-card p-[var(--pad-card)] lg:sticky lg:top-[var(--sticky-top)]" aria-label="Resumo do formulário">
+      <h2 className="m-0 text-card-title-sm text-ink">{title}</h2>
+      <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+        {items.map((item) => (
+          <li key={item} className="flex items-start gap-2.5 text-meta font-semibold text-ink-2">
+            <span className="mt-px grid size-5 shrink-0 place-items-center rounded-full bg-accent-soft-2 text-[var(--accent)]" aria-hidden="true">
+              <Check className="size-3" strokeWidth={2.4} />
+            </span>
+            {item}
+          </li>
+        ))}
+      </ul>
+      {note ? <p className="m-0 rounded-md bg-surface-2 px-3.5 py-3 text-meta-sm text-muted-foreground">{note}</p> : null}
+    </aside>
   );
 }

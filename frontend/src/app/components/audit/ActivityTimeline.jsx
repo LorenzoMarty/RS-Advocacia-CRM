@@ -341,7 +341,7 @@ export function ActivityTimeline({ entries, filters, pagination, autores = [], o
 
   return (
     <Card>
-    <CardContent className="py-5">
+    <CardContent className="py-[var(--pad-card)]">
       <div className="section-head">
         <div>
           <h2 className="section-title">Atividade recente</h2>
@@ -360,7 +360,7 @@ export function ActivityTimeline({ entries, filters, pagination, autores = [], o
               cada tipo mostra a contagem sem expor todas as entradas de cara. */}
           <Accordion type="multiple" className="grid gap-1">
             {groups.map((typeGroup) => (
-              <AccordionItem key={typeGroup.key} value={typeGroup.key} className="rounded-lg border-b-0 bg-muted/30 px-3">
+              <AccordionItem key={typeGroup.key} value={typeGroup.key} className="rounded-lg border-b-0 bg-surface-2 px-3">
                 <AccordionTrigger className="py-2.5 hover:no-underline">
                   <div className="flex flex-1 items-center justify-between gap-2 pr-2">
                     <div className="text-left">
