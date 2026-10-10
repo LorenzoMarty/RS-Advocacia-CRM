@@ -166,7 +166,7 @@
 
 .petition-card-actions a,
 .petition-card-actions button{
-    min-height:30px;
+    min-height:var(--btn-h-sm);
     display:inline-flex;
     align-items:center;
     justify-content:center;
@@ -175,8 +175,8 @@
     border:1px solid var(--line);
     background:var(--surface-2);
     color:var(--soft);
-    font-size:.72rem;
-    font-weight:800;
+    font-size:var(--btn-fs-sm);
+    font-weight:600;
 }
 
 .petition-card-actions a:hover,

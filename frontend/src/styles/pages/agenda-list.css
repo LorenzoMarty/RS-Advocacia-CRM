@@ -248,7 +248,7 @@
 .side-item-attend{display:flex;gap:8px;margin-top:2px}
 
 .side-item-attend-yes,
-.side-item-attend-no{border:none;border-radius:var(--radius-sm);padding:6px 12px;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s ease,color .15s ease}
+.side-item-attend-no{border:none;border-radius:var(--radius-sm);min-height:var(--btn-h-sm);padding:0 12px;font-size:var(--btn-fs-sm);font-weight:600;cursor:pointer;transition:background .15s ease,color .15s ease}
 
 .side-item-attend-yes{background:color-mix(in srgb, var(--success) 15%, transparent);color:var(--success,var(--success))}
 
