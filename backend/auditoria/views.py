@@ -7,7 +7,7 @@ from agenda.models import Evento
 from auditoria import overview as overview_mod
 from auditoria import painel
 from auditoria.models import RegistroAuditoria
-from auditoria.serializers import serialize_registro
+from auditoria.serializers import serialize_registros
 from clientes.models import Cliente
 from core.identity import current_usuario, is_admin
 from core.pagination import paginar
@@ -110,7 +110,7 @@ def listar_auditoria(request: HttpRequest):
 
     return resposta_sucesso(
         {
-            "registros": [serialize_registro(registro) for registro in pagina],
+            "registros": serialize_registros(pagina),
             "paginacao": paginacao,
         }
     )

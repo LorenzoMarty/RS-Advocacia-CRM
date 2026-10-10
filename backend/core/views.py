@@ -10,7 +10,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from agenda.models import Evento
 from agenda.serializers import serialize_evento
 from auditoria.models import RegistroAuditoria
-from auditoria.serializers import serialize_registro
+from auditoria.serializers import serialize_registros
 from clientes.models import Cliente
 from clientes.serializers import serialize_cliente
 from core.identity import current_usuario, is_admin
@@ -225,10 +225,9 @@ def inicializacao(request):
         ]
 
     if eh_admin:
-        tarefas["auditoria"] = lambda: [
-            serialize_registro(registro)
-            for registro in RegistroAuditoria.objects.all()[:50]
-        ]
+        tarefas["auditoria"] = lambda: serialize_registros(
+            RegistroAuditoria.objects.all()[:50]
+        )
 
     data = _executar_em_paralelo(tarefas)
     data["acessos"] = acessos
