@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -8,6 +9,11 @@ from django.urls import reverse
 
 from clientes.models import Cliente
 from documentos.models import ClienteDrive, DocumentoCliente
+from integrations.google.exceptions import (
+    GoogleApiError,
+    GoogleAuthorizationRequired,
+    GoogleConfigurationError,
+)
 from usuarios.models import Usuario
 
 ROOT = "root-folder-id"
@@ -263,3 +269,189 @@ class OrganizacaoViewsTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+
+
+def _login_admin(testcase):
+    usuario = Usuario.objects.create(
+        nome="Advogada", email="adv@example.com", cargo="Administrador"
+    )
+    auth_user = get_user_model().objects.create_superuser(
+        username=usuario.email, email=usuario.email
+    )
+    testcase.client.force_login(auth_user)
+    session = testcase.client.session
+    session["usuario_id"] = usuario.pk
+    session.save()
+    return usuario
+
+
+@override_settings(GOOGLE_DRIVE_ROOT_FOLDER_ID=ROOT)
+class DriveExplorerViewsTests(TestCase):
+    """Folder explorer endpoints; the Drive service layer is mocked."""
+
+    def setUp(self):
+        _login_admin(self)
+        self.cliente = _cliente()
+        _clientedrive(self.cliente)
+
+    def _json(self, method, url, body):
+        return getattr(self.client, method)(
+            url, data=json.dumps(body), content_type="application/json"
+        )
+
+    @patch("documentos.views.services.pastas_gerenciadas_ids", return_value={"p1"})
+    @patch("documentos.views.services.listar_conteudo_pasta")
+    def test_listar_drive_serializa_pastas_e_arquivos(self, mock_listar, _mock_ger):
+        mock_listar.return_value = {
+            "folder_id": "f",
+            "raiz_id": "r",
+            "pastas": [{"id": "p1", "name": "01 Contratos"}, {"id": "p2", "name": "X"}],
+            "arquivos": [{"id": "a1", "name": "a.pdf", "size": "10"}],
+        }
+        response = self.client.get(
+            reverse("listar_drive", args=[self.cliente.pk]), {"folder_id": "f"}
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        dados = response.json()["dados"]
+        self.assertEqual(dados["raiz_id"], "r")
+        self.assertEqual(
+            [(p["id"], p["gerenciada"]) for p in dados["pastas"]],
+            [("p1", True), ("p2", False)],
+        )
+        self.assertEqual(dados["arquivos"][0]["tamanho_bytes"], 10)
+        self.assertEqual(mock_listar.call_args.args[2], "f")
+
+    def test_listar_drive_rejeita_post(self):
+        response = self.client.post(reverse("listar_drive", args=[self.cliente.pk]))
+        self.assertEqual(response.status_code, 405)
+
+    @patch("documentos.views.services.listar_conteudo_pasta")
+    def test_erros_google_sao_mapeados(self, mock_listar):
+        url = reverse("listar_drive", args=[self.cliente.pk])
+        for exc, status in [
+            (GoogleConfigurationError("cfg"), 503),
+            (GoogleAuthorizationRequired("auth"), 401),
+            (GoogleApiError("api"), 502),
+        ]:
+            with self.subTest(exc=type(exc).__name__):
+                mock_listar.side_effect = exc
+                self.assertEqual(self.client.get(url).status_code, status)
+
+    @patch("documentos.views.services.criar_pasta")
+    def test_criar_pasta(self, mock_criar):
+        mock_criar.return_value = {"id": "nova", "name": "Nova"}
+        url = reverse("criar_pasta_drive", args=[self.cliente.pk])
+        ok = self._json("post", url, {"nome": " Nova ", "parent_id": "pai"})
+        self.assertEqual(ok.status_code, 201, ok.content)
+        self.assertEqual(ok.json()["dados"]["pasta"]["id"], "nova")
+        self.assertEqual(
+            mock_criar.call_args.kwargs, {"nome": "Nova", "parent_id": "pai"}
+        )
+        self.assertEqual(self._json("post", url, {"parent_id": "pai"}).status_code, 400)
+        self.assertEqual(self._json("post", url, {"nome": "x"}).status_code, 400)
+        self.assertEqual(self.client.get(url).status_code, 405)
+
+    @patch("documentos.views.services.renomear_pasta")
+    def test_renomear_pasta(self, mock_renomear):
+        url = reverse("gerenciar_pasta_drive", args=[self.cliente.pk, "f1"])
+        mock_renomear.return_value = {"id": "f1", "name": "Novo"}
+        ok = self._json("patch", url, {"nome": "Novo"})
+        self.assertEqual(ok.status_code, 200, ok.content)
+        self.assertTrue(ok.json()["dados"]["pasta"]["gerenciada"])
+        self.assertEqual(self._json("patch", url, {"nome": " "}).status_code, 400)
+        mock_renomear.side_effect = ValueError("pasta estrutural")
+        recusado = self._json("patch", url, {"nome": "Y"})
+        self.assertEqual(recusado.status_code, 400)
+        self.assertIn("pasta estrutural", recusado.json()["erros"]["folder_id"][0])
+
+    @patch("documentos.views.services.excluir_pasta")
+    def test_excluir_pasta_protege_raiz_do_cliente(self, mock_excluir):
+        raiz = self.client.delete(
+            reverse("gerenciar_pasta_drive", args=[self.cliente.pk, "c"])
+        )
+        self.assertEqual(raiz.status_code, 400)
+        mock_excluir.assert_not_called()
+
+        ok = self.client.delete(
+            reverse("gerenciar_pasta_drive", args=[self.cliente.pk, "outra"])
+        )
+        self.assertEqual(ok.status_code, 200, ok.content)
+        mock_excluir.assert_called_once()
+
+    def test_gerenciar_pasta_rejeita_get(self):
+        url = reverse("gerenciar_pasta_drive", args=[self.cliente.pk, "f1"])
+        self.assertEqual(self.client.get(url).status_code, 405)
+
+    @patch("documentos.views.services.upload_para_pasta")
+    def test_upload_drive(self, mock_upload):
+        mock_upload.return_value = {"id": "n1", "name": "rg.pdf"}
+        url = reverse("upload_drive", args=[self.cliente.pk])
+
+        def post(**fields):
+            return self.client.post(url, fields)
+
+        pdf = SimpleUploadedFile("rg.pdf", b"x", content_type="application/pdf")
+        ok = post(folder_id="f", arquivo=pdf)
+        self.assertEqual(ok.status_code, 201, ok.content)
+        self.assertEqual(mock_upload.call_args.kwargs["folder_id"], "f")
+        self.assertEqual(mock_upload.call_args.kwargs["content"], b"x")
+
+        sem_pasta = post(arquivo=SimpleUploadedFile("a.pdf", b"x"))
+        self.assertEqual(sem_pasta.status_code, 400)
+        self.assertEqual(post(folder_id="f").status_code, 400)
+        exe = post(folder_id="f", arquivo=SimpleUploadedFile("a.exe", b"x"))
+        self.assertEqual(exe.status_code, 400)
+        with override_settings(DRIVE_MAX_FILE_SIZE_MB=0):
+            grande = post(folder_id="f", arquivo=SimpleUploadedFile("a.pdf", b"x"))
+        self.assertEqual(grande.status_code, 400)
+        self.assertEqual(mock_upload.call_count, 1)
+
+    @patch("documentos.views.services.baixar_documento", return_value=b"PDFDATA")
+    def test_download_documento(self, _mock_baixar):
+        doc = DocumentoCliente.objects.create(
+            cliente=self.cliente,
+            categoria=DocumentoCliente.CATEGORIA_DOCUMENTO,
+            nome="rg.pdf",
+            drive_file_id="f-1",
+            mime_type="application/pdf",
+        )
+        url = reverse("download_documento", args=[self.cliente.pk, doc.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"PDFDATA")
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn('filename="rg.pdf"', response["Content-Disposition"])
+        self.assertEqual(self.client.post(url).status_code, 405)
+
+
+@override_settings(GOOGLE_DRIVE_ROOT_FOLDER_ID=ROOT)
+class DriveImportViewsTests(TestCase):
+    def setUp(self):
+        _login_admin(self)
+
+    @patch("documentos.views.importacao.descobrir_clientes_novos")
+    def test_descobrir_clientes(self, mock_descobrir):
+        mock_descobrir.return_value = [{"pasta_id": "p", "nome": "Fulano"}]
+        url = reverse("descobrir_clientes_drive")
+        response = self.client.get(url)
+        self.assertEqual(response.json()["dados"]["candidatos"][0]["nome"], "Fulano")
+        self.assertEqual(self.client.post(url).status_code, 405)
+        mock_descobrir.side_effect = GoogleAuthorizationRequired("x")
+        self.assertEqual(self.client.get(url).status_code, 401)
+
+    @patch("documentos.views.importacao.criar_clientes_a_partir_de_pastas")
+    def test_confirmar_clientes_novos(self, mock_criar):
+        url = reverse("confirmar_clientes_novos_drive")
+        mock_criar.return_value = [_cliente("Importado")]
+        ok = self.client.post(
+            url,
+            data=json.dumps({"pastas": [{"id": "p"}]}),
+            content_type="application/json",
+        )
+        self.assertEqual(ok.status_code, 200, ok.content)
+        self.assertEqual(ok.json()["dados"]["clientes_criados"][0]["nome"], "Importado")
+        invalido = self.client.post(
+            url, data=json.dumps({"pastas": "x"}), content_type="application/json"
+        )
+        self.assertEqual(invalido.status_code, 400)
+        self.assertEqual(self.client.get(url).status_code, 405)
