@@ -1,5 +1,6 @@
 import re
 
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
@@ -10,14 +11,14 @@ from core.identity import current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
-    enfileirar_best_effort,
     erros_formulario,
     ler_corpo_json,
     metodo_nao_permitido,
     resposta_erro,
     resposta_sucesso,
 )
-from documentos import tasks as documentos_tasks
+from documentos import renomeacao
+from documentos.models import RenomeacaoPastaPendente
 
 
 def _filtrar_clientes(request):
@@ -119,15 +120,14 @@ def editar_cliente(request, cliente_id):
 
     form = ClienteForm(payload, instance=cliente)
     if form.is_valid():
-        cliente = form.save()
-        if cliente.nome != nome_antigo:
-            usuario = current_usuario(request)
-            enfileirar_best_effort(
-                documentos_tasks.renomear_pasta_cliente,
-                cliente.pk,
-                usuario.pk if usuario else None,
-                cliente.nome,
-            )
+        with transaction.atomic():
+            cliente = form.save()
+            if cliente.nome != nome_antigo:
+                renomeacao.registrar(
+                    RenomeacaoPastaPendente.TIPO_CLIENTE,
+                    cliente.pk,
+                    current_usuario(request),
+                )
         serialized = serialize_cliente(cliente)
         return resposta_sucesso(
             {"cliente": serialized},

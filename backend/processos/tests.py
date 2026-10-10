@@ -7,6 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from clientes.models import Cliente
+from documentos.models import RenomeacaoPastaPendente
 from processos.forms import ProcessoForm
 from processos.models import Processo
 from usuarios.models import Usuario
@@ -111,11 +112,7 @@ class ProcessoApiTests(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    @patch(
-        "processos.views.documentos_tasks.renomear_pasta_processo.delay",
-        return_value=None,
-    )
-    def test_editar_atualiza_campo(self, _mock_delay):
+    def test_editar_atualiza_campo(self):
         self._grant("change_processo")
         processo = Processo.objects.create(
             numero_processo="0001",
@@ -194,25 +191,48 @@ class ProcessoApiTests(TestCase):
         self.client.force_login(self.user)
         self.assertEqual(self.client.post(reverse("listar_processos")).status_code, 405)
 
-    def test_editar_enfileira_rename_e_sobrevive_a_falha_do_broker(self):
+    def test_editar_registra_rename_pendente_e_sobrevive_a_falha_do_broker(self):
         self._grant("change_processo")
         processo = self._processo()
         self.client.force_login(self.user)
         payload = _payload_valido(self.cliente, self.usuario)
         payload["numero_processo"] = "0003-EDITADO"
         with patch(
-            "processos.views.documentos_tasks.renomear_pasta_processo.delay",
+            "documentos.tasks.aplicar_renomeacao.delay",
             side_effect=ConnectionError("broker down"),
         ) as delay, self.assertLogs("core.utils", level="ERROR"):
-            response = self.client.put(
-                reverse("editar_processo", args=[processo.pk]),
-                data=json.dumps(payload),
-                content_type="application/json",
-            )
+            with self.captureOnCommitCallbacks(execute=True):
+                response = self.client.put(
+                    reverse("editar_processo", args=[processo.pk]),
+                    data=json.dumps(payload),
+                    content_type="application/json",
+                )
         self.assertEqual(response.status_code, 200, response.content)
         delay.assert_called_once()
         processo.refresh_from_db()
         self.assertEqual(processo.numero_processo, "0003-EDITADO")
+        # the intent survives for the periodic drain
+        pendencia = RenomeacaoPastaPendente.objects.get()
+        self.assertEqual(
+            (pendencia.tipo, pendencia.objeto_id),
+            (RenomeacaoPastaPendente.TIPO_PROCESSO, processo.pk),
+        )
+
+    def test_editar_sem_mudar_o_nome_da_pasta_nao_registra_rename(self):
+        self._grant("change_processo")
+        processo = self._processo()
+        self.client.force_login(self.user)
+        payload = _payload_valido(self.cliente, self.usuario)
+        payload["numero_processo"] = processo.numero_processo
+        payload["area_juridica"] = processo.area_juridica
+        payload["status"] = "Concluído"
+        response = self.client.put(
+            reverse("editar_processo", args=[processo.pk]),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertFalse(RenomeacaoPastaPendente.objects.exists())
 
     def test_editar_e_excluir_geram_auditoria(self):
         from auditoria.models import RegistroAuditoria
@@ -222,14 +242,11 @@ class ProcessoApiTests(TestCase):
         self.client.force_login(self.user)
         payload = _payload_valido(self.cliente, self.usuario)
         payload["status"] = "Concluído"
-        with patch(
-            "processos.views.documentos_tasks.renomear_pasta_processo.delay"
-        ):
-            self.client.put(
-                reverse("editar_processo", args=[processo.pk]),
-                data=json.dumps(payload),
-                content_type="application/json",
-            )
+        self.client.put(
+            reverse("editar_processo", args=[processo.pk]),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
         self.client.delete(reverse("excluir_processo", args=[processo.pk]))
         acoes = list(
             RegistroAuditoria.objects.filter(

@@ -25,8 +25,13 @@ from integrations.google.client import drive_service
 from integrations.google.exceptions import GOOGLE_ERRORS, GoogleAuthorizationRequired
 from integrations.models import GoogleAccount, GoogleDriveSync
 
-from . import importacao, services
-from .models import ClienteDrive, DocumentoCliente, ProcessoDrive
+from . import importacao, renomeacao, services
+from .models import (
+    ClienteDrive,
+    DocumentoCliente,
+    ProcessoDrive,
+    RenomeacaoPastaPendente,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +139,26 @@ def _processar_mudancas(usuario, changes: list[dict]) -> dict:
 
     return contadores
 
+
+@shared_task(name="documentos.aplicar_renomeacao", ignore_result=True)
+def aplicar_renomeacao(pendencia_id: int) -> None:
+    """Fast path: apply one pending Drive rename right after the edit commits."""
+    pendencia = RenomeacaoPastaPendente.objects.filter(pk=pendencia_id).first()
+    if pendencia is not None:
+        renomeacao.aplicar(pendencia)
+
+
+@shared_task(name="documentos.drenar_renomeacoes", ignore_result=True)
+def drenar_renomeacoes() -> dict:
+    """Safety net: retry every pending rename that is due (see ``renomeacao``)."""
+    resumo = {"concluidas": 0, "falhas": 0}
+    for pendencia in renomeacao.vencidas()[: renomeacao.LOTE_MAXIMO]:
+        resumo["concluidas" if renomeacao.aplicar(pendencia) else "falhas"] += 1
+    return resumo
+
+
+# Legacy per-edit tasks: no longer enqueued by the views (see ``renomeacao``).
+# Kept for one release so messages already in the queue at deploy still run.
 
 @shared_task(
     bind=True,
