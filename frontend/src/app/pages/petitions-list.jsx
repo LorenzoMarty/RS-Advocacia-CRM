@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 
 import { PageHeader } from '@/components/ui/page-header';
+import { Avatar } from '@/components/ui/avatar';
 import { Segmented } from '@/components/ui/segmented';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -82,25 +83,29 @@ function PetitionCard({
       onDragStart={(event) => onDragStart(event, petition.id)}
       onDragEnd={onDragEnd}
     >
-      <div className="petition-card-main">
-        <span className="petition-card-client">{clientName}</span>
-        <h3>{petition.adversary || 'Adverso não informado'}</h3>
-        <TaskTimer
-          taskId={petition.id}
-          taskType={petitionTaskType(petition)}
-          title={petition.adversary || petition.type || PETITION_DEFAULT_TYPE}
-          processId={petition.processId}
-          processNumber={processNumber}
-          taskStatus={petition.status}
-          onStart={() => onTimerStart?.(petition)}
-        />
-        <div className="petition-card-meta">
-          {processNumber ? <span>{processNumber}</span> : null}
-          <span>{petition.type || PETITION_DEFAULT_TYPE}</span>
-          <span>{petition.responsible || 'Sem responsável'}</span>
-          <span>{petition.area || 'Sem área'}</span>
-        </div>
+      <div className="petition-card-top">
+        <span className={`petition-card-type type-${normalizeText(petition.type || PETITION_DEFAULT_TYPE).replace(/[^a-z]/g, '')}`}>
+          {petition.type || PETITION_DEFAULT_TYPE}
+        </span>
+        <StatusBadge tone={getStatusTone(statusLabel)}>{statusLabel}</StatusBadge>
       </div>
+
+      <div className="petition-card-main">
+        <h3>{petition.adversary || 'Adverso não informado'}</h3>
+        <span className="petition-card-client">{clientName}</span>
+        {processNumber ? <span className="petition-card-process">{processNumber}</span> : null}
+        {petition.area ? <span className="petition-card-process">{petition.area}</span> : null}
+      </div>
+
+      <TaskTimer
+        taskId={petition.id}
+        taskType={petitionTaskType(petition)}
+        title={petition.adversary || petition.type || PETITION_DEFAULT_TYPE}
+        processId={petition.processId}
+        processNumber={processNumber}
+        taskStatus={petition.status}
+        onStart={() => onTimerStart?.(petition)}
+      />
 
       {petition.pendingReason && petitionColumnKey(petition) === 'pendente' ? (
         <p className="petition-card-reason">{petition.pendingReason}</p>
@@ -122,7 +127,10 @@ function PetitionCard({
       </Select>
 
       <div className="petition-card-footer">
-        <StatusBadge tone={getStatusTone(statusLabel)}>{statusLabel}</StatusBadge>
+        <span className="petition-card-owner">
+          <Avatar name={petition.responsible || '?'} size={24} className="rounded-[8px]" />
+          <span className="truncate">{petition.responsible || 'Sem responsável'}</span>
+        </span>
         <div className="petition-card-actions">
           {petition.driveLink ? (
             <a href={petition.driveLink} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>

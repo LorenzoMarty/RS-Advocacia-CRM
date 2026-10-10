@@ -40,7 +40,7 @@ import {
 import { RailList } from "./agenda-rail-list";
 
 // Cores dos tipos (mesmas da legenda antiga).
-const TYPE_DOT = { audiencia: "var(--accent)", reuniao: "var(--info)", tarefa: "var(--subtle)" };
+const TYPE_DOT = { audiencia: "var(--cat-civel-ink)", reuniao: "var(--cat-empresarial-ink)", tarefa: "var(--cat-trabalhista-ink)" };
 
 export function AgendaListPage() {
   const navigate = useNavigate();

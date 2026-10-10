@@ -312,3 +312,109 @@
 
 .status-badge{font-size:.62rem}
 }
+
+/* ---- Alinhamento com o mock: grade plana com linhas finas, chips coloridos por tipo ---- */
+.calendar-weekdays,
+.calendar-days{gap:0}
+
+.calendar-weekdays{margin-bottom:6px}
+
+.calendar-weekdays span{padding:0 10px 8px;color:var(--subtle);font-size:.79rem;font-weight:700;letter-spacing:.08em}
+
+.calendar-days{border-top:0}
+
+.day-card{
+        min-height:108px;
+        padding:8px 6px;
+        margin:3px 2px;
+        gap:4px;
+        border:0;
+        position:relative;
+        border-radius:14px;
+        background:transparent;
+        box-shadow:inset 0 0 0 0 transparent;
+    }
+
+.day-card::before{content:"";position:absolute;top:-4px;left:-2px;right:-2px;border-top:1px solid var(--line);pointer-events:none}
+
+.day-card:hover{transform:none;background:var(--surface-2)}
+
+.day-card.is-muted{opacity:1}
+
+.day-card.is-muted .day-number{color:var(--subtle)}
+
+.day-card.is-today{background:var(--accent-soft)}
+
+
+.day-card.is-drop-target{background:var(--accent-soft-2);box-shadow:0 0 0 2px var(--focus-ring) inset}
+
+.day-head{gap:6px}
+
+.day-number{
+        width:28px;height:28px;display:grid;place-items:center;border-radius:999px;
+        font-size:.93rem;font-weight:700;letter-spacing:0;font-variant-numeric:tabular-nums;
+    }
+
+.day-card.is-today .day-number,
+.day-card.is-today.is-overdue .day-number{background:var(--accent);color:var(--accent-fg)}
+
+.day-card.is-overdue .day-number{color:var(--danger-ink)}
+
+.day-dot{display:none}
+
+.day-events{gap:4px}
+
+.main .calendar-event{
+        --event-bg:var(--cat-empresarial);
+        --event-ink:var(--cat-empresarial-ink);
+        gap:1px;
+        padding:4px 7px;
+        border:0;
+        border-radius:8px;
+        background:var(--event-bg);
+    }
+
+.calendar-event::before{display:none}
+
+.calendar-event:hover{transform:none;filter:brightness(.97)}
+
+.calendar-event.type-audiencia{--event-bg:var(--cat-civel);--event-ink:var(--cat-civel-ink)}
+
+.calendar-event.type-reuniao{--event-bg:var(--cat-empresarial);--event-ink:var(--cat-empresarial-ink)}
+
+.calendar-event.type-tarefa{--event-bg:var(--cat-trabalhista);--event-ink:var(--cat-trabalhista-ink)}
+
+.calendar-event.is-overdue{--event-bg:var(--danger-soft);--event-ink:var(--danger-ink)}
+
+.calendar-event-time{
+        min-height:0;padding:0;border-radius:0;background:transparent;
+        color:var(--event-ink);font-size:.79rem;font-weight:700;letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums;
+    }
+
+.calendar-event-title{font-size:.86rem;font-weight:600;line-height:1.25;letter-spacing:0}
+
+.calendar-event-context{display:none}
+
+.main .calendar-more{border-radius:8px;min-height:24px;font-size:.79rem;font-weight:700;border:0;background:var(--surface-2)}
+
+/* Painel lateral */
+.side-list{gap:8px}
+
+.main .side-item{padding:14px;border:0;border-radius:var(--radius-md);background:var(--surface-2)}
+
+.side-item:hover{transform:none;background:var(--surface-3)}
+
+.side-title{font-size:1.07rem;font-weight:700;line-height:1.3}
+
+.side-time{margin:4px 0 0;color:var(--muted);font-size:.86rem;font-weight:600;font-variant-numeric:tabular-nums}
+
+.side-meta{gap:2px 10px}
+
+.side-item .meta-chip{min-height:0;padding:0;border:0;background:transparent;color:var(--ink-2);font-size:.93rem;font-weight:500}
+
+.side-item .status-badge{min-height:0;padding:0;border:0;background:transparent;font-size:.86rem;font-weight:700;letter-spacing:0;text-transform:none}
+
+.side-item-attend{align-self:start;justify-self:start;gap:2px;padding:3px;border-radius:999px;background:var(--surface)}
+
+.side-item-attend-yes,
+.side-item-attend-no{border-radius:999px;min-height:28px;padding:0 10px;font-weight:700}
