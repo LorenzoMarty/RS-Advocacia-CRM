@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
+import { FileAudio, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 import { StatusBadge } from '../layout';
 import { MeetingSummary, RecordingPipeline } from './meeting-summary';
-import { statusTone } from './meetings-utils';
+import { formatBytes, friendlyProcessingError, statusTone } from './meetings-utils';
 
 export function RecordingResult({ onDelete, onSaveTranscript, recording }) {
   const [isEditingTranscript, setIsEditingTranscript] = useState(false);
   const [transcriptDraft, setTranscriptDraft] = useState(recording.transcript || '');
   const [isSavingTranscript, setIsSavingTranscript] = useState(false);
+  const [showErrorDetails, setShowErrorDetails] = useState(false);
 
   useEffect(() => {
     if (!isEditingTranscript) {
@@ -29,41 +31,75 @@ export function RecordingResult({ onDelete, onSaveTranscript, recording }) {
     }
   }
 
+  const isProcessing = recording.status !== 'concluida' && recording.status !== 'falhou';
+  const meta = [formatBytes(recording.size), recording.transcriptionModel || 'Aguardando processamento']
+    .filter(Boolean)
+    .join(' · ');
+
   return (
-    <article className="grid gap-3 rounded-xl border border-border bg-surface-2 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <strong>{recording.filename}</strong>
-          <p className="m-0 mt-1 text-xs text-muted-foreground">
-            {recording.transcriptionModel || 'Aguardando processamento'}
-          </p>
+    <article className="grid gap-3 rounded-md bg-surface-2 p-3.5">
+      <div className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3">
+        <span className="grid size-10 place-items-center rounded-sm bg-surface text-ink-2">
+          <FileAudio className="size-[18px]" aria-hidden="true" />
+        </span>
+        <div className="grid min-w-0 gap-0.5">
+          <strong className="truncate text-[1rem] font-bold" title={recording.filename}>{recording.filename}</strong>
+          <span className="text-[.86rem] font-medium text-muted-foreground">{meta}</span>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex items-center gap-2">
           <StatusBadge tone={statusTone(recording.status)}>
             {recording.statusLabel || recording.status}
           </StatusBadge>
-          <Button variant="destructive" size="sm" type="button" onClick={() => onDelete(recording)}>
-            Excluir
+          <Button
+            variant="ghost"
+            size="icon"
+            type="button"
+            aria-label={`Excluir trecho ${recording.filename}`}
+            className="size-9 text-muted-foreground hover:bg-[var(--danger-soft)] hover:text-[var(--danger-ink)]"
+            onClick={() => onDelete(recording)}
+          >
+            <Trash2 className="size-4" />
           </Button>
         </div>
       </div>
 
-      <RecordingPipeline status={recording.status} />
+      {isProcessing ? <RecordingPipeline status={recording.status} /> : null}
 
       {recording.processingError ? (
-        <p className="m-0 text-sm text-destructive">{recording.processingError}</p>
+        <div className="grid gap-2 rounded-sm bg-surface p-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="grid min-w-0 flex-1 gap-0.5">
+              <strong className="text-[.93rem] font-bold text-[var(--danger-ink)]">Não foi possível transcrever</strong>
+              <span className="text-[.93rem] font-medium text-ink-2">{friendlyProcessingError(recording.processingError)}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              aria-expanded={showErrorDetails}
+              onClick={() => setShowErrorDetails((current) => !current)}
+            >
+              {showErrorDetails ? 'Ocultar detalhes' : 'Ver detalhes'}
+            </Button>
+          </div>
+          {showErrorDetails ? (
+            <code className="block break-all rounded-sm bg-surface-2 px-3 py-2.5 font-mono text-[12px] leading-normal text-muted-foreground">
+              {recording.processingError}
+            </code>
+          ) : null}
+        </div>
       ) : null}
 
       {recording.summary ? (
         <div className="grid gap-2">
-          <h3 className="m-0 text-sm uppercase tracking-wide text-primary">Resumo</h3>
+          <h3 className="m-0 text-[11px] font-bold uppercase tracking-[.08em] text-subtle">Resumo</h3>
           <MeetingSummary value={recording.summary} />
         </div>
       ) : null}
 
-      <div className="grid gap-2.5 rounded-lg border border-border bg-surface-2 p-3.5">
+      <div className="grid gap-2.5">
         <div className="flex items-center justify-between gap-2.5">
-          <h3 className="m-0 text-xs font-bold uppercase tracking-wide text-primary">Transcrição</h3>
+          <h3 className="m-0 text-[11px] font-bold uppercase tracking-[.08em] text-subtle">Transcrição</h3>
           {!isEditingTranscript ? (
             <Button variant="secondary" size="sm" type="button" onClick={() => setIsEditingTranscript(true)}>
               {recording.transcript ? 'Editar transcrição' : 'Adicionar transcrição'}
@@ -96,7 +132,7 @@ export function RecordingResult({ onDelete, onSaveTranscript, recording }) {
             </div>
           </form>
         ) : (
-          <p className="m-0 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+          <p className="m-0 whitespace-pre-wrap text-[.93rem] leading-relaxed text-ink-2">
             {recording.transcript || 'Transcrição ainda não disponível.'}
           </p>
         )}

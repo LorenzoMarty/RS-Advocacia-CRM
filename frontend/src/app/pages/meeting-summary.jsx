@@ -1,5 +1,65 @@
 import { PROCESSING_STEPS } from './meetings-utils';
 
+// Etapas no nível da reunião: Gravação → Transcrição → Ata (régua de 3 barras).
+function meetingStages(meeting) {
+  const recordings = meeting?.recordings || [];
+  const failed = recordings.some((recording) => recording.status === 'falhou');
+  const transcribing = recordings.some(
+    (recording) => recording.status === 'enviada' || recording.status === 'transcribindo',
+  );
+  const summarizing = recordings.some((recording) => recording.status === 'resumindo');
+  const hasSummary = Boolean(meeting?.summary);
+
+  return [
+    {
+      key: 'gravacao',
+      label: '1. Gravação',
+      note: recordings.length ? `${recordings.length} ${recordings.length === 1 ? 'trecho' : 'trechos'}` : '',
+      state: recordings.length ? 'done' : 'pending',
+    },
+    {
+      key: 'transcricao',
+      label: '2. Transcrição',
+      note: failed ? 'falhou' : '',
+      state: failed ? 'failed' : transcribing ? 'active' : recordings.length ? 'done' : 'pending',
+    },
+    {
+      key: 'ata',
+      label: '3. Ata',
+      note: '',
+      state: hasSummary ? 'done' : summarizing ? 'active' : 'pending',
+    },
+  ];
+}
+
+const STAGE_BAR = {
+  done: 'bg-[var(--accent)]',
+  active: 'bg-[var(--accent)] motion-safe:animate-pulse',
+  failed: 'bg-[var(--danger)]',
+  pending: 'bg-surface-3',
+};
+
+export function MeetingProgress({ meeting }) {
+  const stages = meetingStages(meeting);
+  return (
+    <ol className="m-0 grid list-none grid-cols-3 gap-2 p-0" aria-label="Etapas da reunião">
+      {stages.map((stage) => (
+        <li key={stage.key} className="grid gap-2">
+          <span className={`h-1 rounded-pill ${STAGE_BAR[stage.state]}`} aria-hidden="true" />
+          <span
+            className={`flex flex-wrap items-center gap-1.5 text-[.86rem] font-bold ${
+              stage.state === 'pending' ? 'text-subtle' : stage.state === 'failed' ? 'text-[var(--danger-ink)]' : 'text-ink'
+            }`}
+          >
+            {stage.label}
+            {stage.note ? <span className="font-semibold text-muted-foreground">· {stage.note}</span> : null}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export function RecordingPipeline({ status }) {
   if (status === 'falhou') {
     return null;
