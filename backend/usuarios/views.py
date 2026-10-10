@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
-from core.identity import authenticated_user
+from core.identity import authenticated_user, current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
@@ -374,7 +374,7 @@ def excluir_usuario(request, usuario_id):
 
     usuario = get_object_or_404(Usuario, pk=usuario_id)
 
-    usuario_logado = get_usuario_atual(request)["usuario_logado"]
+    usuario_logado = _usuario_logado(request)
     if usuario_logado and usuario_logado.pk == usuario.pk:
         return resposta_erro(
             {"usuario": ["Você não pode excluir o próprio usuário."]}, status=400
@@ -424,7 +424,7 @@ def usuario_atual(request: HttpRequest):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    usuario = get_usuario_atual(request)["usuario_logado"]
+    usuario = _usuario_logado(request)
 
     auth_user = authenticated_user(request)
     if usuario and auth_user is not None:
@@ -435,19 +435,9 @@ def usuario_atual(request: HttpRequest):
     )
 
 
-def get_usuario_atual(request: HttpRequest):
-    usuario = None
-    usuario_id = request.session.get("usuario_id")
-
-    if usuario_id:
-        usuario = Usuario.objects.filter(pk=usuario_id).first()
-
-    auth_user = authenticated_user(request)
-    if usuario is None and auth_user is not None:
-        auth_identifier = auth_user.email or auth_user.username
-        if auth_identifier:
-            usuario = Usuario.objects.filter(email=auth_identifier).first()
-            if usuario:
-                _remember_usuario_session(request, usuario)
-
-    return {"usuario_logado": usuario}
+def _usuario_logado(request: HttpRequest) -> Usuario | None:
+    """Current ``Usuario``; re-pins it in the session when found via the auth user."""
+    usuario = current_usuario(request)
+    if usuario is not None and request.session.get("usuario_id") != usuario.pk:
+        _remember_usuario_session(request, usuario)
+    return usuario
