@@ -1,13 +1,13 @@
-from typing import Iterable, cast
 
 from django.contrib.auth import logout as encerrar_sessao_django
-from django.contrib.auth.models import AnonymousUser, Group, Permission, User
+from django.contrib.auth.models import Group, Permission, User
 from django.db.models import Q
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
+from core.identity import authenticated_user, current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
@@ -17,13 +17,12 @@ from core.utils import (
     resposta_erro,
     resposta_sucesso,
 )
-from integrations.google.calendar import calendar_label
-from integrations.models import GoogleAccount
 from usuarios.forms import (
     UsuarioForm,
     normalize_cargo_name,
 )
 from usuarios.models import Cargo, Usuario
+from usuarios.serializers import serialize_usuario, serialize_usuarios
 
 ESTAGIARIO_CARGO_NAME = dict(Usuario.TIPOS).get("estagiario", "Estagiario")
 
@@ -118,17 +117,6 @@ def _remember_usuario_session(request: HttpRequest, usuario: Usuario) -> None:
     request.session["usuario_id"] = usuario.pk
     request.session["usuario_nome"] = usuario.nome
     request.session["usuario_email"] = usuario.email
-
-
-def _authenticated_user(request: HttpRequest) -> User | None:
-    request_user = cast(User | AnonymousUser | None, getattr(request, "user", None))
-    if (
-        request_user is None
-        or isinstance(request_user, AnonymousUser)
-        or not request_user.is_authenticated
-    ):
-        return None
-    return cast(User, request_user)
 
 
 def _ensure_default_cargos() -> list[Group]:
@@ -269,52 +257,6 @@ def _get_cargos() -> list[Group]:
     return list(Cargo.objects.order_by("name"))
 
 
-def _cargo_map_for_usuarios(usuarios: list[Usuario]) -> dict[str, Cargo]:
-    cargo_names = {
-        cargo_name
-        for usuario in usuarios
-        if (cargo_name := normalize_cargo_name(usuario.cargo))
-    }
-    return cast(
-        "dict[str, Cargo]",
-        {cargo.name: cargo for cargo in Cargo.objects.filter(name__in=cargo_names)},
-    )
-
-
-def serialize_usuario(
-    usuario: Usuario,
-    cargos_by_name: dict[str, Cargo] | None = None,
-):
-    cargo_nome = normalize_cargo_name(usuario.cargo)
-    cargo = (
-        cargos_by_name.get(cargo_nome)
-        if cargos_by_name is not None
-        else Cargo.objects.filter(name=cargo_nome).first()
-    )
-    account = GoogleAccount.objects.filter(usuario=usuario).first()
-    return {
-        "id": str(usuario.pk),
-        "pk": usuario.pk,
-        "nome": usuario.nome,
-        "email": usuario.email,
-        "foto": usuario.picture,
-        "cargo": cargo_nome,
-        "cargo_id": str(cargo.pk) if cargo else cargo_nome,
-        "admin": cargo_nome == "Administrador",
-        "google_calendar_conectado": bool(account and account.connected),
-        "google_calendar_destino": calendar_label(usuario),
-    }
-
-
-def serialize_usuarios(usuarios: Iterable[Usuario]):
-    usuarios = list(usuarios)
-    cargos_by_name = _cargo_map_for_usuarios(usuarios)
-    return [
-        serialize_usuario(usuario, cargos_by_name=cargos_by_name)
-        for usuario in usuarios
-    ]
-
-
 def _usuario_response(usuario: Usuario):
     serialized = serialize_usuario(usuario)
     return {"usuario": serialized}
@@ -432,7 +374,7 @@ def excluir_usuario(request, usuario_id):
 
     usuario = get_object_or_404(Usuario, pk=usuario_id)
 
-    usuario_logado = get_usuario_atual(request)["usuario_logado"]
+    usuario_logado = _usuario_logado(request)
     if usuario_logado and usuario_logado.pk == usuario.pk:
         return resposta_erro(
             {"usuario": ["Você não pode excluir o próprio usuário."]}, status=400
@@ -472,7 +414,7 @@ def sair(request: HttpRequest):
     if request.method not in {"POST", "DELETE"}:
         return metodo_nao_permitido(["POST", "DELETE"])
 
-    if _authenticated_user(request) is not None:
+    if authenticated_user(request) is not None:
         encerrar_sessao_django(request)
     _clear_usuario_session(request)
     return resposta_sucesso(mensagem="Sessão encerrada.")
@@ -482,9 +424,9 @@ def usuario_atual(request: HttpRequest):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    usuario = get_usuario_atual(request)["usuario_logado"]
+    usuario = _usuario_logado(request)
 
-    auth_user = _authenticated_user(request)
+    auth_user = authenticated_user(request)
     if usuario and auth_user is not None:
         _sync_usuario_auth(usuario, preferred_auth_user=auth_user)
 
@@ -493,19 +435,9 @@ def usuario_atual(request: HttpRequest):
     )
 
 
-def get_usuario_atual(request: HttpRequest):
-    usuario = None
-    usuario_id = request.session.get("usuario_id")
-
-    if usuario_id:
-        usuario = Usuario.objects.filter(pk=usuario_id).first()
-
-    auth_user = _authenticated_user(request)
-    if usuario is None and auth_user is not None:
-        auth_identifier = auth_user.email or auth_user.username
-        if auth_identifier:
-            usuario = Usuario.objects.filter(email=auth_identifier).first()
-            if usuario:
-                _remember_usuario_session(request, usuario)
-
-    return {"usuario_logado": usuario}
+def _usuario_logado(request: HttpRequest) -> Usuario | None:
+    """Current ``Usuario``; re-pins it in the session when found via the auth user."""
+    usuario = current_usuario(request)
+    if usuario is not None and request.session.get("usuario_id") != usuario.pk:
+        _remember_usuario_session(request, usuario)
+    return usuario

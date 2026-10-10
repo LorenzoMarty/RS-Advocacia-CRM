@@ -2,11 +2,11 @@ from django.shortcuts import get_object_or_404
 
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
+from core.identity import current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
-    isoformat_ou_nulo,
     ler_corpo_json,
     metodo_nao_permitido,
     resolver_criador,
@@ -15,36 +15,10 @@ from core.utils import (
 )
 from documentos import services as documentos_services
 from integrations.google.exceptions import GOOGLE_ERRORS
-from integrations.google.oauth import current_usuario
 from integrations.google.responses import mapear_erro_google
 from peticoes.forms import PeticaoForm
 from peticoes.models import Peticao
-
-
-def serialize_peticao(peticao: Peticao):
-    return {
-        "id": str(peticao.pk),
-        "pk": peticao.pk,
-        "cliente_id": str(peticao.cliente_id),
-        "cliente_nome": peticao.cliente.nome if peticao.cliente_id else "",
-        "processo_id": str(peticao.processo_id) if peticao.processo_id else "",
-        "processo_numero": (
-            peticao.processo.numero_processo if peticao.processo else ""
-        ),
-        "tipo": peticao.tipo,
-        "adverso": peticao.adverso,
-        "responsavel_acao": peticao.responsavel_acao,
-        "link_drive": peticao.link_drive,
-        "drive_file_id": peticao.drive_file_id,
-        "motivo_pendente": peticao.motivo_pendente,
-        "area_juridica": (
-            peticao.processo.area_juridica if peticao.processo else ""
-        ),
-        "status": peticao.status,
-        "criado_por": peticao.criado_por,
-        "criado_em": isoformat_ou_nulo(peticao.criado_em),
-        "atualizado_em": isoformat_ou_nulo(peticao.atualizado_em),
-    }
+from peticoes.serializers import serialize_peticao
 
 
 def _rotulo_peticao(peticao: Peticao):

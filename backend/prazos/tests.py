@@ -267,3 +267,61 @@ class PrazosViewsTests(TestCase):
         prazo.refresh_from_db()
         self.assertEqual(prazo.drive_file_id, "")
         self.assertEqual(prazo.link_drive, "")
+
+
+class AtualizarTimerServiceTests(TestCase):
+    def setUp(self):
+        cliente = Cliente.objects.create(
+            nome="C", email="c@example.com", telefone="1", cpf="1", tipo_cliente="esporadico"
+        )
+        processo = Processo.objects.create(
+            numero_processo="1", cliente=cliente, descricao="d", vara="v",
+            area_juridica="a", status="Ativo",
+        )
+        self.prazo = Prazo.objects.create(
+            titulo="P", data_limite="2026-06-23", processo=processo, status="Pendente"
+        )
+
+    def test_start_moves_pending_to_em_andamento(self):
+        from prazos import services
+
+        services.atualizar_timer(
+            self.prazo, {"timer_iniciado_em": "2026-06-23T10:00:00+00:00"}
+        )
+        self.prazo.refresh_from_db()
+        self.assertEqual(self.prazo.status, "Em andamento")
+
+    def test_start_does_not_touch_concluded_prazo(self):
+        from prazos import services
+
+        self.prazo.concluido = True
+        self.prazo.save()
+        services.atualizar_timer(
+            self.prazo, {"timer_iniciado_em": "2026-06-23T10:00:00+00:00"}
+        )
+        self.prazo.refresh_from_db()
+        self.assertEqual(self.prazo.status, "Pendente")
+
+    def test_invalid_input_raises_and_saves_nothing(self):
+        from prazos import services
+
+        for payload, campo in [
+            ({"tempo_decorrido_segundos": "abc"}, "tempo_decorrido_segundos"),
+            ({"tempo_decorrido_segundos": -1}, "tempo_decorrido_segundos"),
+            ({"timer_iniciado_em": "nope"}, "timer_iniciado_em"),
+            ({"timer_iniciado_em": 123}, "timer_iniciado_em"),
+        ]:
+            with self.subTest(payload=payload):
+                with self.assertRaises(services.TimerInvalido) as ctx:
+                    services.atualizar_timer(self.prazo, payload)
+                self.assertEqual(ctx.exception.campo, campo)
+        self.prazo.refresh_from_db()
+        self.assertEqual(self.prazo.tempo_decorrido_segundos, 0)
+        self.assertEqual(self.prazo.status, "Pendente")
+
+    def test_naive_timer_start_is_stored_timezone_aware(self):
+        from prazos import services
+
+        services.atualizar_timer(self.prazo, {"timer_iniciado_em": "2026-06-23T10:00:00"})
+        self.assertTrue(timezone.is_aware(self.prazo.timer_iniciado_em))
+        self.assertGreater(services.segundos_decorridos(self.prazo), 0)

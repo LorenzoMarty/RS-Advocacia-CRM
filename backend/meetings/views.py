@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from ai.models import ConfiguracaoIA
+from core.identity import current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
@@ -18,7 +19,6 @@ from core.utils import (
     resposta_sucesso,
 )
 from integrations.google.exceptions import GOOGLE_ERRORS
-from integrations.google.oauth import current_usuario
 from integrations.google.responses import mapear_erro_google
 from meetings import services
 from meetings.audio import (

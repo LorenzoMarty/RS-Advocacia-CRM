@@ -22,6 +22,24 @@ from integrations.google.exceptions import GoogleConfigurationError
 
 from .models import ClienteDrive, DocumentoCliente, PastaGerenciada, ProcessoDrive
 
+# Allowlisted upload extensions (lawyer documents: petitions, ids, receipts...).
+SUPPORTED_DOCUMENT_EXTENSIONS = {
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".odt",
+    ".rtf",
+    ".txt",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".xls",
+    ".xlsx",
+    ".csv",
+}
+
 # Subfolders created under every client folder, in display order.
 SUBPASTAS = ("Petições", "Documentos", "Outros")
 

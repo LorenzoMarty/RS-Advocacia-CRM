@@ -5,9 +5,12 @@ from django.shortcuts import get_object_or_404
 
 from clientes.forms import ClienteForm
 from clientes.models import Cliente
-from core.permissions import app_permissions_required
+from clientes.serializers import serialize_cliente
+from core.identity import current_usuario
 from core.pagination import paginar
+from core.permissions import app_permissions_required
 from core.utils import (
+    enfileirar_best_effort,
     erros_formulario,
     ler_corpo_json,
     metodo_nao_permitido,
@@ -15,7 +18,6 @@ from core.utils import (
     resposta_sucesso,
 )
 from documentos import tasks as documentos_tasks
-from integrations.google.oauth import current_usuario
 
 
 def _filtrar_clientes(request):
@@ -43,21 +45,6 @@ def _filtrar_clientes(request):
         tipo_cliente = "todos"
 
     return clientes, busca, tipo_cliente
-
-
-def serialize_cliente(cliente: Cliente):
-    return {
-        "id": str(cliente.pk),
-        "pk": cliente.pk,
-        "nome": cliente.nome,
-        "email": cliente.email,
-        "telefone": cliente.telefone,
-        "cpf": cliente.cpf,
-        "tipo_cliente": cliente.tipo_cliente,
-        "parceria": cliente.parceria,
-        "obs": cliente.obs,
-        "ativo": cliente.ativo,
-    }
 
 
 def _cliente_api_payload(request):
@@ -135,8 +122,11 @@ def editar_cliente(request, cliente_id):
         cliente = form.save()
         if cliente.nome != nome_antigo:
             usuario = current_usuario(request)
-            documentos_tasks.renomear_pasta_cliente.delay(
-                cliente.pk, usuario.pk if usuario else None, cliente.nome
+            enfileirar_best_effort(
+                documentos_tasks.renomear_pasta_cliente,
+                cliente.pk,
+                usuario.pk if usuario else None,
+                cliente.nome,
             )
         serialized = serialize_cliente(cliente)
         return resposta_sucesso(
