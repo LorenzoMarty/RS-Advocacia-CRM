@@ -8,6 +8,7 @@ from django.urls import reverse
 
 from clientes.forms import ClienteForm
 from clientes.models import Cliente
+from documentos.models import RenomeacaoPastaPendente
 
 
 def _payload_valido():
@@ -140,11 +141,8 @@ class ClienteApiTests(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    @patch(
-        "clientes.views.documentos_tasks.renomear_pasta_cliente.delay",
-        return_value=None,
-    )
-    def test_editar_atualiza_campo_e_dispara_rename_assincrono(self, mock_delay):
+    @patch("documentos.tasks.aplicar_renomeacao.delay", return_value=None)
+    def test_editar_atualiza_campo_e_registra_rename_pendente(self, mock_delay):
         self._grant("change_cliente")
         cliente = Cliente.objects.create(
             nome="Cliente Original",
@@ -157,15 +155,42 @@ class ClienteApiTests(TestCase):
         self.client.force_login(self.user)
         payload = _payload_valido()
         payload["nome"] = "Cliente Renomeado"
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.put(
+                reverse("editar_cliente", args=[cliente.pk]),
+                data=json.dumps(payload),
+                content_type="application/json",
+            )
+        self.assertEqual(response.status_code, 200, response.content)
+        cliente.refresh_from_db()
+        self.assertEqual(cliente.nome, "Cliente Renomeado")
+        pendencia = RenomeacaoPastaPendente.objects.get()
+        self.assertEqual(
+            (pendencia.tipo, pendencia.objeto_id),
+            (RenomeacaoPastaPendente.TIPO_CLIENTE, cliente.pk),
+        )
+        mock_delay.assert_called_once_with(pendencia.pk)
+
+    def test_editar_sem_mudar_o_nome_nao_registra_rename(self):
+        self._grant("change_cliente")
+        cliente = Cliente.objects.create(
+            nome="Mesmo Nome",
+            cpf="52998224725",
+            tipo_cliente="esporadico",
+            telefone="11999999999",
+            email="cliente@example.com",
+            obs="",
+        )
+        self.client.force_login(self.user)
+        payload = _payload_valido()
+        payload["nome"] = "Mesmo Nome"
         response = self.client.put(
             reverse("editar_cliente", args=[cliente.pk]),
             data=json.dumps(payload),
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200, response.content)
-        cliente.refresh_from_db()
-        self.assertEqual(cliente.nome, "Cliente Renomeado")
-        mock_delay.assert_called_once_with(cliente.pk, None, "Cliente Renomeado")
+        self.assertFalse(RenomeacaoPastaPendente.objects.exists())
 
     def test_excluir_remove_registro(self):
         self._grant("delete_cliente")
