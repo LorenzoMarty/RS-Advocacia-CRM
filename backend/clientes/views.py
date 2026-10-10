@@ -121,8 +121,11 @@ def editar_cliente(request, cliente_id):
         cliente = form.save()
         if cliente.nome != nome_antigo:
             usuario = current_usuario(request)
-            documentos_tasks.renomear_pasta_cliente.delay(
-                cliente.pk, usuario.pk if usuario else None, cliente.nome
+            documentos_tasks.enfileirar_best_effort(
+                documentos_tasks.renomear_pasta_cliente,
+                cliente.pk,
+                usuario.pk if usuario else None,
+                cliente.nome,
             )
         serialized = serialize_cliente(cliente)
         return resposta_sucesso(
