@@ -16,6 +16,7 @@ from core.utils import (
 )
 from documentos import tasks as documentos_tasks
 from core.identity import current_usuario
+from clientes.serializers import serialize_cliente
 
 
 def _filtrar_clientes(request):
@@ -43,21 +44,6 @@ def _filtrar_clientes(request):
         tipo_cliente = "todos"
 
     return clientes, busca, tipo_cliente
-
-
-def serialize_cliente(cliente: Cliente):
-    return {
-        "id": str(cliente.pk),
-        "pk": cliente.pk,
-        "nome": cliente.nome,
-        "email": cliente.email,
-        "telefone": cliente.telefone,
-        "cpf": cliente.cpf,
-        "tipo_cliente": cliente.tipo_cliente,
-        "parceria": cliente.parceria,
-        "obs": cliente.obs,
-        "ativo": cliente.ativo,
-    }
 
 
 def _cliente_api_payload(request):
