@@ -539,6 +539,9 @@ def sync_calendar(usuario, calendar: GoogleCalendar, service) -> dict:
             continue
         imported_event = _create_imported_event(usuario, item)
         if imported_event:
+            # Hash the DB-normalised values (UTC), not the in-memory ones, or the
+            # export pass below sees a spurious change and pushes it back.
+            imported_event.refresh_from_db()
             _save_link(
                 calendar,
                 imported_event,
