@@ -129,8 +129,11 @@ def editar_processo(request, processo_id):
             "cliente", "advogado_responsavel"
         ).get(pk=processo.pk)
         usuario = current_usuario(request)
-        documentos_tasks.renomear_pasta_processo.delay(
-            processo.pk, usuario.pk if usuario else None, nome_pasta_antigo
+        documentos_tasks.enfileirar_best_effort(
+            documentos_tasks.renomear_pasta_processo,
+            processo.pk,
+            usuario.pk if usuario else None,
+            nome_pasta_antigo,
         )
         serialized = serialize_processo(processo)
         alteracoes = auditoria_services.calcular_diff(antes, serialized)
