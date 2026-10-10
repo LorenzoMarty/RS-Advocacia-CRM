@@ -3,75 +3,21 @@ from django.utils import timezone
 
 from clientes.forms import ClienteForm
 from clientes.models import Cliente
-from clientes.views import serialize_cliente
+from clientes.serializers import serialize_cliente
+from core.identity import current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
-    isoformat_ou_nulo,
     ler_corpo_json,
     metodo_nao_permitido,
     resposta_erro,
     resposta_sucesso,
 )
-from productivity.views import _current_usuario
+from prospeccao.serializers import serialize_interacao, serialize_prospect
 
 from .forms import InteracaoForm, ProspectForm
 from .models import InteracaoProspect, Prospect
-
-
-def serialize_interacao(interacao: InteracaoProspect):
-    return {
-        "id": str(interacao.pk),
-        "pk": interacao.pk,
-        "prospect_id": str(interacao.prospect_id),
-        "tipo": interacao.tipo,
-        "descricao": interacao.descricao,
-        "data": isoformat_ou_nulo(interacao.data),
-        "usuario_id": str(interacao.usuario_id) if interacao.usuario_id else "",
-        "usuario_nome": interacao.usuario.nome if interacao.usuario else "",
-        "criado_em": isoformat_ou_nulo(interacao.criado_em),
-    }
-
-
-def serialize_prospect(prospect: Prospect, incluir_interacoes: bool = False):
-    responsavel = prospect.responsavel_interno
-    dados = {
-        "id": str(prospect.pk),
-        "pk": prospect.pk,
-        "nome": prospect.nome,
-        "telefone": prospect.telefone,
-        "email": prospect.email,
-        "origem_contato": prospect.origem_contato,
-        "tipo_demanda_juridica": prospect.tipo_demanda_juridica,
-        "descricao_caso": prospect.descricao_caso,
-        "responsavel_id": str(responsavel.pk) if responsavel else "",
-        "responsavel_nome": responsavel.nome if responsavel else "",
-        "status_prospeccao": prospect.status_prospeccao,
-        "prioridade": prospect.prioridade,
-        "proxima_acao": prospect.proxima_acao,
-        "observacoes": prospect.observacoes,
-        "data_ultimo_contato": (
-            prospect.data_ultimo_contato.isoformat()
-            if prospect.data_ultimo_contato
-            else ""
-        ),
-        "cliente_convertido_id": (
-            str(prospect.cliente_convertido_id)
-            if prospect.cliente_convertido_id
-            else ""
-        ),
-        "convertido_em": isoformat_ou_nulo(prospect.convertido_em),
-        "total_interacoes": prospect.interacoes.count(),
-        "data_criacao": isoformat_ou_nulo(prospect.data_criacao),
-        "atualizado_em": isoformat_ou_nulo(prospect.atualizado_em),
-    }
-    if incluir_interacoes:
-        dados["interacoes"] = [
-            serialize_interacao(interacao)
-            for interacao in prospect.interacoes.select_related("usuario").all()
-        ]
-    return dados
 
 
 def _prospect_api_payload(request):
@@ -220,7 +166,7 @@ def criar_interacao(request, prospect_id):
     data = dict(payload)
     data["prospect"] = prospect.pk
     if not data.get("usuario"):
-        usuario_atual = _current_usuario(request)
+        usuario_atual = current_usuario(request)
         if usuario_atual:
             data["usuario"] = usuario_atual.pk
 

@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.contrib.auth.models import AnonymousUser, User
 from django.db.models import Q
 from django.http import HttpRequest
 
@@ -8,11 +7,12 @@ from agenda.models import Evento
 from auditoria import overview as overview_mod
 from auditoria import painel
 from auditoria.models import RegistroAuditoria
+from auditoria.serializers import serialize_registro
 from clientes.models import Cliente
+from core.identity import current_usuario, is_admin
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
-    isoformat_ou_nulo,
     metodo_nao_permitido,
     resposta_erro,
     resposta_sucesso,
@@ -21,101 +21,16 @@ from peticoes.models import Peticao
 from prazos.models import Prazo
 from processos.models import Processo
 from productivity.models import ProductivityGoal, TimeEntry
-from usuarios.models import Usuario
-
-
-def _authenticated_user(request: HttpRequest) -> User | None:
-    request_user = getattr(request, "user", None)
-    if (
-        request_user is None
-        or isinstance(request_user, AnonymousUser)
-        or not getattr(request_user, "is_authenticated", False)
-    ):
-        return None
-    return request_user
-
-
-def _current_usuario(request: HttpRequest) -> Usuario | None:
-    usuario_id = request.session.get("usuario_id")
-    if usuario_id:
-        usuario = Usuario.objects.filter(pk=usuario_id).first()
-        if usuario:
-            return usuario
-
-    auth_user = _authenticated_user(request)
-    if not auth_user:
-        return None
-
-    for value in (auth_user.email, auth_user.username):
-        if not value:
-            continue
-        usuario = Usuario.objects.filter(email=value).first()
-        if usuario:
-            return usuario
-
-    return None
-
-
-def _is_admin(request: HttpRequest, usuario: Usuario | None = None) -> bool:
-    auth_user = _authenticated_user(request)
-    if auth_user and (auth_user.is_staff or auth_user.is_superuser):
-        return True
-    if auth_user and auth_user.groups.filter(name="Administrador").exists():
-        return True
-    return usuario is not None and usuario.cargo == "Administrador"
 
 
 def _exigir_admin(request: HttpRequest):
     """Return an error response if the caller is not an admin, else None."""
-    usuario_atual = _current_usuario(request)
-    if not _is_admin(request, usuario_atual):
+    usuario_atual = current_usuario(request)
+    if not is_admin(request, usuario_atual):
         return resposta_erro(
             {"permissao": ["Apenas administradores acessam a auditoria."]}, status=403
         )
     return None
-
-
-def serialize_registro(registro: RegistroAuditoria):
-    processo_id = registro.processo_id or ""
-    processo_rotulo = registro.processo_rotulo or ""
-
-    if not processo_id:
-        if registro.entidade_tipo == RegistroAuditoria.ENTIDADE_PROCESSO:
-            processo_id = registro.entidade_id
-            processo_rotulo = registro.entidade_rotulo
-        elif registro.entidade_tipo == RegistroAuditoria.ENTIDADE_PRAZO:
-            prazo = (
-                Prazo.objects.select_related("processo", "responsavel")
-                .filter(pk=registro.entidade_id)
-                .first()
-            )
-            if prazo and prazo.processo_id:
-                processo_id = str(prazo.processo_id)
-                processo_rotulo = prazo.processo.numero_processo
-        elif registro.entidade_tipo == RegistroAuditoria.ENTIDADE_PETICAO:
-            peticao = (
-                Peticao.objects.select_related("processo")
-                .filter(pk=registro.entidade_id)
-                .first()
-            )
-            if peticao and peticao.processo_id:
-                processo_id = str(peticao.processo_id)
-                processo_rotulo = peticao.processo.numero_processo
-
-    return {
-        "id": str(registro.pk),
-        "pk": registro.pk,
-        "acao": registro.acao,
-        "entidade_tipo": registro.entidade_tipo,
-        "entidade_id": registro.entidade_id,
-        "entidade_rotulo": registro.entidade_rotulo,
-        "autor_nome": registro.autor_nome,
-        "resumo": registro.resumo,
-        "alteracoes": registro.alteracoes,
-        "processo_id": processo_id,
-        "processo_numero": processo_rotulo,
-        "criado_em": isoformat_ou_nulo(registro.criado_em),
-    }
 
 
 def _parse_date(value):

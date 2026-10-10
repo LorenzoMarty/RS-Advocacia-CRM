@@ -7,33 +7,29 @@ from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from agenda.models import Evento
-from agenda.views import serialize_evento
+from agenda.serializers import serialize_evento
 from auditoria.models import RegistroAuditoria
-from auditoria.views import serialize_registro
+from auditoria.serializers import serialize_registro
 from clientes.models import Cliente
-from clientes.views import serialize_cliente
+from clientes.serializers import serialize_cliente
+from core.identity import current_usuario, is_admin
 from core.permission_utils import user_has_permission
 from core.permissions import app_permissions_required
 from core.utils import metodo_nao_permitido, resposta_sucesso
 from financeiro.models import Lancamento
-from financeiro.views import serialize_lancamento
+from financeiro.serializers import serialize_lancamento
 from peticoes.models import Peticao
-from peticoes.views import serialize_peticao
+from peticoes.serializers import serialize_peticao
 from prazos.models import Prazo
-from prazos.views import serialize_prazo
+from prazos.serializers import serialize_prazo
 from processos.models import Processo
-from processos.views import serialize_processo
+from processos.serializers import serialize_processo
 from productivity.models import TimeEntry
-from productivity.views import (
-    _current_usuario,
-    _goals_response,
-    _is_admin,
-    _time_entries_response,
-)
+from productivity.serializers import goals_response, time_entries_response
 from prospeccao.models import Prospect
-from prospeccao.views import serialize_prospect
+from prospeccao.serializers import serialize_prospect
 from usuarios.models import Usuario
-from usuarios.views import serialize_usuarios
+from usuarios.serializers import serialize_usuarios
 
 # Teto de segurança nas coleções mais propensas a crescer sem limite
 # (clientes/processos/usuarios) devolvidas no boot da SPA — não é paginação
@@ -139,7 +135,7 @@ def inicializacao(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    usuario_atual = _current_usuario(request)
+    usuario_atual = current_usuario(request)
     cache_key = f"inicializacao:{request.session.get('usuario_id') or 'anon'}"
     cached = cache.get(cache_key)
     if cached is not None:
@@ -154,7 +150,7 @@ def inicializacao(request):
     pode_ver_metas = user_has_permission(request, "productivity.view_productivitygoal")
     pode_ver_prospects = user_has_permission(request, "prospeccao.view_prospect")
     pode_ver_lancamentos = acessos["financeiro.view_lancamento"]
-    eh_admin = _is_admin(request, usuario_atual)
+    eh_admin = is_admin(request, usuario_atual)
 
     tarefas = {
         "clientes": lambda: [
@@ -200,12 +196,12 @@ def inicializacao(request):
             time_entries = TimeEntry.objects.select_related("user")
             if not eh_admin:
                 time_entries = time_entries.filter(user=usuario_atual)
-            return _time_entries_response(time_entries)
+            return time_entries_response(time_entries)
 
         tarefas["time_entries"] = _time_entries
 
     if usuario_atual and pode_ver_metas:
-        tarefas["productivity_goals"] = lambda: _goals_response(
+        tarefas["productivity_goals"] = lambda: goals_response(
             request, usuario_atual
         )
 

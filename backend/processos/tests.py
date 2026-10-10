@@ -153,3 +153,88 @@ class ProcessoApiTests(TestCase):
         response = self.client.delete(reverse("excluir_processo", args=[processo.pk]))
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(Processo.objects.count(), 0)
+
+    def _processo(self, numero="0003", **extra):
+        return Processo.objects.create(
+            numero_processo=numero,
+            cliente=self.cliente,
+            descricao="",
+            vara="1ª Vara Cível",
+            area_juridica="Cível",
+            status="Ativo",
+            advogado_responsavel=self.usuario,
+            **extra,
+        )
+
+    def test_listar_filtra_por_busca_e_serializa(self):
+        self._grant("view_processo")
+        alvo = self._processo("ALVO-1")
+        self._processo("OUTRO-2")
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("listar_processos"), {"q": "ALVO"})
+        self.assertEqual(response.status_code, 200, response.content)
+        dados = response.json()["dados"]
+        self.assertEqual([p["id"] for p in dados["processos"]], [str(alvo.pk)])
+        self.assertEqual(dados["processos"][0]["cliente_nome"], self.cliente.nome)
+        self.assertEqual(dados["busca"], "ALVO")
+
+    def test_detalhes_retorna_processo_ou_404(self):
+        self._grant("view_processo")
+        processo = self._processo()
+        self.client.force_login(self.user)
+        ok = self.client.get(reverse("detalhes_processo", args=[processo.pk]))
+        self.assertEqual(ok.json()["dados"]["processo"]["numero_processo"], "0003")
+        self.assertEqual(
+            self.client.get(reverse("detalhes_processo", args=[99999])).status_code,
+            404,
+        )
+
+    def test_metodo_errado_retorna_405(self):
+        self._grant("view_processo")
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.post(reverse("listar_processos")).status_code, 405)
+
+    def test_editar_enfileira_rename_e_sobrevive_a_falha_do_broker(self):
+        self._grant("change_processo")
+        processo = self._processo()
+        self.client.force_login(self.user)
+        payload = _payload_valido(self.cliente, self.usuario)
+        payload["numero_processo"] = "0003-EDITADO"
+        with patch(
+            "processos.views.documentos_tasks.renomear_pasta_processo.delay",
+            side_effect=ConnectionError("broker down"),
+        ) as delay, self.assertLogs("core.utils", level="ERROR"):
+            response = self.client.put(
+                reverse("editar_processo", args=[processo.pk]),
+                data=json.dumps(payload),
+                content_type="application/json",
+            )
+        self.assertEqual(response.status_code, 200, response.content)
+        delay.assert_called_once()
+        processo.refresh_from_db()
+        self.assertEqual(processo.numero_processo, "0003-EDITADO")
+
+    def test_editar_e_excluir_geram_auditoria(self):
+        from auditoria.models import RegistroAuditoria
+
+        self._grant("change_processo", "delete_processo")
+        processo = self._processo()
+        self.client.force_login(self.user)
+        payload = _payload_valido(self.cliente, self.usuario)
+        payload["status"] = "Concluído"
+        with patch(
+            "processos.views.documentos_tasks.renomear_pasta_processo.delay"
+        ):
+            self.client.put(
+                reverse("editar_processo", args=[processo.pk]),
+                data=json.dumps(payload),
+                content_type="application/json",
+            )
+        self.client.delete(reverse("excluir_processo", args=[processo.pk]))
+        acoes = list(
+            RegistroAuditoria.objects.filter(
+                entidade_tipo=RegistroAuditoria.ENTIDADE_PROCESSO
+            ).values_list("acao", flat=True)
+        )
+        self.assertIn(RegistroAuditoria.ACAO_ATUALIZADO, acoes)
+        self.assertIn(RegistroAuditoria.ACAO_EXCLUIDO, acoes)

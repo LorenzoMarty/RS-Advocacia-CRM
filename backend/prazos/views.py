@@ -2,16 +2,14 @@ from pathlib import Path
 
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
-from django.utils.dateparse import parse_datetime
 
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
+from core.identity import current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
-    isoformat_ou_nulo,
     ler_corpo_json,
     metodo_nao_permitido,
     resolver_criador,
@@ -19,53 +17,13 @@ from core.utils import (
     resposta_sucesso,
 )
 from documentos import services as documentos_services
-from documentos.views import SUPPORTED_DOCUMENT_EXTENSIONS
+from documentos.services import SUPPORTED_DOCUMENT_EXTENSIONS
 from integrations.google.exceptions import GOOGLE_ERRORS
-from integrations.google.oauth import current_usuario
 from integrations.google.responses import mapear_erro_google
+from prazos import services
 from prazos.forms import PrazoForm
 from prazos.models import Prazo
-
-
-def serialize_prazo(prazo: Prazo):
-    cliente = prazo.processo.cliente if prazo.processo_id else None
-    return {
-        "id": str(prazo.pk),
-        "pk": prazo.pk,
-        "titulo": prazo.titulo,
-        "descricao": prazo.descricao,
-        "data_limite": prazo.data_limite.isoformat() if prazo.data_limite else "",
-        "status": prazo.status,
-        "prioridade": prazo.prioridade,
-        "cliente_id": str(cliente.pk) if cliente else "",
-        "cliente_nome": cliente.nome if cliente else "",
-        "processo_id": str(prazo.processo_id),
-        "processo_numero": prazo.processo.numero_processo if prazo.processo_id else "",
-        "responsavel": str(prazo.responsavel_id) if prazo.responsavel_id else "",
-        "responsavel_nome": prazo.responsavel.nome if prazo.responsavel_id else "",
-        "criado_por": prazo.criado_por,
-        "observacoes": prazo.observacoes,
-        "link_drive": prazo.link_drive,
-        "drive_file_id": prazo.drive_file_id,
-        "concluido": prazo.concluido,
-        "tempo_decorrido_segundos": prazo.tempo_decorrido_segundos,
-        "timer_iniciado_em": isoformat_ou_nulo(prazo.timer_iniciado_em),
-        "criado_em": isoformat_ou_nulo(prazo.criado_em),
-        "atualizado_em": isoformat_ou_nulo(prazo.atualizado_em),
-    }
-
-
-def _prazo_elapsed_seconds(prazo: Prazo, now=None) -> int:
-    elapsed_seconds = int(prazo.tempo_decorrido_segundos or 0)
-    if not prazo.timer_iniciado_em:
-        return elapsed_seconds
-
-    now = now or timezone.now()
-    return elapsed_seconds + max(0, int((now - prazo.timer_iniciado_em).total_seconds()))
-
-
-def _is_pending_prazo_status(status: str) -> bool:
-    return (status or "").strip().casefold() in {"pendente", "a fazer"}
+from prazos.serializers import serialize_prazo
 
 
 def _prazo_api_payload(request):
@@ -193,54 +151,10 @@ def atualizar_timer_prazo(request, prazo_id):
     except ValueError as exc:
         return resposta_erro(str(exc), status=400)
 
-    update_fields = ["atualizado_em"]
-    current_elapsed_seconds = _prazo_elapsed_seconds(prazo)
-
-    if "tempo_decorrido_segundos" in payload:
-        try:
-            tempo_decorrido_segundos = int(payload.get("tempo_decorrido_segundos") or 0)
-        except (TypeError, ValueError):
-            return resposta_erro(
-                {"tempo_decorrido_segundos": ["Informe um numero inteiro."]},
-                status=400,
-            )
-
-        if tempo_decorrido_segundos < 0:
-            return resposta_erro(
-                {"tempo_decorrido_segundos": ["O tempo não pode ser negativo."]},
-                status=400,
-            )
-
-        prazo.tempo_decorrido_segundos = max(
-            int(prazo.tempo_decorrido_segundos or 0),
-            current_elapsed_seconds,
-            tempo_decorrido_segundos,
-        )
-        update_fields.append("tempo_decorrido_segundos")
-
-    if "timer_iniciado_em" in payload:
-        timer_iniciado_em = payload.get("timer_iniciado_em")
-        if timer_iniciado_em in ("", None):
-            prazo.timer_iniciado_em = None
-        elif isinstance(timer_iniciado_em, str):
-            parsed_timer = parse_datetime(timer_iniciado_em)
-            if parsed_timer is None:
-                return resposta_erro(
-                    {"timer_iniciado_em": ["Informe uma data/hora valida."]},
-                    status=400,
-                )
-            prazo.timer_iniciado_em = parsed_timer
-            if not prazo.concluido and _is_pending_prazo_status(prazo.status):
-                prazo.status = "Em andamento"
-                update_fields.append("status")
-        else:
-            return resposta_erro(
-                {"timer_iniciado_em": ["Informe uma data/hora valida."]},
-                status=400,
-            )
-        update_fields.append("timer_iniciado_em")
-
-    prazo.save(update_fields=update_fields)
+    try:
+        services.atualizar_timer(prazo, payload)
+    except services.TimerInvalido as exc:
+        return resposta_erro({exc.campo: [exc.mensagem]}, status=400)
     return resposta_sucesso(
         {"prazo": serialize_prazo(prazo)}, mensagem="Timer atualizado."
     )

@@ -5,6 +5,7 @@ from django.http import HttpRequest, HttpResponseRedirect
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
+from core.identity import current_usuario
 from core.permissions import app_permissions_required
 from core.utils import (
     ler_corpo_json,
@@ -24,7 +25,6 @@ from integrations.google.exceptions import (
 from integrations.google.oauth import (
     begin_authorization,
     complete_authorization,
-    current_usuario,
     frontend_redirect,
 )
 from integrations.google.webhooks import ensure_watches, handle_notification
