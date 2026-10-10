@@ -37,7 +37,7 @@ import {
 import { RailList } from "./agenda-rail-list";
 
 // Cores dos tipos (mesmas da legenda antiga).
-const TYPE_DOT = { audiencia: "oklch(0.62 0.12 295)", reuniao: "oklch(0.62 0.12 220)", tarefa: "oklch(0.66 0.12 40)" };
+const TYPE_DOT = { audiencia: "var(--cat-civel-dot)", reuniao: "var(--cat-empresarial-dot)", tarefa: "var(--cat-trabalhista-dot)" };
 const TYPE_ORDER = ["audiencia", "reuniao", "tarefa"];
 
 export function AgendaListPage() {
@@ -200,6 +200,18 @@ export function AgendaListPage() {
 
     return () => window.clearInterval(intervalId);
   }, [currentUser?.googleCalendarConnected, syncGoogleCalendarEvents]);
+
+  // Navegar de mês leva a seleção junto (dia 1 do mês, ou hoje se for o mês atual),
+  // para o painel do dia não ficar apontando para um dia que não está na grade.
+  function goToMonth(offset) {
+    const next = new Date(viewDate.getFullYear(), viewDate.getMonth() + offset, 1);
+    setViewDate(next);
+    setSelectedDate(
+      next.getFullYear() === today.getFullYear() && next.getMonth() === today.getMonth()
+        ? new Date()
+        : next,
+    );
+  }
 
   function toLocalIso(date) {
     const pad = (value) => String(value).padStart(2, "0");
@@ -376,7 +388,10 @@ export function AgendaListPage() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => setViewDate(new Date(today.getFullYear(), today.getMonth(), 1))}
+                  onClick={() => {
+                    setViewDate(new Date(today.getFullYear(), today.getMonth(), 1));
+                    setSelectedDate(new Date());
+                  }}
                 >
                   Hoje
                 </Button>
@@ -384,7 +399,7 @@ export function AgendaListPage() {
                   variant="secondary"
                   size="icon"
                   aria-label="Mês anterior"
-                  onClick={() => setViewDate((currentDate) => new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}
+                  onClick={() => goToMonth(-1)}
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
@@ -392,7 +407,7 @@ export function AgendaListPage() {
                   variant="secondary"
                   size="icon"
                   aria-label="Próximo mês"
-                  onClick={() => setViewDate((currentDate) => new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}
+                  onClick={() => goToMonth(1)}
                 >
                   <ChevronRight className="size-4" />
                 </Button>
@@ -556,6 +571,23 @@ export function AgendaListPage() {
               </CardContent>
             </Card>
 
+            {overdueEvents.length ? (
+              <Card>
+                <CardContent className="grid gap-3 py-[var(--pad-card)]">
+                  <h3 className="m-0 text-card-title-sm text-ink">Atrasados</h3>
+                  <RailList
+                    events={overdueEvents}
+                    clients={clients}
+                    processes={processes}
+                    emptyTitle="Sem atrasos."
+                    emptyCopy="Nenhum compromisso vencido."
+                    onDelete={handleQuickDelete}
+                    onAttendance={markEventAttendance}
+                  />
+                </CardContent>
+              </Card>
+            ) : null}
+
             <Card>
               <CardContent className="grid gap-2 py-[var(--pad-card)]">
                 <div className="flex items-baseline justify-between gap-3">
@@ -581,6 +613,7 @@ export function AgendaListPage() {
                       <button
                         key={event.id}
                         type="button"
+                        aria-label={`${event.title}, ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "full" }).format(start)}, ${formatTime(event.start)}`}
                         className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-3 rounded-sm border-0 bg-transparent p-2 text-left transition-colors hover:bg-surface-2"
                         onClick={() => {
                           setSelectedDate(start);

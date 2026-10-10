@@ -51,6 +51,20 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
                 {client ? <span className="day-event-client">{client}</span> : null}
                 {processNumber ? <span className="day-event-proc">{processNumber}</span> : null}
               </div>
+              {onDelete ? (
+                <button
+                  className="side-item-delete"
+                  type="button"
+                  aria-label="Excluir compromisso"
+                  onKeyDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(event.id, event.title);
+                  }}
+                >
+                  ×
+                </button>
+              ) : null}
               <div className="day-event-foot">
                 <span className="day-event-owner">
                   <Avatar name={event.responsibleName || "?"} size={24} className="rounded-[8px]" />
@@ -62,6 +76,7 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
                       type="button"
                       className="side-item-attend-yes"
                       aria-label="Marcar como compareceu"
+                      onKeyDown={(e) => e.stopPropagation()}
                       onClick={(e) => { e.stopPropagation(); onAttendance(event.id, true); }}
                     >
                       Compareceu
@@ -70,6 +85,7 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
                       type="button"
                       className="side-item-attend-no"
                       aria-label="Marcar como não compareceu"
+                      onKeyDown={(e) => e.stopPropagation()}
                       onClick={(e) => { e.stopPropagation(); onAttendance(event.id, false); }}
                     >
                       Faltou
@@ -133,6 +149,7 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
                 type="button"
                 className="side-item-attend-yes"
                 aria-label="Marcar como compareceu"
+                onKeyDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
                   onAttendance(event.id, true);
@@ -144,6 +161,7 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
                 type="button"
                 className="side-item-attend-no"
                 aria-label="Marcar como não compareceu"
+                onKeyDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
                   onAttendance(event.id, false);
@@ -158,6 +176,7 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
               className="side-item-delete"
               type="button"
               aria-label="Excluir compromisso"
+              onKeyDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(event.id, event.title);
