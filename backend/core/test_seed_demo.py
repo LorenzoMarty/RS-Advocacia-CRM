@@ -13,6 +13,9 @@ from peticoes.models import Peticao
 from prazos.models import Prazo
 from processos.models import Processo
 from prospeccao.models import Prospect
+from auditoria.models import RegistroAuditoria
+from meetings.models import Reuniao
+from productivity.models import TimeEntry
 
 
 class SeedDemoTests(TestCase):
@@ -29,11 +32,15 @@ class SeedDemoTests(TestCase):
 
         self.assertEqual(Cliente.objects.count(), 8)
         self.assertEqual(Processo.objects.count(), 10)
-        self.assertEqual(Prazo.objects.count(), 12)
-        self.assertEqual(Evento.objects.count(), 8)
+        self.assertEqual(Prazo.objects.count(), 14)
+        self.assertEqual(Evento.objects.count(), 12)
         self.assertEqual(Peticao.objects.count(), 6)
         self.assertEqual(Lancamento.objects.count(), 15)
         self.assertEqual(Prospect.objects.count(), 5)
+        # Telas que ficariam vazias sem dados: reunioes, apontamento de horas e auditoria.
+        self.assertEqual(Reuniao.objects.count(), 4)
+        self.assertEqual(TimeEntry.objects.count(), 14)
+        self.assertEqual(RegistroAuditoria.objects.count(), 10)
 
         # Sempre ha um compromisso futuro hoje/amanha para o painel nao nascer vazio.
         self.assertTrue(
