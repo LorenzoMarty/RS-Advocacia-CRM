@@ -13,10 +13,10 @@ export const buttonVariants = cva(
         link: "text-ink underline underline-offset-4 hover:no-underline",
       },
       size: {
-        default: "h-[var(--btn-h)] px-5 max-[1024px]:h-11",
-        sm: "h-[var(--btn-h-sm)] px-3.5 text-[length:var(--btn-fs-sm)] max-[1024px]:h-10",
-        lg: "h-[var(--btn-h)] px-5 max-[1024px]:h-11",
-        icon: "size-[var(--btn-h)] max-[1024px]:size-11",
+        default: "h-[var(--ctl-h)] px-5",
+        sm: "h-[var(--ctl-h-sm)] px-3.5 text-[length:var(--btn-fs-sm)]",
+        lg: "h-[var(--ctl-h)] px-5",
+        icon: "size-[var(--ctl-h)]",
       },
     },
     defaultVariants: {

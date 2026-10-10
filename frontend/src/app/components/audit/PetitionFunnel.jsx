@@ -29,7 +29,7 @@ export function PetitionFunnel({ petitionFunnel = [] }) {
           <h2 className="section-title">Petições</h2>
           <p className="section-note">Funil por etapa do workflow</p>
         </div>
-        <Link to="/peticoes-contestacoes" className="inline-flex items-center text-sm text-primary no-underline hover:underline whitespace-nowrap max-[1024px]:min-h-[40px]">Ver todas →</Link>
+        <Link to="/peticoes-contestacoes" className="inline-flex items-center text-sm text-primary no-underline hover:underline whitespace-nowrap min-h-[var(--ctl-tap)]">Ver todas →</Link>
       </div>
       <div className="grid gap-2.5">
         {petitionFunnel.map(({ status, count }) => {

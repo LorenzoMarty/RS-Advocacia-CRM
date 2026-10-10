@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "../layout";
+import { ShowMoreButton } from "../components/show-more";
+import { useShowMore } from "../hooks/use-show-more";
 import {
   formatDate,
   formatTime,
@@ -10,8 +12,15 @@ import {
   normalizeText,
 } from "../utils";
 
+const RAIL_PAGE_SIZE = 8;
+
 export function RailList({ events, clients, processes, emptyTitle, emptyCopy, onDelete, onAttendance, variant = "default" }) {
   const navigate = useNavigate();
+  // Dias/listas com dezenas de compromissos: renderização progressiva em vez de empilhar tudo.
+  const { visible, remaining, showMore } = useShowMore(events, RAIL_PAGE_SIZE, {
+    resetKey: `${variant}|${events[0]?.id ?? ""}`,
+  });
+  const showMoreButton = <ShowMoreButton remaining={remaining} pageSize={RAIL_PAGE_SIZE} onClick={showMore} />;
 
   if (!events.length) {
     return (
@@ -27,7 +36,7 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
   if (variant === "day") {
     return (
       <div className="side-list">
-        {events.map((event) => {
+        {visible.map((event) => {
           const client = clients.find((item) => item.id === event.clientId)?.name;
           const processNumber = processes.find((item) => item.id === event.processId)?.number;
           const overdue = isOverdueEvent(event);
@@ -96,13 +105,14 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
             </div>
           );
         })}
+        {showMoreButton}
       </div>
     );
   }
 
   return (
     <div className="side-list">
-      {events.map((event) => (
+      {visible.map((event) => (
         <div
           key={event.id}
           className="side-item"
@@ -187,6 +197,7 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
           )}
         </div>
       ))}
+      {showMoreButton}
     </div>
   );
 }

@@ -15,7 +15,7 @@ export function ProcessStatusPanel({ processStatus = [], staleProcesses = { coun
           <h2 className="section-title">Processos</h2>
           <p className="section-note">Distribuição por status e parados</p>
         </div>
-        <Link to="/processos" className="inline-flex items-center text-sm text-primary no-underline hover:underline whitespace-nowrap max-[1024px]:min-h-[40px]">Ver todos →</Link>
+        <Link to="/processos" className="inline-flex items-center text-sm text-primary no-underline hover:underline whitespace-nowrap min-h-[var(--ctl-tap)]">Ver todos →</Link>
       </div>
       <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[1fr_auto]">
         <div>

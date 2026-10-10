@@ -14,6 +14,7 @@ import { PageChrome, PageSearch, StatusBadge } from '../layout';
 import { useAppState } from '../store';
 import { formatCount, formatPhone, getAreaKey, getStatusTone } from '../utils';
 import { Select } from '../components/select';
+import { ProgressiveList } from '../components/show-more';
 import {
   ClientHoverCard,
   ComboField,
@@ -539,7 +540,7 @@ export function ProcessDetailPage() {
 
             <DetailSection title="Compromissos" note={formatCount(relatedEvents.length)}>
               <div className="flex flex-col gap-2">
-                {relatedEvents.length ? relatedEvents.map((event) => (
+                {relatedEvents.length ? <ProgressiveList items={relatedEvents} render={(event) => (
                   <RelatedItem
                     key={event.id}
                     title={event.title}
@@ -551,7 +552,7 @@ export function ProcessDetailPage() {
                       event.location,
                     ].filter(Boolean)}
                   />
-                )) : (
+                )} /> : (
                   <EmptyState
                     title="Sem compromissos."
                     copy="Adicione um novo compromisso para este processo."
@@ -563,7 +564,7 @@ export function ProcessDetailPage() {
 
             <DetailSection title="Prazos" note={formatCount(relatedDeadlines.length, 'prazo', 'prazos')}>
               <div className="flex flex-col gap-2">
-                {relatedDeadlines.length ? relatedDeadlines.map((deadline) => (
+                {relatedDeadlines.length ? <ProgressiveList items={relatedDeadlines} render={(deadline) => (
                   <RelatedItem
                     key={deadline.id}
                     title={deadline.title}
@@ -571,7 +572,7 @@ export function ProcessDetailPage() {
                     badge={<StatusBadge tone={getStatusTone(deadline.status, deadline.completed)}>{deadline.status}</StatusBadge>}
                     chips={[deadline.responsible].filter(Boolean)}
                   />
-                )) : (
+                )} /> : (
                   <EmptyState
                     title="Sem prazos."
                     copy="Cadastre prazos na area de prazos, separados dos compromissos."

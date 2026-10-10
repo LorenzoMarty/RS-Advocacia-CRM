@@ -22,7 +22,7 @@ function Segmented({ options, value, onChange, tone = "surface-2", label, classN
             aria-pressed={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              "rounded-pill px-3.5 py-2 text-[.93rem] max-[1024px]:min-h-[40px] font-bold leading-none text-ink-2 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink",
+              "rounded-pill px-3.5 py-2 text-[.93rem] min-h-[var(--ctl-tap)] font-bold leading-none text-ink-2 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink",
               active && "bg-surface text-ink shadow-[0_1px_3px_rgba(23,24,28,.1)]",
             )}
           >

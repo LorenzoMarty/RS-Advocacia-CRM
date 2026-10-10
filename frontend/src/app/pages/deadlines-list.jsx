@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
 
@@ -29,6 +29,9 @@ import {
   normalizeText,
 } from '../utils';
 import { Select } from '../components/select';
+import { ShowMoreButton } from '../components/show-more';
+import { useBoardAutoScroll } from '../hooks/use-board-auto-scroll';
+import { useShowMore } from '../hooks/use-show-more';
 import { EmptyState } from './common';
 import {
   buildDeadlineTitle,
@@ -144,6 +147,20 @@ function DeadlineCard({
   );
 }
 
+const COLUMN_PAGE_SIZE = 10;
+
+// Cards de uma coluna do kanban com renderização progressiva: colunas com dezenas de prazos
+// empilhavam a página inteira. O card recém-movido fica sempre visível (pinnedId).
+function DeadlineColumnCards({ deadlines, resetKey, pinnedId, renderCard }) {
+  const { visible, remaining, showMore } = useShowMore(deadlines, COLUMN_PAGE_SIZE, { resetKey, pinnedId });
+  return (
+    <>
+      <AnimatePresence initial={false}>{visible.map(renderCard)}</AnimatePresence>
+      <ShowMoreButton remaining={remaining} pageSize={COLUMN_PAGE_SIZE} onClick={showMore} />
+    </>
+  );
+}
+
 export function DeadlinesPage() {
   const { addFlash, clients, deadlines, isDeadlinesLoading, processes, saveDeadline, timeEntries } = useAppState();
   const [search, setSearch] = useState('');
@@ -153,6 +170,9 @@ export function DeadlinesPage() {
   const [draggingDeadlineId, setDraggingDeadlineId] = useState('');
   const [dragOverColumnKey, setDragOverColumnKey] = useState('');
   const [movingDeadlineId, setMovingDeadlineId] = useState('');
+  const [lastMovedId, setLastMovedId] = useState('');
+  const boardRef = useRef(null);
+  useBoardAutoScroll(boardRef, Boolean(draggingDeadlineId));
 
   const allDeadlines = useMemo(
     () =>
@@ -217,6 +237,8 @@ export function DeadlinesPage() {
     [allDeadlines, clients, priorityTab, processId, processes, responsible, search],
   );
 
+  const filtersKey = `${search}|${responsible}|${processId}|${priorityTab}`;
+
   const deadlinesByColumn = useMemo(() => {
     const columns = DEADLINE_STATUS_COLUMNS.reduce((cols, column) => {
       cols[column.key] = [];
@@ -253,6 +275,7 @@ export function DeadlinesPage() {
     }
 
     setMovingDeadlineId(deadline.id);
+    setLastMovedId(deadline.id);
 
     try {
       const deadlineProcess = processes.find((process) => process.id === deadline.processId) || null;
@@ -378,7 +401,7 @@ export function DeadlinesPage() {
             </div>
           </div>
         ) : allDeadlines.length ? (
-          <section className={`deadlines-board${draggingDeadlineId ? ' is-dragging' : ''}`} aria-label="Kanban de prazos fatais">
+          <section ref={boardRef} className={`deadlines-board${draggingDeadlineId ? ' is-dragging' : ''}`} aria-label="Kanban de prazos fatais">
             {DEADLINE_STATUS_COLUMNS.map((column) => (
               <section
                 className={`deadline-column${dragOverColumnKey === column.key ? ' is-drop-target' : ''}`}
@@ -419,8 +442,11 @@ export function DeadlinesPage() {
                   </AnimatePresence>
 
                   {deadlinesByColumn[column.key].length ? (
-                    <AnimatePresence initial={false}>
-                      {deadlinesByColumn[column.key].map((deadline) => (
+                    <DeadlineColumnCards
+                      deadlines={deadlinesByColumn[column.key]}
+                      resetKey={filtersKey}
+                      pinnedId={lastMovedId}
+                      renderCard={(deadline) => (
                         <DeadlineCard
                           key={deadline.id}
                           deadline={deadline}
@@ -433,8 +459,8 @@ export function DeadlinesPage() {
                           onTimerStart={promoteDeadlineToActive}
                           processes={processes}
                         />
-                      ))}
-                    </AnimatePresence>
+                      )}
+                    />
                   ) : (
                     <div className="deadline-column-empty">
                       Nenhum prazo nesta coluna.
