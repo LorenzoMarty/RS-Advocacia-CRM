@@ -6,6 +6,7 @@
        Os valores reais são injetados em <html> pelo script inline do index.html
        e por applyAppearance(); aqui ficam só os defaults de fallback. */
     --font-base:14px;
+    --track-label:.12em;   /* rastreamento dos rótulos em caixa-alta (eco do logo) */
     --ui-scale:1;
     --font-scale:1;
     --space-scale:1;

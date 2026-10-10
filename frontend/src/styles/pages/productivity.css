@@ -21,7 +21,7 @@
     color:var(--muted);
     font-size:.62rem;
     font-weight:800;
-    letter-spacing:.07em;
+    letter-spacing:var(--track-label);
     text-transform:uppercase;
 }
 
