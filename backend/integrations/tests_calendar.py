@@ -274,6 +274,13 @@ class SyncCalendarTests(CalendarTestBase):
         self.assertEqual(self.calendar.sync_token, "tok-1")
         self.assertIsNotNone(self.calendar.last_synced_at)
 
+    def test_imported_event_is_not_pushed_back_to_google(self):
+        self._list_returns({"items": [self._remote("g1")], "nextSyncToken": "t"})
+        summary = self._sync()
+        self.assertEqual((summary["importados"], summary["exportados"]), (1, 0))
+        self.service.events().update.assert_not_called()
+        self.service.events().insert.assert_not_called()
+
     def test_links_identical_local_event_instead_of_duplicating(self):
         item = self._remote("g1", summary="Igual")
         fields = gcal._remote_fields(item)

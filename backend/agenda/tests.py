@@ -183,6 +183,9 @@ class AgendaIntegrationViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 201, response.content)
         self.assertEqual(Evento.objects.count(), 1)
+        self.assertEqual(
+            response.json()["dados"]["sincronizacao_google"]["status"], "falha_fila"
+        )
 
     @patch("agenda.views.sincronizar_evento_google_calendar", return_value=None)
     def test_patch_evento_marca_comparecimento_com_payload_parcial(

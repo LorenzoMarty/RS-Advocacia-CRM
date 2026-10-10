@@ -1,3 +1,4 @@
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -37,7 +38,9 @@ def listar_prospects(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    prospects = _prospects_base_queryset().all()
+    prospects = _prospects_base_queryset().annotate(
+        num_interacoes=Count("interacoes")
+    )
 
     status = request.GET.get("status", "").strip()
     if status:
