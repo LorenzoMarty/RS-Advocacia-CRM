@@ -3,9 +3,11 @@ from django.shortcuts import get_object_or_404
 
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
-from core.permissions import app_permissions_required
+from core.identity import current_usuario
 from core.pagination import paginar
+from core.permissions import app_permissions_required
 from core.utils import (
+    enfileirar_best_effort,
     erros_formulario,
     ler_corpo_json,
     metodo_nao_permitido,
@@ -14,7 +16,6 @@ from core.utils import (
 )
 from documentos import services as documentos_services
 from documentos import tasks as documentos_tasks
-from core.identity import current_usuario
 from processos.forms import ProcessoForm
 from processos.models import Processo
 from processos.serializers import serialize_processo
@@ -129,7 +130,7 @@ def editar_processo(request, processo_id):
             "cliente", "advogado_responsavel"
         ).get(pk=processo.pk)
         usuario = current_usuario(request)
-        documentos_tasks.enfileirar_best_effort(
+        enfileirar_best_effort(
             documentos_tasks.renomear_pasta_processo,
             processo.pk,
             usuario.pk if usuario else None,

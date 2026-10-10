@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 
 from clientes.models import Cliente
 from clientes.serializers import serialize_cliente
+from core.identity import current_usuario
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -20,7 +21,6 @@ from integrations.google.exceptions import (
     GoogleAuthorizationRequired,
     GoogleConfigurationError,
 )
-from core.identity import current_usuario
 from integrations.google.responses import mapear_erro_google as _mapear_erro_google
 
 from . import importacao, organizacao, services
@@ -28,7 +28,6 @@ from .forms import UploadDocumentoForm
 from .models import DocumentoCliente, serialize_documento
 
 logger = logging.getLogger(__name__)
-
 
 
 @app_permissions_required("documentos.view_documentocliente", "clientes.view_cliente")

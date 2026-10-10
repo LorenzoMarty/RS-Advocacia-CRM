@@ -1,4 +1,5 @@
 from typing import Iterable, cast
+
 from integrations.google.calendar import calendar_label
 from integrations.models import GoogleAccount
 from usuarios.forms import normalize_cargo_name

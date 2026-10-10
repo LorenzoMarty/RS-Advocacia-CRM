@@ -1,6 +1,6 @@
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 from django.utils import timezone
 
 from clientes.models import Cliente
@@ -252,16 +252,3 @@ class SincronizarDriveTests(TestCase):
 
         self.assertEqual(resumo["contas_sincronizadas"], 1)
         self.assertEqual(resumo["clientes_criados"], 2)
-
-
-class EnfileirarBestEffortTests(SimpleTestCase):
-    def test_returns_true_when_enqueued(self):
-        task = Mock()
-        self.assertTrue(tasks.enfileirar_best_effort(task, 1, 2))
-        task.delay.assert_called_once_with(1, 2)
-
-    def test_broker_failure_is_logged_not_raised(self):
-        task = Mock(name="t")
-        task.delay.side_effect = ConnectionError("broker down")
-        with self.assertLogs("documentos.tasks", level="ERROR"):
-            self.assertFalse(tasks.enfileirar_best_effort(task, 1))

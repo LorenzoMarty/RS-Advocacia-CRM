@@ -203,7 +203,7 @@ class ProcessoApiTests(TestCase):
         with patch(
             "processos.views.documentos_tasks.renomear_pasta_processo.delay",
             side_effect=ConnectionError("broker down"),
-        ) as delay, self.assertLogs("documentos.tasks", level="ERROR"):
+        ) as delay, self.assertLogs("core.utils", level="ERROR"):
             response = self.client.put(
                 reverse("editar_processo", args=[processo.pk]),
                 data=json.dumps(payload),
@@ -238,4 +238,3 @@ class ProcessoApiTests(TestCase):
         )
         self.assertIn(RegistroAuditoria.ACAO_ATUALIZADO, acoes)
         self.assertIn(RegistroAuditoria.ACAO_EXCLUIDO, acoes)
-

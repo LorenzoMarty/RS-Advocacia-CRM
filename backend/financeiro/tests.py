@@ -254,4 +254,3 @@ class FinanceiroFluxoTests(TestCase):
         dados = self.client.get(reverse("categorias_financeiro")).json()["dados"]
         self.assertTrue(dados["receita"] and dados["despesa"])
         self.assertEqual(self.client.post(reverse("categorias_financeiro")).status_code, 405)
-

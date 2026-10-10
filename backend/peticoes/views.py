@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
+from core.identity import current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
@@ -14,7 +15,6 @@ from core.utils import (
 )
 from documentos import services as documentos_services
 from integrations.google.exceptions import GOOGLE_ERRORS
-from core.identity import current_usuario
 from integrations.google.responses import mapear_erro_google
 from peticoes.forms import PeticaoForm
 from peticoes.models import Peticao

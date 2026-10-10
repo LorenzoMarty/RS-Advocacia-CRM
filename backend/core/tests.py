@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.test import SimpleTestCase, TestCase, override_settings
@@ -12,6 +14,7 @@ from core.br_identifiers import (
     validar_cpf,
     validar_cpf_cnpj,
 )
+from core.utils import enfileirar_best_effort
 
 
 class HealthEndpointTests(TestCase):
@@ -156,3 +159,17 @@ class BrIdentifiersTests(SimpleTestCase):
 
     def test_classificar_por_palavras_sem_pista_retorna_none(self):
         self.assertIsNone(classificar_por_palavras("foto.jpg"))
+
+
+class EnfileirarBestEffortTests(SimpleTestCase):
+    def test_returns_true_when_enqueued(self):
+        task = Mock()
+        self.assertTrue(enfileirar_best_effort(task, 1, 2))
+        task.delay.assert_called_once_with(1, 2)
+
+    def test_broker_failure_is_logged_not_raised(self):
+        task = Mock(name="t")
+        task.delay.side_effect = ConnectionError("broker down")
+        with self.assertLogs("core.utils", level="ERROR"):
+            self.assertFalse(enfileirar_best_effort(task, 1))
+

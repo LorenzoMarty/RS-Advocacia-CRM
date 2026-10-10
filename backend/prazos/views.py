@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
+from core.identity import current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
@@ -18,10 +19,9 @@ from core.utils import (
 from documentos import services as documentos_services
 from documentos.services import SUPPORTED_DOCUMENT_EXTENSIONS
 from integrations.google.exceptions import GOOGLE_ERRORS
-from core.identity import current_usuario
 from integrations.google.responses import mapear_erro_google
-from prazos.forms import PrazoForm
 from prazos import services
+from prazos.forms import PrazoForm
 from prazos.models import Prazo
 from prazos.serializers import serialize_prazo
 

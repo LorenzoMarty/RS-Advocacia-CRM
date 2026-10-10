@@ -171,6 +171,19 @@ class AgendaIntegrationViewsTests(TestCase):
         )
         sincronizar_task.delay.assert_called_once()
 
+    @patch("agenda.views.sincronizar_evento_google_calendar")
+    def test_criar_evento_sobrevive_a_falha_do_broker(self, sincronizar_task):
+        sincronizar_task.delay.side_effect = ConnectionError("broker down")
+        with self.assertLogs("core.utils", level="ERROR"):
+            response = self.client.post(
+                reverse("criar_evento"),
+                data=json.dumps(self.payload()),
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(Evento.objects.count(), 1)
+
     @patch("agenda.views.sincronizar_evento_google_calendar", return_value=None)
     def test_patch_evento_marca_comparecimento_com_payload_parcial(
         self, sincronizar_task
