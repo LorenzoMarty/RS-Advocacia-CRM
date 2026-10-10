@@ -33,7 +33,8 @@ def _status_pendente(status: str) -> bool:
 def atualizar_timer(prazo: Prazo, payload: dict) -> Prazo:
     """Aplica ``tempo_decorrido_segundos`` e/ou ``timer_iniciado_em`` e salva.
 
-    O tempo acumulado nunca diminui. Iniciar o timer de um prazo pendente e não
+    O tempo acumulado nunca diminui. ``tempo_decorrido_segundos`` é o total do
+    cliente; com o timer ainda rodando ele inclui o trecho em curso. Iniciar o timer de um prazo pendente e não
     concluído move o status para "Em andamento". Levanta ``TimerInvalido`` sem
     gravar nada se algum campo for inválido.
     """
@@ -51,9 +52,14 @@ def atualizar_timer(prazo: Prazo, payload: dict) -> Prazo:
             raise TimerInvalido(
                 "tempo_decorrido_segundos", "O tempo não pode ser negativo."
             )
-        prazo.tempo_decorrido_segundos = max(
-            int(prazo.tempo_decorrido_segundos or 0), atual, informado
-        )
+        acumulado = int(prazo.tempo_decorrido_segundos or 0)
+        if prazo.timer_iniciado_em and "timer_iniciado_em" not in payload:
+            # Timer keeps running: ``informado`` is the client's total (including
+            # the running stretch), so store only the part before the timer start.
+            novo = max(acumulado, informado - (atual - acumulado))
+        else:
+            novo = max(acumulado, atual, informado)
+        prazo.tempo_decorrido_segundos = novo
         update_fields.append("tempo_decorrido_segundos")
 
     if "timer_iniciado_em" in payload:
