@@ -185,7 +185,7 @@ function SidebarNavLink({ item, collapsed, count = 0 }) {
       aria-label={count ? `${item.label} — ${count} em aberto (vencidos ou até 7 dias)` : item.label}
       data-tour={`nav-${item.key}`}
       className={cn(
-        'group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink',
+        'group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-[1rem] font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink',
         collapsed && 'mx-auto size-10 justify-center gap-0 rounded-md px-0 py-0',
         isActive && 'bg-accent-soft font-bold text-ink hover:bg-accent-soft hover:text-ink',
       )}
@@ -237,7 +237,7 @@ function SidebarNavigation({ collapsed }) {
           <div key={group} className="grid gap-1" role="group" aria-label={group}>
             <span
               className={cn(
-                'px-3 pb-1 text-[11px] font-medium uppercase tracking-[.14em] text-subtle',
+                'px-3 pb-1 text-[11px] font-bold uppercase tracking-[.08em] text-subtle',
                 collapsed && 'sr-only',
               )}
             >
@@ -755,7 +755,7 @@ function Topbar({ chrome, notifications }) {
     <header className="app-topbar sticky top-[var(--shell-pad)] z-30 flex h-[var(--topbar-h)] items-center justify-between gap-3 rounded-lg bg-surface pl-5 pr-2 max-sm:pl-4">
       <nav aria-label="Trilha de navegação" className="min-w-0">
         <ol className="m-0 flex min-w-0 list-none items-center gap-2 p-0 text-sm font-semibold text-muted-foreground">
-          <li className="text-[11px] font-medium uppercase tracking-[.14em] max-sm:hidden">RS Advocacia</li>
+          <li className="max-sm:hidden">RS Advocacia</li>
           <li aria-hidden="true" className="max-sm:hidden">
             <ChevronRight className="size-3.5" />
           </li>
@@ -901,7 +901,7 @@ function ShellFrame({ chrome, appearance, sidebarCollapsed, toggleSidebar, start
         <aside
           id="app-sidebar"
           aria-label="Navegação principal"
-          className="group sticky top-[var(--shell-pad)] z-40 hidden h-[calc(100vh-var(--shell-pad)*2)] flex-col rounded-lg bg-surface min-[1201px]:flex"
+          className="group sticky top-[var(--shell-pad)] z-40 hidden h-[calc(100vh-var(--shell-pad)*2)] flex-col rounded-[28px] bg-surface min-[1201px]:flex"
         >
           <Button
             variant="outline"
@@ -929,25 +929,11 @@ function ShellFrame({ chrome, appearance, sidebarCollapsed, toggleSidebar, start
               title="Início"
             >
               <span
-                className="brand-logo brand-logo-mono shrink-0 text-ink"
-                style={{ '--brand-w': sidebarCollapsed ? '36px' : '40px' }}
+                className={cn('brand-logo shrink-0 text-ink', sidebarCollapsed ? 'brand-logo-mono' : 'brand-logo-stack')}
+                style={{ '--brand-w': sidebarCollapsed ? '36px' : '100%' }}
                 role="img"
-                aria-label="RS"
+                aria-label="RS Advocacia empresarial e trabalhista especializada"
               />
-              <div
-                className={cn(
-                  'flex min-w-0 max-w-[180px] items-center gap-3 overflow-hidden transition-[max-width,opacity] duration-200',
-                  sidebarCollapsed && 'pointer-events-none max-w-0 opacity-0',
-                )}
-              >
-                <span className="h-9 w-px shrink-0 bg-line-strong" aria-hidden="true" />
-                <div className="min-w-0">
-                  <strong className="block truncate text-[13px] font-semibold uppercase leading-tight tracking-[.14em] text-ink">
-                    Advocacia
-                  </strong>
-                  <span className="block truncate text-[11px] font-medium tracking-[.04em] text-muted-foreground">Gestão jurídica</span>
-                </div>
-              </div>
             </Link>
 
             <SidebarNavigation collapsed={sidebarCollapsed} />
