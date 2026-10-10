@@ -13,7 +13,16 @@
 
 ![Walkthrough of the app: dashboard, clients, cases, calendar, deadlines and petitions boards, finance, prospecting funnel and office audit](docs/screenshots/demo.webp)
 
-<sub>Walkthrough of the app running locally with fictional demo data (sped up 2x). [Full-quality video](docs/demo.mp4).</sub>
+<sub>Walkthrough of the app (light theme, desktop) running locally with the fictional data from `seed_demo`. [Full-quality video](docs/demo.mp4).</sub>
+
+<details>
+<summary>Dark theme and mobile</summary>
+
+![Dashboard in the dark theme on desktop](docs/screenshots/dashboard-dark.webp)
+
+<img src="docs/screenshots/mobile-light.webp" alt="Dashboard on mobile, light theme" width="300"> <img src="docs/screenshots/mobile-dark.webp" alt="Dashboard on mobile, dark theme" width="300">
+
+</details>
 
 ## What it does
 
