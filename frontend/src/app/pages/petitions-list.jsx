@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 
@@ -29,6 +29,9 @@ import {
   normalizeText,
 } from '../utils';
 import { Select } from '../components/select';
+import { ShowMoreButton } from '../components/show-more';
+import { useBoardAutoScroll } from '../hooks/use-board-auto-scroll';
+import { useShowMore } from '../hooks/use-show-more';
 import { EmptyState } from './common';
 import {
   PETITION_DEFAULT_TYPE,
@@ -172,6 +175,19 @@ function PetitionCard({
   );
 }
 
+const COLUMN_PAGE_SIZE = 10;
+
+// Cards de uma coluna com renderização progressiva (o card recém-movido fica sempre visível).
+function PetitionColumnCards({ petitions, resetKey, pinnedId, renderCard }) {
+  const { visible, remaining, showMore } = useShowMore(petitions, COLUMN_PAGE_SIZE, { resetKey, pinnedId });
+  return (
+    <>
+      <AnimatePresence initial={false}>{visible.map(renderCard)}</AnimatePresence>
+      <ShowMoreButton remaining={remaining} pageSize={COLUMN_PAGE_SIZE} onClick={showMore} />
+    </>
+  );
+}
+
 export function PetitionsPage() {
   const {
     addFlash,
@@ -191,6 +207,9 @@ export function PetitionsPage() {
   const [draggingPetitionId, setDraggingPetitionId] = useState('');
   const [dragOverColumnKey, setDragOverColumnKey] = useState('');
   const [movingPetitionId, setMovingPetitionId] = useState('');
+  const [lastMovedId, setLastMovedId] = useState('');
+  const boardRef = useRef(null);
+  useBoardAutoScroll(boardRef, Boolean(draggingPetitionId));
 
   const clientOptions = [...clients].sort((left, right) => left.name.localeCompare(right.name, 'pt-BR'));
   const allPetitions = [...petitions].sort((left, right) => {
@@ -298,6 +317,7 @@ export function PetitionsPage() {
     }
 
     setMovingPetitionId(petition.id);
+    setLastMovedId(petition.id);
 
     try {
       const savedPetition = await savePetition({
@@ -401,7 +421,7 @@ export function PetitionsPage() {
         </Card>
 
         {clientOptions.length ? (
-          <section className={`petitions-board${draggingPetitionId ? ' is-dragging' : ''}`} aria-label="Kanban de petições ou contestações">
+          <section ref={boardRef} className={`petitions-board${draggingPetitionId ? ' is-dragging' : ''}`} aria-label="Kanban de petições ou contestações">
             {PETITION_STATUS_COLUMNS.map((column) => (
               <section
                 className={`petition-column${dragOverColumnKey === column.key ? ' is-drop-target' : ''}`}
@@ -425,8 +445,11 @@ export function PetitionsPage() {
                   ) : null}
 
                   {petitionsByColumn[column.key].length ? (
-                    <AnimatePresence initial={false}>
-                      {petitionsByColumn[column.key].map((petition) => (
+                    <PetitionColumnCards
+                      petitions={petitionsByColumn[column.key]}
+                      resetKey={`${search}|${typeFilter}`}
+                      pinnedId={lastMovedId}
+                      renderCard={(petition) => (
                         <PetitionCard
                           key={petition.id}
                           clients={clients}
@@ -442,8 +465,8 @@ export function PetitionsPage() {
                           petition={petition}
                           processes={processes}
                         />
-                      ))}
-                    </AnimatePresence>
+                      )}
+                    />
                   ) : (
                     <div className="petition-column-empty">
                       {isPetitionsLoading ? 'Carregando peças.' : 'Nenhuma peça nesta coluna.'}

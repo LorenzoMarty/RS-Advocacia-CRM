@@ -1,4 +1,4 @@
-.agenda-page{display:grid;gap:var(--gap-page)}
+.agenda-page{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gap-page)}
 
 .toolbar-search{position:relative}
 

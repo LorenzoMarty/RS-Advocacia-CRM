@@ -63,6 +63,10 @@
 .deadlines-board > *,
 .petitions-board > *,
 .prospeccao-board > *{scroll-snap-align:start}
+/* Durante o arraste o snap obrigatório brigaria com o autoscroll (useBoardAutoScroll). */
+.deadlines-board.is-dragging,
+.petitions-board.is-dragging,
+.prospeccao-board.is-dragging{scroll-snap-type:none}
 @media (max-width:860px){
     .deadlines-board,
     .petitions-board,

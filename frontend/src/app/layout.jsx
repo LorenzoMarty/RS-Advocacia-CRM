@@ -259,6 +259,52 @@ function SidebarNavigation({ collapsed }) {
   );
 }
 
+const PROFILE_ITEM_CLASS =
+  'flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink';
+const PROFILE_DANGER_CLASS =
+  'flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-sm font-semibold text-[var(--danger-ink)] transition-colors hover:bg-[var(--danger-soft)]';
+
+// Ações da conta (Aparência, Manual, Rever tour, Sair) — única fonte para o menu do perfil (desktop)
+// e a folha "Mais" (mobile). `close` fecha o contêiner; `itemClass` ajusta a densidade (alvo de toque).
+function AccountActions({ onOpenAppearance, onStartTour, close, itemClass }) {
+  const { sair } = useAppState();
+
+  function act(fn) {
+    close();
+    fn?.();
+  }
+
+  return (
+    <>
+      {onOpenAppearance ? (
+        <button type="button" className={cn(PROFILE_ITEM_CLASS, itemClass)} onClick={() => act(onOpenAppearance)}>
+          <Sparkles className="size-4" strokeWidth={1.8} />
+          Aparência
+        </button>
+      ) : null}
+      <Link to="/manual" className={cn(PROFILE_ITEM_CLASS, itemClass)} onClick={close}>
+        <BookOpen className="size-4" strokeWidth={1.8} />
+        Manual do sistema
+      </Link>
+      {onStartTour ? (
+        <button
+          type="button"
+          className={cn(PROFILE_ITEM_CLASS, itemClass)}
+          data-tour="rever-tour"
+          onClick={() => act(onStartTour)}
+        >
+          <CircleHelp className="size-4" strokeWidth={1.8} />
+          Rever tour
+        </button>
+      ) : null}
+      <button type="button" className={cn(PROFILE_DANGER_CLASS, itemClass)} onClick={() => act(sair)}>
+        <LogOut className="size-4" strokeWidth={1.8} />
+        Sair
+      </button>
+    </>
+  );
+}
+
 const BOTTOM_NAV_FIXED = ['painel', 'clientes', 'agenda', 'prazos'];
 const MORE_TILE_CLASS =
   'grid min-h-[72px] place-items-center content-center gap-1.5 rounded-md bg-surface-2 px-2 py-2.5 text-center text-ink-2 transition-colors hover:bg-surface-3 hover:text-ink';
@@ -266,7 +312,7 @@ const MORE_TILE_CLASS =
 // Folha "Mais" (<=1200px): demais áreas do sistema agrupadas + ações da conta. Fecha com Esc,
 // clique no fundo ou ao navegar; prende o foco e devolve ao botão "Mais" ao fechar.
 function MoreSheet({ open, onClose, items, onOpenAppearance, onStartTour }) {
-  const { currentUser, currentRole, sair } = useAppState();
+  const { currentUser, currentRole } = useAppState();
   const panelRef = useRef(null);
   useFocusTrap(panelRef, open);
 
@@ -281,11 +327,6 @@ function MoreSheet({ open, onClose, items, onOpenAppearance, onStartTour }) {
   }, [open, onClose]);
 
   if (!open) return null;
-
-  function act(fn) {
-    onClose();
-    fn?.();
-  }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-[var(--backdrop)] min-[1201px]:hidden" onClick={onClose}>
@@ -340,30 +381,12 @@ function MoreSheet({ open, onClose, items, onOpenAppearance, onStartTour }) {
         })}
 
         <section aria-label="Conta" className="grid gap-1 border-t border-line pt-2">
-          {onOpenAppearance ? (
-            <button type="button" className={cn(PROFILE_ITEM_CLASS, 'min-h-11')} onClick={() => act(onOpenAppearance)}>
-              <Sparkles className="size-4" strokeWidth={1.8} />
-              Aparência
-            </button>
-          ) : null}
-          <Link to="/manual" className={cn(PROFILE_ITEM_CLASS, 'min-h-11')} onClick={onClose}>
-            <BookOpen className="size-4" strokeWidth={1.8} />
-            Manual do sistema
-          </Link>
-          {onStartTour ? (
-            <button type="button" className={cn(PROFILE_ITEM_CLASS, 'min-h-11')} data-tour="rever-tour" onClick={() => act(onStartTour)}>
-              <CircleHelp className="size-4" strokeWidth={1.8} />
-              Rever tour
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className="flex min-h-11 items-center gap-2.5 rounded-sm px-2.5 py-2 text-sm font-semibold text-[var(--danger-ink)] transition-colors hover:bg-[var(--danger-soft)]"
-            onClick={() => act(sair)}
-          >
-            <LogOut className="size-4" strokeWidth={1.8} />
-            Sair
-          </button>
+          <AccountActions
+            onOpenAppearance={onOpenAppearance}
+            onStartTour={onStartTour}
+            close={onClose}
+            itemClass="min-h-11"
+          />
         </section>
       </div>
     </div>
@@ -785,20 +808,12 @@ function Topbar({ chrome, notifications }) {
   );
 }
 
-const PROFILE_ITEM_CLASS =
-  'flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink';
-
 function ProfileMenu({ onOpenAppearance, onStartTour, collapsed, notifications }) {
-  const { currentUser, currentRole, sair } = useAppState();
+  const { currentUser, currentRole } = useAppState();
   const { totalNaoLidas } = notifications;
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
   useDismiss(open, setOpen, menuRef);
-
-  function handleAction(fn) {
-    setOpen(false);
-    fn?.();
-  }
 
   return (
     <div className="relative" ref={menuRef}>
@@ -853,35 +868,11 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed, notifications }
           <Separator />
 
           <nav className="flex flex-col gap-0.5 p-1.5" aria-label="Ações do usuário">
-            {onOpenAppearance && (
-              <button type="button" className={PROFILE_ITEM_CLASS} onClick={() => handleAction(onOpenAppearance)}>
-                <Sparkles className="size-4" strokeWidth={1.8} />
-                Aparência
-              </button>
-            )}
-            <Link to="/manual" className={PROFILE_ITEM_CLASS} onClick={() => setOpen(false)}>
-              <BookOpen className="size-4" strokeWidth={1.8} />
-              Manual do sistema
-            </Link>
-            {onStartTour && (
-              <button
-                type="button"
-                className={PROFILE_ITEM_CLASS}
-                data-tour="rever-tour"
-                onClick={() => handleAction(onStartTour)}
-              >
-                <CircleHelp className="size-4" strokeWidth={1.8} />
-                Rever tour
-              </button>
-            )}
-            <button
-              type="button"
-              className="flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-sm font-semibold text-[var(--danger-ink)] transition-colors hover:bg-[var(--danger-soft)]"
-              onClick={() => handleAction(sair)}
-            >
-              <LogOut className="size-4" strokeWidth={1.8} />
-              Sair
-            </button>
+            <AccountActions
+              onOpenAppearance={onOpenAppearance}
+              onStartTour={onStartTour}
+              close={() => setOpen(false)}
+            />
           </nav>
         </div>
       )}
