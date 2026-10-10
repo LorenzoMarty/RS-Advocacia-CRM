@@ -141,19 +141,13 @@ function LoadingScreen() {
   return (
     <main className="loading-screen" aria-live="polite" aria-busy="true">
       <section className="loading-card" role="status">
-        <div className="loading-mark" aria-hidden="true">
-          <span className="brand-logo brand-logo-mono" style={{ '--brand-w': '44px' }} />
-        </div>
-
-        <div className="loading-copy">
-          <span className="loading-kicker">RS Advocacia</span>
-          <h1>Carregando sistema</h1>
-          <p>Preparando agenda, processos, prazos e petições.</p>
-        </div>
+        <span className="brand-logo brand-logo-full loading-logo" role="img" aria-label="RS Advocacia" />
 
         <div className="loading-progress" aria-hidden="true">
           <span />
         </div>
+
+        <p className="loading-copy">Carregando sistema</p>
       </section>
     </main>
   );
@@ -243,7 +237,7 @@ function SidebarNavigation({ collapsed }) {
           <div key={group} className="grid gap-1" role="group" aria-label={group}>
             <span
               className={cn(
-                'px-3 pb-1 text-[11px] font-bold uppercase tracking-[.07em] text-subtle',
+                'px-3 pb-1 text-[11px] font-medium uppercase tracking-[.14em] text-subtle',
                 collapsed && 'sr-only',
               )}
             >
@@ -761,7 +755,7 @@ function Topbar({ chrome, notifications }) {
     <header className="app-topbar sticky top-[var(--shell-pad)] z-30 flex h-[var(--topbar-h)] items-center justify-between gap-3 rounded-lg bg-surface pl-5 pr-2 max-sm:pl-4">
       <nav aria-label="Trilha de navegação" className="min-w-0">
         <ol className="m-0 flex min-w-0 list-none items-center gap-2 p-0 text-sm font-semibold text-muted-foreground">
-          <li className="max-sm:hidden">RS Advocacia</li>
+          <li className="text-[11px] font-medium uppercase tracking-[.14em] max-sm:hidden">RS Advocacia</li>
           <li aria-hidden="true" className="max-sm:hidden">
             <ChevronRight className="size-3.5" />
           </li>

@@ -49,7 +49,7 @@
   font-weight: 600;
   color: var(--accent);
   text-transform: uppercase;
-  letter-spacing: .06em;
+  letter-spacing:var(--track-label);
   margin: 0 0 12px;
 }
 

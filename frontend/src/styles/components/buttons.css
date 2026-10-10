@@ -11,7 +11,7 @@
     background:var(--accent);
     color:var(--accent-fg);
     font-size:.88rem;
-    font-weight:700;
+    font-weight:600;
     white-space:nowrap;
     transition:background var(--motion) var(--ease-out),
                border-color var(--motion) var(--ease-out);
