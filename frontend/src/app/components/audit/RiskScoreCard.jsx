@@ -42,7 +42,10 @@ function useRiseIn(target, duration = 0.8) {
       }
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      startedRef.current = false; // StrictMode (dev) monta duas vezes: sem isso o 2º efeito não anima
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
