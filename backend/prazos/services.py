@@ -66,6 +66,8 @@ def atualizar_timer(prazo: Prazo, payload: dict) -> Prazo:
                 raise TimerInvalido(
                     "timer_iniciado_em", "Informe uma data/hora valida."
                 )
+            if timezone.is_naive(iniciado):
+                iniciado = timezone.make_aware(iniciado)
             prazo.timer_iniciado_em = iniciado
             if not prazo.concluido and _status_pendente(prazo.status):
                 prazo.status = STATUS_EM_ANDAMENTO

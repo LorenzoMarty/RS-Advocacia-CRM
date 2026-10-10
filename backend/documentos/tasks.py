@@ -31,20 +31,6 @@ from .models import ClienteDrive, DocumentoCliente, ProcessoDrive
 logger = logging.getLogger(__name__)
 
 
-def enfileirar_best_effort(task, *args) -> bool:
-    """Enqueue a side-effect task without failing the already-committed request.
-
-    Broker outages must not turn a saved record into an HTTP 500; the failure
-    is logged and ``False`` is returned.
-    """
-    try:
-        task.delay(*args)
-    except Exception:  # noqa: BLE001 - broker/infra failure, logged below
-        logger.exception("Falha ao enfileirar %s%r.", task.name, args)
-        return False
-    return True
-
-
 @shared_task(name="documentos.sincronizar_drive")
 def sincronizar_drive() -> dict:
     """Run one Drive-changes pass for every connected Google account.

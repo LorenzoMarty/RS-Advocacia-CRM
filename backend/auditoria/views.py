@@ -7,6 +7,7 @@ from agenda.models import Evento
 from auditoria import overview as overview_mod
 from auditoria import painel
 from auditoria.models import RegistroAuditoria
+from auditoria.serializers import serialize_registro
 from clientes.models import Cliente
 from core.identity import current_usuario, is_admin
 from core.pagination import paginar
@@ -20,13 +21,6 @@ from peticoes.models import Peticao
 from prazos.models import Prazo
 from processos.models import Processo
 from productivity.models import ProductivityGoal, TimeEntry
-from auditoria.serializers import serialize_registro
-
-
-
-
-
-
 
 
 def _exigir_admin(request: HttpRequest):

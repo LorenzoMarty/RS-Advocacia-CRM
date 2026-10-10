@@ -5,9 +5,12 @@ from django.shortcuts import get_object_or_404
 
 from clientes.forms import ClienteForm
 from clientes.models import Cliente
-from core.permissions import app_permissions_required
+from clientes.serializers import serialize_cliente
+from core.identity import current_usuario
 from core.pagination import paginar
+from core.permissions import app_permissions_required
 from core.utils import (
+    enfileirar_best_effort,
     erros_formulario,
     ler_corpo_json,
     metodo_nao_permitido,
@@ -15,8 +18,6 @@ from core.utils import (
     resposta_sucesso,
 )
 from documentos import tasks as documentos_tasks
-from core.identity import current_usuario
-from clientes.serializers import serialize_cliente
 
 
 def _filtrar_clientes(request):
@@ -121,7 +122,7 @@ def editar_cliente(request, cliente_id):
         cliente = form.save()
         if cliente.nome != nome_antigo:
             usuario = current_usuario(request)
-            documentos_tasks.enfileirar_best_effort(
+            enfileirar_best_effort(
                 documentos_tasks.renomear_pasta_cliente,
                 cliente.pk,
                 usuario.pk if usuario else None,

@@ -4,6 +4,7 @@ from django.utils import timezone
 from clientes.forms import ClienteForm
 from clientes.models import Cliente
 from clientes.serializers import serialize_cliente
+from core.identity import current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
@@ -13,11 +14,10 @@ from core.utils import (
     resposta_erro,
     resposta_sucesso,
 )
-from core.identity import current_usuario
+from prospeccao.serializers import serialize_interacao, serialize_prospect
 
 from .forms import InteracaoForm, ProspectForm
 from .models import InteracaoProspect, Prospect
-from prospeccao.serializers import serialize_interacao, serialize_prospect
 
 
 def _prospect_api_payload(request):

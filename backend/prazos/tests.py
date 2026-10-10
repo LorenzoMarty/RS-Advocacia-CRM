@@ -318,3 +318,10 @@ class AtualizarTimerServiceTests(TestCase):
         self.prazo.refresh_from_db()
         self.assertEqual(self.prazo.tempo_decorrido_segundos, 0)
         self.assertEqual(self.prazo.status, "Pendente")
+
+    def test_naive_timer_start_is_stored_timezone_aware(self):
+        from prazos import services
+
+        services.atualizar_timer(self.prazo, {"timer_iniciado_em": "2026-06-23T10:00:00"})
+        self.assertTrue(timezone.is_aware(self.prazo.timer_iniciado_em))
+        self.assertGreater(services.segundos_decorridos(self.prazo), 0)

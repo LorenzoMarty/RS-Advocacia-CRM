@@ -14,6 +14,7 @@ from core.utils import (
 )
 from peticoes.models import Peticao
 from prazos.models import Prazo
+from productivity.models import ProductivityGoal, TimeEntry
 from productivity.serializers import (
     DEFAULT_DAILY_HOURS,
     DEFAULT_WEEKLY_HOURS,
@@ -23,8 +24,8 @@ from productivity.serializers import (
     task_details,
     time_entries_response,
 )
-from productivity.models import ProductivityGoal, TimeEntry
 from usuarios.models import Usuario
+
 
 def _save_elapsed(entry: TimeEntry, now=None) -> int:
     total = max(int(entry.total_seconds or 0), elapsed_seconds(entry, now=now))

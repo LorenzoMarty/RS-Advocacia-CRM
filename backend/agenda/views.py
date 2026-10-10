@@ -6,14 +6,17 @@ from django.utils.dateparse import parse_datetime
 
 from agenda.forms import EventoForm
 from agenda.models import Evento
+from agenda.serializers import serialize_evento
 from agenda.tasks import sincronizar_evento_google_calendar
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
+from core.identity import current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     converter_campos_datahora,
     dados_com_aliases,
+    enfileirar_best_effort,
     erros_formulario,
     ler_corpo_json,
     metodo_nao_permitido,
@@ -23,8 +26,6 @@ from core.utils import (
 )
 from integrations.google.calendar import delete_remote_event, sync_agenda
 from integrations.google.exceptions import GoogleAuthorizationRequired
-from core.identity import current_usuario
-from agenda.serializers import serialize_evento
 
 EVENTO_DATETIME_FIELDS = ("data_inicio", "data_fim", "lembrete_em")
 ATTENDANCE_STATUS = {"Compareceu", "Não compareceu"}
@@ -68,7 +69,9 @@ def _sincronizar_evento_se_conectado(request, evento):
         return {"status": "nao_conectado"}
 
     if getattr(settings, "CELERY_BROKER_URL", None):
-        sincronizar_evento_google_calendar.delay(evento.pk, usuario.pk)
+        enfileirar_best_effort(
+            sincronizar_evento_google_calendar, evento.pk, usuario.pk
+        )
     else:
         # Dev sem Redis/Celery: roda inline, best-effort (mesmo padrao do
         # MEETINGS_PROCESSING_MODE=inline).

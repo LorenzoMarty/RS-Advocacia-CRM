@@ -82,8 +82,6 @@ def frontend_redirect(path: str = "/", params: dict[str, str] | None = None) -> 
     return f"{frontend_url}{normalized_path}{query}"
 
 
-
-
 def begin_authorization(
     request: HttpRequest,
     *,
