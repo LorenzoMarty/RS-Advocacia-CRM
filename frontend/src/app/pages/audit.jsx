@@ -57,33 +57,39 @@ function AuditDashboard({
         period={period}
         onPeriodChange={onPeriodChange}
       />
-      <PriorityActions actions={data.priorityActions} />
+      <div className="grid grid-cols-1 items-start gap-[var(--gap-grid)] xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid min-w-0 gap-[var(--gap-grid)]">
+          <PriorityActions actions={data.priorityActions} />
 
-      {/* Macro overview sections */}
-      <div className="grid grid-cols-1 gap-[var(--gap-grid)] lg:grid-cols-[1.15fr_1fr]">
-        <ProcessStatusPanel
-          processStatus={data.processStatus}
-          staleProcesses={data.staleProcesses}
-        />
-        <DeadlinesPanel prazos={data.prazos} />
+          {/* Macro overview sections */}
+          <div className="grid grid-cols-1 gap-[var(--gap-grid)] lg:grid-cols-[1.15fr_1fr]">
+            <ProcessStatusPanel
+              processStatus={data.processStatus}
+              staleProcesses={data.staleProcesses}
+            />
+            <DeadlinesPanel prazos={data.prazos} />
+          </div>
+
+          <EventsPanel eventos={data.eventos} />
+
+          <div className="grid grid-cols-1 gap-[var(--gap-grid)] lg:grid-cols-[1.15fr_1fr]">
+            <PetitionFunnel petitionFunnel={data.petitionFunnel} />
+            <ProductivityPanel productivity={data.productivity} />
+          </div>
+        </div>
+
+        {/* Activity log */}
+        <div className="min-w-0 xl:sticky xl:top-[var(--sticky-top)]">
+          <ActivityTimeline
+            entries={auditEntries}
+            filters={auditFilters}
+            pagination={auditPagination}
+            autores={auditAutores}
+            onFilterChange={onFilterChange}
+            onLoadMore={onLoadMore}
+          />
+        </div>
       </div>
-
-      <EventsPanel eventos={data.eventos} />
-
-      <div className="grid grid-cols-1 gap-[var(--gap-grid)] lg:grid-cols-[1.15fr_1fr]">
-        <PetitionFunnel petitionFunnel={data.petitionFunnel} />
-        <ProductivityPanel productivity={data.productivity} />
-      </div>
-
-      {/* Activity log */}
-      <ActivityTimeline
-        entries={auditEntries}
-        filters={auditFilters}
-        pagination={auditPagination}
-        autores={auditAutores}
-        onFilterChange={onFilterChange}
-        onLoadMore={onLoadMore}
-      />
 
     </div>
   );

@@ -11,14 +11,14 @@ export function RiskSummary({ summary, risk, period, onPeriodChange }) {
         <PeriodFilter value={period} onChange={onPeriodChange} />
       </PageHeader>
 
-      <div className="mt-4 grid grid-cols-1 items-stretch gap-[var(--gap-grid)] lg:grid-cols-[minmax(260px,330px)_minmax(0,1fr)]">
+      <div className="mt-4 grid grid-cols-1 items-stretch gap-2 rounded-lg bg-card p-2.5 lg:grid-cols-[minmax(260px,1.2fr)_minmax(0,4fr)]">
         <RiskScoreCard {...risk} />
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <AlertCard
             label="Prazos vencidos"
             value={summary.overdue}
             tone={summary.overdue ? 'danger' : 'success'}
-            hint={summary.overdue ? 'Ação imediata' : 'Em dia'}
+            hint={summary.overdue ? 'ação imediata' : 'em dia'}
             to="/prazos"
           />
           <AlertCard
@@ -31,7 +31,7 @@ export function RiskSummary({ summary, risk, period, onPeriodChange }) {
             label="Processos parados"
             value={summary.stale}
             tone={summary.stale ? 'warn' : 'success'}
-            hint="+30 dias sem movimentação"
+            hint="+30 dias"
             to="/processos"
           />
           <AlertCard

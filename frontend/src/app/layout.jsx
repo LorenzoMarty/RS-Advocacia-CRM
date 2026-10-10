@@ -43,6 +43,7 @@ import { useFocusTrap } from './hooks/use-focus-trap';
 import { useOnboardingLauncher } from './components/onboarding-launcher';
 import { AnimatePresence, MotionPage } from './motion';
 import { NAV_ITEMS } from './data';
+import { GlobalSearch } from './components/global-search';
 import { useAppState } from './store';
 import { useAppearanceState } from './use-appearance';
 import { formatTime, isFinishedTask } from './utils';
@@ -764,6 +765,7 @@ function Topbar({ chrome, notifications }) {
       </nav>
 
       <div className="flex shrink-0 items-center gap-2">
+        <GlobalSearch />
         {actions}
         <NotificationBell notifications={notifications} />
         {primaryAction && (
