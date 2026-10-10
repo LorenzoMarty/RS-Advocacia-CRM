@@ -458,3 +458,43 @@ class CargoPermissionsTests(TestCase):
         self.assertEqual(atualizado.pk, criado.pk)
         self.assertEqual(atualizado.username, "ana.maria@example.com")
         self.assertEqual(atualizado.first_name, "Ana Maria")
+
+
+class UsuarioAtualIdentidadeTests(TestCase):
+    """``usuario_atual`` e a exclusão usam o resolvedor único de core.identity."""
+
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Ana", email="ana@example.com", cargo="Advogado"
+        )
+
+    def test_email_do_auth_user_casa_sem_diferenciar_caixa_e_fixa_na_sessao(self):
+        auth_user = get_user_model().objects.create_user(
+            username="ana-login", email="ANA@Example.com"
+        )
+        self.client.force_login(auth_user)
+        response = self.client.get(reverse("usuario_atual"))
+        self.assertEqual(response.json()["dados"]["usuario"]["id"], str(self.usuario.pk))
+        self.assertEqual(self.client.session["usuario_id"], self.usuario.pk)
+        self.assertEqual(self.client.session["usuario_email"], self.usuario.email)
+
+    def test_sessao_com_usuario_removido_recai_no_auth_user(self):
+        auth_user = get_user_model().objects.create_user(
+            username=self.usuario.email, email=self.usuario.email
+        )
+        self.client.force_login(auth_user)
+        session = self.client.session
+        session["usuario_id"] = 99999
+        session.save()
+        response = self.client.get(reverse("usuario_atual"))
+        self.assertEqual(response.json()["dados"]["usuario"]["id"], str(self.usuario.pk))
+        self.assertEqual(self.client.session["usuario_id"], self.usuario.pk)
+
+    def test_auth_user_sem_usuario_correspondente_retorna_none(self):
+        auth_user = get_user_model().objects.create_user(
+            username="ninguem", email="ninguem@example.com"
+        )
+        self.client.force_login(auth_user)
+        response = self.client.get(reverse("usuario_atual"))
+        self.assertIsNone(response.json()["dados"]["usuario"])
+        self.assertNotIn("usuario_id", self.client.session)
