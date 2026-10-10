@@ -9,6 +9,10 @@
     /* Botões: dois tamanhos só. md = ação principal/formulário, sm = ação inline (tabelas, cards). */
     --btn-h:40px;      --btn-fs:1rem;   
     --btn-h-sm:32px;   --btn-fs-sm:.86rem;
+    /* Densidade dos controles (Button, Input, Select, Segmented, Tabs): a altura vem destes tokens,
+       trocados por breakpoint no fim deste arquivo. Assim um className do chamador (ex.: h-12)
+       sobrescreve via twMerge em qualquer largura. --ctl-tap = altura mínima de toque em listas. */
+    --ctl-h:var(--btn-h);   --ctl-h-sm:var(--btn-h-sm);   --ctl-tap:0px;
     --track-label:.07em;   /* rastreamento dos rótulos em caixa-alta (eco do logo) */
     --ui-scale:1;
     --font-scale:1;
@@ -200,3 +204,7 @@
     }
 }
 
+/* Toque: controles maiores em tablet e celular. */
+@media (max-width:1024px){
+    :root{--ctl-h:44px;   --ctl-h-sm:40px;   --ctl-tap:40px}
+}

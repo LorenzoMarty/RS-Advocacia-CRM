@@ -18,6 +18,7 @@ import { motion as Motion, staggerContainer, staggerItem } from '../motion';
 import { useAppState } from '../store';
 import { buildSearchText, formatCount, normalizeText } from '../utils';
 import { Select } from '../components/select';
+import { ProgressiveList } from '../components/show-more';
 import {
   DetailGrid,
   DetailHero,
@@ -65,7 +66,7 @@ const UserRow = memo(function UserRow({ user, onDelete }) {
         <h2 className="m-0 min-w-0 truncate text-[1rem] font-bold text-ink">{user.name}</h2>
       </div>
 
-      <a className="min-w-0 truncate max-[1024px]:flex max-[1024px]:min-h-[40px] max-[1024px]:items-center text-meta font-semibold text-ink-2 hover:text-ink" href={`mailto:${user.email}`}>
+      <a className="min-w-0 truncate max-[1024px]:flex min-h-[var(--ctl-tap)] max-[1024px]:items-center text-meta font-semibold text-ink-2 hover:text-ink" href={`mailto:${user.email}`}>
         {user.email}
       </a>
 
@@ -370,14 +371,17 @@ export function UserDetailPage() {
             {relatedEvents.length ? (
               <DetailSection title="Compromissos" note={formatCount(relatedEvents.length)}>
                 <div className="flex flex-col gap-2">
-                  {relatedEvents.map((event) => (
-                    <RelatedItem
-                      key={event.id}
-                      title={event.title}
-                      subtitle={event.start.replace('T', ' ').slice(0, 16)}
-                      chips={[event.type, event.status].filter(Boolean)}
-                    />
-                  ))}
+                  <ProgressiveList
+                    items={relatedEvents}
+                    render={(event) => (
+                      <RelatedItem
+                        key={event.id}
+                        title={event.title}
+                        subtitle={event.start.replace('T', ' ').slice(0, 16)}
+                        chips={[event.type, event.status].filter(Boolean)}
+                      />
+                    )}
+                  />
                 </div>
               </DetailSection>
             ) : null}

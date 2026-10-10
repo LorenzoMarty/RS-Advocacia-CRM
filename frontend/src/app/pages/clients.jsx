@@ -337,7 +337,7 @@ export function ClientsListPage() {
                           disabled={!canSort}
                           aria-label={canSort ? `Ordenar por ${header.column.columnDef.header}` : undefined}
                           className={cn(
-                            'inline-flex items-center gap-1.5 text-left uppercase max-[1024px]:min-h-[40px]',
+                            'inline-flex items-center gap-1.5 text-left uppercase min-h-[var(--ctl-tap)]',
                             canSort ? 'cursor-pointer select-none hover:text-ink' : 'cursor-default',
                             sortState && 'text-ink',
                           )}

@@ -42,7 +42,7 @@ export function EventsPanel({ eventos = {} }) {
             {totalPendentes} pendente{totalPendentes !== 1 ? 's' : ''}
           </p>
         </div>
-        <Link to="/agenda" className="inline-flex items-center text-sm text-primary no-underline hover:underline whitespace-nowrap max-[1024px]:min-h-[40px]">Ver agenda →</Link>
+        <Link to="/agenda" className="inline-flex items-center text-sm text-primary no-underline hover:underline whitespace-nowrap min-h-[var(--ctl-tap)]">Ver agenda →</Link>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {atrasados.length > 0 && (

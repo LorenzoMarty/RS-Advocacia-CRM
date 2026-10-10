@@ -379,7 +379,7 @@ export function AgendaListPage() {
         </Card>
         ) : null}
 
-        <div className="grid grid-cols-1 items-start gap-[var(--gap-grid)] min-[1201px]:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-[var(--gap-grid)] min-[1201px]:grid-cols-[minmax(0,1fr)_340px]">
           <Card>
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <h2 className="text-card-title first-letter:uppercase">{monthLabel(viewDate)}</h2>
