@@ -1,7 +1,9 @@
 from typing import Iterable, cast
 
+from django.db.models import Prefetch, prefetch_related_objects
+
 from integrations.google.calendar import calendar_label
-from integrations.models import GoogleAccount
+from integrations.models import GoogleAccount, GoogleCalendar
 from usuarios.forms import normalize_cargo_name
 from usuarios.models import Cargo, Usuario
 
@@ -28,7 +30,10 @@ def serialize_usuario(
         if cargos_by_name is not None
         else Cargo.objects.filter(name=cargo_nome).first()
     )
-    account = GoogleAccount.objects.filter(usuario=usuario).first()
+    try:
+        account = usuario.google_account
+    except GoogleAccount.DoesNotExist:
+        account = None
     return {
         "id": str(usuario.pk),
         "pk": usuario.pk,
@@ -45,6 +50,15 @@ def serialize_usuario(
 
 def serialize_usuarios(usuarios: Iterable[Usuario]):
     usuarios = list(usuarios)
+    # ``enabled_calendars`` is read by calendar_label(); keep the two in sync.
+    prefetch_related_objects(
+        usuarios,
+        Prefetch(
+            "google_account__calendars",
+            queryset=GoogleCalendar.objects.filter(enabled=True).order_by("pk"),
+            to_attr="enabled_calendars",
+        ),
+    )
     cargos_by_name = _cargo_map_for_usuarios(usuarios)
     return [
         serialize_usuario(usuario, cargos_by_name=cargos_by_name)

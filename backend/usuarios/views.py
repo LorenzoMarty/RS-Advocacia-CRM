@@ -1,7 +1,6 @@
 
 from django.contrib.auth import logout as encerrar_sessao_django
 from django.contrib.auth.models import Group, Permission, User
-from django.db.models import Q
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
@@ -99,13 +98,6 @@ STANDARD_CARGO_PERMISSION_APP_LABELS = (
     "prospeccao",
 )
 
-DEFAULT_CARGO_PERMISSIONS = {
-    # Administrador = todas as permissões (None sinaliza "tudo").
-    "Administrador": None,
-    # Advogado e Estagiário compartilham o mesmo conjunto padrão.
-    "Advogado": ADVOGADO_CARGO_PERMISSIONS,
-    ESTAGIARIO_CARGO_NAME: ADVOGADO_CARGO_PERMISSIONS,
-}
 
 def _clear_usuario_session(request: HttpRequest) -> None:
     request.session.pop("usuario_id", None)
@@ -153,17 +145,6 @@ def _apply_default_cargo_permissions(cargo: Group) -> None:
             )
         )
         return
-
-    default_permissions = DEFAULT_CARGO_PERMISSIONS.get(cargo.name)
-    if not default_permissions:
-        return
-
-    permission_filter = Q()
-    for permission_path in default_permissions:
-        app_label, codename = permission_path.split(".", 1)
-        permission_filter |= Q(content_type__app_label=app_label, codename=codename)
-
-    cargo.permissions.set(Permission.objects.filter(permission_filter))
 
 
 def _find_auth_user(identifier: str) -> User | None:
@@ -250,11 +231,6 @@ def _sync_usuario_auth(
     )
     _sync_auth_user_cargo(usuario, auth_user)
     return auth_user
-
-
-def _get_cargos() -> list[Group]:
-    _ensure_default_cargos()
-    return list(Cargo.objects.order_by("name"))
 
 
 def _usuario_response(usuario: Usuario):

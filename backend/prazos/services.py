@@ -36,9 +36,15 @@ def atualizar_timer(prazo: Prazo, payload: dict) -> Prazo:
     O tempo acumulado nunca diminui. Iniciar o timer de um prazo pendente e não
     concluído move o status para "Em andamento". Levanta ``TimerInvalido`` sem
     gravar nada se algum campo for inválido.
+
+    Contrato de ``tempo_decorrido_segundos``: é o total do cliente. Com o timer
+    ainda rodando (``timer_iniciado_em`` ausente do payload) ele inclui o trecho
+    em curso, então só a parte anterior ao início é gravada. Ao parar ou reiniciar
+    o timer no mesmo payload, o trecho em curso é consolidado antes.
     """
     update_fields = ["atualizado_em"]
     atual = segundos_decorridos(prazo)
+    rodando_desde = prazo.timer_iniciado_em
 
     if "tempo_decorrido_segundos" in payload:
         try:
@@ -51,9 +57,14 @@ def atualizar_timer(prazo: Prazo, payload: dict) -> Prazo:
             raise TimerInvalido(
                 "tempo_decorrido_segundos", "O tempo não pode ser negativo."
             )
-        prazo.tempo_decorrido_segundos = max(
-            int(prazo.tempo_decorrido_segundos or 0), atual, informado
-        )
+        acumulado = int(prazo.tempo_decorrido_segundos or 0)
+        if prazo.timer_iniciado_em and "timer_iniciado_em" not in payload:
+            # Timer keeps running: ``informado`` is the client's total (including
+            # the running stretch), so store only the part before the timer start.
+            novo = max(acumulado, informado - (atual - acumulado))
+        else:
+            novo = max(acumulado, atual, informado)
+        prazo.tempo_decorrido_segundos = novo
         update_fields.append("tempo_decorrido_segundos")
 
     if "timer_iniciado_em" in payload:
@@ -74,6 +85,17 @@ def atualizar_timer(prazo: Prazo, payload: dict) -> Prazo:
                 update_fields.append("status")
         else:
             raise TimerInvalido("timer_iniciado_em", "Informe uma data/hora valida.")
+        if (
+            rodando_desde
+            and prazo.timer_iniciado_em != rodando_desde
+            and "tempo_decorrido_segundos" not in payload
+        ):
+            # Stopping/restarting a running timer without sending the elapsed
+            # time: consolidate the running stretch instead of discarding it.
+            prazo.tempo_decorrido_segundos = max(
+                int(prazo.tempo_decorrido_segundos or 0), atual
+            )
+            update_fields.append("tempo_decorrido_segundos")
         update_fields.append("timer_iniciado_em")
 
     prazo.save(update_fields=update_fields)

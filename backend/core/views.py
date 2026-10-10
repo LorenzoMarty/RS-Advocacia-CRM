@@ -3,13 +3,14 @@ from datetime import date
 
 from django.core.cache import cache
 from django.db import connections
+from django.db.models import Count
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from agenda.models import Evento
 from agenda.serializers import serialize_evento
 from auditoria.models import RegistroAuditoria
-from auditoria.serializers import serialize_registro
+from auditoria.serializers import serialize_registros
 from clientes.models import Cliente
 from clientes.serializers import serialize_cliente
 from core.identity import current_usuario, is_admin
@@ -210,7 +211,9 @@ def inicializacao(request):
             serialize_prospect(prospect)
             for prospect in Prospect.objects.select_related(
                 "responsavel_interno", "cliente_convertido"
-            ).all()
+            )
+            .annotate(num_interacoes=Count("interacoes"))
+            .all()
         ]
 
     if pode_ver_lancamentos:
@@ -222,10 +225,9 @@ def inicializacao(request):
         ]
 
     if eh_admin:
-        tarefas["auditoria"] = lambda: [
-            serialize_registro(registro)
-            for registro in RegistroAuditoria.objects.all()[:50]
-        ]
+        tarefas["auditoria"] = lambda: serialize_registros(
+            RegistroAuditoria.objects.all()[:50]
+        )
 
     data = _executar_em_paralelo(tarefas)
     data["acessos"] = acessos
