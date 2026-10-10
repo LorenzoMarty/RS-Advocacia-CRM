@@ -24,7 +24,7 @@ from core.utils import (
 )
 from integrations.google.calendar import delete_remote_event, sync_agenda
 from integrations.google.exceptions import GoogleAuthorizationRequired
-from integrations.google.oauth import current_usuario
+from core.identity import current_usuario
 
 EVENTO_DATETIME_FIELDS = ("data_inicio", "data_fim", "lembrete_em")
 ATTENDANCE_STATUS = {"Compareceu", "Não compareceu"}

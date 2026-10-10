@@ -13,6 +13,7 @@ from django.utils import timezone
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2 import id_token as google_id_token
 
+from core.identity import current_usuario
 from integrations.google.exceptions import (
     GoogleAuthorizationRequired,
     GoogleConfigurationError,
@@ -81,19 +82,6 @@ def frontend_redirect(path: str = "/", params: dict[str, str] | None = None) -> 
     return f"{frontend_url}{normalized_path}{query}"
 
 
-def current_usuario(request: HttpRequest) -> Usuario | None:
-    usuario_id = request.session.get("usuario_id")
-    if usuario_id:
-        usuario = Usuario.objects.filter(pk=usuario_id).first()
-        if usuario is not None:
-            return usuario
-
-    user = getattr(request, "user", None)
-    if user is not None and getattr(user, "is_authenticated", False):
-        identifier = getattr(user, "email", "") or getattr(user, "username", "")
-        if identifier:
-            return Usuario.objects.filter(email__iexact=identifier).first()
-    return None
 
 
 def begin_authorization(

@@ -15,7 +15,7 @@ from core.utils import (
 )
 from documentos import services as documentos_services
 from documentos import tasks as documentos_tasks
-from integrations.google.oauth import current_usuario
+from core.identity import current_usuario
 from processos.forms import ProcessoForm
 from processos.models import Processo
 

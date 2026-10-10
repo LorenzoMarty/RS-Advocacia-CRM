@@ -17,6 +17,7 @@ from integrations.google.calendar import (
     list_available_calendars,
     sync_agenda,
 )
+from core.identity import current_usuario
 from integrations.google.exceptions import (
     GoogleAuthorizationRequired,
     GoogleConfigurationError,
@@ -24,7 +25,6 @@ from integrations.google.exceptions import (
 from integrations.google.oauth import (
     begin_authorization,
     complete_authorization,
-    current_usuario,
     frontend_redirect,
 )
 from integrations.google.webhooks import ensure_watches, handle_notification

@@ -20,7 +20,7 @@ from integrations.google.exceptions import (
     GoogleAuthorizationRequired,
     GoogleConfigurationError,
 )
-from integrations.google.oauth import current_usuario
+from core.identity import current_usuario
 from integrations.google.responses import mapear_erro_google as _mapear_erro_google
 
 from . import importacao, organizacao, services

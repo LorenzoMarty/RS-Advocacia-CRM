@@ -21,7 +21,7 @@ from core.utils import (
 from documentos import services as documentos_services
 from documentos.views import SUPPORTED_DOCUMENT_EXTENSIONS
 from integrations.google.exceptions import GOOGLE_ERRORS
-from integrations.google.oauth import current_usuario
+from core.identity import current_usuario
 from integrations.google.responses import mapear_erro_google
 from prazos.forms import PrazoForm
 from prazos.models import Prazo

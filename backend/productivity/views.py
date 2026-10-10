@@ -1,11 +1,10 @@
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 
-from django.contrib.auth.models import AnonymousUser, User
-from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
+from core.identity import current_usuario, is_admin
 from core.permissions import app_permissions_required
 from core.utils import (
     ler_corpo_json,
@@ -22,45 +21,10 @@ DEFAULT_DAILY_HOURS = Decimal("6")
 DEFAULT_WEEKLY_HOURS = Decimal("30")
 
 
-def _authenticated_user(request: HttpRequest) -> User | None:
-    request_user = getattr(request, "user", None)
-    if (
-        request_user is None
-        or isinstance(request_user, AnonymousUser)
-        or not getattr(request_user, "is_authenticated", False)
-    ):
-        return None
-    return request_user
 
 
-def _current_usuario(request: HttpRequest) -> Usuario | None:
-    usuario_id = request.session.get("usuario_id")
-    if usuario_id:
-        usuario = Usuario.objects.filter(pk=usuario_id).first()
-        if usuario:
-            return usuario
-
-    auth_user = _authenticated_user(request)
-    if not auth_user:
-        return None
-
-    for value in (auth_user.email, auth_user.username):
-        if not value:
-            continue
-        usuario = Usuario.objects.filter(email=value).first()
-        if usuario:
-            return usuario
-
-    return None
 
 
-def _is_admin(request: HttpRequest, usuario: Usuario | None = None) -> bool:
-    auth_user = _authenticated_user(request)
-    if auth_user and (auth_user.is_staff or auth_user.is_superuser):
-        return True
-    if auth_user and auth_user.groups.filter(name="Administrador").exists():
-        return True
-    return usuario is not None and usuario.cargo == "Administrador"
 
 
 def _elapsed_seconds(entry: TimeEntry, now=None) -> int:
@@ -200,7 +164,7 @@ def serialize_productivity_goal(goal: ProductivityGoal | None, usuario: Usuario)
 
 def _visible_time_entries(request, usuario: Usuario):
     queryset = TimeEntry.objects.select_related("user").all()
-    if not _is_admin(request, usuario):
+    if not is_admin(request, usuario):
         queryset = queryset.filter(user=usuario)
     elif request.GET.get("user_id"):
         queryset = queryset.filter(user_id=request.GET["user_id"])
@@ -215,7 +179,7 @@ def _time_entries_response(entries):
 
 
 def _goals_response(request, usuario: Usuario):
-    if _is_admin(request, usuario):
+    if is_admin(request, usuario):
         usuarios = list(Usuario.objects.order_by("nome"))
     else:
         usuarios = [usuario]
@@ -397,7 +361,7 @@ def resumo(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    usuario = _current_usuario(request)
+    usuario = current_usuario(request)
     if not usuario:
         return resposta_erro({"usuario": ["Usuário atual não encontrado."]}, status=403)
 
@@ -441,7 +405,7 @@ def resumo(request):
             "por_tipo": resumo_atual["por_tipo"],
             "por_dia": resumo_atual["por_dia"],
             "timers_ativos": timers_ativos,
-            "is_admin": _is_admin(request, usuario),
+            "is_admin": is_admin(request, usuario),
         }
     )
 
@@ -451,7 +415,7 @@ def produtividade(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    usuario = _current_usuario(request)
+    usuario = current_usuario(request)
     if not usuario:
         return resposta_erro({"usuario": ["Usuário atual não encontrado."]}, status=403)
 
@@ -460,7 +424,7 @@ def produtividade(request):
         {
             "time_entries": _time_entries_response(entries),
             "productivity_goals": _goals_response(request, usuario),
-            "is_admin": _is_admin(request, usuario),
+            "is_admin": is_admin(request, usuario),
         }
     )
 
@@ -470,7 +434,7 @@ def iniciar_timer(request):
     if request.method != "POST":
         return metodo_nao_permitido(["POST"])
 
-    usuario = _current_usuario(request)
+    usuario = current_usuario(request)
     if not usuario:
         return resposta_erro({"usuario": ["Usuário atual não encontrado."]}, status=403)
 
@@ -547,14 +511,14 @@ def iniciar_timer(request):
 
 
 def _get_entry_for_action(request, entry_id):
-    usuario = _current_usuario(request)
+    usuario = current_usuario(request)
     if not usuario:
         return None, resposta_erro(
             {"usuario": ["Usuário atual não encontrado."]}, status=403
         )
 
     entry = get_object_or_404(TimeEntry.objects.select_related("user"), pk=entry_id)
-    if entry.user_id != usuario.pk and not _is_admin(request, usuario):
+    if entry.user_id != usuario.pk and not is_admin(request, usuario):
         return None, resposta_erro(
             {"permissao": ["Você só pode alterar seus próprios timers."]}, status=403
         )
@@ -676,7 +640,7 @@ def listar_metas(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    usuario = _current_usuario(request)
+    usuario = current_usuario(request)
     if not usuario:
         return resposta_erro({"usuario": ["Usuário atual não encontrado."]}, status=403)
 
@@ -688,8 +652,8 @@ def salvar_metas(request):
     if request.method not in {"PUT", "PATCH"}:
         return metodo_nao_permitido(["PUT", "PATCH"])
 
-    usuario = _current_usuario(request)
-    if not usuario or not _is_admin(request, usuario):
+    usuario = current_usuario(request)
+    if not usuario or not is_admin(request, usuario):
         return resposta_erro(
             {"permissao": ["Apenas administradores alteram metas."]}, status=403
         )

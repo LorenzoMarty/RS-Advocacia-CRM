@@ -1,13 +1,14 @@
 from typing import Iterable, cast
 
 from django.contrib.auth import logout as encerrar_sessao_django
-from django.contrib.auth.models import AnonymousUser, Group, Permission, User
+from django.contrib.auth.models import Group, Permission, User
 from django.db.models import Q
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from auditoria import services as auditoria_services
 from auditoria.models import RegistroAuditoria
+from core.identity import authenticated_user
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
@@ -118,17 +119,6 @@ def _remember_usuario_session(request: HttpRequest, usuario: Usuario) -> None:
     request.session["usuario_id"] = usuario.pk
     request.session["usuario_nome"] = usuario.nome
     request.session["usuario_email"] = usuario.email
-
-
-def _authenticated_user(request: HttpRequest) -> User | None:
-    request_user = cast(User | AnonymousUser | None, getattr(request, "user", None))
-    if (
-        request_user is None
-        or isinstance(request_user, AnonymousUser)
-        or not request_user.is_authenticated
-    ):
-        return None
-    return cast(User, request_user)
 
 
 def _ensure_default_cargos() -> list[Group]:
@@ -472,7 +462,7 @@ def sair(request: HttpRequest):
     if request.method not in {"POST", "DELETE"}:
         return metodo_nao_permitido(["POST", "DELETE"])
 
-    if _authenticated_user(request) is not None:
+    if authenticated_user(request) is not None:
         encerrar_sessao_django(request)
     _clear_usuario_session(request)
     return resposta_sucesso(mensagem="Sessão encerrada.")
@@ -484,7 +474,7 @@ def usuario_atual(request: HttpRequest):
 
     usuario = get_usuario_atual(request)["usuario_logado"]
 
-    auth_user = _authenticated_user(request)
+    auth_user = authenticated_user(request)
     if usuario and auth_user is not None:
         _sync_usuario_auth(usuario, preferred_auth_user=auth_user)
 
@@ -500,7 +490,7 @@ def get_usuario_atual(request: HttpRequest):
     if usuario_id:
         usuario = Usuario.objects.filter(pk=usuario_id).first()
 
-    auth_user = _authenticated_user(request)
+    auth_user = authenticated_user(request)
     if usuario is None and auth_user is not None:
         auth_identifier = auth_user.email or auth_user.username
         if auth_identifier:

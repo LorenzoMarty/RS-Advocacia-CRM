@@ -33,7 +33,7 @@ def resolver_autor(request) -> tuple[int | None, str]:
     """Identifica o autor da ação a partir da sessão/usuário da requisição.
 
     Consolida a lógica que já existia espalhada em ``_resolver_criador_prazo``
-    (prazos) e ``current_usuario``/``_current_usuario`` (oauth/productivity).
+    (prazos) e ``core.identity.current_usuario``.
     """
     sessao = getattr(request, "session", None)
     if sessao is not None:

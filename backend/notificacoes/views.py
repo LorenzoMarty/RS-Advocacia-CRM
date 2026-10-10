@@ -1,6 +1,6 @@
 from core.permissions import app_permissions_required
 from core.utils import metodo_nao_permitido, resposta_erro, resposta_sucesso
-from integrations.google.oauth import current_usuario
+from core.identity import current_usuario
 
 from .models import Notificacao
 
