@@ -1,6 +1,5 @@
 import json
 from datetime import timedelta
-from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.db import connection
@@ -66,11 +65,7 @@ class _AuditoriaBaseTestCase(TestCase):
 
 @override_settings(SECURE_SSL_REDIRECT=False)
 class AuditoriaRegistroTests(_AuditoriaBaseTestCase):
-    @patch(
-        "processos.views.documentos_tasks.renomear_pasta_processo.delay",
-        return_value=None,
-    )
-    def test_editar_processo_registra_diff_e_autor(self, _mock_delay):
+    def test_editar_processo_registra_diff_e_autor(self):
         response = self.client.patch(
             reverse("editar_processo", args=[self.processo.pk]),
             data=json.dumps(

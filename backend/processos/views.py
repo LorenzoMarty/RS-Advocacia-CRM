@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
@@ -7,7 +8,6 @@ from core.identity import current_usuario
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
-    enfileirar_best_effort,
     erros_formulario,
     ler_corpo_json,
     metodo_nao_permitido,
@@ -15,7 +15,8 @@ from core.utils import (
     resposta_sucesso,
 )
 from documentos import services as documentos_services
-from documentos import tasks as documentos_tasks
+from documentos import renomeacao
+from documentos.models import RenomeacaoPastaPendente
 from processos.forms import ProcessoForm
 from processos.models import Processo
 from processos.serializers import serialize_processo
@@ -125,17 +126,17 @@ def editar_processo(request, processo_id):
 
     form = ProcessoForm(payload, instance=processo)
     if form.is_valid():
-        processo = form.save()
+        with transaction.atomic():
+            processo = form.save()
+            if documentos_services.nome_pasta_processo(processo) != nome_pasta_antigo:
+                renomeacao.registrar(
+                    RenomeacaoPastaPendente.TIPO_PROCESSO,
+                    processo.pk,
+                    current_usuario(request),
+                )
         processo = Processo.objects.select_related(
             "cliente", "advogado_responsavel"
         ).get(pk=processo.pk)
-        usuario = current_usuario(request)
-        enfileirar_best_effort(
-            documentos_tasks.renomear_pasta_processo,
-            processo.pk,
-            usuario.pk if usuario else None,
-            nome_pasta_antigo,
-        )
         serialized = serialize_processo(processo)
         alteracoes = auditoria_services.calcular_diff(antes, serialized)
         if alteracoes:

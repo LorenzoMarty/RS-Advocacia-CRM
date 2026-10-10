@@ -149,6 +149,46 @@ class ProcessoDrive(models.Model):
         return f"Drive de {self.processo.numero_processo}"
 
 
+class RenomeacaoPastaPendente(models.Model):
+    """Outbox of Drive folder renames the CRM still owes Google.
+
+    Written in the same transaction as the edit that changes a client/processo
+    name; ``documentos.renomeacao`` applies it (fast path right after commit,
+    periodic drain as the safety net) and deletes the row on success. Only the
+    *fact* of a pending rename is stored: the target name is always recomputed
+    from the current row, so repeated edits collapse into one entry and applying
+    it twice is harmless.
+    """
+
+    TIPO_CLIENTE = "cliente"
+    TIPO_PROCESSO = "processo"
+    TIPOS = ((TIPO_CLIENTE, "Cliente"), (TIPO_PROCESSO, "Processo"))
+
+    tipo = models.CharField(max_length=20, choices=TIPOS)
+    objeto_id = models.PositiveIntegerField()
+    usuario = models.ForeignKey(
+        "usuarios.Usuario",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    tentativas = models.PositiveSmallIntegerField(default=0)
+    ultimo_erro = models.TextField(blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tipo", "objeto_id"), name="unique_renomeacao_pasta_por_objeto"
+            )
+        ]
+
+    def __str__(self):
+        return f"Renomear pasta de {self.tipo} {self.objeto_id}"
+
+
 def serialize_documento(documento: DocumentoCliente):
     return {
         "id": str(documento.pk),

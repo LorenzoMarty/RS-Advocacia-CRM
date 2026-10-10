@@ -22,4 +22,8 @@ app.conf.beat_schedule = {
         "task": "documentos.sincronizar_drive",
         "schedule": crontab(minute="*/10"),
     },
+    "drenar-renomeacoes-every-5-min": {
+        "task": "documentos.drenar_renomeacoes",
+        "schedule": crontab(minute="*/5"),
+    },
 }
