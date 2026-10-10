@@ -1,0 +1,22 @@
+/* Marca RS Advocacia. Os PNGs são máscaras (alpha): a cor vem de currentColor,
+   então o logo acompanha o tema claro/escuro. */
+.brand-logo{
+    display:block;
+    width:var(--brand-w,100%);
+    background-color:currentColor;
+    -webkit-mask:var(--brand-src) center / contain no-repeat;
+    mask:var(--brand-src) center / contain no-repeat;
+}
+
+.brand-logo-mono{
+    --brand-src:url("../../assets/brand/logo-rs.png");
+    aspect-ratio:187 / 122;
+}
+
+.brand-logo-full{
+    --brand-src:url("../../assets/brand/logo-rs-full.png");
+    aspect-ratio:541 / 150;
+}
+
+.login-logo{--brand-w:min(100%,300px);color:var(--ink)}
+.policy-logo{--brand-w:min(100%,280px);color:var(--text);margin-bottom:32px}

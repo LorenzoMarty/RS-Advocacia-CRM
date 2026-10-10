@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Scale } from 'lucide-react';
 
 import { api, isApiEnabled } from '../api';
 
@@ -29,13 +28,7 @@ export function LoginPage() {
   return (
     <main className="login-shell">
       <section className="login-card" aria-labelledby="login-title">
-        <div className="login-brand">
-          <div className="login-brand-mark" aria-hidden="true"><Scale className="size-[var(--pad-card)]" strokeWidth={1.8} /></div>
-          <div className="login-brand-copy">
-            <span className="login-kicker">Plataforma jurídica</span>
-            <strong>RS Advocacia</strong>
-          </div>
-        </div>
+        <span className="brand-logo brand-logo-full login-logo" role="img" aria-label="RS Advocacia empresarial e trabalhista especializada" />
 
         <header className="login-header">
           <h1 className="login-title" id="login-title">Entrar</h1>
