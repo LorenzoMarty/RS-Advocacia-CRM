@@ -7,7 +7,6 @@ from core.permissions import app_permissions_required
 from core.pagination import paginar
 from core.utils import (
     erros_formulario,
-    isoformat_ou_nulo,
     ler_corpo_json,
     metodo_nao_permitido,
     resposta_erro,
@@ -18,6 +17,7 @@ from documentos import tasks as documentos_tasks
 from core.identity import current_usuario
 from processos.forms import ProcessoForm
 from processos.models import Processo
+from processos.serializers import serialize_processo
 
 
 def _filtrar_processos(request):
@@ -35,35 +35,6 @@ def _filtrar_processos(request):
         )
 
     return processos, busca
-
-
-def serialize_processo(processo: Processo):
-    cliente_nome = processo.cliente.nome if processo.cliente_id else ""
-    return {
-        "id": str(processo.pk),
-        "pk": processo.pk,
-        "numero_processo": processo.numero_processo,
-        "cliente_id": str(processo.cliente_id),
-        "cliente_nome": cliente_nome,
-        "descricao": processo.descricao,
-        "vara": processo.vara,
-        "area_juridica": processo.area_juridica,
-        "status": processo.status,
-        "advogado_responsavel": (
-            str(processo.advogado_responsavel_id)
-            if processo.advogado_responsavel_id
-            else ""
-        ),
-        "advogado_responsavel_nome": (
-            processo.advogado_responsavel.nome
-            if processo.advogado_responsavel_id
-            else ""
-        ),
-        "advogado_habilitado": processo.advogado_habilitado,
-        "data_ultima_movimentacao": isoformat_ou_nulo(
-            processo.data_ultima_movimentacao
-        ),
-    }
 
 
 def _processo_api_payload(request):

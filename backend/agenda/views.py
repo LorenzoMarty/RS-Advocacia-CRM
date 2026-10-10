@@ -15,7 +15,6 @@ from core.utils import (
     converter_campos_datahora,
     dados_com_aliases,
     erros_formulario,
-    isoformat_ou_nulo,
     ler_corpo_json,
     metodo_nao_permitido,
     resolver_criador,
@@ -25,6 +24,7 @@ from core.utils import (
 from integrations.google.calendar import delete_remote_event, sync_agenda
 from integrations.google.exceptions import GoogleAuthorizationRequired
 from core.identity import current_usuario
+from agenda.serializers import serialize_evento
 
 EVENTO_DATETIME_FIELDS = ("data_inicio", "data_fim", "lembrete_em")
 ATTENDANCE_STATUS = {"Compareceu", "Não compareceu"}
@@ -75,34 +75,6 @@ def _sincronizar_evento_se_conectado(request, evento):
         sincronizar_evento_google_calendar(evento.pk, usuario.pk)
 
     return {"status": "agendado"}
-
-
-def serialize_evento(evento: Evento):
-    cliente_nome = evento.cliente.nome if evento.cliente_id else ""
-    processo_numero = evento.processo.numero_processo if evento.processo_id else ""
-    responsavel_nome = evento.responsavel.nome if evento.responsavel_id else ""
-    return {
-        "id": str(evento.pk),
-        "pk": evento.pk,
-        "titulo": evento.titulo,
-        "descricao": evento.descricao,
-        "data_inicio": isoformat_ou_nulo(evento.data_inicio),
-        "data_fim": isoformat_ou_nulo(evento.data_fim),
-        "tipo_evento": evento.tipo_evento,
-        "status": evento.status,
-        "prioridade": evento.prioridade,
-        "cliente_id": str(evento.cliente_id) if evento.cliente_id else "",
-        "cliente_nome": cliente_nome,
-        "processo_id": str(evento.processo_id) if evento.processo_id else "",
-        "processo_numero": processo_numero,
-        "responsavel": str(evento.responsavel_id) if evento.responsavel_id else "",
-        "responsavel_nome": responsavel_nome,
-        "criado_por": evento.criado_por,
-        "local": evento.local,
-        "observacoes": evento.observacoes,
-        "lembrete_em": isoformat_ou_nulo(evento.lembrete_em),
-        "concluido": evento.concluido,
-    }
 
 
 def _evento_api_payload(request):

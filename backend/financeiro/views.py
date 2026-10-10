@@ -9,7 +9,6 @@ from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
-    isoformat_ou_nulo,
     ler_corpo_json,
     metodo_nao_permitido,
     resposta_erro,
@@ -27,6 +26,7 @@ from .models import (
     TIPO_RECEITA,
     Lancamento,
 )
+from financeiro.serializers import serialize_lancamento
 
 ORDENACOES_PERMITIDAS = {
     "data_vencimento": "data_vencimento",
@@ -36,35 +36,6 @@ ORDENACOES_PERMITIDAS = {
     "descricao": "descricao",
     "-descricao": "-descricao",
 }
-
-
-def serialize_lancamento(lancamento: Lancamento):
-    cliente = lancamento.cliente_relacionado
-    caso = lancamento.caso_relacionado
-    return {
-        "id": str(lancamento.pk),
-        "pk": lancamento.pk,
-        "descricao": lancamento.descricao,
-        "tipo": lancamento.tipo,
-        "categoria": lancamento.categoria,
-        "valor": str(lancamento.valor),
-        "data_vencimento": (
-            lancamento.data_vencimento.isoformat() if lancamento.data_vencimento else ""
-        ),
-        "data_pagamento": (
-            lancamento.data_pagamento.isoformat() if lancamento.data_pagamento else ""
-        ),
-        "status": lancamento.status,
-        "status_exibicao": lancamento.status_exibicao,
-        "atrasado": lancamento.atrasado,
-        "cliente_id": str(cliente.pk) if cliente else "",
-        "cliente_nome": cliente.nome if cliente else "",
-        "caso_id": str(caso.pk) if caso else "",
-        "caso_numero": caso.numero_processo if caso else "",
-        "observacoes": lancamento.observacoes,
-        "criado_em": isoformat_ou_nulo(lancamento.criado_em),
-        "atualizado_em": isoformat_ou_nulo(lancamento.atualizado_em),
-    }
 
 
 def _lancamento_api_payload(request):

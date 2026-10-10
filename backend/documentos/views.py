@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
 from clientes.models import Cliente
-from clientes.views import serialize_cliente
+from clientes.serializers import serialize_cliente
 from core.permissions import app_permissions_required
 from core.utils import (
     erros_formulario,
@@ -29,23 +29,6 @@ from .models import DocumentoCliente, serialize_documento
 
 logger = logging.getLogger(__name__)
 
-# Allowlisted upload extensions (lawyer documents: petitions, ids, receipts...).
-SUPPORTED_DOCUMENT_EXTENSIONS = {
-    ".pdf",
-    ".doc",
-    ".docx",
-    ".odt",
-    ".rtf",
-    ".txt",
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".gif",
-    ".webp",
-    ".xls",
-    ".xlsx",
-    ".csv",
-}
 
 
 @app_permissions_required("documentos.view_documentocliente", "clientes.view_cliente")
@@ -81,9 +64,9 @@ def upload_documento_view(request, cliente_id):
         return resposta_erro({"arquivo": ["Envie um arquivo."]}, status=400)
 
     extension = Path(arquivo.name or "").suffix.lower()
-    if extension not in SUPPORTED_DOCUMENT_EXTENSIONS:
+    if extension not in services.SUPPORTED_DOCUMENT_EXTENSIONS:
         formatos = ", ".join(
-            sorted(ext.removeprefix(".") for ext in SUPPORTED_DOCUMENT_EXTENSIONS)
+            sorted(ext.removeprefix(".") for ext in services.SUPPORTED_DOCUMENT_EXTENSIONS)
         )
         return resposta_erro(
             {"arquivo": [f"Formato inválido. Use: {formatos}."]}, status=400
@@ -323,9 +306,9 @@ def upload_drive_view(request, cliente_id):
         return resposta_erro({"arquivo": ["Envie um arquivo."]}, status=400)
 
     extension = Path(arquivo.name or "").suffix.lower()
-    if extension not in SUPPORTED_DOCUMENT_EXTENSIONS:
+    if extension not in services.SUPPORTED_DOCUMENT_EXTENSIONS:
         formatos = ", ".join(
-            sorted(ext.removeprefix(".") for ext in SUPPORTED_DOCUMENT_EXTENSIONS)
+            sorted(ext.removeprefix(".") for ext in services.SUPPORTED_DOCUMENT_EXTENSIONS)
         )
         return resposta_erro(
             {"arquivo": [f"Formato inválido. Use: {formatos}."]}, status=400
