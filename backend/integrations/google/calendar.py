@@ -3,6 +3,7 @@ import json
 import logging
 import time as time_module
 from datetime import datetime, time, timedelta
+from datetime import timezone as dt_timezone
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
@@ -256,6 +257,10 @@ def _create_imported_event(usuario, item: dict) -> Evento | None:
     fields = _remote_fields(item)
     if fields is None:
         return None
+    # Store UTC so the in-memory object hashes like the row read back from the DB;
+    # otherwise the export pass sees a spurious change and pushes it back to Google.
+    fields["data_inicio"] = fields["data_inicio"].astimezone(dt_timezone.utc)
+    fields["data_fim"] = fields["data_fim"].astimezone(dt_timezone.utc)
     return Evento.objects.create(
         cliente=None,
         processo=None,
@@ -545,9 +550,6 @@ def sync_calendar(usuario, calendar: GoogleCalendar, service) -> dict:
             continue
         imported_event = _create_imported_event(usuario, item)
         if imported_event:
-            # Hash the DB-normalised values (UTC), not the in-memory ones, or the
-            # export pass below sees a spurious change and pushes it back.
-            imported_event.refresh_from_db()
             _save_link(
                 calendar,
                 imported_event,

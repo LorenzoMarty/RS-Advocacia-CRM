@@ -30,9 +30,7 @@ def _prospect_api_payload(request):
 
 
 def _prospects_base_queryset():
-    return Prospect.objects.select_related(
-        "responsavel_interno", "cliente_convertido"
-    ).annotate(num_interacoes=Count("interacoes"))
+    return Prospect.objects.select_related("responsavel_interno", "cliente_convertido")
 
 
 @app_permissions_required("prospeccao.view_prospect")
@@ -40,7 +38,9 @@ def listar_prospects(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    prospects = _prospects_base_queryset().all()
+    prospects = _prospects_base_queryset().annotate(
+        num_interacoes=Count("interacoes")
+    )
 
     status = request.GET.get("status", "").strip()
     if status:

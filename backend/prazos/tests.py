@@ -363,3 +363,53 @@ class AtualizarTimerServiceTests(TestCase):
         self.prazo.refresh_from_db()
         self.assertAlmostEqual(self.prazo.tempo_decorrido_segundos, 160, delta=3)
         self.assertIsNone(self.prazo.timer_iniciado_em)
+
+
+    def test_parar_timer_so_com_timer_nulo_consolida_o_trecho_em_curso(self):
+        from prazos import services
+
+        self.prazo.tempo_decorrido_segundos = 100
+        self.prazo.timer_iniciado_em = timezone.now() - timedelta(seconds=60)
+        self.prazo.save()
+
+        services.atualizar_timer(self.prazo, {"timer_iniciado_em": None})
+        self.prazo.refresh_from_db()
+        self.assertIsNone(self.prazo.timer_iniciado_em)
+        self.assertAlmostEqual(self.prazo.tempo_decorrido_segundos, 160, delta=3)
+
+    def test_reiniciar_timer_sem_tempo_consolida_o_trecho_anterior(self):
+        from prazos import services
+
+        self.prazo.tempo_decorrido_segundos = 100
+        self.prazo.timer_iniciado_em = timezone.now() - timedelta(seconds=60)
+        self.prazo.save()
+
+        novo_inicio = timezone.now().isoformat()
+        services.atualizar_timer(self.prazo, {"timer_iniciado_em": novo_inicio})
+        self.prazo.refresh_from_db()
+        self.assertAlmostEqual(self.prazo.tempo_decorrido_segundos, 160, delta=3)
+        self.assertIsNotNone(self.prazo.timer_iniciado_em)
+
+    def test_reenviar_o_mesmo_inicio_nao_consolida_nem_conta_em_dobro(self):
+        from prazos import services
+
+        inicio = timezone.now() - timedelta(seconds=60)
+        self.prazo.tempo_decorrido_segundos = 100
+        self.prazo.timer_iniciado_em = inicio
+        self.prazo.save()
+
+        services.atualizar_timer(self.prazo, {"timer_iniciado_em": inicio.isoformat()})
+        self.prazo.refresh_from_db()
+        self.assertEqual(self.prazo.tempo_decorrido_segundos, 100)
+        self.assertAlmostEqual(services.segundos_decorridos(self.prazo), 160, delta=3)
+
+    def test_iniciar_timer_parado_nao_altera_o_acumulado(self):
+        from prazos import services
+
+        self.prazo.tempo_decorrido_segundos = 100
+        self.prazo.save()
+        services.atualizar_timer(
+            self.prazo, {"timer_iniciado_em": timezone.now().isoformat()}
+        )
+        self.prazo.refresh_from_db()
+        self.assertEqual(self.prazo.tempo_decorrido_segundos, 100)
