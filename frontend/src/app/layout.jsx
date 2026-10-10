@@ -20,7 +20,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
-  Scale,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -143,13 +142,7 @@ function LoadingScreen() {
     <main className="loading-screen" aria-live="polite" aria-busy="true">
       <section className="loading-card" role="status">
         <div className="loading-mark" aria-hidden="true">
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 3v18" />
-            <path d="m19 8 3 8a5 5 0 0 1-6 0z" />
-            <path d="m5 8 3 8a5 5 0 0 1-6 0z" />
-            <path d="M3 7h18" />
-            <path d="M7 21h10" />
-          </svg>
+          <span className="brand-logo brand-logo-mono" style={{ '--brand-w': '44px' }} />
         </div>
 
         <div className="loading-copy">
@@ -941,22 +934,25 @@ function ShellFrame({ chrome, appearance, sidebarCollapsed, toggleSidebar, start
               aria-label="Ir para a área inicial"
               title="Início"
             >
-              <div
-                className="grid size-10 shrink-0 place-items-center rounded-sm bg-accent-soft-2 text-[var(--accent)]"
-                aria-hidden="true"
-              >
-                <Scale className="size-5" strokeWidth={1.8} />
-              </div>
+              <span
+                className="brand-logo brand-logo-mono shrink-0 text-ink"
+                style={{ '--brand-w': sidebarCollapsed ? '36px' : '40px' }}
+                role="img"
+                aria-label="RS"
+              />
               <div
                 className={cn(
-                  'min-w-0 max-w-[180px] overflow-hidden transition-[max-width,opacity] duration-200',
+                  'flex min-w-0 max-w-[180px] items-center gap-3 overflow-hidden transition-[max-width,opacity] duration-200',
                   sidebarCollapsed && 'pointer-events-none max-w-0 opacity-0',
                 )}
               >
-                <strong className="block truncate text-[17px] font-extrabold leading-tight text-ink">
-                  RS Advocacia
-                </strong>
-                <span className="block truncate text-xs font-medium text-muted-foreground">Gestão jurídica</span>
+                <span className="h-9 w-px shrink-0 bg-line-strong" aria-hidden="true" />
+                <div className="min-w-0">
+                  <strong className="block truncate text-[13px] font-semibold uppercase leading-tight tracking-[.14em] text-ink">
+                    Advocacia
+                  </strong>
+                  <span className="block truncate text-[11px] font-medium tracking-[.04em] text-muted-foreground">Gestão jurídica</span>
+                </div>
               </div>
             </Link>
 
