@@ -1,10 +1,11 @@
+import json
 from datetime import timedelta
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlsplit
 
 import requests
 from django.contrib.auth import get_user_model
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -16,7 +17,10 @@ from integrations.google.calendar import (
     sync_agenda,
 )
 from integrations.google.client import credentials_for_usuario
-from integrations.google.exceptions import GoogleAuthorizationRequired
+from integrations.google.exceptions import (
+    GoogleAuthorizationRequired,
+    GoogleConfigurationError,
+)
 from integrations.google.oauth import verify_identity_token
 from integrations.google.webhooks import ensure_watch
 from integrations.models import GoogleAccount, GoogleCalendar, GoogleEventLink
@@ -559,3 +563,215 @@ class GoogleWebhookTests(TestCase):
         self.assertTrue(created)
         self.assertEqual(self.calendar.watch_resource_id, "resource-new")
         service.events.return_value.watch.assert_called_once()
+
+
+class GoogleLoginAndCallbackViewTests(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Advogada", email="adv@example.com", cargo="Administrador"
+        )
+
+    def test_login_rejeita_post(self):
+        self.assertEqual(self.client.post(reverse("login_google")).status_code, 405)
+
+    def test_callback_rejeita_post(self):
+        self.assertEqual(self.client.post(reverse("google_callback")).status_code, 405)
+
+    def test_callback_cancelado_redireciona_para_login_com_erro(self):
+        response = self.client.get(reverse("google_callback"), {"error": "access_denied"})
+        self.assertEqual(response.status_code, 302)
+        query = parse_qs(urlsplit(response["Location"]).query)
+        self.assertEqual(query["google_error"], ["Login com Google cancelado."])
+        self.assertIn("/login", urlsplit(response["Location"]).path)
+
+    @patch("integrations.google.views.complete_authorization")
+    def test_callback_erros_conhecidos_redirecionam_para_login(self, complete):
+        casos = [
+            (GoogleAuthorizationRequired("sem consentimento"), True),
+            (GoogleConfigurationError("sem config"), False),
+            (ValueError("state invalido"), False),
+            (requests.RequestException("rede"), False),
+        ]
+        for exc, pede_consentimento in casos:
+            with self.subTest(exc=type(exc).__name__):
+                complete.side_effect = exc
+                response = self.client.get(
+                    reverse("google_callback"), {"code": "c", "state": "s"}
+                )
+                self.assertEqual(response.status_code, 302)
+                query = parse_qs(urlsplit(response["Location"]).query)
+                self.assertEqual(query["google_error"], [str(exc)])
+                self.assertEqual(
+                    query.get("google_consent") == ["required"], pede_consentimento
+                )
+
+    @patch("integrations.google.views.ensure_watches")
+    @patch("integrations.google.views.sync_agenda")
+    @patch("integrations.google.views.complete_authorization")
+    def test_callback_sucesso_sincroniza_e_marca_agenda_conectada(
+        self, complete, sync, watches
+    ):
+        complete.return_value = (self.usuario, "/agenda")
+        response = self.client.get(reverse("google_callback"), {"code": "c", "state": "s"})
+        self.assertEqual(response.status_code, 302)
+        destino = urlsplit(response["Location"])
+        self.assertEqual(destino.path, "/agenda")
+        self.assertEqual(parse_qs(destino.query), {"google_calendar": ["connected"]})
+        sync.assert_called_once_with(self.usuario)
+        watches.assert_called_once()
+
+    @patch("integrations.google.views.sync_agenda", side_effect=RuntimeError("boom"))
+    @patch("integrations.google.views.complete_authorization")
+    def test_callback_segue_para_destino_mesmo_se_sync_falhar(self, complete, _sync):
+        complete.return_value = (self.usuario, "/processos")
+        with self.assertLogs("integrations.google.views", level="ERROR"):
+            response = self.client.get(
+                reverse("google_callback"), {"code": "c", "state": "s"}
+            )
+        self.assertEqual(response.status_code, 302)
+        destino = urlsplit(response["Location"])
+        self.assertEqual(destino.path, "/processos")
+        self.assertEqual(destino.query, "")
+
+
+class GoogleCalendarViewsTests(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Advogada", email="cal@example.com", cargo="Administrador"
+        )
+        auth_user = get_user_model().objects.create_superuser(
+            username=self.usuario.email, email=self.usuario.email
+        )
+        self.client.force_login(auth_user)
+
+    def _put(self, body):
+        return self.client.put(
+            reverse("google_calendar_selection"),
+            data=json.dumps(body),
+            content_type="application/json",
+        )
+
+    @patch("integrations.google.views.list_available_calendars")
+    def test_listar_calendarios(self, listar):
+        url = reverse("google_calendars")
+        listar.return_value = [{"id": "c1", "summary": "Agenda"}]
+        ok = self.client.get(url)
+        self.assertEqual(ok.json()["dados"]["calendarios"][0]["id"], "c1")
+        self.assertEqual(self.client.post(url).status_code, 405)
+
+        listar.side_effect = GoogleAuthorizationRequired("reautorize")
+        self.assertEqual(self.client.get(url).status_code, 401)
+        listar.side_effect = RuntimeError("api fora")
+        with self.assertLogs("integrations.google.views", level="ERROR"):
+            self.assertEqual(self.client.get(url).status_code, 502)
+
+    @patch("integrations.google.views.ensure_watches")
+    @patch("integrations.google.views.sync_agenda")
+    @patch("integrations.google.views.configure_calendars")
+    def test_selecionar_calendarios_configura_sincroniza_e_observa(
+        self, configure, sync, watches
+    ):
+        configure.return_value = [{"id": "c1", "enabled": True}]
+        response = self._put({"calendarios": [{"id": "c1"}]})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["dados"]["calendarios"][0]["id"], "c1")
+        self.assertEqual(configure.call_args.args[1], [{"id": "c1"}])
+        sync.assert_called_once()
+        watches.assert_called_once()
+
+    @patch("integrations.google.views.configure_calendars")
+    def test_selecionar_calendarios_erros(self, configure):
+        self.assertEqual(self.client.get(reverse("google_calendar_selection")).status_code, 405)
+        invalido = self.client.put(
+            reverse("google_calendar_selection"),
+            data="nao-json",
+            content_type="application/json",
+        )
+        self.assertEqual(invalido.status_code, 400)
+
+        configure.side_effect = ValueError("calendario desconhecido")
+        self.assertEqual(self._put({"calendarios": ["x"]}).status_code, 400)
+        configure.side_effect = GoogleAuthorizationRequired("reautorize")
+        self.assertEqual(self._put({"calendarios": []}).status_code, 401)
+        configure.side_effect = RuntimeError("api fora")
+        with self.assertLogs("integrations.google.views", level="ERROR"):
+            self.assertEqual(self._put({"calendarios": []}).status_code, 502)
+
+
+class GoogleWebhookViewTests(TestCase):
+    def test_rejeita_get(self):
+        self.assertEqual(self.client.get(reverse("google_calendar_webhook")).status_code, 405)
+
+    @patch("integrations.google.views.handle_notification")
+    def test_aceita_post_sem_csrf_e_repassa_headers(self, handle):
+        handle.return_value = {"status": "ok"}
+        client = Client(enforce_csrf_checks=True)
+        response = client.post(
+            reverse("google_calendar_webhook"), HTTP_X_GOOG_CHANNEL_ID="canal-1"
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["dados"], {"status": "ok"})
+        self.assertEqual(handle.call_args.args[0]["X-Goog-Channel-Id"], "canal-1")
+
+    @patch("integrations.google.views.handle_notification", side_effect=RuntimeError("x"))
+    def test_falha_interna_responde_202_para_google_nao_reenviar(self, _handle):
+        with self.assertLogs("integrations.google.views", level="ERROR"):
+            response = self.client.post(reverse("google_calendar_webhook"))
+        self.assertEqual(response.status_code, 202)
+
+
+class GoogleDisconnectEdgeCaseTests(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Adv", email="disc@example.com", cargo="Administrador"
+        )
+        auth_user = get_user_model().objects.create_superuser(
+            username=self.usuario.email, email=self.usuario.email
+        )
+        self.client.force_login(auth_user)
+
+    def test_sem_conta_google_responde_sucesso(self):
+        response = self.client.post(reverse("google_disconnect"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("já desconectada", response.json()["mensagem"])
+
+    def test_rejeita_get(self):
+        self.assertEqual(self.client.get(reverse("google_disconnect")).status_code, 405)
+
+    def _conta(self, **tokens):
+        account = GoogleAccount.objects.create(
+            usuario=self.usuario, google_user_id="sub-edge", email=self.usuario.email
+        )
+        if tokens:
+            account.store_tokens(**tokens)
+            account.save()
+        return account
+
+    @patch("integrations.google.views.requests.post")
+    def test_status_inesperado_da_revogacao_preserva_tokens(self, revoke):
+        revoke.return_value.status_code = 500
+        account = self._conta(access_token="a", refresh_token="r")
+        response = self.client.post(reverse("google_disconnect"))
+        account.refresh_from_db()
+        self.assertEqual(response.status_code, 502)
+        self.assertEqual(account.refresh_token, "r")
+        self.assertIsNone(account.revoked_at)
+
+    @patch("integrations.google.views.requests.post")
+    def test_token_ja_invalido_400_tambem_limpa_tokens(self, revoke):
+        revoke.return_value.status_code = 400
+        account = self._conta(access_token="a", refresh_token="r")
+        response = self.client.post(reverse("google_disconnect"))
+        account.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(account.refresh_token, "")
+        self.assertIsNotNone(account.revoked_at)
+
+    @patch("integrations.google.views.requests.post")
+    def test_conta_sem_token_nao_chama_google(self, revoke):
+        account = self._conta()
+        response = self.client.post(reverse("google_disconnect"))
+        account.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        revoke.assert_not_called()
+        self.assertIsNotNone(account.revoked_at)
