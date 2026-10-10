@@ -4,13 +4,13 @@
     align-items:center;
     justify-content:center;
     gap:8px;
-    min-height:44px;
+    min-height:var(--btn-h);
     padding:0 20px;
     border-radius:var(--radius-pill);
     border:1px solid transparent;
     background:var(--accent);
     color:var(--accent-fg);
-    font-size:.88rem;
+    font-size:var(--btn-fs);
     font-weight:600;
     white-space:nowrap;
     transition:background var(--motion) var(--ease-out),
@@ -45,4 +45,13 @@
 .btn-danger:focus-visible{
     outline:none;
     box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--danger);
+}
+
+/* Tamanho pequeno (ações inline em tabelas/cards). .btn-compact e .btn-mini são aliases legados. */
+.btn-sm,
+.btn-compact,
+.btn-mini{
+    min-height:var(--btn-h-sm);
+    padding:0 12px;
+    font-size:var(--btn-fs-sm);
 }

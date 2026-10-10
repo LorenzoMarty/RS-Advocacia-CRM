@@ -39,14 +39,14 @@
 }
 
 .timer-btn{
-    min-height:28px;
-    padding:0 8px;
+    min-height:var(--btn-h-sm);
+    padding:0 12px;
     border-radius:var(--radius-sm);
     border:1px solid var(--line-strong);
     background:var(--line-strong);
     color:var(--accent);
-    font-size:.68rem;
-    font-weight:800;
+    font-size:var(--btn-fs-sm);
+    font-weight:600;
 }
 
 .timer-btn-stop{

@@ -2,13 +2,13 @@
         display:inline-flex;
         align-items:center;
         justify-content:center;
-        min-height:38px;
+        min-height:var(--btn-h-sm);
         padding:0 14px;
         border-radius:var(--radius-sm);
         border:1px solid var(--line);
         background:var(--ghost);
         color:var(--text);
-        font-size:.82rem;
+        font-size:var(--btn-fs-sm);
         font-weight:600;
         transition:border-color .2s ease,background .2s ease,transform .2s ease;
     }
@@ -20,6 +20,4 @@
     }
 
 @media (max-width:640px){
-.action-link{min-height:36px;padding:0 12px;font-size:.78rem}
-
 }

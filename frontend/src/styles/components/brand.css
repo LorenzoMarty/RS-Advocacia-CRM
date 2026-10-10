@@ -9,12 +9,12 @@
 }
 
 .brand-logo-mono{
-    --brand-src:url("../../assets/brand/logo-rs.png");
+    --brand-src:url("../../assets/brand/logo-rs.svg");
     aspect-ratio:187 / 122;
 }
 
 .brand-logo-full{
-    --brand-src:url("../../assets/brand/logo-rs-full.png");
+    --brand-src:url("../../assets/brand/logo-rs-full.svg");
     aspect-ratio:541 / 150;
 }
 
