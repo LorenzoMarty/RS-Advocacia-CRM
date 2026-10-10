@@ -69,9 +69,10 @@ def _sincronizar_evento_se_conectado(request, evento):
         return {"status": "nao_conectado"}
 
     if getattr(settings, "CELERY_BROKER_URL", None):
-        enfileirar_best_effort(
+        enfileirado = enfileirar_best_effort(
             sincronizar_evento_google_calendar, evento.pk, usuario.pk
         )
+        return {"status": "agendado" if enfileirado else "falha_fila"}
     else:
         # Dev sem Redis/Celery: roda inline, best-effort (mesmo padrao do
         # MEETINGS_PROCESSING_MODE=inline).

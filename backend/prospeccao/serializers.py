@@ -2,6 +2,7 @@ from core.utils import isoformat_ou_nulo
 
 from .models import InteracaoProspect, Prospect
 
+
 def _total_interacoes(prospect: Prospect) -> int:
     # ``num_interacoes`` comes from ``.annotate(Count("interacoes"))`` on list queries.
     anotado = getattr(prospect, "num_interacoes", None)

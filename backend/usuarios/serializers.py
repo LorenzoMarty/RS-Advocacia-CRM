@@ -50,6 +50,7 @@ def serialize_usuario(
 
 def serialize_usuarios(usuarios: Iterable[Usuario]):
     usuarios = list(usuarios)
+    # ``enabled_calendars`` is read by calendar_label(); keep the two in sync.
     prefetch_related_objects(
         usuarios,
         Prefetch(
