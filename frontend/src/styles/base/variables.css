@@ -6,6 +6,10 @@
        Os valores reais são injetados em <html> pelo script inline do index.html
        e por applyAppearance(); aqui ficam só os defaults de fallback. */
     --font-base:14px;
+    /* Botões: dois tamanhos só. md = ação principal/formulário, sm = ação inline (tabelas, cards). */
+    --btn-h:40px;      --btn-fs:1rem;   
+    --btn-h-sm:32px;   --btn-fs-sm:.86rem;
+    --track-label:.07em;   /* rastreamento dos rótulos em caixa-alta (eco do logo) */
     --ui-scale:1;
     --font-scale:1;
     --space-scale:1;
@@ -42,6 +46,10 @@
     --cat-civel:oklch(0.92 0.05 295);       --cat-civel-ink:oklch(0.42 0.09 295);
     --cat-trabalhista:oklch(0.92 0.05 40);  --cat-trabalhista-ink:oklch(0.42 0.09 40);
     --cat-empresarial:oklch(0.92 0.05 220); --cat-empresarial-ink:oklch(0.42 0.09 220);
+    /* Pontos de tipo (abas da agenda): mesmos matizes, mais saturados que o fundo da categoria */
+    --cat-civel-dot:oklch(0.62 0.12 295);
+    --cat-empresarial-dot:oklch(0.62 0.12 220);
+    --cat-trabalhista-dot:oklch(0.66 0.12 40);
     --cat-tributario:oklch(0.92 0.05 165);  --cat-tributario-ink:oklch(0.42 0.09 165);
 
     /* Raio */
@@ -158,6 +166,9 @@
     --success:oklch(0.72 0.11 160); --success-soft:oklch(0.32 0.05 160); --success-ink:oklch(0.84 0.08 160);
     --info:oklch(0.72 0.11 260);
 
+    --cat-civel-dot:oklch(0.74 0.12 295);
+    --cat-empresarial-dot:oklch(0.74 0.12 220);
+    --cat-trabalhista-dot:oklch(0.76 0.12 40);
     --cat-civel:oklch(0.35 0.05 295);       --cat-civel-ink:oklch(0.85 0.07 295);
     --cat-trabalhista:oklch(0.35 0.05 40);  --cat-trabalhista-ink:oklch(0.85 0.07 40);
     --cat-empresarial:oklch(0.35 0.05 220); --cat-empresarial-ink:oklch(0.85 0.07 220);

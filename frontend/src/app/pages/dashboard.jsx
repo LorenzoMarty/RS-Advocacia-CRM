@@ -228,7 +228,7 @@ export function DashboardPage() {
     <div className="dashboard-page flex flex-col gap-[var(--gap-grid)]">
       <PageChrome label="Painel" primaryAction={PRIMARY_ACTION} />
 
-      <PageHeader title={greeting(currentUser?.name)} subtitle={focusParts.length ? focusParts.join(" · ") : "Nada urgente agora."}>
+      <PageHeader compact title={greeting(currentUser?.name)} subtitle={focusParts.length ? focusParts.join(" · ") : "Nada urgente agora."}>
         <Segmented tone="bg" label="Período" options={RANGE_OPTIONS} value={range} onChange={setRange} />
       </PageHeader>
 

@@ -5,13 +5,7 @@ export function PrivacyPolicyPage() {
     <div className="policy-shell">
       <div className="policy-container">
         <header className="policy-header">
-          <div className="policy-brand">
-            <div className="login-brand-mark" aria-hidden="true">RS</div>
-            <div>
-              <div className="login-kicker">Plataforma jurídica</div>
-              <strong>RS Advocacia</strong>
-            </div>
-          </div>
+          <span className="brand-logo brand-logo-full policy-logo" role="img" aria-label="RS Advocacia" />
           <h1>Política de Privacidade</h1>
           <p className="policy-meta">Última atualização: julho de 2026</p>
         </header>

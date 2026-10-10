@@ -20,7 +20,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
-  Scale,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -44,6 +43,7 @@ import { useFocusTrap } from './hooks/use-focus-trap';
 import { useOnboardingLauncher } from './components/onboarding-launcher';
 import { AnimatePresence, MotionPage } from './motion';
 import { NAV_ITEMS } from './data';
+import { GlobalSearch } from './components/global-search';
 import { useAppState } from './store';
 import { useAppearanceState } from './use-appearance';
 import { formatTime, isFinishedTask } from './utils';
@@ -142,25 +142,13 @@ function LoadingScreen() {
   return (
     <main className="loading-screen" aria-live="polite" aria-busy="true">
       <section className="loading-card" role="status">
-        <div className="loading-mark" aria-hidden="true">
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 3v18" />
-            <path d="m19 8 3 8a5 5 0 0 1-6 0z" />
-            <path d="m5 8 3 8a5 5 0 0 1-6 0z" />
-            <path d="M3 7h18" />
-            <path d="M7 21h10" />
-          </svg>
-        </div>
-
-        <div className="loading-copy">
-          <span className="loading-kicker">RS Advocacia</span>
-          <h1>Carregando sistema</h1>
-          <p>Preparando agenda, processos, prazos e petições.</p>
-        </div>
+        <span className="brand-logo brand-logo-full loading-logo" role="img" aria-label="RS Advocacia" />
 
         <div className="loading-progress" aria-hidden="true">
           <span />
         </div>
+
+        <p className="loading-copy">Carregando sistema</p>
       </section>
     </main>
   );
@@ -198,7 +186,7 @@ function SidebarNavLink({ item, collapsed, count = 0 }) {
       aria-label={count ? `${item.label} — ${count} em aberto (vencidos ou até 7 dias)` : item.label}
       data-tour={`nav-${item.key}`}
       className={cn(
-        'group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink',
+        'group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-[1rem] font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink',
         collapsed && 'mx-auto size-10 justify-center gap-0 rounded-md px-0 py-0',
         isActive && 'bg-accent-soft font-bold text-ink hover:bg-accent-soft hover:text-ink',
       )}
@@ -250,7 +238,7 @@ function SidebarNavigation({ collapsed }) {
           <div key={group} className="grid gap-1" role="group" aria-label={group}>
             <span
               className={cn(
-                'px-3 pb-1 text-[11px] font-bold uppercase tracking-[.07em] text-subtle',
+                'px-3 pb-1 text-[11px] font-bold uppercase tracking-[.08em] text-subtle',
                 collapsed && 'sr-only',
               )}
             >
@@ -777,6 +765,7 @@ function Topbar({ chrome, notifications }) {
       </nav>
 
       <div className="flex shrink-0 items-center gap-2">
+        <GlobalSearch />
         {actions}
         <NotificationBell notifications={notifications} />
         {primaryAction && (
@@ -914,7 +903,7 @@ function ShellFrame({ chrome, appearance, sidebarCollapsed, toggleSidebar, start
         <aside
           id="app-sidebar"
           aria-label="Navegação principal"
-          className="group sticky top-[var(--shell-pad)] z-40 hidden h-[calc(100vh-var(--shell-pad)*2)] flex-col rounded-lg bg-surface min-[1201px]:flex"
+          className="group sticky top-[var(--shell-pad)] z-40 hidden h-[calc(100vh-var(--shell-pad)*2)] flex-col rounded-[28px] bg-surface min-[1201px]:flex"
         >
           <Button
             variant="outline"
@@ -941,23 +930,12 @@ function ShellFrame({ chrome, appearance, sidebarCollapsed, toggleSidebar, start
               aria-label="Ir para a área inicial"
               title="Início"
             >
-              <div
-                className="grid size-10 shrink-0 place-items-center rounded-sm bg-accent-soft-2 text-[var(--accent)]"
-                aria-hidden="true"
-              >
-                <Scale className="size-5" strokeWidth={1.8} />
-              </div>
-              <div
-                className={cn(
-                  'min-w-0 max-w-[180px] overflow-hidden transition-[max-width,opacity] duration-200',
-                  sidebarCollapsed && 'pointer-events-none max-w-0 opacity-0',
-                )}
-              >
-                <strong className="block truncate text-[17px] font-extrabold leading-tight text-ink">
-                  RS Advocacia
-                </strong>
-                <span className="block truncate text-xs font-medium text-muted-foreground">Gestão jurídica</span>
-              </div>
+              <span
+                className={cn('brand-logo shrink-0 text-ink', sidebarCollapsed ? 'brand-logo-mono' : 'brand-logo-stack')}
+                style={{ '--brand-w': sidebarCollapsed ? '36px' : '100%' }}
+                role="img"
+                aria-label="RS Advocacia empresarial e trabalhista especializada"
+              />
             </Link>
 
             <SidebarNavigation collapsed={sidebarCollapsed} />

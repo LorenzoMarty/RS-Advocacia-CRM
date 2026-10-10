@@ -26,6 +26,7 @@ function Segmented({ options, value, onChange, tone = "surface-2", label, classN
               active && "bg-surface text-ink shadow-[0_1px_3px_rgba(23,24,28,.1)]",
             )}
           >
+            {option.dot ? <span className="mr-2 inline-block size-2 rounded-full align-middle" style={{ background: option.dot }} aria-hidden="true" /> : null}
             {option.label}
           </button>
         )

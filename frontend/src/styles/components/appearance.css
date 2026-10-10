@@ -42,7 +42,7 @@
 .appearance-group-label{
     font-size:.79rem;
     font-weight:700;
-    letter-spacing:.07em;
+    letter-spacing:var(--track-label);
     text-transform:uppercase;
     color:var(--subtle);
 }

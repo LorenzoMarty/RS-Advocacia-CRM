@@ -59,9 +59,7 @@ export function ProductivityPage() {
             />
         </PageHeader>
 
-        <Card>
-          <CardContent className="py-[var(--pad-card)]">
-          <div className="productivity-kpis">
+        <div className="productivity-kpis">
             {kpis.map((item) => (
               <div key={item.label} className="productivity-kpi">
                 <span>{item.label}</span>
@@ -73,9 +71,7 @@ export function ProductivityPage() {
                 </strong>
               </div>
             ))}
-          </div>
-          </CardContent>
-        </Card>
+        </div>
 
         {isLoading ? (
           <Card>

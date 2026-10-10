@@ -16,12 +16,13 @@
   display: block;
   color: var(--muted);
   font-size: .72rem;
-  font-weight: 700;
-  letter-spacing:.07em;
+  font-weight: 500;
+  letter-spacing:var(--track-label);
   text-transform: uppercase;
 }
 
 .metric strong{
+  font-weight: 800;
   display: block;
   margin-top: 10px;
   font-size: 1.9rem;
@@ -106,7 +107,7 @@
 .finance-donut-label{
   font-size: .62rem;
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing:var(--track-label);
   color: var(--muted);
   max-width: 92px;
   overflow: hidden;
@@ -252,7 +253,7 @@
 
 .financeiro-row{
   display: grid;
-  grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 1.6fr;
+  grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr 2.2fr;
   gap: 10px;
   align-items: center;
   padding: 12px;
@@ -268,7 +269,7 @@
   color: var(--soft);
   font-size: .72rem;
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing:var(--track-label);
 }
 
 .financeiro-th{
@@ -299,12 +300,6 @@
   gap: 6px;
 }
 
-.btn-mini{
-  padding: 5px 10px;
-  font-size: .72rem;
-  border-radius: 8px;
-}
-
 .financeiro-pagination{
   display: flex;
   align-items: center;
@@ -329,7 +324,7 @@
     color: var(--soft);
     font-size: .66rem;
     text-transform: uppercase;
-    letter-spacing: .08em;
+    letter-spacing:var(--track-label);
   }
 
 }

@@ -31,7 +31,7 @@
         color:var(--soft);
         font-size:.7rem;
         font-weight:700;
-        letter-spacing:.07em;
+        letter-spacing:var(--track-label);
         text-transform:uppercase;
         white-space:nowrap;
     }
@@ -141,7 +141,7 @@
         font-size:.78rem;
         color:var(--muted);
         font-weight:700;
-        letter-spacing:.07em;
+        letter-spacing:var(--track-label);
         text-transform:uppercase;
     }
 

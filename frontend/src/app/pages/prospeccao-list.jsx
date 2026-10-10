@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { ArrowRight, MessageCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
+import { Avatar } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 
 import { INTERACTION_TYPE_OPTIONS, PROSPECT_STATUS_COLUMNS } from '../data';
 import { PageChrome, PageSearch, StatusBadge } from '../layout';
-import { motion as Motion, pop, staggerContainer } from '../motion';
+import { motion as Motion, pop } from '../motion';
 import { useAppState } from '../store';
 import { buildSearchText, formatDate, normalizeText } from '../utils';
 import { Select } from '../components/select';
@@ -81,20 +82,12 @@ function ProspectCard({ prospect, deadlines, onDragStart, onDragEnd, isDragging,
         <StatusBadge tone={priorityTone(prospect.priority)}>{priorityLabel(prospect.priority)}</StatusBadge>
       </div>
       <p className="prospect-card-demand">{prospect.demandType || 'Demanda não informada'}</p>
-      <dl className="prospect-card-meta">
-        <div>
-          <dt>Responsável</dt>
-          <dd>{prospect.responsibleName || '-'}</dd>
-        </div>
-        <div>
-          <dt>Próximo passo</dt>
-          <dd>{prospect.nextAction || '-'}</dd>
-        </div>
-        <div>
-          <dt>Última interação</dt>
-          <dd>{prospect.lastContact ? formatDate(prospect.lastContact) : '-'}</dd>
-        </div>
-      </dl>
+      {prospect.nextAction ? (
+        <p className="prospect-card-step">
+          <ArrowRight className="size-3.5 shrink-0" strokeWidth={2.2} aria-hidden="true" />
+          <span className="truncate">{prospect.nextAction}</span>
+        </p>
+      ) : null}
 
       {isStale ? (
         <p className="prospect-card-stale">⏳ Parado {idleLabel(idleDays)}</p>
@@ -138,20 +131,30 @@ function ProspectCard({ prospect, deadlines, onDragStart, onDragEnd, isDragging,
           </form>
         ) : (
           <div className="prospect-card-actions">
+            <span className="prospect-card-owner" title={prospect.responsibleName || 'Sem responsável'}>
+              <Avatar name={prospect.responsibleName || '?'} size={24} className="rounded-[8px]" />
+              <span className="truncate">
+                {idleDays != null ? idleLabel(idleDays) : prospect.lastContact ? formatDate(prospect.lastContact) : '—'}
+              </span>
+            </span>
             <button
-              className="btn btn-secondary btn-compact"
+              className="prospect-card-icon"
               type="button"
+              aria-label="Registrar interação"
+              title="Registrar interação"
               onClick={() => setShowInteraction(true)}
             >
-              + Interação
+              <MessageCircle className="size-3.5" strokeWidth={2.2} />
             </button>
             {nextStatus ? (
               <button
-                className="btn btn-compact"
+                className="prospect-card-icon is-primary"
                 type="button"
+                aria-label={`Avançar para ${nextStatus}`}
+                title={`Avançar → ${nextStatus}`}
                 onClick={() => onAdvance(prospect, nextStatus)}
               >
-                Avançar → {nextStatus}
+                <ArrowRight className="size-3.5" strokeWidth={2.4} />
               </button>
             ) : null}
           </div>
@@ -261,54 +264,50 @@ export function ProspectKanbanPage() {
     <>
       <PageChrome label="Prospecção" primaryAction={{ label: 'Novo prospect', to: '/prospeccao/novo', tour: 'page-primary-action' }} />
       <div className="grid gap-[var(--gap-grid)]">
-        <PageHeader title="Prospecção" subtitle="Funil de captação de clientes" />
+        <PageHeader title="Prospecção" subtitle="Funil de captação de clientes · arraste os cards entre etapas">
+          <PageSearch
+            className="on-bg"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar nome ou demanda"
+            label="Buscar prospects"
+          />
+          <div className="on-bg w-52">
+            <Select
+              aria-label="Filtrar por responsável"
+              value={responsibleFilter}
+              onChange={(event) => setResponsibleFilter(event.target.value)}
+            >
+              <option value="">Todos os responsáveis</option>
+              {responsibleOptions.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </Select>
+          </div>
+        </PageHeader>
 
-        <Motion.div
-          className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-        >
-          <Motion.div variants={pop}>
-            <Card><CardContent className="py-[calc(var(--pad-card)*.75)]"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Total</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.total}</strong></CardContent></Card>
-          </Motion.div>
-          <Motion.div variants={pop}>
-            <Card><CardContent className="py-[calc(var(--pad-card)*.75)]"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Novos no mês</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.novosMes}</strong></CardContent></Card>
-          </Motion.div>
-          <Motion.div variants={pop}>
-            <Card><CardContent className="py-[calc(var(--pad-card)*.75)]"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Convertidos</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.convertidos}</strong></CardContent></Card>
-          </Motion.div>
-          <Motion.div variants={pop}>
-            <Card><CardContent className="py-[calc(var(--pad-card)*.75)]"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Perdidos</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.perdidos}</strong></CardContent></Card>
-          </Motion.div>
-          <Motion.div variants={pop}>
-            <Card><CardContent className="py-[calc(var(--pad-card)*.75)]"><span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Taxa conversão</span><strong className="mt-1 block text-2xl font-bold text-foreground">{metrics.taxa}%</strong></CardContent></Card>
-          </Motion.div>
-        </Motion.div>
-
-        <Card>
-          <CardContent className="flex flex-wrap items-center gap-3 py-[calc(var(--pad-card)*.75)]">
-            <div className="min-w-[180px] flex-1">
-              <PageSearch
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por nome, e-mail ou demanda"
-              />
-            </div>
-            <div className="w-full sm:w-[220px]">
-              <Select
-                aria-label="Filtrar por responsável"
-                value={responsibleFilter}
-                onChange={(event) => setResponsibleFilter(event.target.value)}
-              >
-                <option value="">Responsável</option>
-                {responsibleOptions.map((option) => (
-                  <option key={option} value={option}>{option}</option>
+        <Motion.div variants={pop} initial="hidden" animate="visible">
+          <Card>
+            <CardContent className="grid grid-cols-1 items-center gap-6 py-[calc(var(--pad-card)*.9)] lg:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="prospect-funnel" style={{ gridTemplateColumns: `repeat(${PROSPECT_STATUS_COLUMNS.length}, minmax(0, 1fr))` }}>
+                {PROSPECT_STATUS_COLUMNS.map((column) => (
+                  <div key={column.key} className={`prospect-funnel-step is-${column.key}`}>
+                    <span className="prospect-funnel-bar" />
+                    <span className="prospect-funnel-label">
+                      <strong>{byColumn[column.label].length}</strong>
+                      <span>{column.label}</span>
+                    </span>
+                  </div>
                 ))}
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+              <div className="prospect-funnel-stats">
+                <div><span>Conversão</span><strong>{metrics.taxa}%</strong></div>
+                <div><span>Perdidos</span><strong>{metrics.perdidos}</strong></div>
+                <div><span>Novos no mês</span><strong>{metrics.novosMes}</strong></div>
+              </div>
+            </CardContent>
+          </Card>
+        </Motion.div>
 
         {prospects.length ? (
           <section className={`prospeccao-board${draggingId ? ' is-dragging' : ''}`} aria-label="Funil de prospecção">

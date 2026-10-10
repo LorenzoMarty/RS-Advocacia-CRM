@@ -35,7 +35,7 @@
 
 .page-search input{
     width:100%;
-    min-height:44px;
+    min-height:var(--btn-h);
     padding:0 16px 0 42px;
     border-radius:var(--radius-pill);
     border:0;
@@ -74,7 +74,7 @@
     align-items:center;
     justify-content:flex-start;
     width:100%;
-    min-height:44px;
+    min-height:var(--btn-h);
     padding:0 46px 0 15px;
     border-radius:var(--radius-sm);
     border:0;
@@ -196,7 +196,7 @@
     color:var(--muted);
     font-size:.67rem;
     font-weight:700;
-    letter-spacing:.07em;
+    letter-spacing:var(--track-label);
     text-transform:uppercase;
 }
 
@@ -297,7 +297,7 @@
     font-weight:500;
 }
 
-.main .field :where(input:not([type="checkbox"]):not([type="radio"]), select){min-height:44px}
+.main .field :where(input:not([type="checkbox"]):not([type="radio"]), select){min-height:var(--btn-h)}
 
 .main .field :where(input, select, textarea):hover{background-color:var(--surface-2)}
 

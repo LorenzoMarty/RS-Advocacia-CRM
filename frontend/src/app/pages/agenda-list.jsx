@@ -9,12 +9,11 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Segmented } from "@/components/ui/segmented";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 import { useConfirmPopup } from "../hooks/use-confirm-popup";
@@ -23,7 +22,6 @@ import { Select } from "../components/select";
 import { useAppState } from "../store";
 import {
   buildSearchText,
-  formatCount,
   formatTime,
   getEventTypeKey,
   isOverdueEvent,
@@ -37,6 +35,10 @@ import {
   formatDayParam,
 } from "./agenda-utils";
 import { RailList } from "./agenda-rail-list";
+
+// Cores dos tipos (mesmas da legenda antiga).
+const TYPE_DOT = { audiencia: "var(--cat-civel-dot)", reuniao: "var(--cat-empresarial-dot)", tarefa: "var(--cat-trabalhista-dot)" };
+const TYPE_ORDER = ["audiencia", "reuniao", "tarefa"];
 
 export function AgendaListPage() {
   const navigate = useNavigate();
@@ -62,12 +64,20 @@ export function AgendaListPage() {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [showFilters, setShowFilters] = useState(false);
   const [draggingEventId, setDraggingEventId] = useState("");
   const [dragOverDayKey, setDragOverDayKey] = useState("");
 
   const typeOptions = [
     ...new Set(events.map((event) => event.type).filter(Boolean)),
-  ];
+  ].sort((left, right) => {
+    const rank = (value) => {
+      const index = TYPE_ORDER.indexOf(normalizeText(value));
+      return index === -1 ? TYPE_ORDER.length : index;
+    };
+    return rank(left) - rank(right);
+  });
   const responsibleOptions = [
     ...new Set(events.map((event) => event.responsibleName).filter(Boolean)),
   ];
@@ -116,15 +126,23 @@ export function AgendaListPage() {
     })
     .sort((left, right) => new Date(left.start) - new Date(right.start));
 
-  const todayEvents = filteredEvents.filter((event) =>
-    isSameDay(event.start, today),
+  const selectedDayEvents = filteredEvents.filter((event) =>
+    isSameDay(event.start, selectedDate),
   );
+  const isSelectedToday = isSameDay(selectedDate, today);
+  const monthCount = filteredEvents.filter((event) => {
+    const start = new Date(event.start);
+    return start.getMonth() === viewDate.getMonth() && start.getFullYear() === viewDate.getFullYear();
+  }).length;
+  const monthName = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(viewDate);
+  const monthSubtitle = `${monthCount} ${monthCount === 1 ? "compromisso" : "compromissos"} em ${monthName}`;
+  const activeFilters = [search, responsible, status, period].filter(Boolean).length;
   const upcomingEvents = filteredEvents
     .filter(
       (event) =>
         new Date(event.start) > new Date(todayStart.getTime() + 86400000),
     )
-    .slice(0, 6);
+    .slice(0, 5);
   const overdueEvents = filteredEvents
     .filter((event) => isOverdueEvent(event))
     .slice(0, 6);
@@ -182,6 +200,18 @@ export function AgendaListPage() {
 
     return () => window.clearInterval(intervalId);
   }, [currentUser?.googleCalendarConnected, syncGoogleCalendarEvents]);
+
+  // Navegar de mês leva a seleção junto (dia 1 do mês, ou hoje se for o mês atual),
+  // para o painel do dia não ficar apontando para um dia que não está na grade.
+  function goToMonth(offset) {
+    const next = new Date(viewDate.getFullYear(), viewDate.getMonth() + offset, 1);
+    setViewDate(next);
+    setSelectedDate(
+      next.getFullYear() === today.getFullYear() && next.getMonth() === today.getMonth()
+        ? new Date()
+        : next,
+    );
+  }
 
   function toLocalIso(date) {
     const pad = (value) => String(value).padStart(2, "0");
@@ -258,8 +288,30 @@ export function AgendaListPage() {
       <PageChrome label="Agenda" primaryAction={{ label: 'Novo compromisso', to: '/agenda/novo', tour: 'page-primary-action' }} />
 
       <div className="agenda-page">
-        <PageHeader title="Agenda" subtitle={formatCount(filteredEvents.length)} />
+        <PageHeader className="mb-4" title="Agenda" subtitle={monthSubtitle}>
+          <Button
+            variant="secondary"
+            size="sm"
+            type="button"
+            aria-expanded={showFilters}
+            onClick={() => setShowFilters((current) => !current)}
+          >
+            <SlidersHorizontal className="size-3.5" aria-hidden="true" />
+            Filtros{activeFilters ? ` (${activeFilters})` : ""}
+          </Button>
+          <Segmented
+            tone="bg"
+            label="Filtrar por tipo"
+            value={eventType}
+            onChange={setEventType}
+            options={[
+              { value: "", label: "Todos" },
+              ...typeOptions.map((option) => ({ value: option, label: option, dot: TYPE_DOT[normalizeText(option)] })),
+            ]}
+          />
+        </PageHeader>
 
+        {showFilters ? (
         <Card className="mb-4">
           <CardContent className="flex flex-wrap items-center gap-3 py-[calc(var(--pad-card)*.75)]">
             <label
@@ -287,19 +339,7 @@ export function AgendaListPage() {
               />
             </label>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Select
-                aria-label="Filtrar por tipo"
-                value={eventType}
-                onChange={(event) => setEventType(event.target.value)}
-              >
-                <option value="">Tipo</option>
-                {typeOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </Select>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <Select
                 aria-label="Filtrar por responsável"
                 value={responsible}
@@ -337,50 +377,37 @@ export function AgendaListPage() {
             </div>
           </CardContent>
         </Card>
+        ) : null}
 
-        <div className="grid grid-cols-1 gap-[var(--gap-grid)] lg:grid-cols-3">
-          <Card className="lg:col-span-2">
+        <div className="grid grid-cols-1 items-start gap-[var(--gap-grid)] min-[1201px]:grid-cols-[minmax(0,1fr)_340px]">
+          <Card>
             <CardHeader className="flex-row items-center justify-between space-y-0">
-              <div>
-                <h2 className="text-card-title-sm text-ink">Calendário</h2>
-                <p className="text-xs text-muted-foreground">Visão mensal</p>
-              </div>
+              <h2 className="text-card-title first-letter:uppercase">{monthLabel(viewDate)}</h2>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <Button
-                  variant="ghost"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setViewDate(new Date(today.getFullYear(), today.getMonth(), 1));
+                    setSelectedDate(new Date());
+                  }}
+                >
+                  Hoje
+                </Button>
+                <Button
+                  variant="secondary"
                   size="icon"
                   aria-label="Mês anterior"
-                  onClick={() =>
-                    setViewDate(
-                      (currentDate) =>
-                        new Date(
-                          currentDate.getFullYear(),
-                          currentDate.getMonth() - 1,
-                          1,
-                        ),
-                    )
-                  }
+                  onClick={() => goToMonth(-1)}
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
-                <div className="min-w-[8ch] text-center text-sm font-medium text-foreground">
-                  {monthLabel(viewDate)}
-                </div>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="icon"
                   aria-label="Próximo mês"
-                  onClick={() =>
-                    setViewDate(
-                      (currentDate) =>
-                        new Date(
-                          currentDate.getFullYear(),
-                          currentDate.getMonth() + 1,
-                          1,
-                        ),
-                    )
-                  }
+                  onClick={() => goToMonth(1)}
                 >
                   <ChevronRight className="size-4" />
                 </Button>
@@ -388,14 +415,6 @@ export function AgendaListPage() {
             </CardHeader>
 
             <CardContent>
-            <div className="calendar-legend">
-              <span className="legend-chip legend-chip-audiencia">
-                Audiência
-              </span>
-              <span className="legend-chip legend-chip-reuniao">Reunião</span>
-              <span className="legend-chip legend-chip-tarefa">Tarefa</span>
-            </div>
-
             <div className="calendar-frame">
               <div className="calendar-weekdays">
                 <span>Seg</span>
@@ -411,19 +430,24 @@ export function AgendaListPage() {
                 {days.map((day) => (
                   <article
                     key={day.key}
-                    className={`day-card${day.date.getMonth() !== viewDate.getMonth() ? " is-muted" : ""}${isSameDay(day.date, today) ? " is-today" : ""}${day.events.some((event) => isOverdueEvent(event)) ? " is-overdue" : ""}${day.events.length ? " has-events" : ""}${dragOverDayKey === day.key && draggingEventId ? " is-drop-target" : ""}`}
+                    className={`day-card${day.date.getMonth() !== viewDate.getMonth() ? " is-muted" : ""}${isSameDay(day.date, today) ? " is-today" : ""}${isSameDay(day.date, selectedDate) ? " is-selected" : ""}${day.events.some((event) => isOverdueEvent(event)) ? " is-overdue" : ""}${day.events.length ? " has-events" : ""}${dragOverDayKey === day.key && draggingEventId ? " is-drop-target" : ""}`}
                     onDragOver={(dragEvent) => handleDayDragOver(dragEvent, day.key)}
                     onDragEnter={(dragEvent) => handleDayDragOver(dragEvent, day.key)}
                     onDrop={(dragEvent) => handleDayDrop(dragEvent, day)}
                   >
                     <div className="day-head">
-                      <Link
+                      <button
+                        type="button"
                         className="day-number day-number-link"
-                        to={`/agenda/dia/${formatDayParam(day.date)}`}
-                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Selecionar dia ${day.date.getDate()}`}
+                        aria-pressed={isSameDay(day.date, selectedDate)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDate(day.date);
+                        }}
                       >
                         {day.date.getDate()}
-                      </Link>
+                      </button>
                       <span className="day-dot" />
                     </div>
 
@@ -512,67 +536,109 @@ export function AgendaListPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="flex flex-col gap-[var(--gap-grid)] py-[var(--pad-card)]">
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <h2 className="text-card-title-sm text-ink">Hoje</h2>
-                  {todayEvents.length ? (
-                    <Badge variant="default">{todayEvents.length}</Badge>
-                  ) : null}
+          <div className="grid gap-[var(--gap-grid)] min-[1201px]:sticky min-[1201px]:top-[var(--sticky-top)]">
+            <Card>
+              <CardContent className="grid gap-3.5 py-[var(--pad-card)]">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="grid gap-1">
+                    <span className="text-[11px] font-bold uppercase tracking-[.08em] text-subtle">
+                      {isSelectedToday ? "Hoje" : "Dia selecionado"}
+                    </span>
+                    <h2 className="m-0 text-card-title-sm text-ink first-letter:uppercase">
+                      {new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" }).format(selectedDate)}
+                    </h2>
+                  </div>
+                  <span className="text-[.93rem] font-semibold text-muted-foreground">
+                    {selectedDayEvents.length} {selectedDayEvents.length === 1 ? "compromisso" : "compromissos"}
+                  </span>
                 </div>
                 <RailList
-                  events={todayEvents}
+                  variant="day"
+                  events={selectedDayEvents}
                   clients={clients}
                   processes={processes}
-                  emptyTitle="Sem compromissos hoje."
-                  emptyCopy="A agenda do dia aparece aqui."
+                  emptyTitle="Nenhum compromisso neste dia."
+                  emptyCopy="Selecione outro dia no calendário."
                   onDelete={handleQuickDelete}
                   onAttendance={markEventAttendance}
                 />
-              </div>
+                <Link
+                  className="text-[.93rem] font-bold text-ink-2 no-underline hover:text-ink"
+                  to={`/agenda/dia/${formatDayParam(selectedDate)}`}
+                >
+                  Ver agenda do dia →
+                </Link>
+              </CardContent>
+            </Card>
 
-              <Separator />
+            {overdueEvents.length ? (
+              <Card>
+                <CardContent className="grid gap-3 py-[var(--pad-card)]">
+                  <h3 className="m-0 text-card-title-sm text-ink">Atrasados</h3>
+                  <RailList
+                    events={overdueEvents}
+                    clients={clients}
+                    processes={processes}
+                    emptyTitle="Sem atrasos."
+                    emptyCopy="Nenhum compromisso vencido."
+                    onDelete={handleQuickDelete}
+                    onAttendance={markEventAttendance}
+                  />
+                </CardContent>
+              </Card>
+            ) : null}
 
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <h2 className="text-card-title-sm text-ink">Próximos</h2>
-                  {upcomingEvents.length ? (
-                    <Badge variant="outline">{upcomingEvents.length}</Badge>
-                  ) : null}
-                </div>
-                <RailList
-                  events={upcomingEvents}
-                  clients={clients}
-                  processes={processes}
-                  emptyTitle="Sem próximos compromissos."
-                  emptyCopy="Os próximos registros aparecem aqui."
-                  onDelete={handleQuickDelete}
-                  onAttendance={markEventAttendance}
-                />
-              </div>
-
-              <Separator />
-
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <h2 className="text-card-title-sm text-ink">Atrasados</h2>
+            <Card>
+              <CardContent className="grid gap-2 py-[var(--pad-card)]">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="m-0 text-card-title-sm text-ink">Próximos</h3>
                   {overdueEvents.length ? (
-                    <Badge variant="destructive">{overdueEvents.length}</Badge>
-                  ) : null}
+                    <span className="flex items-center gap-1.5 text-[.86rem] font-semibold text-[var(--danger-ink)]">
+                      <span className="size-[7px] rounded-full bg-[var(--danger)]" aria-hidden="true" />
+                      {overdueEvents.length} {overdueEvents.length === 1 ? "atrasado" : "atrasados"}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-[.86rem] font-semibold text-[var(--success-ink)]">
+                      <span className="size-[7px] rounded-full bg-[var(--success)]" aria-hidden="true" />
+                      Sem atrasos
+                    </span>
+                  )}
                 </div>
-                <RailList
-                  events={overdueEvents}
-                  clients={clients}
-                  processes={processes}
-                  emptyTitle="Sem atrasos."
-                  emptyCopy="Nenhum compromisso vencido."
-                  onDelete={handleQuickDelete}
-                  onAttendance={markEventAttendance}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                {upcomingEvents.length ? (
+                  upcomingEvents.map((event) => {
+                    const start = new Date(event.start);
+                    const typeKey = getEventTypeKey(event.type);
+                    const clientName = clients.find((client) => client.id === event.clientId)?.name;
+                    return (
+                      <button
+                        key={event.id}
+                        type="button"
+                        aria-label={`${event.title}, ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "full" }).format(start)}, ${formatTime(event.start)}`}
+                        className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-3 rounded-sm border-0 bg-transparent p-2 text-left transition-colors hover:bg-surface-2"
+                        onClick={() => {
+                          setSelectedDate(start);
+                          setViewDate(new Date(start.getFullYear(), start.getMonth(), 1));
+                        }}
+                      >
+                        <span className={`upcoming-tile type-${typeKey}`}>
+                          <span>{new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(start).replace(".", "")}</span>
+                          <strong>{start.getDate()}</strong>
+                        </span>
+                        <span className="grid min-w-0 gap-0.5">
+                          <strong className="truncate text-[1rem] font-bold text-ink">{event.title}</strong>
+                          <span className="truncate text-[.86rem] font-medium text-muted-foreground">
+                            {formatTime(event.start)}{clientName ? ` · ${clientName}` : ""}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className="m-0 py-3 text-center text-[.93rem] font-semibold text-muted-foreground">Sem próximos compromissos.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </>

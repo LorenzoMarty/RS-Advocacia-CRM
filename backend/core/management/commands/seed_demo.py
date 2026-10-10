@@ -15,11 +15,14 @@ from django.test import Client
 from django.utils import timezone
 
 from agenda.models import Evento
+from auditoria.models import RegistroAuditoria
 from clientes.models import Cliente
 from financeiro.models import Lancamento
+from meetings.models import Gravacao, Reuniao
 from peticoes.models import Peticao
 from prazos.models import Prazo
 from processos.models import Processo
+from productivity.models import ProductivityGoal, TimeEntry
 from prospeccao.models import Prospect
 from usuarios.models import Usuario
 
@@ -62,6 +65,8 @@ PRAZOS = [
     ("Petição inicial protocolada", -6, "Protocolado", "Alta", 7),
     ("Recurso ordinário", -3, "Protocolado", "Alta", 5),
     ("Impugnação ao cálculo", 20, "Pendente", "Baixa", 1),
+    ("Juntada de procuração", -3, "Pendente", "Alta", 2),
+    ("Cumprimento de diligência", -8, "Em andamento", "Média", 4),
 ]
 
 # (titulo, dias, hora inicio, hora fim, tipo, status, prioridade, indice do processo, local)
@@ -73,6 +78,34 @@ EVENTOS = [
     ("Reunião com a contabilidade parceira", 6, 15, 16, "Reunião", "Agendado", "Média", 1, "Escritório"),
     ("Audiência de justificação", 8, 10, 11, "Audiência", "Agendado", "Média", 4, "Juizado — Sala 4"),
     ("Reunião inicial — novo cliente", -2, 11, 12, "Reunião", "Compareceu", "Média", 6, "Escritório"),
+    ("Enviar minuta do acordo", 5, 17, 18, "Tarefa", "Agendado", "Média", 5, "Escritório"),
+    ("Revisar contrato social", 9, 14, 15, "Tarefa", "Agendado", "Baixa", 1, "Escritório"),
+    ("Retorno ao cliente — andamento", -4, 9, 10, "Tarefa", "Compareceu", "Baixa", 0, "Telefone"),
+    ("Audiência adiada — reagendar", -5, 10, 11, "Audiência", "Agendado", "Média", 4, "Juizado — Sala 4"),
+]
+
+# (titulo, dias atras, indice do cliente, status da gravacao, resumo da reuniao)
+REUNIOES = [
+    ("Alinhamento de estratégia processual", 1, 1, "concluida",
+     "Definida a estratégia de defesa: priorizar a contestação e reunir os comprovantes de pagamento até sexta."),
+    ("Entrevista inicial", 4, 3, "concluida",
+     "Cliente relatou a demissão sem justa causa. Pendente: carteira de trabalho e extratos do FGTS."),
+    ("Revisão de cálculos trabalhistas", 8, 5, "falhou", ""),
+    ("Planejamento tributário", 12, 4, "", ""),
+]
+
+# (acao, entidade, rotulo, resumo, autor (indice), minutos atras)
+AUDITORIA = [
+    ("criado", "evento", "Audiência de conciliação", "criou o compromisso Audiência de conciliação", 0, 12),
+    ("atualizado", "processo", "Ação de cobrança", "atribuiu responsável em Ação de cobrança", 0, 40),
+    ("atualizado", "peticao", "Contestação · Banco Exemplo", "marcou como protocolado Contestação · Banco Exemplo", 1, 70),
+    ("atualizado", "processo", "Execução de título extrajudicial", "atualizou o status de Execução de título extrajudicial", 2, 190),
+    ("criado", "prazo", "Recurso de apelação", "criou o prazo Recurso de apelação", 1, 300),
+    ("atualizado", "usuario", "Júlia Prado", "alterou a permissão de Júlia Prado", 0, 1500),
+    ("criado", "peticao", "Seguradora Gama", "criou a petição Seguradora Gama", 2, 1700),
+    ("atualizado", "prazo", "Embargos à execução", "alterou a prioridade de Embargos à execução", 1, 2900),
+    ("excluido", "evento", "Reunião cancelada", "excluiu o compromisso Reunião cancelada", 0, 4300),
+    ("criado", "processo", "Reclamação trabalhista", "criou o processo Reclamação trabalhista", 1, 5800),
 ]
 
 # (tipo, adverso, status, indice do processo, indice do responsavel)
@@ -210,7 +243,55 @@ class Command(BaseCommand):
                 tipo_demanda_juridica=demanda, status_prospeccao=status, prioridade=prioridade,
                 proxima_acao=proxima, responsavel_interno=usuarios[1], data_ultimo_contato=dia(-3),
             )
+        self._criar_extras(usuarios, clientes, processos, hoje)
         return usuarios
+
+    def _criar_extras(self, usuarios, clientes, processos, hoje):
+        """Reunioes, apontamento de horas e historico de auditoria (telas que ficariam vazias)."""
+        agora = timezone.now()
+
+        for i, (titulo, dias_atras, ci, status_grav, resumo) in enumerate(REUNIOES):
+            quando = agora - dt.timedelta(days=dias_atras, hours=2)
+            reuniao = Reuniao.objects.create(
+                titulo=titulo, data_reuniao=quando, cliente=clientes[ci],
+                criado_por=usuarios[0].nome, resumo=resumo,
+            )
+            if status_grav:
+                Gravacao.objects.create(
+                    reuniao=reuniao, ordem=0, nome_original=f"reuniao-{i + 1}.webm",
+                    mime_type="audio/webm", tamanho_bytes=2_400_000 + i * 310_000,
+                    status=status_grav, enviada_por=usuarios[0],
+                    transcricao=("Trecho de demonstracao da transcricao." if status_grav == "concluida" else ""),
+                    resumo=resumo, modelo_transcricao="demo", modelo_resumo="demo",
+                    erro_processamento=("Falha de demonstracao ao transcrever o audio." if status_grav == "falhou" else ""),
+                )
+
+        prazos = list(Prazo.objects.all()[:6])
+        peticoes = list(Peticao.objects.all()[:4])
+        tarefas = [("prazo", p.pk) for p in prazos] + [("peticao", p.pk) for p in peticoes]
+        duracoes = [3300, 5400, 1800, 7200, 2700, 4500, 3600, 6300, 1500, 4200]
+        for n in range(14):
+            tipo, task_id = tarefas[n % len(tarefas)]
+            usuario = usuarios[n % len(usuarios)]
+            inicio = agora - dt.timedelta(days=n // 2, hours=3 + n % 4)
+            total = duracoes[n % len(duracoes)]
+            TimeEntry.objects.create(
+                user=usuario, task_id=str(task_id), task_type=tipo, started_at=inicio,
+                ended_at=inicio + dt.timedelta(seconds=total), total_seconds=total, status="stopped",
+            )
+        for usuario in usuarios:
+            ProductivityGoal.objects.get_or_create(user=usuario)
+
+        for acao, entidade, rotulo, resumo, autor, minutos in AUDITORIA:
+            registro = RegistroAuditoria.objects.create(
+                acao=acao, entidade_tipo=entidade, entidade_id=str(1 + minutos % 7),
+                entidade_rotulo=rotulo, autor_id=usuarios[autor].pk, autor_nome=usuarios[autor].nome,
+                resumo=resumo,
+            )
+            # criado_em e auto_now_add: ajusta depois para espalhar o historico no tempo.
+            RegistroAuditoria.objects.filter(pk=registro.pk).update(
+                criado_em=agora - dt.timedelta(minutes=minutos)
+            )
 
     def _criar_sessao(self, usuario):
         auth_user = User.objects.create_superuser(
