@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, MessageCircle } from 'lucide-react';
 
@@ -13,6 +13,9 @@ import { motion as Motion, pop } from '../motion';
 import { useAppState } from '../store';
 import { buildSearchText, formatDate, normalizeText } from '../utils';
 import { Select } from '../components/select';
+import { ShowMoreButton } from '../components/show-more';
+import { useBoardAutoScroll } from '../hooks/use-board-auto-scroll';
+import { useShowMore } from '../hooks/use-show-more';
 import { EmptyState } from './common';
 import {
   STALE_DAYS,
@@ -177,12 +180,28 @@ function ProspectCard({ prospect, deadlines, onDragStart, onDragEnd, isDragging,
   );
 }
 
+const COLUMN_PAGE_SIZE = 10;
+
+// Cards de uma coluna do funil com renderização progressiva (o card recém-movido fica visível).
+function ProspectColumnCards({ prospects, resetKey, pinnedId, renderCard }) {
+  const { visible, remaining, showMore } = useShowMore(prospects, COLUMN_PAGE_SIZE, { resetKey, pinnedId });
+  return (
+    <>
+      {visible.map(renderCard)}
+      <ShowMoreButton remaining={remaining} pageSize={COLUMN_PAGE_SIZE} onClick={showMore} />
+    </>
+  );
+}
+
 export function ProspectKanbanPage() {
   const { prospects, deadlines, saveProspect, addInteracao, addFlash } = useAppState();
   const [search, setSearch] = useState('');
   const [responsibleFilter, setResponsibleFilter] = useState('');
   const [draggingId, setDraggingId] = useState('');
   const [dragOverKey, setDragOverKey] = useState('');
+  const [lastMovedId, setLastMovedId] = useState('');
+  const boardRef = useRef(null);
+  useBoardAutoScroll(boardRef, Boolean(draggingId));
 
   const responsibleOptions = useMemo(
     () => [...new Set(prospects.map((item) => item.responsibleName).filter(Boolean))]
@@ -247,6 +266,7 @@ export function ProspectKanbanPage() {
     setDragOverKey('');
     const prospect = prospects.find((item) => item.id === id);
     if (!prospect || prospect.status === label) return;
+    setLastMovedId(prospect.id);
     const saved = await saveProspect({ ...prospect, status: label });
     if (saved) {
       addFlash(`Prospect movido para ${label}.`, 'info');
@@ -254,6 +274,7 @@ export function ProspectKanbanPage() {
   }
 
   async function advanceProspect(prospect, nextStatus) {
+    setLastMovedId(prospect.id);
     const saved = await saveProspect({ ...prospect, status: nextStatus });
     if (saved) {
       addFlash(`Prospect movido para ${nextStatus}.`, 'info');
@@ -310,7 +331,7 @@ export function ProspectKanbanPage() {
         </Motion.div>
 
         {prospects.length ? (
-          <section className={`prospeccao-board${draggingId ? ' is-dragging' : ''}`} aria-label="Funil de prospecção">
+          <section ref={boardRef} className={`prospeccao-board${draggingId ? ' is-dragging' : ''}`} aria-label="Funil de prospecção">
             {PROSPECT_STATUS_COLUMNS.map((column) => (
               <section
                 className={`prospect-column${dragOverKey === column.label ? ' is-drop-target' : ''}`}
@@ -325,18 +346,23 @@ export function ProspectKanbanPage() {
                 </div>
                 <div className="prospect-column-list">
                   {byColumn[column.label].length ? (
-                    byColumn[column.label].map((prospect) => (
-                      <ProspectCard
-                        key={prospect.id}
-                        prospect={prospect}
-                        deadlines={deadlines}
-                        isDragging={draggingId === prospect.id}
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                        onAdvance={advanceProspect}
-                        onAddInteraction={addInteracao}
-                      />
-                    ))
+                    <ProspectColumnCards
+                      prospects={byColumn[column.label]}
+                      resetKey={`${search}|${responsibleFilter}`}
+                      pinnedId={lastMovedId}
+                      renderCard={(prospect) => (
+                        <ProspectCard
+                          key={prospect.id}
+                          prospect={prospect}
+                          deadlines={deadlines}
+                          isDragging={draggingId === prospect.id}
+                          onDragStart={handleDragStart}
+                          onDragEnd={handleDragEnd}
+                          onAdvance={advanceProspect}
+                          onAddInteraction={addInteracao}
+                        />
+                      )}
+                    />
                   ) : (
                     <div className="prospect-column-empty">Nenhum prospect.</div>
                   )}

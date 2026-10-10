@@ -31,7 +31,7 @@ export function DeadlinesPanel({ prazos = {} }) {
           <h2 className="section-title">Prazos</h2>
           <p className="section-note">Visão geral de vencimentos</p>
         </div>
-        <Link to="/prazos" className="inline-flex items-center text-sm text-primary no-underline hover:underline whitespace-nowrap max-[1024px]:min-h-[40px]">Ver todos →</Link>
+        <Link to="/prazos" className="inline-flex items-center text-sm text-primary no-underline hover:underline whitespace-nowrap min-h-[var(--ctl-tap)]">Ver todos →</Link>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <KpiTile label="Vencidos" value={overdue} tone={overdue ? 'danger' : 'neutral'} />
