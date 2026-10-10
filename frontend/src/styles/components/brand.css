@@ -19,3 +19,8 @@
 }
 
 .policy-logo{--brand-w:min(100%,280px);color:var(--text);margin-bottom:32px}
+
+.brand-logo-stack{
+    --brand-src:url("../../assets/brand/logo-rs-stack.svg");
+    aspect-ratio:795 / 121;
+}

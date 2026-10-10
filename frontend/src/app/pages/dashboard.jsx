@@ -235,12 +235,12 @@ export function DashboardPage() {
       <MotionDiv className="flex flex-col gap-[var(--gap-grid)]" variants={fadeUp} initial="hidden" animate="visible">
         <div className={cn("grid grid-cols-2 gap-[var(--gap-grid)]", canSeeFinance ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
           <KpiCard dark title={`Prazos em ${range} dias`} icon={ArrowUpRight}>
-            <strong className="text-[2.1rem] font-extralight leading-none tracking-[-0.03em] tabular-nums sm:text-kpi">{rangeDeadlines.length}</strong>
+            <strong className="text-[2.1rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums sm:text-kpi">{rangeDeadlines.length}</strong>
             <KpiNote>{rangeHigh} com prioridade alta</KpiNote>
           </KpiCard>
 
           <KpiCard title="Processos ativos" icon={Briefcase}>
-            <strong className="text-[2.1rem] font-extralight leading-none tracking-[-0.03em] tabular-nums sm:text-kpi">{activeProcesses.length}</strong>
+            <strong className="text-[2.1rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums sm:text-kpi">{activeProcesses.length}</strong>
             {areaBar.length ? (
               <>
                 <div className="flex h-2 gap-1 overflow-hidden rounded-pill" aria-hidden="true">
@@ -261,7 +261,7 @@ export function DashboardPage() {
           </KpiCard>
 
           <KpiCard title="Compromissos" icon={CalendarDays}>
-            <strong className="text-[2.1rem] font-extralight leading-none tracking-[-0.03em] tabular-nums sm:text-kpi">{rangeEvents.length}</strong>
+            <strong className="text-[2.1rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums sm:text-kpi">{rangeEvents.length}</strong>
             <KpiNote>
               {hearings} audiências · {meetings} reuniões
             </KpiNote>
@@ -269,7 +269,7 @@ export function DashboardPage() {
 
           {canSeeFinance ? (
             <KpiCard title="A receber" icon={Coins}>
-              <strong className="text-[1.7rem] font-extralight leading-tight tracking-[-0.03em] tabular-nums sm:text-[2.86rem]">
+              <strong className="text-[1.7rem] font-extrabold leading-tight tracking-[-0.03em] tabular-nums sm:text-[2.86rem]">
                 <span className="mr-1 text-[1.43rem] font-bold text-muted-foreground">R$</span>
                 {formatBRL(receivableTotal)}
               </strong>

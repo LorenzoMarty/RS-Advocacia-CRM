@@ -1,13 +1,12 @@
 import { cn } from "@/lib/utils"
 
-// Cabeçalho padrão de página, compacto: título + subtítulo na mesma linha (o subtítulo quebra
-// para baixo só se não couber) e controles à direita, em uma linha quando a largura permite.
+// Cabeçalho padrão de página (mock): título grande, subtítulo abaixo e controles à direita.
 function PageHeader({ title, subtitle, children, className }) {
   return (
-    <div className={cn("flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-1 pt-0.5", className)}>
-      <div className="flex min-w-0 flex-[1_1_240px] flex-wrap items-baseline gap-x-3 gap-y-0">
+    <div className={cn("flex flex-wrap items-end justify-between gap-x-4 gap-y-3 px-2 pt-2", className)}>
+      <div className="min-w-0 flex-[1_1_240px]">
         <h1 className="m-0 text-page-title text-ink">{title}</h1>
-        {subtitle ? <p className="m-0 min-w-0 text-[1rem] font-medium text-muted-foreground">{subtitle}</p> : null}
+        {subtitle ? <p className="m-0 mt-1.5 min-w-0 text-[1.07rem] font-medium text-muted-foreground">{subtitle}</p> : null}
       </div>
       {children ? <div className="flex flex-wrap items-center gap-2">{children}</div> : null}
     </div>

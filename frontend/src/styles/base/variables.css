@@ -9,7 +9,7 @@
     /* Botões: dois tamanhos só. md = ação principal/formulário, sm = ação inline (tabelas, cards). */
     --btn-h:40px;      --btn-fs:1rem;   
     --btn-h-sm:32px;   --btn-fs-sm:.86rem;
-    --track-label:.12em;   /* rastreamento dos rótulos em caixa-alta (eco do logo) */
+    --track-label:.07em;   /* rastreamento dos rótulos em caixa-alta (eco do logo) */
     --ui-scale:1;
     --font-scale:1;
     --space-scale:1;
