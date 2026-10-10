@@ -418,3 +418,62 @@
 
 .side-item-attend-yes,
 .side-item-attend-no{border-radius:999px;min-height:28px;padding:0 10px;font-weight:700}
+
+/* ---- Dia selecionado (mock): círculo no número do dia escolhido ---- */
+.day-card.is-today .day-number{background:transparent;color:var(--accent)}
+
+.day-card.is-today{background:transparent}
+
+.day-card.is-selected{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent-soft-2)}
+
+.day-card.is-selected .day-number,
+.day-card.is-selected.is-today .day-number,
+.day-card.is-selected.is-overdue .day-number{background:var(--accent);color:var(--accent-fg)}
+
+button.day-number{border:0;background:transparent;cursor:pointer;font-family:inherit;padding:0;color:var(--ink)}
+
+/* Tile de data nos "Próximos" */
+.upcoming-tile{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:44px;border-radius:12px;line-height:1;
+    background:var(--cat-empresarial);color:var(--cat-empresarial-ink);
+}
+
+.upcoming-tile span{font-size:.71rem;font-weight:700;text-transform:uppercase}
+
+.upcoming-tile strong{font-size:1.14rem;font-weight:800;font-variant-numeric:tabular-nums}
+
+.upcoming-tile.type-audiencia{background:var(--cat-civel);color:var(--cat-civel-ink)}
+
+.upcoming-tile.type-tarefa{background:var(--cat-trabalhista);color:var(--cat-trabalhista-ink)}
+
+/* ---- Cartão do dia (mock): barra de tipo, linha tempo·tipo + status, cliente, processo, responsável ---- */
+.day-event{
+    --event-ink:var(--cat-empresarial-ink);
+    display:grid;gap:12px;padding:14px;border-radius:var(--radius-md);
+    background:var(--surface-2);cursor:pointer;
+}
+
+.day-event.type-audiencia{--event-ink:var(--cat-civel-ink)}
+
+.day-event.type-tarefa{--event-ink:var(--cat-trabalhista-ink)}
+
+.day-event.is-overdue{--event-ink:var(--danger)}
+
+.day-event-bar{display:none}
+
+.day-event-body{display:grid;gap:4px;min-width:0;padding-left:12px;border-left:4px solid var(--event-ink);border-radius:2px}
+
+.day-event-top{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:.86rem;font-weight:700;font-variant-numeric:tabular-nums}
+
+.day-event-top .is-overdue{color:var(--danger-ink)}
+
+.day-event-title{font-size:1.07rem;font-weight:700;line-height:1.3;color:var(--ink)}
+
+.day-event-client{overflow:hidden;color:var(--ink-2);font-size:.93rem;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+
+.day-event-proc{color:var(--subtle);font-size:.86rem;font-weight:500;font-variant-numeric:tabular-nums}
+
+.day-event-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+.day-event-owner{display:flex;align-items:center;gap:8px;min-width:0;color:var(--ink-2);font-size:.86rem;font-weight:600}
