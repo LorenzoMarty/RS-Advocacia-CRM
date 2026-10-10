@@ -25,10 +25,7 @@ from prazos.serializers import serialize_prazo
 from processos.models import Processo
 from processos.serializers import serialize_processo
 from productivity.models import TimeEntry
-from productivity.views import (
-    _goals_response,
-    _time_entries_response,
-)
+from productivity.serializers import goals_response, time_entries_response
 from prospeccao.models import Prospect
 from prospeccao.serializers import serialize_prospect
 from usuarios.models import Usuario
@@ -199,12 +196,12 @@ def inicializacao(request):
             time_entries = TimeEntry.objects.select_related("user")
             if not eh_admin:
                 time_entries = time_entries.filter(user=usuario_atual)
-            return _time_entries_response(time_entries)
+            return time_entries_response(time_entries)
 
         tarefas["time_entries"] = _time_entries
 
     if usuario_atual and pode_ver_metas:
-        tarefas["productivity_goals"] = lambda: _goals_response(
+        tarefas["productivity_goals"] = lambda: goals_response(
             request, usuario_atual
         )
 

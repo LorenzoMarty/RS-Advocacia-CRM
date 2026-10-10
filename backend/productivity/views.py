@@ -14,36 +14,22 @@ from core.utils import (
 )
 from peticoes.models import Peticao
 from prazos.models import Prazo
+from productivity.serializers import (
+    DEFAULT_DAILY_HOURS,
+    DEFAULT_WEEKLY_HOURS,
+    elapsed_seconds,
+    goals_response,
+    serialize_time_entry,
+    task_details,
+    time_entries_response,
+)
 from productivity.models import ProductivityGoal, TimeEntry
 from usuarios.models import Usuario
 
-DEFAULT_DAILY_HOURS = Decimal("6")
-DEFAULT_WEEKLY_HOURS = Decimal("30")
-
-
-
-
-
-
-
-
-def _elapsed_seconds(entry: TimeEntry, now=None) -> int:
-    total_seconds = int(entry.total_seconds or 0)
-    if entry.status != TimeEntry.STATUS_RUNNING:
-        return total_seconds
-
-    now = now or timezone.now()
-    base = entry.resumed_at or entry.started_at
-    if not base:
-        return total_seconds
-
-    return total_seconds + max(0, int((now - base).total_seconds()))
-
-
 def _save_elapsed(entry: TimeEntry, now=None) -> int:
-    elapsed_seconds = max(int(entry.total_seconds or 0), _elapsed_seconds(entry, now=now))
-    entry.total_seconds = elapsed_seconds
-    return elapsed_seconds
+    total = max(int(entry.total_seconds or 0), elapsed_seconds(entry, now=now))
+    entry.total_seconds = total
+    return total
 
 
 def _is_pending_task_status(status: str) -> bool:
@@ -71,97 +57,6 @@ def _promote_task_to_running(task_type: str, task_id: str):
         ).update(status=Peticao.STATUS_EM_ANDAMENTO)
 
 
-def _decimal_hours(value) -> float:
-    return float(value or 0)
-
-
-def _task_details(entries):
-    prazo_ids = [
-        entry.task_id for entry in entries if entry.task_type == TimeEntry.TASK_PRAZO
-    ]
-    peticao_ids = [
-        entry.task_id
-        for entry in entries
-        if entry.task_type in {TimeEntry.TASK_PETICAO, TimeEntry.TASK_CONTESTACAO}
-    ]
-
-    prazos = {
-        str(prazo.pk): prazo
-        for prazo in Prazo.objects.select_related("processo__cliente").filter(
-            pk__in=prazo_ids
-        )
-    }
-    peticoes = {
-        str(peticao.pk): peticao
-        for peticao in Peticao.objects.select_related("cliente", "processo").filter(
-            pk__in=peticao_ids
-        )
-    }
-
-    details = {}
-    for entry in entries:
-        if entry.task_type == TimeEntry.TASK_PRAZO:
-            prazo = prazos.get(str(entry.task_id))
-            if prazo:
-                details[entry.pk] = {
-                    "task_name": prazo.titulo,
-                    "process_id": str(prazo.processo_id) if prazo.processo_id else "",
-                    "process_number": (
-                        prazo.processo.numero_processo if prazo.processo_id else ""
-                    ),
-                }
-            continue
-
-        peticao = peticoes.get(str(entry.task_id))
-        if peticao:
-            details[entry.pk] = {
-                "task_name": peticao.adverso,
-                "process_id": str(peticao.processo_id) if peticao.processo_id else "",
-                "process_number": (
-                    peticao.processo.numero_processo if peticao.processo_id else ""
-                ),
-            }
-
-    return details
-
-
-def serialize_time_entry(entry: TimeEntry, details=None, now=None):
-    details = details or {}
-    task_details = details.get(entry.pk, {})
-    return {
-        "id": str(entry.pk),
-        "pk": entry.pk,
-        "user_id": str(entry.user_id),
-        "user_name": entry.user.nome if entry.user_id else "",
-        "task_id": str(entry.task_id),
-        "task_type": entry.task_type,
-        "task_name": task_details.get("task_name", ""),
-        "process_id": task_details.get("process_id", ""),
-        "process_number": task_details.get("process_number", ""),
-        "started_at": entry.started_at.isoformat() if entry.started_at else None,
-        "paused_at": entry.paused_at.isoformat() if entry.paused_at else None,
-        "resumed_at": entry.resumed_at.isoformat() if entry.resumed_at else None,
-        "ended_at": entry.ended_at.isoformat() if entry.ended_at else None,
-        "total_seconds": entry.total_seconds,
-        "elapsed_seconds": _elapsed_seconds(entry, now=now),
-        "status": entry.status,
-    }
-
-
-def serialize_productivity_goal(goal: ProductivityGoal | None, usuario: Usuario):
-    return {
-        "id": str(goal.pk) if goal else "",
-        "user_id": str(usuario.pk),
-        "daily_hours": _decimal_hours(
-            goal.daily_hours if goal else DEFAULT_DAILY_HOURS
-        ),
-        "weekly_hours": _decimal_hours(
-            goal.weekly_hours if goal else DEFAULT_WEEKLY_HOURS
-        ),
-        "configured": bool(goal),
-    }
-
-
 def _visible_time_entries(request, usuario: Usuario):
     queryset = TimeEntry.objects.select_related("user").all()
     if not is_admin(request, usuario):
@@ -169,29 +64,6 @@ def _visible_time_entries(request, usuario: Usuario):
     elif request.GET.get("user_id"):
         queryset = queryset.filter(user_id=request.GET["user_id"])
     return queryset
-
-
-def _time_entries_response(entries):
-    entries = list(entries)
-    now = timezone.now()
-    details = _task_details(entries)
-    return [serialize_time_entry(entry, details=details, now=now) for entry in entries]
-
-
-def _goals_response(request, usuario: Usuario):
-    if is_admin(request, usuario):
-        usuarios = list(Usuario.objects.order_by("nome"))
-    else:
-        usuarios = [usuario]
-
-    goals_by_user_id = {
-        goal.user_id: goal
-        for goal in ProductivityGoal.objects.filter(user__in=usuarios)
-    }
-    return [
-        serialize_productivity_goal(goals_by_user_id.get(item.pk), item)
-        for item in usuarios
-    ]
 
 
 # ---------------------------------------------------------------------------
@@ -275,7 +147,7 @@ def _aggregate_resumo(entries, details, now):
     total = 0
 
     for entry in entries:
-        seconds = _elapsed_seconds(entry, now=now)
+        seconds = elapsed_seconds(entry, now=now)
         total += seconds
         task_details = details.get(entry.pk, {})
 
@@ -371,13 +243,13 @@ def resumo(request):
     )
 
     all_entries = list(_visible_time_entries(request, usuario))
-    details = _task_details(all_entries)
+    details = task_details(all_entries)
 
     atuais = _entries_in_range(all_entries, inicio, fim)
     anteriores = _entries_in_range(all_entries, inicio_anterior, fim_anterior)
 
     resumo_atual = _aggregate_resumo(atuais, details, now)
-    total_anterior = sum(_elapsed_seconds(e, now=now) for e in anteriores)
+    total_anterior = sum(elapsed_seconds(e, now=now) for e in anteriores)
     total_atual = resumo_atual["tempo_total_segundos"]
 
     if total_anterior > 0:
@@ -422,8 +294,8 @@ def produtividade(request):
     entries = _visible_time_entries(request, usuario)
     return resposta_sucesso(
         {
-            "time_entries": _time_entries_response(entries),
-            "productivity_goals": _goals_response(request, usuario),
+            "time_entries": time_entries_response(entries),
+            "productivity_goals": goals_response(request, usuario),
             "is_admin": is_admin(request, usuario),
         }
     )
@@ -466,7 +338,7 @@ def iniciar_timer(request):
         running_entry.task_id == task_id and running_entry.task_type == task_type
     ):
         if not pause_existing:
-            details = _task_details([running_entry])
+            details = task_details([running_entry])
             return resposta_erro(
                 {
                     "timer_ativo": ["Já existe um timer ativo."],
@@ -502,7 +374,7 @@ def iniciar_timer(request):
     return resposta_sucesso(
         {
             "time_entry": serialize_time_entry(
-                entry, details=_task_details([entry]), now=now
+                entry, details=task_details([entry]), now=now
             )
         },
         mensagem="Timer iniciado.",
@@ -544,7 +416,7 @@ def pausar_timer(request, entry_id):
     return resposta_sucesso(
         {
             "time_entry": serialize_time_entry(
-                entry, details=_task_details([entry]), now=now
+                entry, details=task_details([entry]), now=now
             )
         },
         mensagem="Timer pausado.",
@@ -578,7 +450,7 @@ def retomar_timer(request, entry_id):
 
     if running_entry:
         if not payload.get("pause_existing"):
-            details = _task_details([running_entry])
+            details = task_details([running_entry])
             return resposta_erro(
                 {
                     "timer_ativo": ["Já existe um timer ativo."],
@@ -602,7 +474,7 @@ def retomar_timer(request, entry_id):
     return resposta_sucesso(
         {
             "time_entry": serialize_time_entry(
-                entry, details=_task_details([entry]), now=now
+                entry, details=task_details([entry]), now=now
             )
         },
         mensagem="Timer retomado.",
@@ -628,7 +500,7 @@ def encerrar_timer(request, entry_id):
     return resposta_sucesso(
         {
             "time_entry": serialize_time_entry(
-                entry, details=_task_details([entry]), now=now
+                entry, details=task_details([entry]), now=now
             )
         },
         mensagem="Timer encerrado.",
@@ -644,7 +516,7 @@ def listar_metas(request):
     if not usuario:
         return resposta_erro({"usuario": ["Usuário atual não encontrado."]}, status=403)
 
-    return resposta_sucesso({"productivity_goals": _goals_response(request, usuario)})
+    return resposta_sucesso({"productivity_goals": goals_response(request, usuario)})
 
 
 @app_permissions_required("productivity.change_productivitygoal")
@@ -689,6 +561,6 @@ def salvar_metas(request):
             updated_goals.append(goal)
 
     return resposta_sucesso(
-        {"productivity_goals": _goals_response(request, usuario)},
+        {"productivity_goals": goals_response(request, usuario)},
         mensagem=f"{len(updated_goals)} meta(s) atualizada(s).",
     )
