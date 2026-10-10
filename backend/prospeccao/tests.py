@@ -2,11 +2,14 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.db import connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from clientes.models import Cliente
 from prospeccao.models import InteracaoProspect, Prospect
+from prospeccao.serializers import serialize_prospect
 from usuarios.models import Usuario
 
 
@@ -368,3 +371,51 @@ class ProspeccaoFluxoTests(TestCase):
             "converter_prospect", [prospect.pk], {"cliente_id": cliente.pk}
         )
         self.assertEqual(ok.status_code, 200, ok.content)
+
+
+class ProspectListQueryCountTests(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Advogada", email="adv@example.com", cargo="Administrador"
+        )
+        auth_user = get_user_model().objects.create_superuser(
+            username=self.usuario.email, email=self.usuario.email
+        )
+        self.client.force_login(auth_user)
+
+    def _criar(self, quantidade, interacoes_por_prospect=2):
+        for i in range(quantidade):
+            prospect = Prospect.objects.create(
+                nome=f"P{i}", responsavel_interno=self.usuario
+            )
+            for _ in range(interacoes_por_prospect):
+                InteracaoProspect.objects.create(
+                    prospect=prospect, tipo="ligacao", descricao="x", usuario=self.usuario
+                )
+
+    def _listar(self):
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.get(reverse("listar_prospects"))
+        self.assertEqual(response.status_code, 200, response.content)
+        return len(ctx), response.json()["dados"]["prospects"]
+
+    def test_listagem_nao_faz_uma_query_por_prospect(self):
+        self._criar(2)
+        poucos, _ = self._listar()
+        self._criar(8)
+        muitos, prospects = self._listar()
+        self.assertEqual(poucos, muitos)
+        self.assertEqual(len(prospects), 10)
+
+    def test_total_interacoes_correto_na_listagem_e_no_detalhe(self):
+        self._criar(1, interacoes_por_prospect=3)
+        sem_interacao = Prospect.objects.create(nome="Vazio")
+        _, prospects = self._listar()
+        totais = {p["nome"]: p["total_interacoes"] for p in prospects}
+        self.assertEqual(totais, {"P0": 3, "Vazio": 0})
+        detalhe = self.client.get(reverse("detalhes_prospect", args=[sem_interacao.pk]))
+        self.assertEqual(detalhe.json()["dados"]["prospect"]["total_interacoes"], 0)
+
+    def test_serialize_prospect_avulso_conta_sem_anotacao(self):
+        self._criar(1, interacoes_por_prospect=2)
+        self.assertEqual(serialize_prospect(Prospect.objects.get())["total_interacoes"], 2)
