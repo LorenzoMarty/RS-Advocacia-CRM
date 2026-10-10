@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
+import { Segmented } from '@/components/ui/segmented';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -365,8 +365,13 @@ export function PetitionsPage() {
       <PageChrome label="Petições ou contestações" primaryAction={{ label: 'Nova peça', to: '/peticoes-contestacoes/novo', tour: 'page-primary-action' }} />
       <div className="grid gap-[var(--gap-grid)]">
         <PageHeader title="Petições ou contestações" subtitle="Kanban separado para peças, protocolo e acompanhamento.">
-          <Badge>{formatCount(filteredPetitions.length, 'peça', 'peças')}</Badge>
-            
+          <Segmented
+            tone="bg"
+            label="Filtrar por tipo"
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={[{ value: '', label: 'Todas' }, ...PETITION_TYPE_OPTIONS.map((option) => ({ value: option, label: option }))]}
+          />
         </PageHeader>
 
         <Card>
@@ -384,18 +389,6 @@ export function PetitionsPage() {
               />
             </label>
 
-            <div className="w-full sm:w-[240px]">
-              <Select
-                aria-label="Filtrar por petições ou contestações"
-                value={typeFilter}
-                onChange={(event) => setTypeFilter(event.target.value)}
-              >
-                <option value="">Petições ou contestações</option>
-                {PETITION_TYPE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </Select>
-            </div>
           </CardContent>
         </Card>
 

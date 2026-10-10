@@ -12,10 +12,10 @@ export function AlertCard({ label, value, hint, tone = 'gold', to }) {
   const content = (
     <>
       <span className="text-meta-sm font-semibold text-muted-foreground">{label}</span>
-      <strong className={`text-card-title tabular-nums leading-tight ${TONE_TEXT[tone] || TONE_TEXT.gold}`}>
+      <strong className={`text-[1.86rem] font-extrabold tracking-[-0.02em] tabular-nums leading-tight ${TONE_TEXT[tone] || TONE_TEXT.gold}`}>
         {value}
       </strong>
-      {hint ? <em className="text-[0.64rem] not-italic text-muted-foreground">{hint}</em> : null}
+      {hint ? <em className="text-[.86rem] font-semibold not-italic text-muted-foreground">{hint}</em> : null}
     </>
   );
 

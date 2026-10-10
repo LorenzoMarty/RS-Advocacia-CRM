@@ -7,7 +7,7 @@ import { AlertCard } from './AlertCard';
 export function RiskSummary({ summary, risk, period, onPeriodChange }) {
   return (
     <div>
-      <PageHeader title="Auditoria do escritório" subtitle="Painel de controle — risco, urgência e ação">
+      <PageHeader title="Auditoria" subtitle="O que precisa de ação no escritório, por ordem de urgência">
         <PeriodFilter value={period} onChange={onPeriodChange} />
       </PageHeader>
 

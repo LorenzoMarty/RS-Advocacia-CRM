@@ -13,6 +13,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Segmented } from "@/components/ui/segmented";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -37,6 +38,9 @@ import {
   formatDayParam,
 } from "./agenda-utils";
 import { RailList } from "./agenda-rail-list";
+
+// Cores dos tipos (mesmas da legenda antiga).
+const TYPE_DOT = { audiencia: "var(--accent)", reuniao: "var(--info)", tarefa: "var(--subtle)" };
 
 export function AgendaListPage() {
   const navigate = useNavigate();
@@ -258,7 +262,18 @@ export function AgendaListPage() {
       <PageChrome label="Agenda" primaryAction={{ label: 'Novo compromisso', to: '/agenda/novo', tour: 'page-primary-action' }} />
 
       <div className="agenda-page">
-        <PageHeader title="Agenda" subtitle={formatCount(filteredEvents.length)} />
+        <PageHeader className="mb-4" title="Agenda" subtitle={formatCount(filteredEvents.length)}>
+          <Segmented
+            tone="bg"
+            label="Filtrar por tipo"
+            value={eventType}
+            onChange={setEventType}
+            options={[
+              { value: "", label: "Todos" },
+              ...typeOptions.map((option) => ({ value: option, label: option, dot: TYPE_DOT[normalizeText(option)] })),
+            ]}
+          />
+        </PageHeader>
 
         <Card className="mb-4">
           <CardContent className="flex flex-wrap items-center gap-3 py-[calc(var(--pad-card)*.75)]">
@@ -287,19 +302,7 @@ export function AgendaListPage() {
               />
             </label>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Select
-                aria-label="Filtrar por tipo"
-                value={eventType}
-                onChange={(event) => setEventType(event.target.value)}
-              >
-                <option value="">Tipo</option>
-                {typeOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </Select>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <Select
                 aria-label="Filtrar por responsável"
                 value={responsible}
@@ -341,46 +344,29 @@ export function AgendaListPage() {
         <div className="grid grid-cols-1 gap-[var(--gap-grid)] lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardHeader className="flex-row items-center justify-between space-y-0">
-              <div>
-                <h2 className="text-card-title-sm text-ink">Calendário</h2>
-                <p className="text-xs text-muted-foreground">Visão mensal</p>
-              </div>
+              <h2 className="text-card-title first-letter:uppercase">{monthLabel(viewDate)}</h2>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <Button
-                  variant="ghost"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setViewDate(new Date(today.getFullYear(), today.getMonth(), 1))}
+                >
+                  Hoje
+                </Button>
+                <Button
+                  variant="secondary"
                   size="icon"
                   aria-label="Mês anterior"
-                  onClick={() =>
-                    setViewDate(
-                      (currentDate) =>
-                        new Date(
-                          currentDate.getFullYear(),
-                          currentDate.getMonth() - 1,
-                          1,
-                        ),
-                    )
-                  }
+                  onClick={() => setViewDate((currentDate) => new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
-                <div className="min-w-[8ch] text-center text-sm font-medium text-foreground">
-                  {monthLabel(viewDate)}
-                </div>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="icon"
                   aria-label="Próximo mês"
-                  onClick={() =>
-                    setViewDate(
-                      (currentDate) =>
-                        new Date(
-                          currentDate.getFullYear(),
-                          currentDate.getMonth() + 1,
-                          1,
-                        ),
-                    )
-                  }
+                  onClick={() => setViewDate((currentDate) => new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}
                 >
                   <ChevronRight className="size-4" />
                 </Button>
@@ -388,14 +374,6 @@ export function AgendaListPage() {
             </CardHeader>
 
             <CardContent>
-            <div className="calendar-legend">
-              <span className="legend-chip legend-chip-audiencia">
-                Audiência
-              </span>
-              <span className="legend-chip legend-chip-reuniao">Reunião</span>
-              <span className="legend-chip legend-chip-tarefa">Tarefa</span>
-            </div>
-
             <div className="calendar-frame">
               <div className="calendar-weekdays">
                 <span>Seg</span>
