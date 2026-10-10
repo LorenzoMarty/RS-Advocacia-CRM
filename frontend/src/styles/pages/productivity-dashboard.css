@@ -14,7 +14,7 @@
 .productivity-distribution-tasks{ min-width:0; display:flex; flex-direction:column; gap:var(--space-3); }
 
 .productivity-distribution-tasks .section-subtitle{
-    margin:0; font-size:.7rem; font-weight:800; letter-spacing:.07em;
+    margin:0; font-size:.7rem; font-weight:800; letter-spacing:var(--track-label);
     text-transform:uppercase; color:var(--muted);
 }
 
@@ -29,7 +29,7 @@
     pointer-events:none;
 }
 
-.pd-donut-center span{ color:var(--muted); font-size:.6rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; }
+.pd-donut-center span{ color:var(--muted); font-size:.6rem; font-weight:800; letter-spacing:var(--track-label); text-transform:uppercase; }
 
 .pd-donut-center strong{ font-size:1.2rem; font-variant-numeric:tabular-nums; }
 

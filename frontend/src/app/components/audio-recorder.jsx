@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react';
-import { Download, Radio } from 'lucide-react';
+import { Mic, Upload } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
@@ -74,96 +73,119 @@ export function AudioRecorder({ onUpload }) {
     }
   }
 
+  function handleDrop(event) {
+    event.preventDefault();
+    if (isRecording) {
+      return;
+    }
+    selectFile(event.dataTransfer.files?.[0]);
+  }
+
+  const blockClass = 'flex min-w-0 items-center gap-3.5 rounded-md p-4 text-left';
+
   return (
-    <Card className="border-dashed bg-surface-2" aria-label="Captura de áudio">
-      <CardContent className="grid gap-3 py-[calc(var(--pad-card)*.75)]">
-        <div className="flex flex-wrap gap-2.5">
-          {isRecording ? (
-            <Button variant="destructive" type="button" onClick={meetingRecorder.stopMeetingRecording}>
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-current" aria-hidden="true" />
-              Encerrar gravação · {formatElapsed(meetingRecorder.elapsedMs)}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              disabled={!tabCaptureSupported}
-              title={tabCaptureSupported
-                ? 'Compartilhe a aba da reunião com áudio para gravar todos os participantes.'
-                : 'Disponível no Chrome ou Edge (captura de áudio da aba).'}
-              onClick={meetingRecorder.startMeetingRecording}
-            >
-              <Radio className="size-4" />
-              Gravar reunião
-            </Button>
-          )}
-
-          <Button asChild variant="secondary" disabled={isRecording} className={isRecording ? 'pointer-events-none opacity-50' : ''}>
-            <label className="cursor-pointer">
-              <Download className="size-4" />
-              Enviar arquivo
-              <input
-                ref={inputRef}
-                type="file"
-                className="absolute h-px w-px overflow-hidden opacity-0"
-                accept=".mp3,.mp4,.mpeg,.mpga,.m4a,.wav,.webm,audio/*"
-                disabled={isRecording}
-                onChange={(event) => selectFile(event.target.files?.[0])}
-              />
-            </label>
-          </Button>
-        </div>
-
-        {!tabCaptureSupported && !isRecording ? (
-          <p className="m-0 text-sm leading-relaxed text-muted-foreground">
-            Para gravar a reunião inteira (todos os participantes) use o Chrome ou Edge. Você ainda
-            pode enviar um arquivo de áudio.
-          </p>
-        ) : null}
-
-        {error ? <p className="m-0 text-sm text-destructive">{error}</p> : null}
-        {meetingRecorder.error ? <p className="m-0 text-sm text-destructive">{meetingRecorder.error}</p> : null}
-
+    <section className="grid gap-3" aria-label="Captura de áudio">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
         {isRecording ? (
-          <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-3" role="status">
-            <span className="h-3 w-3 flex-none animate-ping rounded-full bg-destructive" aria-hidden="true" />
-            <div className="grid gap-0.5">
-              <strong className="text-sm text-foreground">Gravando reunião · {formatElapsed(meetingRecorder.elapsedMs)}</strong>
-              <span className="text-sm leading-snug text-muted-foreground">
-                Aba + microfone. A cada 5 min vira um trecho transcrito automaticamente.
-                {meetingRecorder.segmentCount > 0
-                  ? ` Trechos capturados: ${meetingRecorder.segmentCount}.`
-                  : ''}
+          <button
+            type="button"
+            role="status"
+            className={`${blockClass} cursor-pointer border-0 bg-[var(--danger-soft)] text-[var(--danger-ink)]`}
+            onClick={meetingRecorder.stopMeetingRecording}
+          >
+            <span className="grid size-11 flex-none place-items-center rounded-full bg-[var(--danger)] text-white">
+              <Mic className="size-5 motion-safe:animate-pulse" aria-hidden="true" />
+            </span>
+            <span className="grid min-w-0 gap-0.5">
+              <strong className="text-[1.07rem] font-bold">Gravando… toque para encerrar</strong>
+              <span className="text-[.86rem] font-medium tabular-nums">
+                {formatElapsed(meetingRecorder.elapsedMs)}
+                {meetingRecorder.segmentCount > 0 ? ` · ${meetingRecorder.segmentCount} trechos` : ''}
               </span>
-            </div>
+            </span>
+          </button>
+        ) : tabCaptureSupported ? (
+          <button
+            type="button"
+            className={`${blockClass} cursor-pointer border-0 bg-[var(--accent)] text-[var(--accent-fg)] transition-colors hover:bg-[var(--accent-hover)]`}
+            title="Compartilhe a aba da reunião com áudio para gravar todos os participantes."
+            onClick={meetingRecorder.startMeetingRecording}
+          >
+            <span className="grid size-11 flex-none place-items-center rounded-full bg-white/[.18]">
+              <Mic className="size-5" aria-hidden="true" />
+            </span>
+            <span className="grid min-w-0 gap-0.5">
+              <strong className="text-[1.07rem] font-bold">Gravar reunião</strong>
+              <span className="text-[.86rem] font-medium opacity-80">Aba + microfone · um trecho a cada 5 min</span>
+            </span>
+          </button>
+        ) : (
+          <div className={`${blockClass} bg-surface-2 text-muted-foreground`} aria-disabled="true">
+            <span className="grid size-11 flex-none place-items-center rounded-full bg-surface-3">
+              <Mic className="size-5" aria-hidden="true" />
+            </span>
+            <span className="grid min-w-0 gap-0.5">
+              <strong className="text-[1.07rem] font-bold text-ink-2">Gravar reunião</strong>
+              <span className="text-[.86rem] font-medium">Disponível no Chrome ou Edge</span>
+            </span>
           </div>
-        ) : null}
+        )}
 
-        {!isRecording && segmentsSent > 0 ? (
-          <p className="m-0 text-sm text-success">
-            {segmentsSent} trecho(s) enviado(s) para transcrição.
-          </p>
-        ) : null}
+        <label
+          className={`relative ${blockClass} cursor-pointer border-[1.5px] border-dashed border-line-strong transition-colors hover:bg-surface-2 ${
+            isRecording ? 'pointer-events-none opacity-50' : ''
+          }`}
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={handleDrop}
+        >
+          <span className="grid size-11 flex-none place-items-center rounded-full bg-surface-2">
+            <Upload className="size-5" aria-hidden="true" />
+          </span>
+          <span className="grid min-w-0 gap-0.5">
+            <strong className="text-[1.07rem] font-bold text-ink">Enviar arquivo de áudio</strong>
+            <span className="text-[.86rem] font-medium text-muted-foreground">Arraste aqui · MP3, WAV, M4A, WEBM</span>
+          </span>
+          <input
+            ref={inputRef}
+            type="file"
+            className="absolute h-px w-px overflow-hidden opacity-0"
+            accept=".mp3,.mp4,.mpeg,.mpga,.m4a,.wav,.webm,audio/*"
+            disabled={isRecording}
+            onChange={(event) => selectFile(event.target.files?.[0])}
+          />
+        </label>
+      </div>
 
-        {recording ? (
-          <div className="grid gap-2.5 rounded-xl border border-border bg-muted/60 p-3.5">
-            <audio className="w-full" controls src={previewUrl} />
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="min-w-[140px] flex-1 truncate text-sm text-muted-foreground">{recording.filename}</span>
-              <Button type="button" disabled={isUploading} onClick={upload}>
-                {isUploading
-                  ? `Enviando...${uploadProgress ? ` ${uploadProgress}%` : ''}`
-                  : 'Transcrever e resumir'}
-              </Button>
-              <Button variant="secondary" type="button" disabled={isUploading} onClick={clearRecording}>
-                Descartar
-              </Button>
-            </div>
-            {isUploading && uploadProgress ? (
-              <Progress value={uploadProgress} className="h-1.5" aria-hidden="true" />
-            ) : null}
+      {error ? <p className="m-0 text-[.93rem] font-medium text-[var(--danger-ink)]">{error}</p> : null}
+      {meetingRecorder.error ? (
+        <p className="m-0 text-[.93rem] font-medium text-[var(--danger-ink)]">{meetingRecorder.error}</p>
+      ) : null}
+
+      {!isRecording && segmentsSent > 0 ? (
+        <p className="m-0 text-[.93rem] font-medium text-[var(--success-ink)]">
+          {segmentsSent} trecho(s) enviado(s) para transcrição.
+        </p>
+      ) : null}
+
+      {recording ? (
+        <div className="grid gap-2.5 rounded-md bg-surface-2 p-3.5">
+          <audio className="w-full" controls src={previewUrl} />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="min-w-[140px] flex-1 truncate text-[.93rem] text-muted-foreground">{recording.filename}</span>
+            <Button type="button" disabled={isUploading} onClick={upload}>
+              {isUploading
+                ? `Enviando...${uploadProgress ? ` ${uploadProgress}%` : ''}`
+                : 'Transcrever e resumir'}
+            </Button>
+            <Button variant="secondary" type="button" disabled={isUploading} onClick={clearRecording}>
+              Descartar
+            </Button>
           </div>
-        ) : null}
-      </CardContent>
-    </Card>
+          {isUploading && uploadProgress ? (
+            <Progress value={uploadProgress} className="h-1.5" aria-hidden="true" />
+          ) : null}
+        </div>
+      ) : null}
+    </section>
   );
 }

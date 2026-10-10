@@ -1,3 +1,5 @@
+import '@fontsource/urbanist/200.css';
+import '@fontsource/urbanist/300.css';
 import '@fontsource/urbanist/400.css';
 import '@fontsource/urbanist/500.css';
 import '@fontsource/urbanist/600.css';

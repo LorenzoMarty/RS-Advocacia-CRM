@@ -294,3 +294,60 @@
   display: grid;
   gap: 12px;
 }
+
+/* ---- Alinhamento com o mock ---- */
+.prospect-funnel{display:grid;gap:6px}
+
+.prospect-funnel-step{display:flex;flex-direction:column;gap:8px;min-width:0}
+
+.prospect-funnel-bar{height:8px;border-radius:999px;background:var(--subtle)}
+
+.prospect-funnel-step.is-proposta_enviada .prospect-funnel-bar{background:var(--accent)}
+
+.prospect-funnel-step.is-aguardando_retorno .prospect-funnel-bar{background:var(--warn)}
+
+.prospect-funnel-step.is-perdido .prospect-funnel-bar{background:var(--danger)}
+
+.prospect-funnel-label{display:flex;align-items:baseline;gap:8px;min-width:0}
+
+.prospect-funnel-label strong{font-size:1.57rem;font-weight:800;font-variant-numeric:tabular-nums}
+
+.prospect-funnel-label span{overflow:hidden;color:var(--muted);font-size:.93rem;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+
+.prospect-funnel-stats{display:flex;gap:28px;padding-left:24px;border-left:1px solid var(--line)}
+
+.prospect-funnel-stats div{display:flex;flex-direction:column;gap:2px}
+
+.prospect-funnel-stats span{color:var(--muted);font-size:.86rem;font-weight:600}
+
+.prospect-funnel-stats strong{font-size:1.57rem;font-weight:800;font-variant-numeric:tabular-nums}
+
+@media (max-width:1024px){
+.prospect-funnel-stats{padding-left:0;border-left:0}
+}
+
+.prospect-card{gap:10px;border-radius:var(--radius-md)}
+
+.prospect-card-name{font-size:1.07rem;white-space:normal}
+
+.prospect-card-demand{margin:0;color:var(--muted);font-size:.93rem;font-weight:500}
+
+.prospect-card-step{
+  display:flex;align-items:center;gap:8px;margin:0;padding:8px 10px;border-radius:10px;
+  background:var(--accent-soft);color:var(--accent);font-size:.86rem;font-weight:600;
+}
+
+.prospect-card-actions{display:flex;align-items:center;gap:8px}
+
+.prospect-card-owner{display:flex;flex:1;align-items:center;gap:8px;min-width:0;color:var(--subtle);font-size:.86rem;font-weight:500}
+
+.prospect-card-icon{
+  display:grid;place-items:center;flex:0 0 auto;width:30px;height:30px;border:0;border-radius:999px;
+  background:var(--surface-2);color:var(--ink-2);cursor:pointer;transition:background var(--motion) var(--ease-out);
+}
+
+.prospect-card-icon:hover{background:var(--surface-3)}
+
+.prospect-card-icon.is-primary{background:var(--accent);color:var(--accent-fg)}
+
+.prospect-card-icon.is-primary:hover{background:var(--accent-hover)}

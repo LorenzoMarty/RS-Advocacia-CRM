@@ -8,62 +8,33 @@
 }
 
 .loading-card{
-    width:min(100%,420px);
+    width:min(100%,460px);
     display:grid;
     justify-items:center;
-    gap:20px;
-    padding:32px 28px;
-    border-radius:var(--radius-lg);
-    border:0;
-    background:var(--surface);
-    box-shadow:none;
+    gap:28px;
     text-align:center;
-    overflow:hidden;
 }
 
-.loading-mark{
-    width:76px;
-    height:76px;
-    display:grid;
-    place-items:center;
-    border-radius:var(--radius-md);
-    border:0;
-    background:var(--accent-soft-2);
-    color:var(--accent);
-    animation:loading-mark-pulse 1.8s ease-in-out infinite;
+.loading-logo{
+    --brand-w:min(100%,420px);
+    color:var(--ink);
+    animation:loading-fade 2.2s ease-in-out infinite;
 }
 
-.loading-copy{display:grid;gap:8px}
-
-.loading-kicker{
-    color:var(--muted);
-    font-size:.79rem;
-    font-weight:700;
-    letter-spacing:.07em;
+.loading-copy{
+    margin:0;
+    color:var(--subtle);
+    font-size:11px;
+    font-weight:500;
+    letter-spacing:.18em;
     text-transform:uppercase;
 }
 
-.loading-copy h1{
-    margin:0;
-    font-size:clamp(1.8rem,6vw,2.43rem);
-    line-height:1.1;
-    font-weight:700;
-    letter-spacing:-.02em;
-}
-
-.loading-copy p{
-    margin:0;
-    color:var(--soft);
-    font-size:.92rem;
-    line-height:1.5;
-}
-
+/* Linha fina, como a divisória do logo */
 .loading-progress{
-    width:100%;
-    height:8px;
-    border-radius:999px;
-    border:0;
-    background:var(--surface-3);
+    width:min(100%,220px);
+    height:1px;
+    background:var(--line-strong);
     overflow:hidden;
 }
 
@@ -71,8 +42,7 @@
     display:block;
     width:44%;
     height:100%;
-    border-radius:999px;
-    background:var(--accent);
+    background:var(--ink);
     animation:loading-progress 1.15s ease-in-out infinite;
 }
 
@@ -81,9 +51,9 @@
     100%{transform:translateX(250%)}
 }
 
-@keyframes loading-mark-pulse{
-    0%,100%{transform:translateY(0)}
-    50%{transform:translateY(-3px)}
+@keyframes loading-fade{
+    0%,100%{opacity:.55}
+    50%{opacity:1}
 }
 
 /* Fallback do Suspense ao trocar de rota — só a área de conteúdo, sidebar continua montada. */
@@ -119,7 +89,7 @@
     50%{opacity:1}
 }
 @media (prefers-reduced-motion:reduce){
-.loading-mark,
+.loading-logo,
 .loading-progress span{
         animation:none;
     }
@@ -137,9 +107,5 @@
 
 @media (max-width:480px){
 .loading-screen{padding:16px}
-
-.loading-card{padding:28px 20px}
-
-.loading-mark{width:68px;height:68px}
 
 }
