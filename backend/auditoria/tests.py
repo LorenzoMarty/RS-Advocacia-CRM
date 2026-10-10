@@ -3,11 +3,14 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.db import connection
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
 from auditoria.models import RegistroAuditoria
+from auditoria.serializers import serialize_registro, serialize_registros
 from auditoria.services import calcular_diff
 from clientes.models import Cliente
 from peticoes.models import Peticao
@@ -824,3 +827,90 @@ class AuditoriaListarAutoresTests(_AuditoriaBaseTestCase):
 
         response = self.client.get(reverse("listar_autores"))
         self.assertEqual(response.status_code, 403)
+
+
+class SerializeRegistrosTests(_AuditoriaBaseTestCase):
+    def _prazo(self, titulo="Prazo"):
+        return Prazo.objects.create(
+            titulo=titulo,
+            data_limite="2026-06-23",
+            processo=self.processo,
+            status="Pendente",
+        )
+
+    def _peticao(self, com_processo=True):
+        return Peticao.objects.create(
+            cliente=self.cliente,
+            processo=self.processo if com_processo else None,
+            tipo=Peticao.TIPO_PETICAO,
+            adverso="Empresa",
+            responsavel_acao="X",
+            status=Peticao.STATUS_PENDENTE,
+        )
+
+    def _registro(self, tipo, entidade_id, **extra):
+        return RegistroAuditoria.objects.create(
+            acao=RegistroAuditoria.ACAO_ATUALIZADO,
+            entidade_tipo=tipo,
+            entidade_id=str(entidade_id),
+            entidade_rotulo="x",
+            resumo="r",
+            **extra,
+        )
+
+    def _serializar(self):
+        registros = list(RegistroAuditoria.objects.order_by("pk"))
+        with CaptureQueriesContext(connection) as ctx:
+            dados = serialize_registros(registros)
+        return len(ctx), dados
+
+    def test_resolve_processo_de_prazos_e_peticoes_sem_processo_no_registro(self):
+        prazo = self._prazo()
+        peticao = self._peticao()
+        self._registro(RegistroAuditoria.ENTIDADE_PRAZO, prazo.pk)
+        self._registro(RegistroAuditoria.ENTIDADE_PETICAO, peticao.pk)
+        _, dados = self._serializar()
+        for item in dados:
+            self.assertEqual(item["processo_id"], str(self.processo.pk))
+            self.assertEqual(item["processo_numero"], self.processo.numero_processo)
+
+    def test_numero_de_queries_nao_cresce_com_o_numero_de_registros(self):
+        for i in range(2):
+            self._registro(RegistroAuditoria.ENTIDADE_PRAZO, self._prazo(f"P{i}").pk)
+            self._registro(RegistroAuditoria.ENTIDADE_PETICAO, self._peticao().pk)
+        poucos, _ = self._serializar()
+        for i in range(2, 8):
+            self._registro(RegistroAuditoria.ENTIDADE_PRAZO, self._prazo(f"P{i}").pk)
+            self._registro(RegistroAuditoria.ENTIDADE_PETICAO, self._peticao().pk)
+        muitos, dados = self._serializar()
+        self.assertEqual(poucos, muitos)
+        self.assertEqual(muitos, 2)
+        self.assertEqual(len(dados), 16)
+
+    def test_casos_que_nao_resolvem_processo(self):
+        sem_processo = self._peticao(com_processo=False)
+        self._registro(RegistroAuditoria.ENTIDADE_PETICAO, sem_processo.pk)
+        self._registro(RegistroAuditoria.ENTIDADE_PRAZO, 99999)  # entidade apagada
+        self._registro(RegistroAuditoria.ENTIDADE_PRAZO, "nao-numerico")
+        self._registro(RegistroAuditoria.ENTIDADE_EVENTO, 1)
+        _, dados = self._serializar()
+        self.assertEqual([d["processo_id"] for d in dados], ["", "", "", ""])
+
+    def test_registro_com_processo_ou_do_proprio_processo_nao_consulta_nada(self):
+        self._registro(
+            RegistroAuditoria.ENTIDADE_PRAZO,
+            1,
+            processo_id=str(self.processo.pk),
+            processo_rotulo="rotulo",
+        )
+        self._registro(RegistroAuditoria.ENTIDADE_PROCESSO, self.processo.pk)
+        total, dados = self._serializar()
+        self.assertEqual(total, 0)
+        self.assertEqual(dados[0]["processo_numero"], "rotulo")
+        self.assertEqual(dados[1]["processo_id"], str(self.processo.pk))
+
+    def test_serialize_registro_avulso_continua_resolvendo(self):
+        prazo = self._prazo()
+        registro = self._registro(RegistroAuditoria.ENTIDADE_PRAZO, prazo.pk)
+        dados = serialize_registro(registro)
+        self.assertEqual(dados["processo_numero"], self.processo.numero_processo)
