@@ -2,6 +2,11 @@ from core.utils import isoformat_ou_nulo
 
 from .models import InteracaoProspect, Prospect
 
+def _total_interacoes(prospect: Prospect) -> int:
+    # ``num_interacoes`` comes from ``.annotate(Count("interacoes"))`` on list queries.
+    anotado = getattr(prospect, "num_interacoes", None)
+    return anotado if anotado is not None else prospect.interacoes.count()
+
 
 def serialize_interacao(interacao: InteracaoProspect):
     return {
@@ -45,7 +50,7 @@ def serialize_prospect(prospect: Prospect, incluir_interacoes: bool = False):
             else ""
         ),
         "convertido_em": isoformat_ou_nulo(prospect.convertido_em),
-        "total_interacoes": prospect.interacoes.count(),
+        "total_interacoes": _total_interacoes(prospect),
         "data_criacao": isoformat_ou_nulo(prospect.data_criacao),
         "atualizado_em": isoformat_ou_nulo(prospect.atualizado_em),
     }

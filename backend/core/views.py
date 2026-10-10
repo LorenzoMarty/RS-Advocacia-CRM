@@ -3,6 +3,7 @@ from datetime import date
 
 from django.core.cache import cache
 from django.db import connections
+from django.db.models import Count
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -210,7 +211,9 @@ def inicializacao(request):
             serialize_prospect(prospect)
             for prospect in Prospect.objects.select_related(
                 "responsavel_interno", "cliente_convertido"
-            ).all()
+            )
+            .annotate(num_interacoes=Count("interacoes"))
+            .all()
         ]
 
     if pode_ver_lancamentos:

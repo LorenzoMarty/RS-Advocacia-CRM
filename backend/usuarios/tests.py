@@ -5,13 +5,16 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.core.cache import cache
 from django.core.management import call_command
+from django.db import connection
 from django.test import TestCase, TransactionTestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from auditoria.models import RegistroAuditoria
 from integrations.models import GoogleAccount, GoogleCalendar
 from usuarios import views as usuarios_views
 from usuarios.models import Cargo, Usuario
+from usuarios.serializers import serialize_usuario, serialize_usuarios
 from usuarios.views import _ensure_default_cargos
 
 
@@ -498,3 +501,55 @@ class UsuarioAtualIdentidadeTests(TestCase):
         response = self.client.get(reverse("usuario_atual"))
         self.assertIsNone(response.json()["dados"]["usuario"])
         self.assertNotIn("usuario_id", self.client.session)
+
+
+class SerializeUsuariosQueryCountTests(TestCase):
+    def _criar(self, quantidade, com_google=True):
+        for i in range(quantidade):
+            usuario = Usuario.objects.create(
+                nome=f"U{i}", email=f"u{i}-{quantidade}@example.com", cargo="Advogado"
+            )
+            if com_google:
+                conta = GoogleAccount.objects.create(
+                    usuario=usuario, google_user_id=f"sub-{i}-{quantidade}", email=usuario.email
+                )
+                conta.store_tokens(access_token="a", refresh_token="r")
+                conta.save()
+                GoogleCalendar.objects.create(
+                    account=conta, calendar_id="primary", summary=f"Agenda {i}", enabled=True
+                )
+                GoogleCalendar.objects.create(
+                    account=conta, calendar_id="off", summary="Desligada", enabled=False
+                )
+
+    def _queries(self):
+        usuarios = list(Usuario.objects.order_by("nome"))
+        with CaptureQueriesContext(connection) as ctx:
+            dados = serialize_usuarios(usuarios)
+        return len(ctx), dados
+
+    def test_numero_de_queries_nao_cresce_com_o_numero_de_usuarios(self):
+        self._criar(2)
+        poucos, _ = self._queries()
+        self._criar(6)
+        muitos, dados = self._queries()
+        self.assertEqual(poucos, muitos)
+        self.assertEqual(len(dados), 8)
+
+    def test_resultado_inclui_conta_e_calendario_habilitado(self):
+        self._criar(2)
+        _, dados = self._queries()
+        self.assertTrue(all(d["google_calendar_conectado"] for d in dados))
+        self.assertEqual([d["google_calendar_destino"] for d in dados], ["Agenda 0", "Agenda 1"])
+
+    def test_usuario_sem_conta_google_usa_destino_padrao(self):
+        self._criar(2, com_google=False)
+        _, dados = self._queries()
+        self.assertFalse(any(d["google_calendar_conectado"] for d in dados))
+        self.assertEqual({d["google_calendar_destino"] for d in dados}, {"primary"})
+
+    def test_serialize_usuario_avulso_continua_funcionando_sem_prefetch(self):
+        self._criar(1)
+        dados = serialize_usuario(Usuario.objects.get())
+        self.assertTrue(dados["google_calendar_conectado"])
+        self.assertEqual(dados["google_calendar_destino"], "Agenda 0")

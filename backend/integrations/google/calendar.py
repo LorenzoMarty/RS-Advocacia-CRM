@@ -42,7 +42,13 @@ def _execute(factory, error_message: str):
 def calendar_label(usuario=None) -> str:
     if usuario is not None:
         try:
-            enabled = usuario.google_account.calendars.filter(enabled=True).first()
+            account = usuario.google_account
+            # ``enabled_calendars`` is set by a Prefetch(to_attr=...) when serializing lists.
+            prefetched = getattr(account, "enabled_calendars", None)
+            if prefetched is not None:
+                enabled = prefetched[0] if prefetched else None
+            else:
+                enabled = account.calendars.filter(enabled=True).first()
             if enabled:
                 return enabled.summary or enabled.calendar_id
         except (

@@ -1,3 +1,4 @@
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -29,7 +30,9 @@ def _prospect_api_payload(request):
 
 
 def _prospects_base_queryset():
-    return Prospect.objects.select_related("responsavel_interno", "cliente_convertido")
+    return Prospect.objects.select_related(
+        "responsavel_interno", "cliente_convertido"
+    ).annotate(num_interacoes=Count("interacoes"))
 
 
 @app_permissions_required("prospeccao.view_prospect")
