@@ -15,7 +15,7 @@ from core.utils import (
 )
 from documentos import services as documentos_services
 from integrations.google.exceptions import GOOGLE_ERRORS
-from integrations.google.oauth import current_usuario
+from core.identity import current_usuario
 from integrations.google.responses import mapear_erro_google
 from peticoes.forms import PeticaoForm
 from peticoes.models import Peticao

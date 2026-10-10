@@ -15,7 +15,7 @@ from core.utils import (
     resposta_sucesso,
 )
 from documentos import tasks as documentos_tasks
-from integrations.google.oauth import current_usuario
+from core.identity import current_usuario
 
 
 def _filtrar_clientes(request):

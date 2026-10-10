@@ -12,6 +12,7 @@ from auditoria.models import RegistroAuditoria
 from auditoria.views import serialize_registro
 from clientes.models import Cliente
 from clientes.views import serialize_cliente
+from core.identity import current_usuario, is_admin
 from core.permission_utils import user_has_permission
 from core.permissions import app_permissions_required
 from core.utils import metodo_nao_permitido, resposta_sucesso
@@ -25,9 +26,7 @@ from processos.models import Processo
 from processos.views import serialize_processo
 from productivity.models import TimeEntry
 from productivity.views import (
-    _current_usuario,
     _goals_response,
-    _is_admin,
     _time_entries_response,
 )
 from prospeccao.models import Prospect
@@ -139,7 +138,7 @@ def inicializacao(request):
     if request.method != "GET":
         return metodo_nao_permitido(["GET"])
 
-    usuario_atual = _current_usuario(request)
+    usuario_atual = current_usuario(request)
     cache_key = f"inicializacao:{request.session.get('usuario_id') or 'anon'}"
     cached = cache.get(cache_key)
     if cached is not None:
@@ -154,7 +153,7 @@ def inicializacao(request):
     pode_ver_metas = user_has_permission(request, "productivity.view_productivitygoal")
     pode_ver_prospects = user_has_permission(request, "prospeccao.view_prospect")
     pode_ver_lancamentos = acessos["financeiro.view_lancamento"]
-    eh_admin = _is_admin(request, usuario_atual)
+    eh_admin = is_admin(request, usuario_atual)
 
     tarefas = {
         "clientes": lambda: [

@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.contrib.auth.models import AnonymousUser, User
 from django.db.models import Q
 from django.http import HttpRequest
 
@@ -9,6 +8,7 @@ from auditoria import overview as overview_mod
 from auditoria import painel
 from auditoria.models import RegistroAuditoria
 from clientes.models import Cliente
+from core.identity import current_usuario, is_admin
 from core.pagination import paginar
 from core.permissions import app_permissions_required
 from core.utils import (
@@ -21,54 +21,18 @@ from peticoes.models import Peticao
 from prazos.models import Prazo
 from processos.models import Processo
 from productivity.models import ProductivityGoal, TimeEntry
-from usuarios.models import Usuario
 
 
-def _authenticated_user(request: HttpRequest) -> User | None:
-    request_user = getattr(request, "user", None)
-    if (
-        request_user is None
-        or isinstance(request_user, AnonymousUser)
-        or not getattr(request_user, "is_authenticated", False)
-    ):
-        return None
-    return request_user
 
 
-def _current_usuario(request: HttpRequest) -> Usuario | None:
-    usuario_id = request.session.get("usuario_id")
-    if usuario_id:
-        usuario = Usuario.objects.filter(pk=usuario_id).first()
-        if usuario:
-            return usuario
-
-    auth_user = _authenticated_user(request)
-    if not auth_user:
-        return None
-
-    for value in (auth_user.email, auth_user.username):
-        if not value:
-            continue
-        usuario = Usuario.objects.filter(email=value).first()
-        if usuario:
-            return usuario
-
-    return None
 
 
-def _is_admin(request: HttpRequest, usuario: Usuario | None = None) -> bool:
-    auth_user = _authenticated_user(request)
-    if auth_user and (auth_user.is_staff or auth_user.is_superuser):
-        return True
-    if auth_user and auth_user.groups.filter(name="Administrador").exists():
-        return True
-    return usuario is not None and usuario.cargo == "Administrador"
 
 
 def _exigir_admin(request: HttpRequest):
     """Return an error response if the caller is not an admin, else None."""
-    usuario_atual = _current_usuario(request)
-    if not _is_admin(request, usuario_atual):
+    usuario_atual = current_usuario(request)
+    if not is_admin(request, usuario_atual):
         return resposta_erro(
             {"permissao": ["Apenas administradores acessam a auditoria."]}, status=403
         )

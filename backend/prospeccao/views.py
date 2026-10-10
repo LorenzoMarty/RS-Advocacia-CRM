@@ -14,7 +14,7 @@ from core.utils import (
     resposta_erro,
     resposta_sucesso,
 )
-from productivity.views import _current_usuario
+from core.identity import current_usuario
 
 from .forms import InteracaoForm, ProspectForm
 from .models import InteracaoProspect, Prospect
@@ -220,7 +220,7 @@ def criar_interacao(request, prospect_id):
     data = dict(payload)
     data["prospect"] = prospect.pk
     if not data.get("usuario"):
-        usuario_atual = _current_usuario(request)
+        usuario_atual = current_usuario(request)
         if usuario_atual:
             data["usuario"] = usuario_atual.pk
 
