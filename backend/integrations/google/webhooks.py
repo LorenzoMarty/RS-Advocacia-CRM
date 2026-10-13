@@ -1,3 +1,4 @@
+import hmac
 import logging
 from datetime import timedelta
 from datetime import timezone as datetime_timezone
@@ -119,15 +120,19 @@ def handle_notification(headers) -> dict:
         "x-goog-resource-state"
     )
 
+    # Calendars without an active watch store "" in both fields, so empty headers
+    # must never be treated as a match.
+    if not channel_id or not channel_token:
+        return {"status": "ignorado"}
+
     calendar = (
         GoogleCalendar.objects.select_related("account__usuario")
-        .filter(
-            watch_channel_id=channel_id,
-            watch_token=channel_token,
-        )
+        .filter(watch_channel_id=channel_id)
         .first()
     )
-    if calendar is None:
+    if calendar is None or not hmac.compare_digest(
+        calendar.watch_token.encode(), channel_token.encode()
+    ):
         return {"status": "ignorado"}
     if (
         resource_id

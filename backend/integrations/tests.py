@@ -775,3 +775,74 @@ class GoogleDisconnectEdgeCaseTests(TestCase):
         self.assertEqual(response.status_code, 200)
         revoke.assert_not_called()
         self.assertIsNotNone(account.revoked_at)
+
+
+class GoogleWebhookChannelValidationTests(TestCase):
+    """Notificações sem identificação de canal completa e válida são ignoradas."""
+
+    def setUp(self):
+        usuario = Usuario.objects.create(
+            nome="Advogada", email="canal@example.com", cargo="Administrador"
+        )
+        conta = GoogleAccount.objects.create(
+            usuario=usuario, google_user_id="canal-sub", email=usuario.email
+        )
+        conta.store_tokens(access_token="a", refresh_token="r")
+        conta.save()
+        # um calendário sem watch ativo (campos de watch vazios, o estado padrão)
+        self.sem_watch = GoogleCalendar.objects.create(
+            account=conta, calendar_id="sem-watch", summary="Sem watch"
+        )
+        self.com_watch = GoogleCalendar.objects.create(
+            account=conta,
+            calendar_id="com-watch",
+            summary="Com watch",
+            watch_channel_id="canal-1",
+            watch_resource_id="recurso-1",
+            watch_token="token-1",
+        )
+
+    def _post(self, **headers):
+        with patch(
+            "integrations.google.webhooks.sync_single_calendar",
+            return_value={"importados": 0},
+        ) as sync:
+            response = self.client.post(reverse("google_calendar_webhook"), **headers)
+        return response, sync
+
+    def test_cabecalhos_ausentes_ou_vazios_sao_ignorados(self):
+        casos = {
+            "ausentes": {},
+            "vazios": {"HTTP_X_GOOG_CHANNEL_ID": "", "HTTP_X_GOOG_CHANNEL_TOKEN": ""},
+            "so_id_vazio": {
+                "HTTP_X_GOOG_CHANNEL_ID": "",
+                "HTTP_X_GOOG_CHANNEL_TOKEN": "token-1",
+            },
+            "so_token_vazio": {
+                "HTTP_X_GOOG_CHANNEL_ID": "canal-1",
+                "HTTP_X_GOOG_CHANNEL_TOKEN": "",
+            },
+        }
+        for nome, headers in casos.items():
+            with self.subTest(caso=nome):
+                response, sync = self._post(**headers)
+                self.assertEqual(response.json()["dados"], {"status": "ignorado"})
+                sync.assert_not_called()
+
+    def test_token_incorreto_e_ignorado(self):
+        response, sync = self._post(
+            HTTP_X_GOOG_CHANNEL_ID="canal-1",
+            HTTP_X_GOOG_CHANNEL_TOKEN="outro-token",
+        )
+        self.assertEqual(response.json()["dados"], {"status": "ignorado"})
+        sync.assert_not_called()
+
+    def test_canal_valido_continua_sincronizando(self):
+        response, sync = self._post(
+            HTTP_X_GOOG_CHANNEL_ID="canal-1",
+            HTTP_X_GOOG_CHANNEL_TOKEN="token-1",
+            HTTP_X_GOOG_RESOURCE_ID="recurso-1",
+            HTTP_X_GOOG_RESOURCE_STATE="exists",
+        )
+        self.assertEqual(response.json()["dados"]["status"], "sincronizado")
+        sync.assert_called_once_with(self.com_watch)
