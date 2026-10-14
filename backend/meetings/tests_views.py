@@ -185,7 +185,7 @@ class MeetingViewsBranchTests(TemporaryMediaTestCase):
         self.assertEqual(ok.status_code, 200, ok.json())
         self.assertIn("2 áudio(s)", ok.json()["mensagem"])
         self.assertEqual(valor.status_code, 400)
-        self.assertGreaterEqual(google.status_code, 400)
+        self.assertEqual(google.status_code, 401)
         self.assertEqual(
             self.client.post(reverse("finalizar_reuniao", args=[999999])).status_code, 404
         )
@@ -275,7 +275,7 @@ class MeetingViewsBranchTests(TemporaryMediaTestCase):
         self.assertEqual(invalido.status_code, 400)
         self.assertEqual(ok.status_code, 200, ok.json())
         self.assertEqual(ok.json()["dados"]["upload_url"], "https://drive.example/u")
-        self.assertGreaterEqual(google.status_code, 400)
+        self.assertEqual(google.status_code, 502)
 
     @patch("meetings.views.processar_gravacao.delay")
     @patch("meetings.views.services.confirmar_upload")
@@ -297,4 +297,4 @@ class MeetingViewsBranchTests(TemporaryMediaTestCase):
         self.assertEqual(confirmar.call_args_list[0].kwargs["ordem"], 0)
         delay.assert_called_once_with(gravacao.pk)
         self.assertEqual(valor.status_code, 400)
-        self.assertGreaterEqual(google.status_code, 400)
+        self.assertEqual(google.status_code, 401)
