@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from agenda.models import Evento
 from clientes.models import Cliente
@@ -44,6 +45,36 @@ class AgendaIntegrationViewsTests(TestCase):
             status="Ativo",
             advogado_responsavel=self.usuario,
         )
+
+    def test_listar_eventos_pagina_sem_repetir_nem_perder_datas_iguais(self):
+        inicio = timezone.now()
+        Evento.objects.bulk_create(
+            Evento(
+                titulo=f"Evento {i}",
+                data_inicio=inicio,
+                data_fim=inicio,
+                tipo_evento="Audiencia",
+                status="Agendado",
+                prioridade="Alta",
+                criado_por="teste",
+                local="Forum",
+            )
+            for i in range(1100)
+        )
+
+        ids = []
+        offset = 0
+        while True:
+            response = self.client.get(reverse("listar_eventos"), {"offset": offset})
+            dados = response.json()["dados"]
+            ids.extend(e["id"] for e in dados["eventos"])
+            if not dados["paginacao"]["tem_mais"]:
+                break
+            offset += len(dados["eventos"])
+
+        self.assertEqual(dados["paginacao"]["total"], 1100)
+        self.assertEqual(len(ids), 1100)
+        self.assertEqual(len(set(ids)), 1100)
 
     def payload(self):
         return {
