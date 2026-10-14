@@ -30,19 +30,22 @@ test('editing a process shows the success toast', async ({ page }) => {
   await page.getByLabel('Descrição').fill(`Editado pelo smoke E2E ${Date.now()}`);
   await page.getByRole('button', { name: 'Atualizar' }).click();
 
-  await expect(page.locator('[data-sonner-toast]').first()).toBeVisible();
+  await expect(page.locator('[data-sonner-toast][data-type="success"]').first()).toBeVisible();
   await expect(page).toHaveURL(/\/processos\/[^/]+$/);
 });
 
 test('moving a deadline card between kanban columns persists', async ({ page }) => {
   await page.goto('/prazos');
   const board = page.getByLabel('Kanban de prazos fatais');
+  // Counts are only meaningful once the cards have loaded.
+  await expect(board.locator('.deadline-card').first()).toBeVisible();
   const countOf = async (name) =>
     Number(await board.locator('section', { has: page.getByRole('heading', { name, exact: true }) }).locator('.deadline-column-count').first().innerText());
 
   const pending = board.locator('section', { has: page.getByRole('heading', { name: 'Pendente', exact: true }) });
   const target = board.locator('section', { has: page.getByRole('heading', { name: 'Em andamento', exact: true }) });
   const before = { pending: await countOf('Pendente'), target: await countOf('Em andamento') };
+  expect(before.pending).toBeGreaterThan(0);
 
   await pending.locator('.deadline-card').first().dragTo(target);
 
@@ -74,13 +77,17 @@ test.describe('no horizontal overflow at 390px', () => {
   const routes = [
     '/', '/clientes', '/processos', '/agenda', '/prazos', '/peticoes-contestacoes',
     '/reunioes', '/produtividade', '/prospeccao', '/financeiro', '/auditoria',
-    '/usuarios', '/configuracoes',
+    '/usuarios', '/configuracoes', '/clientes/novo', '/processos/novo', '/agenda/novo', '/prazos/novo',
   ];
 
   for (const route of routes) {
     test(route, async ({ page }) => {
       await page.goto(route);
       await page.waitForLoadState('networkidle');
+      // The route must really render: no redirect (access denied/login) and no error boundary.
+      expect(new URL(page.url()).pathname).toBe(route);
+      await expect(page.locator('#main-content')).toBeVisible();
+      await expect(page.getByText('Algo deu errado')).toHaveCount(0);
       const { scrollWidth, innerWidth } = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         innerWidth: window.innerWidth,

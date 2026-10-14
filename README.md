@@ -116,7 +116,7 @@ E2E_SESSIONID=<value printed by seed_demo> npm run test:e2e
 
 The suite mutates the demo database (it edits a process and moves a card), so re-seed an empty database for a clean run. If a managed Windows machine blocks the downloaded browser, use an installed one: `E2E_BROWSER_CHANNEL=chrome` (or `msedge`).
 
-The [quality gate](.github/workflows/quality.yml) can be run from the Actions tab (`workflow_dispatch`) and runs on pull requests to `main`: backend lint (ruff) and Django tests against real Postgres and Redis service containers, plus frontend lint (ESLint) and Vitest.
+The [quality gate](.github/workflows/quality.yml) can be run from the Actions tab (`workflow_dispatch`) and runs on pull requests to `main`: backend lint (ruff) and Django tests against real Postgres and Redis service containers, plus frontend lint (ESLint) and Vitest, and an `e2e` job that runs the Playwright smoke tests above.
 
 ## Deployment
 

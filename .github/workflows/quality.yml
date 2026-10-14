@@ -109,7 +109,9 @@ jobs:
           uv sync
           uv run python manage.py migrate
           uv run python manage.py seed_demo | tee "$RUNNER_TEMP/seed.txt"
-          echo "E2E_SESSIONID=$(sed -n 's/.*sessionid = //p' "$RUNNER_TEMP/seed.txt")" >> "$GITHUB_ENV"
+          SESSIONID="$(sed -n 's/.*sessionid = //p' "$RUNNER_TEMP/seed.txt")"
+          test -n "$SESSIONID" || { echo "seed_demo did not print a sessionid"; exit 1; }
+          echo "E2E_SESSIONID=$SESSIONID" >> "$GITHUB_ENV"
           nohup uv run python manage.py runserver 8000 --noreload > "$RUNNER_TEMP/backend.log" 2>&1 &
           curl --retry 30 --retry-delay 1 --retry-connrefused -fsS http://localhost:8000/api/csrf/ > /dev/null
       - name: Install frontend and browser
