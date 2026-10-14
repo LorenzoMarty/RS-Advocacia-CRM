@@ -215,6 +215,7 @@ export const api = {
   urlLoginGoogle: () => apiUrl('/api/autenticacao/google'),
   urlReauthorizeGoogle: () => `${apiUrl('/api/autenticacao/google')}?next=/agenda`,
   sair: () => apiRequest('/api/autenticacao/sair/', { method: 'POST' }),
+  search: (q) => apiRequest(`/api/busca/?${buildQuery({ q })}`),
   listClients: (params = {}) => {
     const query = buildQuery(params);
     return apiRequest(`/api/clientes/${query ? `?${query}` : ''}`);
