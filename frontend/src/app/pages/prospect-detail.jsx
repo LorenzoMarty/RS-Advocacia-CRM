@@ -107,7 +107,7 @@ export function ProspectDetailPage() {
               <Button asChild variant="outline">
                 <Link to={`/prospeccao/${prospect.id}/editar`}>Editar</Link>
               </Button>
-              <Button variant="outline" className="text-destructive hover:bg-destructive/10" onClick={handleDelete}>
+              <Button variant="outline" className="text-[var(--danger-ink)] hover:bg-[var(--danger-soft)]" onClick={handleDelete}>
                 Excluir
               </Button>
             </>

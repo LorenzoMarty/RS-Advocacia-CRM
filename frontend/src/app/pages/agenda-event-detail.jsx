@@ -127,7 +127,7 @@ export function EventDetailPage() {
               <Button asChild variant="outline">
                 <Link to={`/agenda/${eventItem.id}/editar`}>Editar</Link>
               </Button>
-              <Button variant="outline" className="text-destructive hover:bg-destructive/10" onClick={handleDeleteEvent}>
+              <Button variant="outline" className="text-[var(--danger-ink)] hover:bg-[var(--danger-soft)]" onClick={handleDeleteEvent}>
                 Excluir
               </Button>
             </>

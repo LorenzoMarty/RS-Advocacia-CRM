@@ -39,6 +39,7 @@ export function PetitionFunnel({ petitionFunnel = [] }) {
             <div key={status} className="grid gap-1">
               <Progress
                 value={Math.max(pct, count > 0 ? 8 : 0)}
+                aria-label={`${status}: ${count}`}
                 className="h-2"
                 indicatorClassName={TONE_BAR[tone]}
               />

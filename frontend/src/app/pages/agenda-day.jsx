@@ -254,7 +254,7 @@ export function AgendaDayPage() {
                               <button
                                 type="button"
                                 className="timeline-event-attend-no"
-                                aria-label="Marcar como não compareceu"
+                                aria-label="Faltou: marcar como não compareceu"
                                 onClick={(e) => handleQuickAttendance(e, event, false)}
                               >
                                 Não compareceu

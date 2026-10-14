@@ -129,7 +129,8 @@ def listar_eventos(request):
     if data_fim:
         eventos = eventos.filter(data_inicio__lte=data_fim)
 
-    eventos = eventos.order_by("data_inicio")
+    # "id" desempata datas iguais: sem isso o offset pode repetir/perder itens.
+    eventos = eventos.order_by("data_inicio", "id")
     # Limite alto (não paginação de UI): o frontend carrega a coleção inteira
     # de uma vez no store global — isto é só um teto de segurança contra
     # query sem limite, não uma tela paginada.

@@ -649,3 +649,27 @@ export function productivityGoalFromApi(goal) {
     configured: Boolean(goal.configured),
   };
 }
+
+const SEARCH_GROUPS = [
+  { key: 'clientes', label: 'Clientes', path: (id) => `/clientes/${id}` },
+  { key: 'processos', label: 'Processos', path: (id) => `/processos/${id}` },
+  { key: 'prazos', label: 'Prazos', path: (id) => `/prazos/${id}` },
+  { key: 'eventos', label: 'Compromissos', path: (id) => `/agenda/${id}` },
+  { key: 'peticoes', label: 'Petições', path: (id) => `/peticoes-contestacoes/${id}/editar` },
+];
+
+// `/api/busca/` -> [{ label, items: [{ key, title, meta, to }] }], sem grupos vazios.
+export function searchGroupsFromResponse(payload) {
+  const grupos = payload?.grupos || {};
+  return SEARCH_GROUPS
+    .map(({ key, label, path }) => ({
+      label,
+      items: (grupos[key] || []).map((item) => ({
+        key: item.id,
+        title: item.titulo,
+        meta: item.meta || '',
+        to: path(item.id),
+      })),
+    }))
+    .filter((group) => group.items.length);
+}

@@ -105,7 +105,7 @@ export function CategoryDonut({ title, data, onSelect }) {
   if (!data.length || total <= 0) {
     return (
       <div className="finance-chart">
-        <h3>{title}</h3>
+        <h2>{title}</h2>
         <p className="section-note">Sem dados.</p>
       </div>
     );
@@ -119,7 +119,7 @@ export function CategoryDonut({ title, data, onSelect }) {
 
   return (
     <div className="finance-chart">
-      <h3>{title}</h3>
+      <h2>{title}</h2>
       <div className="finance-donut">
         <div className="finance-donut-chart" onMouseLeave={() => setActiveIndex(-1)}>
           <ResponsiveContainer width="100%" height="100%">

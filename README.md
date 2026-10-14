@@ -102,7 +102,21 @@ cd backend && python manage.py test
 cd frontend && npm test
 ```
 
-The [quality gate](.github/workflows/quality.yml) can be run from the Actions tab (`workflow_dispatch`) and runs on pull requests to `main`: backend lint (ruff) and Django tests against real Postgres and Redis service containers, plus frontend lint (ESLint) and Vitest.
+### End-to-end smoke tests
+
+A small Playwright suite (`frontend/e2e`) drives the real app against a backend seeded with `seed_demo`: demo-session login, editing a process (success toast), moving a deadline card on the kanban (persists after reload), global search (Ctrl+K) and a no-horizontal-overflow check on the main routes at 390 px. It runs in CI as the `e2e` job (Postgres + backend + Vite + Chromium) and uploads the report, traces and screenshots when it fails.
+
+Locally, with the backend from "Try it with demo data" running on port 8000 (the Vite server is started by Playwright):
+
+```bash
+cd frontend
+npx playwright install chromium                  # once
+E2E_SESSIONID=<value printed by seed_demo> npm run test:e2e
+```
+
+The suite mutates the demo database (it edits a process and moves a card), so re-seed an empty database for a clean run. If a managed Windows machine blocks the downloaded browser, use an installed one: `E2E_BROWSER_CHANNEL=chrome` (or `msedge`).
+
+The [quality gate](.github/workflows/quality.yml) can be run from the Actions tab (`workflow_dispatch`) and runs on pull requests to `main`: backend lint (ruff) and Django tests against real Postgres and Redis service containers, plus frontend lint (ESLint), Vitest and the production build. A separate `audit` job (also run weekly) fails on high-severity `npm audit --omit=dev` findings and on any `pip-audit` finding in the locked backend runtime set; Dependabot opens grouped weekly updates for `uv`, `npm` and GitHub Actions, and an `e2e` job that runs the Playwright smoke tests above.
 
 ## Deployment
 

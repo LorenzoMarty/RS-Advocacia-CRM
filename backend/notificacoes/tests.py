@@ -107,6 +107,106 @@ class MarcarLidaViewTests(TestCase):
         self.assertEqual(Notificacao.objects.filter(usuario=self.usuario, lida=False).count(), 0)
 
 
+class NotificacoesViewsTests(TestCase):
+    def setUp(self):
+        self.usuario = _usuario()
+        self.outro = _usuario("User B", "b@test.com")
+
+    def _login(self, usuario=None, com_sessao=True):
+        usuario = usuario or self.usuario
+        auth_user = get_user_model().objects.create_superuser(
+            username=usuario.email, email=usuario.email
+        )
+        self.client.force_login(auth_user)
+        if com_sessao:
+            session = self.client.session
+            session["usuario_id"] = usuario.pk
+            session.save()
+
+    def _notificar(self, usuario, titulo="N", lida=False):
+        return Notificacao.objects.create(
+            usuario=usuario, tipo="sistema", titulo=titulo, lida=lida
+        )
+
+    def test_exigem_autenticacao(self):
+        n = self._notificar(self.usuario)
+        for method, url in (
+            ("get", "/api/notificacoes/"),
+            ("post", f"/api/notificacoes/{n.pk}/ler/"),
+            ("post", "/api/notificacoes/ler-todas/"),
+        ):
+            self.assertEqual(getattr(self.client, method)(url).status_code, 401, url)
+        n.refresh_from_db()
+        self.assertFalse(n.lida)
+
+    def test_metodo_errado_retorna_405(self):
+        self._login()
+        n = self._notificar(self.usuario)
+        self.assertEqual(self.client.post("/api/notificacoes/").status_code, 405)
+        self.assertEqual(self.client.get(f"/api/notificacoes/{n.pk}/ler/").status_code, 405)
+        self.assertEqual(self.client.get("/api/notificacoes/ler-todas/").status_code, 405)
+
+    def test_listar_devolve_so_nao_lidas_do_proprio_usuario(self):
+        self._login()
+        visivel = self._notificar(self.usuario, "Visível")
+        self._notificar(self.usuario, "Já lida", lida=True)
+        self._notificar(self.outro, "De outro usuário")
+
+        resp = self.client.get("/api/notificacoes/")
+
+        self.assertEqual(resp.status_code, 200)
+        dados = resp.json()["dados"]
+        self.assertEqual([i["id"] for i in dados["itens"]], [visivel.pk])
+        self.assertEqual(dados["total_nao_lidas"], 1)
+
+    def test_listar_limita_a_50_itens_mas_conta_todas(self):
+        self._login()
+        Notificacao.objects.bulk_create(
+            Notificacao(usuario=self.usuario, tipo="sistema", titulo=f"N{i}")
+            for i in range(60)
+        )
+
+        dados = self.client.get("/api/notificacoes/").json()["dados"]
+
+        self.assertEqual(len(dados["itens"]), 50)
+        self.assertEqual(dados["total_nao_lidas"], 60)
+
+    def test_usuario_da_sessao_inexistente_retorna_401(self):
+        # Usuário Django autenticado sem Usuario de domínio correspondente.
+        auth_user = get_user_model().objects.create_user(
+            username="fantasma@test.com", email="fantasma@test.com"
+        )
+        self.client.force_login(auth_user)
+        for method, url in (
+            ("get", "/api/notificacoes/"),
+            ("post", "/api/notificacoes/1/ler/"),
+            ("post", "/api/notificacoes/ler-todas/"),
+        ):
+            self.assertEqual(getattr(self.client, method)(url).status_code, 401, url)
+
+    def test_marcar_lida_de_notificacao_alheia_ou_inexistente_retorna_404(self):
+        self._login()
+        alheia = self._notificar(self.outro)
+
+        self.assertEqual(self.client.post(f"/api/notificacoes/{alheia.pk}/ler/").status_code, 404)
+        self.assertEqual(self.client.post("/api/notificacoes/999999/ler/").status_code, 404)
+        alheia.refresh_from_db()
+        self.assertFalse(alheia.lida)
+
+    def test_marcar_todas_lidas_nao_toca_nas_de_outros_usuarios(self):
+        self._login()
+        propria = self._notificar(self.usuario)
+        alheia = self._notificar(self.outro)
+
+        resp = self.client.post("/api/notificacoes/ler-todas/")
+
+        self.assertEqual(resp.status_code, 200)
+        propria.refresh_from_db()
+        alheia.refresh_from_db()
+        self.assertTrue(propria.lida)
+        self.assertFalse(alheia.lida)
+
+
 class ChecarLembretesTaskTests(TestCase):
     def setUp(self):
         self.usuario = _usuario()
