@@ -278,18 +278,18 @@ export function FinanceiroPage() {
               <>
                 <div className="financeiro-table" role="table">
                   <div className="financeiro-row financeiro-row-head" role="row">
-                    <button type="button" className={`financeiro-th is-sortable${sort.field === 'description' ? ' is-sorted' : ''}`} onClick={() => toggleSort('description')}>
+                    <span role="columnheader" style={{ display: 'contents' }}><button type="button" className={`financeiro-th is-sortable${sort.field === 'description' ? ' is-sorted' : ''}`} onClick={() => toggleSort('description')}>
                       Descrição <SortArrow active={sort.field === 'description'} dir={sort.dir} />
-                    </button>
-                    <span className="financeiro-th">Categoria</span>
-                    <button type="button" className={`financeiro-th is-sortable${sort.field === 'value' ? ' is-sorted' : ''}`} onClick={() => toggleSort('value')}>
+                    </button></span>
+                    <span role="columnheader" className="financeiro-th">Categoria</span>
+                    <span role="columnheader" style={{ display: 'contents' }}><button type="button" className={`financeiro-th is-sortable${sort.field === 'value' ? ' is-sorted' : ''}`} onClick={() => toggleSort('value')}>
                       Valor <SortArrow active={sort.field === 'value'} dir={sort.dir} />
-                    </button>
-                    <button type="button" className={`financeiro-th is-sortable${sort.field === 'dueDate' ? ' is-sorted' : ''}`} onClick={() => toggleSort('dueDate')}>
+                    </button></span>
+                    <span role="columnheader" style={{ display: 'contents' }}><button type="button" className={`financeiro-th is-sortable${sort.field === 'dueDate' ? ' is-sorted' : ''}`} onClick={() => toggleSort('dueDate')}>
                       Vencimento <SortArrow active={sort.field === 'dueDate'} dir={sort.dir} />
-                    </button>
-                    <span className="financeiro-th">Status</span>
-                    <span className="financeiro-th">Ações</span>
+                    </button></span>
+                    <span role="columnheader" className="financeiro-th">Status</span>
+                    <span role="columnheader" className="financeiro-th">Ações</span>
                   </div>
                   <Motion.div
                     key={`${tab}-${safePage}-${sort.field}-${sort.dir}`}
@@ -300,17 +300,17 @@ export function FinanceiroPage() {
                   >
                   {pageRows.map((item) => (
                     <Motion.div className="financeiro-row" role="row" key={item.id} variants={staggerItem}>
-                      <span className="financeiro-cell" data-label="Descrição">
+                      <span role="cell" className="financeiro-cell" data-label="Descrição">
                         {item.description}
                         {item.clientName ? <small>{item.clientName}</small> : null}
                       </span>
-                      <span className="financeiro-cell" data-label="Categoria">{item.category}</span>
-                      <span className="financeiro-cell" data-label="Valor">{formatCurrency(item.value)}</span>
-                      <span className="financeiro-cell" data-label="Vencimento">{item.dueDate ? formatDate(item.dueDate) : '-'}</span>
-                      <span className="financeiro-cell" data-label="Status">
+                      <span role="cell" className="financeiro-cell" data-label="Categoria">{item.category}</span>
+                      <span role="cell" className="financeiro-cell" data-label="Valor">{formatCurrency(item.value)}</span>
+                      <span role="cell" className="financeiro-cell" data-label="Vencimento">{item.dueDate ? formatDate(item.dueDate) : '-'}</span>
+                      <span role="cell" className="financeiro-cell" data-label="Status">
                         <StatusBadge tone={getStatusTone(item.displayStatus, item.status === 'Pago')}>{item.displayStatus}</StatusBadge>
                       </span>
-                      <span className="financeiro-cell financeiro-actions" data-label="Ações">
+                      <span role="cell" className="financeiro-cell financeiro-actions" data-label="Ações">
                         <Link className="btn btn-mini btn-secondary" to={`/financeiro/${item.id}/editar`}>Editar</Link>
                         {item.status === 'Pendente' ? (
                           <button className="btn btn-mini" type="button" onClick={() => handleMarkPaid(item)}>Pagar</button>

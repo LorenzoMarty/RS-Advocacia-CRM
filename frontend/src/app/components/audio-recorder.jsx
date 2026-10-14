@@ -116,7 +116,7 @@ export function AudioRecorder({ onUpload }) {
             </span>
             <span className="grid min-w-0 gap-0.5">
               <strong className="text-[1.07rem] font-bold">Gravar reunião</strong>
-              <span className="text-[.86rem] font-medium opacity-80">Aba + microfone · um trecho a cada 5 min</span>
+              <span className="text-[.86rem] font-medium opacity-90">Aba + microfone · um trecho a cada 5 min</span>
             </span>
           </button>
         ) : (

@@ -28,7 +28,7 @@ export function TimeDistributionChart({ byType, byTask, deadlines, petitions }) 
         <div className="productivity-distribution">
           <Donut data={donutData} formatValue={formatMinutes} />
           <div className="productivity-distribution-tasks">
-            <h3 className="section-subtitle">Onde o tempo foi gasto</h3>
+            <h2 className="section-subtitle">Onde o tempo foi gasto</h2>
             {top.length ? (
               <div className="productivity-task-list">
                 {top.map((item) => {
