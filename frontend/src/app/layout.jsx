@@ -825,7 +825,6 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed, notifications }
         )}
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label={`Menu do usuário${totalNaoLidas ? ` — ${totalNaoLidas} notificações` : ''}`}
         onClick={() => setOpen((p) => !p)}
       >
         <Avatar name={currentUser.name} seed={currentUser.id} size={collapsed ? 40 : 38} />
@@ -847,6 +846,7 @@ function ProfileMenu({ onOpenAppearance, onStartTour, collapsed, notifications }
           <strong className="block truncate text-sm font-bold text-ink">{currentUser.name}</strong>
           <span className="block truncate text-xs font-medium text-muted-foreground">{currentRole?.name || 'Usuário'}</span>
         </div>
+        <span className="sr-only">menu do usuário{totalNaoLidas ? `, ${totalNaoLidas} notificações` : ''}</span>
         <ChevronUp
           className={cn(
             'size-3.5 shrink-0 text-muted-foreground transition-transform',

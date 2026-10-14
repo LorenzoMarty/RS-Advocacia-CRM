@@ -55,6 +55,7 @@ export function ProductivityPanel({ productivity = {} }) {
               </span>
               <Progress
                 value={Math.min(u.pct, 100)}
+                aria-label={`${u.userName}: ${u.pct}% da meta`}
                 className="col-start-1 row-start-2 h-1.5 sm:col-auto sm:row-auto"
                 indicatorClassName={TONE_BAR[tone]}
               />

@@ -161,7 +161,7 @@ function ClientDetailPanel({ client, clientProcesses, onDelete }) {
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h3 className="m-0 text-[1.07rem] font-bold text-ink">Processos</h3>
+          <h2 className="m-0 text-[1.07rem] font-bold text-ink">Processos</h2>
           <span className="text-meta font-bold text-muted-foreground tabular-nums">{clientProcesses.length}</span>
         </div>
         {clientProcesses.length ? (

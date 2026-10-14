@@ -24,7 +24,7 @@ export function ProcessStatusPanel({ processStatus = [], staleProcesses = { coun
               {processStatus.map(({ status, count }) => (
                 <li key={status} className="grid grid-cols-[minmax(0,140px)_1fr_28px] items-center gap-2">
                   <span className="truncate text-sm text-muted-foreground">{status}</span>
-                  <Progress value={Math.round((count / maxCount) * 100)} className="h-1.5" />
+                  <Progress value={Math.round((count / maxCount) * 100)} className="h-1.5" aria-label={`${status}: ${count}`} />
                   <span className="text-right text-sm tabular-nums">{count}</span>
                 </li>
               ))}

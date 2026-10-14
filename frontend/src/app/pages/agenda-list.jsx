@@ -613,14 +613,13 @@ export function AgendaListPage() {
                       <button
                         key={event.id}
                         type="button"
-                        aria-label={`${event.title}, ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "full" }).format(start)}, ${formatTime(event.start)}`}
                         className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-3 rounded-sm border-0 bg-transparent p-2 text-left transition-colors hover:bg-surface-2"
                         onClick={() => {
                           setSelectedDate(start);
                           setViewDate(new Date(start.getFullYear(), start.getMonth(), 1));
                         }}
                       >
-                        <span className={`upcoming-tile type-${typeKey}`}>
+                        <span className={`upcoming-tile type-${typeKey}`} aria-hidden="true">
                           <span>{new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(start).replace(".", "")}</span>
                           <strong>{start.getDate()}</strong>
                         </span>
@@ -629,6 +628,7 @@ export function AgendaListPage() {
                           <span className="truncate text-[.86rem] font-medium text-muted-foreground">
                             {formatTime(event.start)}{clientName ? ` · ${clientName}` : ""}
                           </span>
+                          <span className="sr-only">{new Intl.DateTimeFormat("pt-BR", { dateStyle: "full" }).format(start)}</span>
                         </span>
                       </button>
                     );

@@ -95,7 +95,7 @@
         display:grid;
         place-items:center;
         border-radius:var(--radius-md);
-        color:var(--accent);
+        color:var(--accent-hover);
         font-size:.92rem;
         font-weight:700;
         background:var(--line-strong);
