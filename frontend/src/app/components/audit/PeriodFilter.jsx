@@ -7,13 +7,14 @@ const PERIOD_OPTIONS = [
 ];
 
 // Segmented control de horizonte de vencimento — Tabs do shadcn usado como
-// filtro (sem TabsContent, o conteúdo já reage via onPeriodChange).
+// filtro (sem TabsContent, o conteúdo já reage via onPeriodChange; por isso
+// aria-controls é removido: apontaria para um painel que não existe).
 export function PeriodFilter({ value, onChange }) {
   return (
     <Tabs value={String(value)} onValueChange={(next) => onChange(Number(next))}>
       <TabsList tone="bg" aria-label="Período">
         {PERIOD_OPTIONS.map((opt) => (
-          <TabsTrigger key={opt.value} value={String(opt.value)}>
+          <TabsTrigger key={opt.value} value={String(opt.value)} aria-controls={undefined}>
             {opt.label}
           </TabsTrigger>
         ))}

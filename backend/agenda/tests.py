@@ -4,10 +4,12 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from agenda.models import Evento
 from clientes.models import Cliente
-from integrations.google.exceptions import GoogleAuthorizationRequired
+from agenda.tasks import sincronizar_evento_google_calendar
+from integrations.google.exceptions import GoogleApiError, GoogleAuthorizationRequired
 from processos.models import Processo
 from usuarios.models import Usuario
 
@@ -44,6 +46,36 @@ class AgendaIntegrationViewsTests(TestCase):
             status="Ativo",
             advogado_responsavel=self.usuario,
         )
+
+    def test_listar_eventos_pagina_sem_repetir_nem_perder_datas_iguais(self):
+        inicio = timezone.now()
+        Evento.objects.bulk_create(
+            Evento(
+                titulo=f"Evento {i}",
+                data_inicio=inicio,
+                data_fim=inicio,
+                tipo_evento="Audiencia",
+                status="Agendado",
+                prioridade="Alta",
+                criado_por="teste",
+                local="Forum",
+            )
+            for i in range(1100)
+        )
+
+        ids = []
+        offset = 0
+        while True:
+            response = self.client.get(reverse("listar_eventos"), {"offset": offset})
+            dados = response.json()["dados"]
+            ids.extend(e["id"] for e in dados["eventos"])
+            if not dados["paginacao"]["tem_mais"]:
+                break
+            offset += len(dados["eventos"])
+
+        self.assertEqual(dados["paginacao"]["total"], 1100)
+        self.assertEqual(len(ids), 1100)
+        self.assertEqual(len(set(ids)), 1100)
 
     def payload(self):
         return {
@@ -359,3 +391,62 @@ class AgendaIntegrationViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 200, response.json())
         sync_agenda.assert_called_once_with(self.usuario)
+
+
+class SincronizarEventoGoogleCalendarTaskTests(TestCase):
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Advogada", email="advogada@example.com", cargo="Administrador"
+        )
+        agora = timezone.now()
+        self.evento = Evento.objects.create(
+            titulo="Audiencia",
+            data_inicio=agora,
+            data_fim=agora,
+            tipo_evento="Audiencia",
+            status="Agendado",
+            prioridade="Alta",
+            criado_por="teste",
+            local="Forum",
+        )
+
+    def run_task(self, evento_id, usuario_id):
+        return sincronizar_evento_google_calendar.apply(args=(evento_id, usuario_id))
+
+    @patch("agenda.tasks.sync_local_event")
+    def test_sucesso_sincroniza_evento_com_o_usuario(self, sync):
+        result = self.run_task(self.evento.pk, self.usuario.pk)
+
+        self.assertTrue(result.successful())
+        sync.assert_called_once_with(self.usuario, self.evento)
+
+    @patch("agenda.tasks.sync_local_event")
+    def test_evento_inexistente_nao_chama_o_google(self, sync):
+        result = self.run_task(999999, self.usuario.pk)
+
+        self.assertTrue(result.successful())
+        sync.assert_not_called()
+
+    @patch("agenda.tasks.sync_local_event")
+    def test_usuario_inexistente_ou_ausente_nao_chama_o_google(self, sync):
+        self.assertTrue(self.run_task(self.evento.pk, 999999).successful())
+        self.assertTrue(self.run_task(self.evento.pk, None).successful())
+        sync.assert_not_called()
+
+    @patch("agenda.tasks.logger")
+    @patch("agenda.tasks.sync_local_event", side_effect=GoogleAuthorizationRequired("sem conta"))
+    def test_usuario_sem_conta_google_pula_com_log_sem_retry(self, sync, logger):
+        result = self.run_task(self.evento.pk, self.usuario.pk)
+
+        self.assertTrue(result.successful())
+        sync.assert_called_once()
+        logger.info.assert_called_once()
+
+    @patch("agenda.tasks.sync_local_event", side_effect=GoogleApiError("503"))
+    def test_erro_da_api_tenta_de_novo_e_propaga_ao_esgotar(self, sync):
+        result = self.run_task(self.evento.pk, self.usuario.pk)
+
+        self.assertTrue(result.failed())
+        self.assertIsInstance(result.result, GoogleApiError)
+        # 1 tentativa + max_retries=3
+        self.assertEqual(sync.call_count, 4)

@@ -62,6 +62,31 @@ class PrazosViewsTests(TestCase):
             "concluido": False,
         }
 
+    def test_listar_prazos_pagina_todos_os_registros_acima_do_limite_padrao(self):
+        Prazo.objects.bulk_create(
+            Prazo(
+                titulo=f"Prazo {i}",
+                data_limite="2026-06-23",
+                processo=self.processo,
+                status="Pendente",
+            )
+            for i in range(1100)
+        )
+
+        ids = []
+        offset = 0
+        while True:
+            response = self.client.get(reverse("listar_prazos"), {"offset": offset})
+            dados = response.json()["dados"]
+            ids.extend(p["id"] for p in dados["prazos"])
+            if not dados["paginacao"]["tem_mais"]:
+                break
+            offset += len(dados["prazos"])
+
+        self.assertEqual(dados["paginacao"]["total"], 1100)
+        self.assertEqual(len(ids), 1100)
+        self.assertEqual(len(set(ids)), 1100)
+
     def test_criar_prazo_nao_cria_evento(self):
         response = self.client.post(
             reverse("criar_prazo"),

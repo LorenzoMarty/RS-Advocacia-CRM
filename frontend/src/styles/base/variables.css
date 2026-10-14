@@ -28,9 +28,9 @@
     --ink:#17181C;
     --ink-2:#3A3D45;
     /* Desvio do spec (#7B808C/#9A9EA8 ficam < 4.5:1): --muted cumpre 4.5:1 em surface, bg e surface-3;
-       --subtle (4.68:1 no branco) só para labels >= 11px bold. */
+       --subtle (4.9:1 em surface-2, 5.4:1 no branco) só para labels >= 11px bold. */
     --muted:#5E636F;
-    --subtle:#6F7480;
+    --subtle:#656A76;
 
     /* Acento da interface: azul médio. Único ponto de troca. --ink fica só como cor de texto. */
     --accent:oklch(0.52 0.13 255);

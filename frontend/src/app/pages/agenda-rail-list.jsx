@@ -93,7 +93,7 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
                     <button
                       type="button"
                       className="side-item-attend-no"
-                      aria-label="Marcar como não compareceu"
+                      aria-label="Faltou: marcar como não compareceu"
                       onKeyDown={(e) => e.stopPropagation()}
                       onClick={(e) => { e.stopPropagation(); onAttendance(event.id, false); }}
                     >
@@ -170,7 +170,7 @@ export function RailList({ events, clients, processes, emptyTitle, emptyCopy, on
               <button
                 type="button"
                 className="side-item-attend-no"
-                aria-label="Marcar como não compareceu"
+                aria-label="Faltou: marcar como não compareceu"
                 onKeyDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();

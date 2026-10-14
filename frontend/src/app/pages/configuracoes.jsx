@@ -107,7 +107,7 @@ export function ConfiguracoesPage() {
 
       <div className="grid gap-[var(--gap-grid)]">
         <section className="mb-2">
-          <p className="text-page-title text-ink">Configurações</p>
+          <h1 className="m-0 text-page-title text-ink">Configurações</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             API key da OpenAI e custo estimado de uso de IA do escritório.
           </p>

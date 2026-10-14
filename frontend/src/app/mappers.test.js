@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  searchGroupsFromResponse,
   auditEntryFromApi,
   auditFromListResponse,
   auditFromResponse,
@@ -719,5 +720,30 @@ describe('auditOverviewFromResponse', () => {
     expect(result.petitionFunnel).toEqual([]);
     expect(result.productivity.porUsuario).toEqual([]);
     expect(result.productivity.timersAtivos).toBe(0);
+  });
+});
+
+describe('searchGroupsFromResponse', () => {
+  it('maps each non-empty group to labelled items with their route', () => {
+    const groups = searchGroupsFromResponse({
+      grupos: {
+        clientes: [{ id: '7', titulo: 'Ana', meta: '' }],
+        processos: [],
+        peticoes: [{ id: '3', titulo: 'Ana', meta: 'Banco' }],
+      },
+    });
+
+    expect(groups).toEqual([
+      { label: 'Clientes', items: [{ key: '7', title: 'Ana', meta: '', to: '/clientes/7' }] },
+      {
+        label: 'Petições',
+        items: [{ key: '3', title: 'Ana', meta: 'Banco', to: '/peticoes-contestacoes/3/editar' }],
+      },
+    ]);
+  });
+
+  it('returns no groups for an empty or missing payload', () => {
+    expect(searchGroupsFromResponse({ grupos: {} })).toEqual([]);
+    expect(searchGroupsFromResponse(undefined)).toEqual([]);
   });
 });
