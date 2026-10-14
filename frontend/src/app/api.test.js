@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { apiRequest, errorMessageFromPayload } from './api';
+import { apiRequest, errorMessageFromPayload, fetchAllPages } from './api';
 
 // ---------------------------------------------------------------------------
 // errorMessageFromPayload
@@ -96,5 +96,52 @@ describe('apiRequest — network errors', () => {
     });
 
     expect(result).toEqual({ id: '1', nome: 'Cliente' });
+  });
+});
+
+describe('fetchAllPages', () => {
+  const makeItems = (from, count) => Array.from({ length: count }, (_, i) => ({ id: String(from + i) }));
+
+  it('follows tem_mais until every record is loaded (more than 1000)', async () => {
+    const all = makeItems(0, 2500);
+    const fetchPage = vi.fn(async (query) => {
+      const params = new URLSearchParams(query);
+      const offset = Number(params.get('offset'));
+      const limit = Math.min(Number(params.get('limit')), 1000);
+      return {
+        prazos: all.slice(offset, offset + limit),
+        paginacao: { offset, limit, total: all.length, tem_mais: offset + limit < all.length },
+      };
+    });
+
+    const result = await fetchAllPages(fetchPage, 'prazos');
+
+    expect(result.prazos).toHaveLength(2500);
+    expect(result.prazos.at(-1)).toEqual({ id: '2499' });
+    expect(fetchPage).toHaveBeenCalledTimes(3);
+  });
+
+  it('stops after one call when there is no further page', async () => {
+    const fetchPage = vi.fn().mockResolvedValue({
+      eventos: makeItems(0, 3),
+      paginacao: { offset: 0, limit: 5000, total: 3, tem_mais: false },
+    });
+
+    const result = await fetchAllPages(fetchPage, 'eventos');
+
+    expect(result.eventos).toHaveLength(3);
+    expect(fetchPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not loop forever on an empty page that still claims tem_mais', async () => {
+    const fetchPage = vi.fn().mockResolvedValue({
+      prazos: [],
+      paginacao: { offset: 0, limit: 5000, total: 9, tem_mais: true },
+    });
+
+    const result = await fetchAllPages(fetchPage, 'prazos');
+
+    expect(result.prazos).toEqual([]);
+    expect(fetchPage).toHaveBeenCalledTimes(1);
   });
 });
