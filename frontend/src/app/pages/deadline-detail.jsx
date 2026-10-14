@@ -226,7 +226,7 @@ export function DeadlineDetailPage() {
               </Button>
               <Button
                 variant="outline"
-                className="text-destructive hover:bg-destructive/10"
+                className="text-[var(--danger-ink)] hover:bg-[var(--danger-soft)]"
                 onClick={handleDelete}
               >
                 Excluir
@@ -270,7 +270,7 @@ export function DeadlineDetailPage() {
               ) : null}
               <Button
                 variant="outline"
-                className="text-destructive hover:bg-destructive/10"
+                className="text-[var(--danger-ink)] hover:bg-[var(--danger-soft)]"
                 onClick={handleRemoveDoc}
                 disabled={isDocBusy}
               >

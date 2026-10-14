@@ -163,6 +163,7 @@ export function ManualPage() {
   return (
     <div className="grid gap-[var(--gap-grid)] pt-5">
       <PageChrome label="Manual do sistema" />
+      <h1 className="m-0 text-page-title text-ink">Manual do sistema</h1>
 
       <div className="grid gap-[var(--gap-grid)] lg:grid-cols-[240px_1fr]">
         <aside className="lg:sticky lg:top-20 lg:self-start">
@@ -202,7 +203,7 @@ export function ManualPage() {
           </Card>
         </aside>
 
-        <main className="grid gap-[var(--gap-grid)]">
+        <div className="grid gap-[var(--gap-grid)]">
           {visibleSections.length === 0 ? (
             <Card>
               <CardContent className="p-6 text-center text-sm text-muted-foreground">
@@ -228,7 +229,7 @@ export function ManualPage() {
               </Card>
             ))
           )}
-        </main>
+        </div>
       </div>
     </div>
   );

@@ -44,7 +44,7 @@
     border-radius:var(--radius-sm);
     border:1px solid var(--line-strong);
     background:var(--line-strong);
-    color:var(--accent);
+    color:var(--accent-hover);
     font-size:var(--btn-fs-sm);
     font-weight:600;
 }
@@ -110,9 +110,9 @@
     letter-spacing:.02em;
 }
 
-.kpi-delta-up{color:var(--success);}
+.kpi-delta-up{color:var(--success-ink);}
 
-.kpi-delta-down{color:var(--danger);}
+.kpi-delta-down{color:var(--danger-ink);}
 
 .productivity-bar{
     height:7px;
