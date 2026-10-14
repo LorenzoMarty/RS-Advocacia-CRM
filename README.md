@@ -102,7 +102,7 @@ cd backend && python manage.py test
 cd frontend && npm test
 ```
 
-The [quality gate](.github/workflows/quality.yml) can be run from the Actions tab (`workflow_dispatch`) and runs on pull requests to `main`: backend lint (ruff) and Django tests against real Postgres and Redis service containers, plus frontend lint (ESLint) and Vitest.
+The [quality gate](.github/workflows/quality.yml) can be run from the Actions tab (`workflow_dispatch`) and runs on pull requests to `main`: backend lint (ruff) and Django tests against real Postgres and Redis service containers, plus frontend lint (ESLint), Vitest and the production build. A separate `audit` job (also run weekly) fails on high-severity `npm audit --omit=dev` findings and on any `pip-audit` finding in the locked backend runtime set; Dependabot opens grouped weekly updates for `uv`, `npm` and GitHub Actions.
 
 ## Deployment
 
