@@ -99,3 +99,64 @@ jobs:
         run: |
           uv export --frozen --no-dev --no-emit-project --no-hashes -o "$RUNNER_TEMP/requirements.txt"
           uv run pip-audit -r "$RUNNER_TEMP/requirements.txt" --disable-pip --no-deps
+
+  e2e:
+    # Smoke tests: seed_demo data + real backend + Vite + Chromium (frontend/e2e).
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: agenda_juri
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DEBUG: "true"
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/agenda_juri?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - name: Seed demo data and start the backend
+        working-directory: backend
+        # No Redis on purpose: seed_demo's session needs neither Redis nor Google.
+        run: |
+          uv sync
+          uv run python manage.py migrate
+          uv run python manage.py seed_demo | tee "$RUNNER_TEMP/seed.txt"
+          SESSIONID="$(sed -n 's/.*sessionid = //p' "$RUNNER_TEMP/seed.txt")"
+          test -n "$SESSIONID" || { echo "seed_demo did not print a sessionid"; exit 1; }
+          echo "E2E_SESSIONID=$SESSIONID" >> "$GITHUB_ENV"
+          nohup uv run python manage.py runserver 8000 --noreload > "$RUNNER_TEMP/backend.log" 2>&1 &
+          curl --retry 30 --retry-delay 1 --retry-connrefused -fsS http://localhost:8000/api/csrf/ > /dev/null
+      - name: Install frontend and browser
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run smoke tests
+        working-directory: frontend
+        run: npm run test:e2e
+      - name: Upload report, traces and screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+            ${{ runner.temp }}/backend.log
+          retention-days: 7
