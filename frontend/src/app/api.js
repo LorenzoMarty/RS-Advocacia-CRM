@@ -153,6 +153,27 @@ export async function apiRequest(
   return payload;
 }
 
+// Teto por página do backend para prazos/eventos (`limite_maximo`).
+const LIST_ALL_PAGE_SIZE = 5000;
+
+// Prazos e compromissos vivem inteiros no store global (kanban, painel,
+// calendário, busca). Percorre `paginacao.tem_mais` para nunca truncar em
+// silêncio quando passam do teto de uma página.
+export async function fetchAllPages(fetchPage, key) {
+  const items = [];
+  let offset = 0;
+
+  for (;;) {
+    const page = await fetchPage(`?limit=${LIST_ALL_PAGE_SIZE}&offset=${offset}`);
+    const batch = page?.[key] || [];
+    items.push(...batch);
+    if (!page?.paginacao?.tem_mais || batch.length === 0) {
+      return { [key]: items };
+    }
+    offset += batch.length;
+  }
+}
+
 function jsonOptions(method, payload) {
   return {
     method,
@@ -231,7 +252,7 @@ export const api = {
   createProcess: (payload) => apiRequest('/api/processos/criar/', jsonOptions('POST', payload)),
   updateProcess: (id, payload) => apiRequest(`/api/processos/${id}/editar/`, jsonOptions('PUT', payload)),
   deleteProcess: (id) => apiRequest(`/api/processos/${id}/excluir/`, { method: 'DELETE' }),
-  listEvents: () => eventRequest(),
+  listEvents: () => fetchAllPages((query) => eventRequest(query), 'eventos'),
   syncGoogleCalendar: () => apiRequest('/api/eventos/sincronizar/google/', { method: 'POST' }),
   listGoogleCalendars: () => apiRequest('/api/integracoes/google/calendarios/'),
   selectGoogleCalendars: (calendarios) => apiRequest(
@@ -245,7 +266,7 @@ export const api = {
   patchEvent: (id, payload) => eventRequest(`${id}/editar/`, jsonOptions('PATCH', payload)),
   updateEventAttendance: (id, payload) => eventRequest(`${id}/comparecimento/`, jsonOptions('POST', payload)),
   deleteEvent: (id) => eventRequest(`${id}/excluir/`, { method: 'DELETE' }),
-  listDeadlines: () => deadlineRequest(),
+  listDeadlines: () => fetchAllPages((query) => deadlineRequest(query), 'prazos'),
   getDeadline: (id) => deadlineRequest(`${id}/`),
   createDeadline: (payload) => deadlineRequest('criar/', jsonOptions('POST', payload)),
   updateDeadline: (id, payload) => deadlineRequest(`${id}/editar/`, jsonOptions('PUT', payload)),
