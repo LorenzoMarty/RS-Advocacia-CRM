@@ -1,4 +1,6 @@
 version: 2
+# Grouped weekly updates for minor/patch only. Major versions (tailwind 4, eslint 10,
+# openai 3, ruff 0.x minors that add rules...) need a migration and get their own PR by hand.
 updates:
   - package-ecosystem: uv
     directory: /backend
@@ -7,6 +9,10 @@ updates:
     groups:
       backend:
         patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /frontend
     schedule:
@@ -14,6 +20,10 @@ updates:
     groups:
       frontend:
         patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -21,3 +31,7 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
