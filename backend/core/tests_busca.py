@@ -109,3 +109,21 @@ class BuscaGlobalTests(TestCase):
         grupos = self.buscar("zeferino").json()["dados"]["grupos"]
 
         self.assertEqual([c["titulo"] for c in grupos["clientes"]], ["Zeferino Raro"])
+
+    def test_eventos_do_tipo_prazo_nao_aparecem(self):
+        self.login_superuser()
+        agora = timezone.now()
+        Evento.objects.create(
+            titulo="Vencimento Horizonte",
+            data_inicio=agora,
+            data_fim=agora,
+            tipo_evento="Prazo fatal",
+            status="Agendado",
+            prioridade="Alta",
+            criado_por="teste",
+            local="",
+        )
+
+        grupos = self.buscar("horizonte").json()["dados"]["grupos"]
+
+        self.assertEqual([e["titulo"] for e in grupos["eventos"]], ["Audiência Horizonte"])
