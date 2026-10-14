@@ -1,21 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 
-import { useAppState } from '../store';
-import { normalizeText } from '../utils';
+import { api } from '../api';
+import { searchGroupsFromResponse } from '../mappers';
 
-const MAX_PER_GROUP = 4;
+const MIN_QUERY_LENGTH = 2;
+const DEBOUNCE_MS = 250;
 
-// Busca global da topbar (mock): clientes, processos, prazos, compromissos e petições já
-// carregados no estado. ⌘K / Ctrl+K foca o campo; Enter abre o primeiro resultado.
+// Busca global da topbar: consulta o servidor (`/api/busca/`, com debounce), então acha
+// registros que o estado carregado não tem. ⌘K / Ctrl+K foca o campo; Enter abre o primeiro resultado.
 export function GlobalSearch() {
-  const { clients, processes, deadlines, events, petitions } = useAppState();
   const navigate = useNavigate();
   const inputRef = useRef(null);
   const boxRef = useRef(null);
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [result, setResult] = useState({ term: '', groups: [], failed: false });
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -35,19 +36,27 @@ export function GlobalSearch() {
     };
   }, []);
 
-  const groups = useMemo(() => {
-    const term = normalizeText(query.trim());
-    if (term.length < 2) return [];
-    const match = (...values) => values.some((value) => normalizeText(value || '').includes(term));
-    const pick = (list, test, toItem) => list.filter(test).slice(0, MAX_PER_GROUP).map(toItem);
-    return [
-      { label: 'Clientes', items: pick(clients, (c) => match(c.name, c.email), (c) => ({ key: c.id, title: c.name, to: `/clientes/${c.id}` })) },
-      { label: 'Processos', items: pick(processes, (p) => match(p.number, p.description), (p) => ({ key: p.id, title: p.number, meta: p.description, to: `/processos/${p.id}` })) },
-      { label: 'Prazos', items: pick(deadlines, (d) => match(d.title), (d) => ({ key: d.id, title: d.title, to: `/prazos/${d.id}` })) },
-      { label: 'Compromissos', items: pick(events, (e) => match(e.title), (e) => ({ key: e.id, title: e.title, to: `/agenda/${e.id}` })) },
-      { label: 'Petições', items: pick(petitions, (p) => match(p.clientName, p.adversary), (p) => ({ key: p.id, title: p.clientName || p.adversary, meta: p.adversary, to: `/peticoes-contestacoes/${p.id}/editar` })) },
-    ].filter((group) => group.items.length);
-  }, [query, clients, processes, deadlines, events, petitions]);
+  const term = query.trim();
+  const isSearchable = term.length >= MIN_QUERY_LENGTH;
+
+  useEffect(() => {
+    if (!isSearchable) return undefined;
+    let stale = false;
+    const timer = setTimeout(() => {
+      api.search(term).then(
+        (payload) => !stale && setResult({ term, groups: searchGroupsFromResponse(payload), failed: false }),
+        () => !stale && setResult({ term, groups: [], failed: true }),
+      );
+    }, DEBOUNCE_MS);
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+    };
+  }, [term, isSearchable]);
+
+  // Só vale o resultado da consulta atual; enquanto ela não volta, mostra "Buscando…".
+  const isCurrent = result.term === term;
+  const groups = isCurrent ? result.groups : [];
 
   function go(to) {
     setOpen(false);
@@ -84,9 +93,13 @@ export function GlobalSearch() {
         <kbd className="rounded-[6px] border border-solid border-line-strong px-1.5 text-[11px] font-bold leading-[18px]">⌘K</kbd>
       </label>
 
-      {open && query.trim().length >= 2 ? (
+      {open && isSearchable ? (
         <div className="absolute right-0 top-full z-50 mt-2 max-h-[70vh] w-[420px] overflow-y-auto rounded-lg bg-card p-2 shadow-pop">
-          {groups.length ? (
+          {!isCurrent ? (
+            <p className="m-0 px-3 py-4 text-center text-[.93rem] font-semibold text-muted-foreground">Buscando…</p>
+          ) : result.failed ? (
+            <p className="m-0 px-3 py-4 text-center text-[.93rem] font-semibold text-muted-foreground">Não foi possível buscar. Tente de novo.</p>
+          ) : groups.length ? (
             groups.map((group) => (
               <div key={group.label} className="py-1">
                 <span className="block px-3 pb-1 pt-1 text-[11px] font-bold uppercase tracking-[.08em] text-subtle">{group.label}</span>
