@@ -61,6 +61,8 @@ test('global search (Ctrl+K) opens a client', async ({ page }) => {
   await page.keyboard.press('Control+K');
   await expect(page.getByLabel('Busca global')).toBeFocused();
   await page.keyboard.type('Horizonte');
+  // Results may come from the client state or the server (debounced): wait for one.
+  await expect(page.getByRole('button', { name: /Horizonte/ }).first()).toBeVisible();
   await page.keyboard.press('Enter');
 
   await expect(page).toHaveURL(/\/clientes\/[^/]+$/);
