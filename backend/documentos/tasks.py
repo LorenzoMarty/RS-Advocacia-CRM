@@ -22,7 +22,7 @@ from django.utils import timezone
 
 from integrations.google import drive
 from integrations.google.client import drive_service
-from integrations.google.exceptions import GOOGLE_ERRORS, GoogleAuthorizationRequired
+from integrations.google.exceptions import GOOGLE_ERRORS
 from integrations.models import GoogleAccount, GoogleDriveSync
 
 from . import importacao, renomeacao, services
@@ -155,73 +155,6 @@ def drenar_renomeacoes() -> dict:
     for pendencia in renomeacao.vencidas()[: renomeacao.LOTE_MAXIMO]:
         resumo["concluidas" if renomeacao.aplicar(pendencia) else "falhas"] += 1
     return resumo
-
-
-# Legacy per-edit tasks: no longer enqueued by the views (see ``renomeacao``).
-# Kept for one release so messages already in the queue at deploy still run.
-
-@shared_task(
-    bind=True,
-    ignore_result=True,
-    autoretry_for=GOOGLE_ERRORS,
-    retry_backoff=True,
-    retry_backoff_max=120,
-    max_retries=3,
-)
-def renomear_pasta_cliente(self, cliente_id, usuario_id, novo_nome: str) -> None:
-    """Best-effort Drive rename for a client's folder, off the request path."""
-    from clientes.models import Cliente
-    from usuarios.models import Usuario
-
-    try:
-        cliente = Cliente.objects.get(pk=cliente_id)
-    except Cliente.DoesNotExist:
-        return
-
-    usuario = Usuario.objects.filter(pk=usuario_id).first() if usuario_id else None
-    if usuario is None:
-        return
-
-    try:
-        services.renomear_pasta_cliente(usuario, cliente, novo_nome)
-    except GoogleAuthorizationRequired:
-        logger.info(
-            "Renomear pasta do cliente %s pulado: usuario %s sem conta Google conectada.",
-            cliente_id,
-            usuario_id,
-        )
-
-
-@shared_task(
-    bind=True,
-    ignore_result=True,
-    autoretry_for=GOOGLE_ERRORS,
-    retry_backoff=True,
-    retry_backoff_max=120,
-    max_retries=3,
-)
-def renomear_pasta_processo(self, processo_id, usuario_id, nome_antigo: str) -> None:
-    """Best-effort Drive rename for a processo's folder, off the request path."""
-    from processos.models import Processo
-    from usuarios.models import Usuario
-
-    try:
-        processo = Processo.objects.get(pk=processo_id)
-    except Processo.DoesNotExist:
-        return
-
-    usuario = Usuario.objects.filter(pk=usuario_id).first() if usuario_id else None
-    if usuario is None:
-        return
-
-    try:
-        services.renomear_pasta_processo(usuario, processo, nome_antigo)
-    except GoogleAuthorizationRequired:
-        logger.info(
-            "Renomear pasta do processo %s pulado: usuario %s sem conta Google conectada.",
-            processo_id,
-            usuario_id,
-        )
 
 
 def _inativar(file_id: str | None) -> int:
