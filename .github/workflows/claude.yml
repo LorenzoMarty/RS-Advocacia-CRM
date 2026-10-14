@@ -16,13 +16,14 @@ on:
 jobs:
   claude:
     # Só o dono e colaboradores podem chamar o Claude (repositório público).
-    # Aplicar label já exige permissão de triagem no repositório.
+    # Aplicar label já exige permissão de triagem no repositório; além disso só issues de
+    # OWNER/MEMBER/COLLABORATOR são aceitas, porque o agente lê o corpo atual (que pode ser editado).
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude') && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude') && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association)) ||
       (github.event_name == 'issues' && github.event.action == 'opened' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')) && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)) ||
-      (github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'ready-for-agent')
+      (github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'ready-for-agent' && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
     concurrency:
       group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
       cancel-in-progress: false
