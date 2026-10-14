@@ -1,6 +1,7 @@
 version: 2
 # Grouped weekly updates for minor/patch only. Major versions (tailwind 4, eslint 10,
-# openai 3, ruff 0.x minors that add rules...) need a migration and get their own PR by hand.
+# openai 3...) need a migration and get their own PR by hand. Security updates are not affected
+# by `ignore`. ruff is 0.x, so its minors can add lint rules: it is pinned to patch updates.
 updates:
   - package-ecosystem: uv
     directory: /backend
@@ -13,6 +14,8 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      - dependency-name: ruff
+        update-types: ["version-update:semver-minor"]
   - package-ecosystem: npm
     directory: /frontend
     schedule:
