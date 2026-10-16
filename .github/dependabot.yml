@@ -27,6 +27,9 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # 7.1 adds set-state-in-effect lint errors across many components.
+      - dependency-name: eslint-plugin-react-hooks
+        update-types: ["version-update:semver-minor"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
